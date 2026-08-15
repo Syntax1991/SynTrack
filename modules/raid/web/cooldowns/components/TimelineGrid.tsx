@@ -194,31 +194,6 @@ export function TimelineGrid({
           className="cooldown-timeline-track-overlay"
           ref={trackOverlayRef}
         >
-          {phaseMarkers.map(
-            (marker) => (
-              <div
-                className="cooldown-timeline-phase"
-                key={marker.id}
-                style={
-                  {
-                    left: `${percentOf(marker.startSeconds, fightDurationSeconds)}%`
-                  } as CSSProperties
-                }
-              >
-                <span
-                  onClick={() =>
-                    onRemovePhaseMarker(
-                      marker.id
-                    )
-                  }
-                  title="Click to remove"
-                >
-                  {marker.label}
-                </span>
-              </div>
-            )
-          )}
-
           <TimelineHoverPlayhead
             fightDurationSeconds={
               fightDurationSeconds
@@ -232,6 +207,10 @@ export function TimelineGrid({
           fightDurationSeconds={
             fightDurationSeconds
           }
+          onRemovePhaseMarker={
+            onRemovePhaseMarker
+          }
+          phaseMarkers={phaseMarkers}
           segments={phaseSegments}
         />
 
