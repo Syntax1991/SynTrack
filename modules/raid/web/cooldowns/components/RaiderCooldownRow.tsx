@@ -1,182 +1,20 @@
 import {
   useRef,
   type CSSProperties,
-  type MouseEvent,
-  type RefObject
+  type MouseEvent
 } from "react";
-import { Tooltip } from "../../../../../apps/web/src/shared/components/Tooltip";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
-import { getSpellById } from "../../../shared/catalog/raidCooldownSpellCatalog";
-import { useMarkerDrag } from "../hooks/useMarkerDrag";
-import type { RaidCooldownAssignment } from "../types/cooldown.types";
+import { AssignmentMarker } from "./AssignmentMarker";
+import { CooldownCreatePopover } from "./CooldownCreatePopover";
+import type {
+  RaidCooldownAssignment,
+  RaidCooldownAssignmentInput
+} from "../types/cooldown.types";
 import {
-  formatSeconds,
   percentOf,
   secondsFromClickX
 } from "../utils/timelineFormat";
-
-type AssignmentMarkerProps = {
-  assignment: RaidCooldownAssignment;
-  member: GuildMember | undefined;
-  fightDurationSeconds: number;
-  trackRef: RefObject<HTMLDivElement | null>;
-  isInLineup: boolean;
-  isTooltipSuppressed: boolean;
-  onRemove: () => void;
-  onReposition: (
-    seconds: number
-  ) => void;
-  onDragPreview: (
-    seconds: number | null
-  ) => void;
-};
-
-function AssignmentMarker({
-  assignment,
-  member,
-  fightDurationSeconds,
-  trackRef,
-  isInLineup,
-  isTooltipSuppressed,
-  onRemove,
-  onReposition,
-  onDragPreview
-}: AssignmentMarkerProps) {
-  const { onMouseDown, isDragging, previewSeconds } =
-    useMarkerDrag({
-      trackRef,
-      fightDurationSeconds,
-      onDrop: onReposition,
-      onClick: onRemove,
-      onDragPreview
-    });
-
-  const originalSeconds =
-    assignment.timestampSeconds ?? 0;
-
-  const displaySeconds =
-    previewSeconds ?? originalSeconds;
-
-  const markerClassName = [
-    "cooldown-timeline-marker",
-    assignment.abilityIcon
-      ? "cooldown-timeline-marker-icon"
-      : "",
-    isDragging ? "is-dragging" : ""
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const category = assignment.spellId
-    ? getSpellById(assignment.spellId)
-        ?.category
-    : null;
-
-  const tooltipContent = (
-    <>
-      <span className="tooltip-title">
-        {assignment.abilityIcon && (
-          <img
-            alt=""
-            src={
-              assignment.abilityIcon
-            }
-          />
-        )}
-        {assignment.abilityName}
-      </span>
-
-      <span className="tooltip-meta">
-        {member?.name ?? "Unknown"}
-        {member?.className
-          ? ` — ${member.className}`
-          : ""}
-      </span>
-
-      <span className="tooltip-time">
-        {formatSeconds(
-          originalSeconds
-        )}
-      </span>
-
-      {category && (
-        <span className="tooltip-meta">
-          {category}
-        </span>
-      )}
-
-      {!isInLineup && (
-        <span className="tooltip-warning">
-          Not in current setup
-        </span>
-      )}
-    </>
-  );
-
-  return (
-    <>
-      {isDragging && (
-        <span
-          className="cooldown-timeline-marker cooldown-timeline-marker-ghost"
-          style={
-            {
-              left: `${percentOf(originalSeconds, fightDurationSeconds)}%`
-            } as CSSProperties
-          }
-        />
-      )}
-
-      <Tooltip
-        anchorClassName={
-          markerClassName
-        }
-        anchorStyle={
-          {
-            left: `${percentOf(displaySeconds, fightDurationSeconds)}%`,
-            "--marker-color":
-              resolveClassColor(
-                member?.className ??
-                  ""
-              )
-          } as CSSProperties
-        }
-        content={tooltipContent}
-        disabled={
-          isTooltipSuppressed
-        }
-      >
-        <button
-          aria-label={`${member?.name ?? "Unknown"} — ${assignment.abilityName} at ${formatSeconds(displaySeconds)} — click to remove, drag to move`}
-          className="cooldown-timeline-marker-button"
-          onMouseDown={onMouseDown}
-          type="button"
-        >
-          {isDragging && (
-            <span className="cooldown-timeline-drag-label">
-              {formatSeconds(
-                displaySeconds
-              )}
-            </span>
-          )}
-
-          {assignment.abilityIcon ? (
-            <img
-              alt=""
-              src={
-                assignment.abilityIcon
-              }
-            />
-          ) : (
-            (member?.name ?? "?")
-              .slice(0, 2)
-              .toUpperCase()
-          )}
-        </button>
-      </Tooltip>
-    </>
-  );
-}
 
 type RaiderCooldownRowProps = {
   member: GuildMember;
@@ -184,9 +22,14 @@ type RaiderCooldownRowProps = {
   assignments: RaidCooldownAssignment[];
   isInLineup: boolean;
   isTooltipSuppressed: boolean;
+  pendingCreationSeconds: number | null;
   onTrackClick: (
     seconds: number
   ) => void;
+  onCreateAssignment: (
+    input: RaidCooldownAssignmentInput
+  ) => void;
+  onCancelCreate: () => void;
   onRemoveAssignment: (
     assignmentId: string
   ) => void;
@@ -205,7 +48,10 @@ export function RaiderCooldownRow({
   assignments,
   isInLineup,
   isTooltipSuppressed,
+  pendingCreationSeconds,
   onTrackClick,
+  onCreateAssignment,
+  onCancelCreate,
   onRemoveAssignment,
   onRepositionAssignment,
   onDragPreview
@@ -308,6 +154,69 @@ export function RaiderCooldownRow({
               trackRef={trackRef}
             />
           ))}
+
+        {pendingCreationSeconds !==
+          null && (
+          <div
+            className="cooldown-create-popover-anchor"
+            style={
+              {
+                left: `${percentOf(pendingCreationSeconds, fightDurationSeconds)}%`
+              } as CSSProperties
+            }
+          >
+            <CooldownCreatePopover
+              member={member}
+              onCancel={
+                onCancelCreate
+              }
+              onSelectFreeText={(
+                name
+              ) =>
+                onCreateAssignment(
+                  {
+                    memberId:
+                      member.id,
+                    abilityName:
+                      name,
+                    spellId: null,
+                    abilityIcon:
+                      null,
+                    phaseLabel:
+                      null,
+                    timestampSeconds:
+                      pendingCreationSeconds,
+                    sortOrder: 0
+                  }
+                )
+              }
+              onSelectSpell={(
+                spell
+              ) =>
+                onCreateAssignment(
+                  {
+                    memberId:
+                      member.id,
+                    abilityName:
+                      spell.name,
+                    spellId:
+                      spell.spellId,
+                    abilityIcon:
+                      spell.icon,
+                    phaseLabel:
+                      null,
+                    timestampSeconds:
+                      pendingCreationSeconds,
+                    sortOrder: 0
+                  }
+                )
+              }
+              seconds={
+                pendingCreationSeconds
+              }
+            />
+          </div>
+        )}
       </div>
     </div>
   );

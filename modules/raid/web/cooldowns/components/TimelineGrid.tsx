@@ -8,7 +8,8 @@ import type { GuildMember } from "../../../../guild/web/roster/types/roster.type
 import type {
   RaidBossAbilityCast,
   RaidBossPhaseMarker,
-  RaidCooldownAssignment
+  RaidCooldownAssignment,
+  RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 import {
   formatSeconds,
@@ -30,10 +31,18 @@ type TimelineGridProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  pendingCreation: {
+    memberId: string;
+    seconds: number;
+  } | null;
   onRaiderTrackClick: (
     memberId: string,
     seconds: number
   ) => void;
+  onCreateAssignment: (
+    input: RaidCooldownAssignmentInput
+  ) => void;
+  onCancelCreate: () => void;
   onRemoveAssignment: (
     assignmentId: string
   ) => void;
@@ -53,7 +62,10 @@ export function TimelineGrid({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  pendingCreation,
   onRaiderTrackClick,
+  onCreateAssignment,
+  onCancelCreate,
   onRemoveAssignment,
   onRepositionAssignment,
   onRemovePhaseMarker
@@ -75,7 +87,9 @@ export function TimelineGrid({
     dragSeconds !== null;
 
   const playheadSeconds =
-    dragSeconds ?? hoverSeconds;
+    dragSeconds ??
+    pendingCreation?.seconds ??
+    hoverSeconds;
 
   const handleRowsMouseMove = (
     event: ReactMouseEvent<HTMLDivElement>
@@ -264,6 +278,12 @@ export function TimelineGrid({
                 }
                 key={memberId}
                 member={member}
+                onCancelCreate={
+                  onCancelCreate
+                }
+                onCreateAssignment={
+                  onCreateAssignment
+                }
                 onDragPreview={
                   setDragSeconds
                 }
@@ -280,6 +300,12 @@ export function TimelineGrid({
                     memberId,
                     seconds
                   )
+                }
+                pendingCreationSeconds={
+                  pendingCreation?.memberId ===
+                  memberId
+                    ? pendingCreation.seconds
+                    : null
                 }
               />
             );

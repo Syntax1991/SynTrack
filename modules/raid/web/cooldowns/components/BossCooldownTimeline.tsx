@@ -8,7 +8,6 @@ import type {
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 import { formatRelativeTime } from "../utils/timelineFormat";
-import { CooldownAssignmentForm } from "./CooldownAssignmentForm";
 import { PhaseMarkerForm } from "./PhaseMarkerForm";
 import { TimelineGrid } from "./TimelineGrid";
 
@@ -54,8 +53,8 @@ export function BossCooldownTimeline({
     useBossAbilityCasts(bossId);
 
   const [
-    pendingAssignmentClick,
-    setPendingAssignmentClick
+    pendingCreation,
+    setPendingCreation
   ] = useState<{
     memberId: string;
     seconds: number;
@@ -69,16 +68,6 @@ export function BossCooldownTimeline({
 
   const [isPhaseFormOpen, setIsPhaseFormOpen] =
     useState(false);
-
-  const abilitySuggestions =
-    Array.from(
-      new Set(
-        assignments.map(
-          (assignment) =>
-            assignment.abilityName
-        )
-      )
-    ).sort();
 
   const handleSync = async () => {
     setSyncError(null);
@@ -201,13 +190,31 @@ export function BossCooldownTimeline({
             lineupMemberIds={
               lineupMemberIds
             }
+            onCancelCreate={() =>
+              setPendingCreation(
+                null
+              )
+            }
+            onCreateAssignment={(
+              input
+            ) => {
+              setPendingCreation(
+                null
+              );
+
+              void onAddAssignment(
+                bossId,
+                input
+              );
+            }}
             onRaiderTrackClick={(
               memberId,
               seconds
             ) =>
-              setPendingAssignmentClick(
-                { memberId, seconds }
-              )
+              setPendingCreation({
+                memberId,
+                seconds
+              })
             }
             onRemoveAssignment={
               onRemoveAssignment
@@ -222,6 +229,9 @@ export function BossCooldownTimeline({
             onRepositionAssignment={
               onRepositionAssignment
             }
+            pendingCreation={
+              pendingCreation
+            }
             phaseMarkers={
               phaseMarkers.markers
             }
@@ -229,51 +239,6 @@ export function BossCooldownTimeline({
               rosterMembers
             }
           />
-
-          {pendingAssignmentClick !==
-            null && (
-            <>
-              <CooldownAssignmentForm
-                abilitySuggestions={
-                  abilitySuggestions
-                }
-                datalistId={`cooldown-timeline-abilities-${bossId}`}
-                initialMemberId={
-                  pendingAssignmentClick.memberId
-                }
-                initialTimestampSeconds={
-                  pendingAssignmentClick.seconds
-                }
-                onSubmit={async (
-                  input
-                ) => {
-                  await onAddAssignment(
-                    bossId,
-                    input
-                  );
-
-                  setPendingAssignmentClick(
-                    null
-                  );
-                }}
-                rosterMembers={
-                  rosterMembers
-                }
-              />
-
-              <button
-                className="text-button"
-                onClick={() =>
-                  setPendingAssignmentClick(
-                    null
-                  )
-                }
-                type="button"
-              >
-                Cancel
-              </button>
-            </>
-          )}
         </>
       )}
     </section>

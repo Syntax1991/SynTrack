@@ -36,6 +36,7 @@ import "./styles/boss-roster-matrix.css";
 import "./styles/boss-roster-overview.css";
 import "./styles/cooldown-timeline.css";
 import "./styles/cooldown-timeline-markers.css";
+import "./styles/cooldown-create-popover.css";
 import "./styles/profession-overview.css";
 import "./styles/profession-module-workspaces.css";
 import "./styles/profession-module-workspaces-responsive.css";

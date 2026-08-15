@@ -25,10 +25,13 @@ function computeSeconds(
   );
 }
 
-// After a drag, the marker re-renders at the drop position before the
-// browser's native click fires, so click lands on the track underneath
-// and would otherwise open the click-to-place form. Swallow that one
-// synthesized click in the capture phase, before React sees it.
+// A native `click` always follows `mouseup`, bubbling from the marker
+// to the track underneath — after a drag (marker moved out from under
+// the cursor) or after a plain click-to-remove (marker still there,
+// but should not also start a new assignment at that spot), that
+// bubbled click would otherwise open the track's click-to-place flow.
+// Swallow that one synthesized click in the capture phase, before
+// React sees it, for both cases.
 function suppressNextClick(): void {
   const swallow = (event: MouseEvent) => {
     event.stopPropagation();
@@ -121,9 +124,9 @@ export function useMarkerDrag(params: {
           handleMouseUp
         );
 
-        if (draggedRef.current) {
-          suppressNextClick();
+        suppressNextClick();
 
+        if (draggedRef.current) {
           onDrop(
             computeSeconds(
               upEvent.clientX,

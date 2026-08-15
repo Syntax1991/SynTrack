@@ -494,6 +494,72 @@ in the first, marker/drag/tooltip-adjacent rules in the second: same
 architecture split already used for `BossRosterMatrix.tsx`'s
 `BossMatrixHeader.tsx`/`BossMatrixFooter.tsx` extraction.
 
+### Step 6 — drag opacity polish + contextual click-to-create (2026-08-15, same day)
+
+Two follow-up requests landed right after Step 5 shipped.
+
+**Drag opacity was a real gap, not cosmetic tuning.** Step 5 added a
+dimmed ghost at a cooldown's original position while dragging, but
+`.cooldown-timeline-marker.is-dragging` itself had no opacity rule at
+all — the live marker being dragged looked exactly like a normal,
+already-placed one, undermining the "preview, not committed yet"
+feedback the WoWUtils reference has. Added `opacity: 0.62` to the
+dragging marker and tuned the ghost from 0.35 down to 0.25, both
+within the ranges the user specified; confirmed neither rule touches
+hover state (grepped the timeline stylesheets for any existing hover-
+opacity rule first — none existed). Verified live via a real simulated
+drag (mousedown + mousemove, held mid-flight without releasing) and
+`getComputedStyle()` inspection, since this session's Browser pane
+doesn't composite frames for `computer{action:"screenshot"}`/`zoom` —
+confirmed and disclosed as an environment limitation rather than
+claiming a screenshot that couldn't actually be captured.
+
+**Removed the permanent bottom "Add assignment" bar from the Timeline
+view entirely**, replacing it with direct-manipulation creation: click
+empty space on a raider's row and both `memberId` (the row) and
+`timestampSeconds` (the click's X position, via the same
+`secondsFromClickX` every other marker already uses — no separate
+math) are already known, so the only thing still asked for is the
+spell. New `CooldownCreatePopover.tsx`, a small popover anchored at
+the clicked position (`CooldownCreatePopover.tsx` +
+`.cooldown-create-popover-anchor`, positioned the same
+`percentOf()`-based way as every marker/playhead, spanning the row's
+full height like the existing drag-label technique so the popover
+clears the row instead of overlapping it) showing only real
+`getSpellsForClass(member.className)` entries (icon + name, grouped by
+category) plus a compact free-text fallback — no player selector, no
+timestamp input, matching the row+click-defines-the-target model
+exactly. Selecting a spell calls the existing `onAddAssignment`
+immediately with the already-known member/timestamp.
+`CooldownAssignmentForm.tsx`/`SpellPicker.tsx` are untouched and still
+used by the List view's "+ Add assignment" (`CooldownBossPanel.tsx`)
+— a genuinely different case (phase-label-only entries with no click-
+based timestamp, still needs manual player selection), not affected
+by this change.
+
+**Real gap found and fixed while building this**: clicking an existing
+marker to remove it (a plain click, not a drag) let the browser's
+native `click` event bubble to the track underneath afterward — only
+the drag-completion path called the existing `suppressNextClick()`
+helper, not the plain click-to-remove path, so removing a marker could
+immediately reopen the new creation popover at that same spot.
+`useMarkerDrag.ts` now calls `suppressNextClick()` unconditionally
+before branching into drop-vs-click, closing that gap for both cases.
+`AssignmentMarker.tsx` was split out of `RaiderCooldownRow.tsx` (which
+would otherwise have crossed the 350-line limit once the popover
+rendering was added) — same extraction pattern as `BossMatrixHeader`/
+`BossMatrixFooter` and `verification.officer-check.ts`.
+
+Live-verified end to end against real demo data: clicked Selunari's
+row at a computed 0:47, the popover showed real Priest spells with no
+player/timestamp fields, selecting "Pain Suppression" created a real
+assignment (`timestampSeconds: 47`, real `spellId`/`abilityIcon`
+intact) and closed the popover; clicking that same marker afterward
+removed it without reopening the creation popover; dragging a
+different marker still persisted a reposition; opening the popover on
+an empty row and clicking Cancel created nothing. Confirmed the old
+`.boss-add-form` no longer exists anywhere under the timeline panel.
+
 ## Signups
 
 The first genuinely self-service Raid feature, built 2026-08-14 after
