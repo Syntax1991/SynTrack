@@ -6,7 +6,7 @@ import {
 
 type TimelineHoverPlayheadProps = {
   seconds: number | null;
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   isDragging: boolean;
 };
 
@@ -18,7 +18,7 @@ type TimelineHoverPlayheadProps = {
  */
 export function TimelineHoverPlayhead({
   seconds,
-  fightDurationSeconds,
+  planningDurationSeconds,
   isDragging
 }: TimelineHoverPlayheadProps) {
   if (seconds === null) {
@@ -34,7 +34,7 @@ export function TimelineHoverPlayhead({
       }
       style={
         {
-          left: `${percentOf(seconds, fightDurationSeconds)}%`
+          left: `${percentOf(seconds, planningDurationSeconds)}%`
         } as CSSProperties
       }
     >

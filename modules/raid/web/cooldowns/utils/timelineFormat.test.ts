@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  defaultFightDurationSeconds,
-  derivePhaseSegments,
   formatRelativeTime,
   formatSeconds,
   getWowIconUrl,
@@ -9,7 +7,7 @@ import {
   isAssignedMemberInLineup,
   parseTimeInput,
   percentOf,
-  resolveActivePhase,
+  planningDurationSeconds,
   secondsFromClickX
 } from "./timelineFormat.js";
 
@@ -169,133 +167,15 @@ describe("isAssignedMemberInLineup", () => {
   });
 });
 
-describe("derivePhaseSegments", () => {
-  it("returns no segments when there are no real phase markers", () => {
-    expect(
-      derivePhaseSegments([], 420)
-    ).toEqual([]);
-  });
-
-  it("derives start/end/duration from adjacent markers, ending the final phase at the fight duration", () => {
-    const segments = derivePhaseSegments(
-      [
-        { label: "Phase 1", startSeconds: 0 },
-        { label: "Phase 2", startSeconds: 102 },
-        { label: "Phase 3", startSeconds: 229 }
-      ],
-      420
-    );
-
-    expect(segments).toEqual([
-      {
-        label: "Phase 1",
-        startSeconds: 0,
-        endSeconds: 102,
-        durationSeconds: 102
-      },
-      {
-        label: "Phase 2",
-        startSeconds: 102,
-        endSeconds: 229,
-        durationSeconds: 127
-      },
-      {
-        label: "Phase 3",
-        startSeconds: 229,
-        endSeconds: 420,
-        durationSeconds: 191
-      }
-    ]);
-  });
-
-  it("sorts markers by start time regardless of input order", () => {
-    const segments = derivePhaseSegments(
-      [
-        { label: "Phase 2", startSeconds: 100 },
-        { label: "Phase 1", startSeconds: 0 }
-      ],
-      200
-    );
-
-    expect(
-      segments.map((segment) => segment.label)
-    ).toEqual(["Phase 1", "Phase 2"]);
-  });
-
-  it("a single real marker still produces one segment ending at the fight duration", () => {
-    expect(
-      derivePhaseSegments(
-        [{ label: "Phase 1", startSeconds: 0 }],
-        300
-      )
-    ).toEqual([
-      {
-        label: "Phase 1",
-        startSeconds: 0,
-        endSeconds: 300,
-        durationSeconds: 300
-      }
-    ]);
-  });
-});
-
-describe("resolveActivePhase", () => {
-  const segments = derivePhaseSegments(
-    [
-      { label: "Phase 1", startSeconds: 0 },
-      { label: "Phase 2", startSeconds: 102 },
-      { label: "Phase 3", startSeconds: 229 }
-    ],
-    420
-  );
-
-  it("resolves a timestamp to the segment containing it", () => {
-    expect(
-      resolveActivePhase(54, segments)?.label
-    ).toBe("Phase 1");
-
-    expect(
-      resolveActivePhase(102, segments)?.label
-    ).toBe("Phase 2");
-
-    expect(
-      resolveActivePhase(300, segments)?.label
-    ).toBe("Phase 3");
-  });
-
-  it("resolves a timestamp exactly at the fight end to the final segment", () => {
-    expect(
-      resolveActivePhase(420, segments)?.label
-    ).toBe("Phase 3");
-  });
-
-  it("never guesses a phase for a timestamp before the first real marker", () => {
-    const laterStart = derivePhaseSegments(
-      [{ label: "Phase 2", startSeconds: 90 }],
-      420
-    );
-
-    expect(
-      resolveActivePhase(30, laterStart)
-    ).toBeNull();
-  });
-
-  it("returns null when there are no real phase segments at all", () => {
-    expect(
-      resolveActivePhase(54, [])
-    ).toBeNull();
-  });
-});
-
-describe("defaultFightDurationSeconds", () => {
+describe("planningDurationSeconds", () => {
   it("is 7:00", () => {
     expect(
-      defaultFightDurationSeconds
+      planningDurationSeconds
     ).toBe(420);
 
     expect(
       formatSeconds(
-        defaultFightDurationSeconds
+        planningDurationSeconds
       )
     ).toBe("7:00");
   });

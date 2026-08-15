@@ -11,7 +11,7 @@ import {
 
 type BossAbilityRowProps = {
   abilityName: string;
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   casts: RaidBossAbilityCast[];
   phaseSegments: DerivedPhaseSegment[];
   isTooltipSuppressed: boolean;
@@ -19,7 +19,7 @@ type BossAbilityRowProps = {
 
 export function BossAbilityRow({
   abilityName,
-  fightDurationSeconds,
+  planningDurationSeconds,
   casts,
   phaseSegments,
   isTooltipSuppressed
@@ -125,7 +125,7 @@ export function BossAbilityRow({
           );
 
           const markerStyle = {
-            left: `${percentOf(cast.timestampSeconds, fightDurationSeconds)}%`
+            left: `${percentOf(cast.timestampSeconds, planningDurationSeconds)}%`
           } as CSSProperties;
 
           return (

@@ -27,7 +27,7 @@ import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
 const tickCount = 10;
 
 type TimelineGridProps = {
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   phaseMarkers: RaidBossPhaseMarker[];
   bossAbilityCasts: RaidBossAbilityCast[];
   assignments: RaidCooldownAssignment[];
@@ -58,7 +58,7 @@ type TimelineGridProps = {
 };
 
 export function TimelineGrid({
-  fightDurationSeconds,
+  planningDurationSeconds,
   phaseMarkers,
   bossAbilityCasts,
   assignments,
@@ -79,7 +79,7 @@ export function TimelineGrid({
   const phaseSegments =
     derivePhaseSegments(
       phaseMarkers,
-      fightDurationSeconds
+      planningDurationSeconds
     );
 
   const trackOverlayRef =
@@ -121,7 +121,7 @@ export function TimelineGrid({
       secondsFromClickX(
         event.clientX,
         trackOverlayRef.current,
-        fightDurationSeconds
+        planningDurationSeconds
       )
     );
   };
@@ -158,7 +158,7 @@ export function TimelineGrid({
     { length: tickCount + 1 },
     (_, index) =>
       Math.round(
-        (fightDurationSeconds /
+        (planningDurationSeconds /
           tickCount) *
           index
       )
@@ -172,7 +172,7 @@ export function TimelineGrid({
             key={seconds}
             style={
               {
-                left: `${percentOf(seconds, fightDurationSeconds)}%`
+                left: `${percentOf(seconds, planningDurationSeconds)}%`
               } as CSSProperties
             }
           >
@@ -195,8 +195,8 @@ export function TimelineGrid({
           ref={trackOverlayRef}
         >
           <TimelineHoverPlayhead
-            fightDurationSeconds={
-              fightDurationSeconds
+            planningDurationSeconds={
+              planningDurationSeconds
             }
             isDragging={isDragActive}
             seconds={playheadSeconds}
@@ -204,8 +204,8 @@ export function TimelineGrid({
         </div>
 
         <PhaseBar
-          fightDurationSeconds={
-            fightDurationSeconds
+          planningDurationSeconds={
+            planningDurationSeconds
           }
           onRemovePhaseMarker={
             onRemovePhaseMarker
@@ -221,8 +221,8 @@ export function TimelineGrid({
                 row.abilityName
               }
               casts={row.casts}
-              fightDurationSeconds={
-                fightDurationSeconds
+              planningDurationSeconds={
+                planningDurationSeconds
               }
               isTooltipSuppressed={
                 isDragActive
@@ -260,8 +260,8 @@ export function TimelineGrid({
                     assignment.memberId ===
                     memberId
                 )}
-                fightDurationSeconds={
-                  fightDurationSeconds
+                planningDurationSeconds={
+                  planningDurationSeconds
                 }
                 isInLineup={isAssignedMemberInLineup(
                   memberId,

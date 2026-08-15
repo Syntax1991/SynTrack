@@ -12,7 +12,7 @@ const dragThresholdPx = 4;
 function computeSeconds(
   clientX: number,
   trackRef: RefObject<HTMLDivElement | null>,
-  fightDurationSeconds: number
+  planningDurationSeconds: number
 ): number {
   if (!trackRef.current) {
     return 0;
@@ -21,7 +21,7 @@ function computeSeconds(
   return secondsFromClickX(
     clientX,
     trackRef.current,
-    fightDurationSeconds
+    planningDurationSeconds
   );
 }
 
@@ -51,7 +51,7 @@ function suppressNextClick(): void {
 
 export function useMarkerDrag(params: {
   trackRef: RefObject<HTMLDivElement | null>;
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   onDrop: (seconds: number) => void;
   onClick: () => void;
   onDragPreview?: (
@@ -60,7 +60,7 @@ export function useMarkerDrag(params: {
 }) {
   const {
     trackRef,
-    fightDurationSeconds,
+    planningDurationSeconds,
     onDrop,
     onClick,
     onDragPreview
@@ -104,7 +104,7 @@ export function useMarkerDrag(params: {
             computeSeconds(
               moveEvent.clientX,
               trackRef,
-              fightDurationSeconds
+              planningDurationSeconds
             );
 
           setPreviewSeconds(seconds);
@@ -131,7 +131,7 @@ export function useMarkerDrag(params: {
             computeSeconds(
               upEvent.clientX,
               trackRef,
-              fightDurationSeconds
+              planningDurationSeconds
             )
           );
         }
@@ -155,7 +155,7 @@ export function useMarkerDrag(params: {
     },
     [
       trackRef,
-      fightDurationSeconds,
+      planningDurationSeconds,
       onDrop,
       onClick,
       onDragPreview

@@ -67,9 +67,9 @@ export function parseTimeInput(
 
 export function percentOf(
   seconds: number,
-  fightDurationSeconds: number
+  planningDurationSeconds: number
 ): number {
-  if (fightDurationSeconds <= 0) {
+  if (planningDurationSeconds <= 0) {
     return 0;
   }
 
@@ -78,7 +78,7 @@ export function percentOf(
     Math.max(
       0,
       (seconds /
-        fightDurationSeconds) *
+        planningDurationSeconds) *
         100
     )
   );
@@ -87,7 +87,7 @@ export function percentOf(
 export function secondsFromClickX(
   clientX: number,
   trackElement: HTMLElement,
-  fightDurationSeconds: number
+  planningDurationSeconds: number
 ): number {
   const rect =
     trackElement.getBoundingClientRect();
@@ -106,7 +106,7 @@ export function secondsFromClickX(
   );
 
   return Math.round(
-    ratio * fightDurationSeconds
+    ratio * planningDurationSeconds
   );
 }
 
@@ -205,12 +205,16 @@ export function isAssignedMemberInLineup(
 }
 
 /**
- * When no real synced Warcraft Logs fight duration exists yet, the
- * timeline still needs *some* axis to render against. 7:00 is a
- * plain UI/domain fallback, never written to RaidBoss.fightDurationSeconds
- * — a real synced duration always overrides it.
+ * The Cooldown Planner's coordinate-system width — everything on the
+ * timeline (ticks, markers, playhead, drag, phase segments) positions
+ * against this, NOT against any single synced Warcraft Logs pull's
+ * real duration. A short WCL pull must never shrink the planning
+ * workspace; a real, longer or shorter `RaidBoss.fightDurationSeconds`
+ * stays around as separate source metadata and is never written over
+ * by this value. Fixed at 7:00 for the current product phase; a
+ * proper reference-fight/encounter-duration workflow is future work.
  */
-export const defaultFightDurationSeconds = 420;
+export const planningDurationSeconds = 420;
 
 export type DerivedPhaseSegment = {
   label: string;
@@ -224,44 +228,70 @@ export type DerivedPhaseSegment = {
  * phase-transition timestamps only (today: officer-added
  * RaidBossPhaseMarker rows; Warcraft Logs exposes no phase/stage data
  * for this app to prefer instead). A phase's end is simply the next
- * phase's start; the final phase ends at the fight's real or
- * fallback duration. No markers means no segments — never fabricate
- * a P1/P2/P3 split that isn't backed by real data.
+ * phase's start; the final phase ends at the planning horizon. No
+ * markers at all means no segments — never fabricate a P1/P2/P3 split
+ * that isn't backed by real data.
+ *
+ * Once at least one real marker exists, the span from 0 up to that
+ * first marker is real, un-ambiguous time that must still render as
+ * part of the phase bar — it's implicitly "Phase 1", the one phase
+ * every encounter has before its first real transition. This is
+ * deterministic construction from real transition timestamps, not
+ * guessing a transition: only the marker's own timestamps decide
+ * where boundaries fall.
  */
 export function derivePhaseSegments(
   phaseMarkers: Array<{
     label: string;
     startSeconds: number;
   }>,
-  fightDurationSeconds: number
+  planningDurationSeconds: number
 ): DerivedPhaseSegment[] {
+  if (phaseMarkers.length === 0) {
+    return [];
+  }
+
   const sorted = [...phaseMarkers].sort(
     (a, b) =>
       a.startSeconds - b.startSeconds
   );
 
-  return sorted.map(
-    (marker, index) => {
-      const nextMarker =
-        sorted[index + 1];
+  const segments: DerivedPhaseSegment[] =
+    [];
 
-      const endSeconds = nextMarker
-        ? nextMarker.startSeconds
-        : fightDurationSeconds;
+  if (sorted[0].startSeconds > 0) {
+    segments.push({
+      label: "Phase 1",
+      startSeconds: 0,
+      endSeconds:
+        sorted[0].startSeconds,
+      durationSeconds:
+        sorted[0].startSeconds
+    });
+  }
 
-      return {
-        label: marker.label,
-        startSeconds:
-          marker.startSeconds,
-        endSeconds,
-        durationSeconds: Math.max(
-          0,
-          endSeconds -
-            marker.startSeconds
-        )
-      };
-    }
-  );
+  sorted.forEach((marker, index) => {
+    const nextMarker =
+      sorted[index + 1];
+
+    const endSeconds = nextMarker
+      ? nextMarker.startSeconds
+      : planningDurationSeconds;
+
+    segments.push({
+      label: marker.label,
+      startSeconds:
+        marker.startSeconds,
+      endSeconds,
+      durationSeconds: Math.max(
+        0,
+        endSeconds -
+          marker.startSeconds
+      )
+    });
+  });
+
+  return segments;
 }
 
 /**

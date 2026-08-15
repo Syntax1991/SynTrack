@@ -8,8 +8,8 @@ import type {
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 import {
-  defaultFightDurationSeconds,
-  formatRelativeTime
+  formatRelativeTime,
+  planningDurationSeconds
 } from "../utils/timelineFormat";
 import { PhaseMarkerForm } from "./PhaseMarkerForm";
 import { TimelineGrid } from "./TimelineGrid";
@@ -17,6 +17,13 @@ import { TimelineGrid } from "./TimelineGrid";
 type BossCooldownTimelineProps = {
   bossId: string;
   bossName: string;
+  /**
+   * The real duration of the currently synced Warcraft Logs pull —
+   * useful source metadata, kept around and never overwritten, but
+   * NOT the Cooldown Planner's coordinate-system width. The timeline
+   * always renders against `planningDurationSeconds` regardless of
+   * how long (or short) this pull was.
+   */
   fightDurationSeconds: number | null;
   wclSyncedAt: string | null;
   assignments: RaidCooldownAssignment[];
@@ -39,7 +46,6 @@ type BossCooldownTimelineProps = {
 export function BossCooldownTimeline({
   bossId,
   bossName,
-  fightDurationSeconds,
   wclSyncedAt,
   assignments,
   rosterMembers,
@@ -71,13 +77,6 @@ export function BossCooldownTimeline({
 
   const [isPhaseFormOpen, setIsPhaseFormOpen] =
     useState(false);
-
-  const isUsingFallbackDuration =
-    fightDurationSeconds === null;
-
-  const effectiveFightDurationSeconds =
-    fightDurationSeconds ??
-    defaultFightDurationSeconds;
 
   const handleSync = async () => {
     setSyncError(null);
@@ -144,16 +143,6 @@ export function BossCooldownTimeline({
         </StatusMessage>
       )}
 
-      {isUsingFallbackDuration && (
-        <p className="cooldown-timeline-fallback-note muted-text">
-          No synced fight duration
-          yet — showing a default
-          0:00–7:00 timeline. Click
-          the sync pill above for
-          the real fight length.
-        </p>
-      )}
-
       <div className="cooldown-timeline-actions">
         <button
           className="text-button"
@@ -190,9 +179,6 @@ export function BossCooldownTimeline({
         assignments={assignments}
         bossAbilityCasts={
           abilityCasts.casts
-        }
-        fightDurationSeconds={
-          effectiveFightDurationSeconds
         }
         lineupMemberIds={
           lineupMemberIds
@@ -234,6 +220,9 @@ export function BossCooldownTimeline({
         }
         pendingCreation={
           pendingCreation
+        }
+        planningDurationSeconds={
+          planningDurationSeconds
         }
         phaseMarkers={
           phaseMarkers.markers

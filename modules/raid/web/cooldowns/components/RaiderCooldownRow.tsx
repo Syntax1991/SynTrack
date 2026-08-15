@@ -18,7 +18,7 @@ import {
 
 type RaiderCooldownRowProps = {
   member: GuildMember;
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   assignments: RaidCooldownAssignment[];
   isInLineup: boolean;
   isTooltipSuppressed: boolean;
@@ -44,7 +44,7 @@ type RaiderCooldownRowProps = {
 
 export function RaiderCooldownRow({
   member,
-  fightDurationSeconds,
+  planningDurationSeconds,
   assignments,
   isInLineup,
   isTooltipSuppressed,
@@ -70,7 +70,7 @@ export function RaiderCooldownRow({
       secondsFromClickX(
         event.clientX,
         trackRef.current,
-        fightDurationSeconds
+        planningDurationSeconds
       )
     );
   };
@@ -124,8 +124,8 @@ export function RaiderCooldownRow({
               assignment={
                 assignment
               }
-              fightDurationSeconds={
-                fightDurationSeconds
+              planningDurationSeconds={
+                planningDurationSeconds
               }
               isInLineup={
                 isInLineup
@@ -161,7 +161,7 @@ export function RaiderCooldownRow({
             className="cooldown-create-popover-anchor"
             style={
               {
-                left: `${percentOf(pendingCreationSeconds, fightDurationSeconds)}%`
+                left: `${percentOf(pendingCreationSeconds, planningDurationSeconds)}%`
               } as CSSProperties
             }
           >

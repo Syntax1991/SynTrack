@@ -16,7 +16,7 @@ import {
 type AssignmentMarkerProps = {
   assignment: RaidCooldownAssignment;
   member: GuildMember | undefined;
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   trackRef: RefObject<HTMLDivElement | null>;
   isInLineup: boolean;
   isTooltipSuppressed: boolean;
@@ -32,7 +32,7 @@ type AssignmentMarkerProps = {
 export function AssignmentMarker({
   assignment,
   member,
-  fightDurationSeconds,
+  planningDurationSeconds,
   trackRef,
   isInLineup,
   isTooltipSuppressed,
@@ -43,7 +43,7 @@ export function AssignmentMarker({
   const { onMouseDown, isDragging, previewSeconds } =
     useMarkerDrag({
       trackRef,
-      fightDurationSeconds,
+      planningDurationSeconds,
       onDrop: onReposition,
       onClick: onRemove,
       onDragPreview
@@ -118,7 +118,7 @@ export function AssignmentMarker({
           className="cooldown-timeline-marker cooldown-timeline-marker-ghost"
           style={
             {
-              left: `${percentOf(originalSeconds, fightDurationSeconds)}%`
+              left: `${percentOf(originalSeconds, planningDurationSeconds)}%`
             } as CSSProperties
           }
         />
@@ -130,7 +130,7 @@ export function AssignmentMarker({
         }
         anchorStyle={
           {
-            left: `${percentOf(displaySeconds, fightDurationSeconds)}%`,
+            left: `${percentOf(displaySeconds, planningDurationSeconds)}%`,
             "--marker-color":
               resolveClassColor(
                 member?.className ??

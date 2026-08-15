@@ -8,7 +8,7 @@ import {
 
 type PhaseBarProps = {
   segments: DerivedPhaseSegment[];
-  fightDurationSeconds: number;
+  planningDurationSeconds: number;
   phaseMarkers: RaidBossPhaseMarker[];
   onRemovePhaseMarker: (markerId: string) => void;
 };
@@ -29,7 +29,7 @@ type PhaseBarProps = {
  */
 export function PhaseBar({
   segments,
-  fightDurationSeconds,
+  planningDurationSeconds,
   phaseMarkers,
   onRemovePhaseMarker
 }: PhaseBarProps) {
@@ -48,13 +48,13 @@ export function PhaseBar({
           const startPercent =
             percentOf(
               segment.startSeconds,
-              fightDurationSeconds
+              planningDurationSeconds
             );
 
           const endPercent =
             percentOf(
               segment.endSeconds,
-              fightDurationSeconds
+              planningDurationSeconds
             );
 
           const sourceMarker =
