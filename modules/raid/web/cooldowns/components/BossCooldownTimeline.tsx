@@ -7,7 +7,10 @@ import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
-import { formatRelativeTime } from "../utils/timelineFormat";
+import {
+  defaultFightDurationSeconds,
+  formatRelativeTime
+} from "../utils/timelineFormat";
 import { PhaseMarkerForm } from "./PhaseMarkerForm";
 import { TimelineGrid } from "./TimelineGrid";
 
@@ -68,6 +71,13 @@ export function BossCooldownTimeline({
 
   const [isPhaseFormOpen, setIsPhaseFormOpen] =
     useState(false);
+
+  const isUsingFallbackDuration =
+    fightDurationSeconds === null;
+
+  const effectiveFightDurationSeconds =
+    fightDurationSeconds ??
+    defaultFightDurationSeconds;
 
   const handleSync = async () => {
     setSyncError(null);
@@ -134,113 +144,104 @@ export function BossCooldownTimeline({
         </StatusMessage>
       )}
 
-      {fightDurationSeconds ===
-      null ? (
-        <p className="muted-text">
+      {isUsingFallbackDuration && (
+        <p className="cooldown-timeline-fallback-note muted-text">
           No synced fight duration
-          yet. Click the sync pill
-          above to pull the boss
-          timing from Warcraft Logs.
+          yet — showing a default
+          0:00–7:00 timeline. Click
+          the sync pill above for
+          the real fight length.
         </p>
-      ) : (
-        <>
-          <div className="cooldown-timeline-actions">
-            <button
-              className="text-button"
-              onClick={() =>
-                setIsPhaseFormOpen(
-                  (current) =>
-                    !current
-                )
-              }
-              type="button"
-            >
-              {isPhaseFormOpen
-                ? "Cancel"
-                : "+ Phase"}
-            </button>
-          </div>
-
-          {isPhaseFormOpen && (
-            <PhaseMarkerForm
-              onSubmit={async (
-                input
-              ) => {
-                await phaseMarkers.addMarker(
-                  input
-                );
-
-                setIsPhaseFormOpen(
-                  false
-                );
-              }}
-            />
-          )}
-
-          <TimelineGrid
-            assignments={
-              assignments
-            }
-            bossAbilityCasts={
-              abilityCasts.casts
-            }
-            fightDurationSeconds={
-              fightDurationSeconds
-            }
-            lineupMemberIds={
-              lineupMemberIds
-            }
-            onCancelCreate={() =>
-              setPendingCreation(
-                null
-              )
-            }
-            onCreateAssignment={(
-              input
-            ) => {
-              setPendingCreation(
-                null
-              );
-
-              void onAddAssignment(
-                bossId,
-                input
-              );
-            }}
-            onRaiderTrackClick={(
-              memberId,
-              seconds
-            ) =>
-              setPendingCreation({
-                memberId,
-                seconds
-              })
-            }
-            onRemoveAssignment={
-              onRemoveAssignment
-            }
-            onRemovePhaseMarker={(
-              markerId
-            ) => {
-              void phaseMarkers.removeMarker(
-                markerId
-              );
-            }}
-            onRepositionAssignment={
-              onRepositionAssignment
-            }
-            pendingCreation={
-              pendingCreation
-            }
-            phaseMarkers={
-              phaseMarkers.markers
-            }
-            rosterMembers={
-              rosterMembers
-            }
-          />
-        </>
       )}
+
+      <div className="cooldown-timeline-actions">
+        <button
+          className="text-button"
+          onClick={() =>
+            setIsPhaseFormOpen(
+              (current) => !current
+            )
+          }
+          type="button"
+        >
+          {isPhaseFormOpen
+            ? "Cancel"
+            : "+ Phase"}
+        </button>
+      </div>
+
+      {isPhaseFormOpen && (
+        <PhaseMarkerForm
+          onSubmit={async (
+            input
+          ) => {
+            await phaseMarkers.addMarker(
+              input
+            );
+
+            setIsPhaseFormOpen(
+              false
+            );
+          }}
+        />
+      )}
+
+      <TimelineGrid
+        assignments={assignments}
+        bossAbilityCasts={
+          abilityCasts.casts
+        }
+        fightDurationSeconds={
+          effectiveFightDurationSeconds
+        }
+        lineupMemberIds={
+          lineupMemberIds
+        }
+        onCancelCreate={() =>
+          setPendingCreation(null)
+        }
+        onCreateAssignment={(
+          input
+        ) => {
+          setPendingCreation(null);
+
+          void onAddAssignment(
+            bossId,
+            input
+          );
+        }}
+        onRaiderTrackClick={(
+          memberId,
+          seconds
+        ) =>
+          setPendingCreation({
+            memberId,
+            seconds
+          })
+        }
+        onRemoveAssignment={
+          onRemoveAssignment
+        }
+        onRemovePhaseMarker={(
+          markerId
+        ) => {
+          void phaseMarkers.removeMarker(
+            markerId
+          );
+        }}
+        onRepositionAssignment={
+          onRepositionAssignment
+        }
+        pendingCreation={
+          pendingCreation
+        }
+        phaseMarkers={
+          phaseMarkers.markers
+        }
+        rosterMembers={
+          rosterMembers
+        }
+      />
     </section>
   );
 }

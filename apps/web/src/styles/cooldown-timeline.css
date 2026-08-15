@@ -234,3 +234,44 @@
   pointer-events: auto;
 }
 
+.cooldown-timeline-fallback-note {
+  margin: 0 0 8px;
+}
+
+.cooldown-timeline-row-phases {
+  margin-bottom: 2px;
+}
+
+.cooldown-timeline-phase-bar-track {
+  background: transparent;
+  border-color: transparent;
+}
+
+.cooldown-timeline-phase-bar-segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-hover);
+}
+
+.cooldown-timeline-phase-bar-segment:nth-child(even) {
+  background: var(--surface-elevated);
+}
+
+.cooldown-timeline-phase-bar-segment span {
+  overflow: hidden;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

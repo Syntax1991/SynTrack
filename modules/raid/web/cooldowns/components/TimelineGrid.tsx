@@ -12,6 +12,7 @@ import type {
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 import {
+  derivePhaseSegments,
   formatSeconds,
   groupCastsByAbility,
   isAssignedMemberInLineup,
@@ -19,6 +20,7 @@ import {
   secondsFromClickX
 } from "../utils/timelineFormat";
 import { BossAbilityRow } from "./BossAbilityRow";
+import { PhaseBar } from "./PhaseBar";
 import { RaiderCooldownRow } from "./RaiderCooldownRow";
 import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
 
@@ -73,6 +75,12 @@ export function TimelineGrid({
   const abilityRows = groupCastsByAbility(
     bossAbilityCasts
   );
+
+  const phaseSegments =
+    derivePhaseSegments(
+      phaseMarkers,
+      fightDurationSeconds
+    );
 
   const trackOverlayRef =
     useRef<HTMLDivElement>(null);
@@ -220,6 +228,13 @@ export function TimelineGrid({
           />
         </div>
 
+        <PhaseBar
+          fightDurationSeconds={
+            fightDurationSeconds
+          }
+          segments={phaseSegments}
+        />
+
         {abilityRows.map(
           (row) => (
             <BossAbilityRow
@@ -234,8 +249,8 @@ export function TimelineGrid({
                 isDragActive
               }
               key={row.abilityName}
-              phaseMarkers={
-                phaseMarkers
+              phaseSegments={
+                phaseSegments
               }
             />
           )

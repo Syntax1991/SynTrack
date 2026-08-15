@@ -1,47 +1,27 @@
 import type { CSSProperties } from "react";
 import { Tooltip } from "../../../../../apps/web/src/shared/components/Tooltip";
-import type {
-  RaidBossAbilityCast,
-  RaidBossPhaseMarker
-} from "../types/cooldown.types";
+import type { RaidBossAbilityCast } from "../types/cooldown.types";
+import type { DerivedPhaseSegment } from "../utils/timelineFormat";
 import {
   formatSeconds,
   getWowIconUrl,
-  percentOf
+  percentOf,
+  resolveActivePhase
 } from "../utils/timelineFormat";
 
 type BossAbilityRowProps = {
   abilityName: string;
   fightDurationSeconds: number;
   casts: RaidBossAbilityCast[];
-  phaseMarkers: RaidBossPhaseMarker[];
+  phaseSegments: DerivedPhaseSegment[];
   isTooltipSuppressed: boolean;
 };
-
-function resolvePhaseLabel(
-  timestampSeconds: number,
-  phaseMarkers: RaidBossPhaseMarker[]
-): string | null {
-  const activePhase = [...phaseMarkers]
-    .filter(
-      (marker) =>
-        marker.startSeconds <=
-        timestampSeconds
-    )
-    .sort(
-      (a, b) =>
-        b.startSeconds -
-        a.startSeconds
-    )[0];
-
-  return activePhase?.label ?? null;
-}
 
 export function BossAbilityRow({
   abilityName,
   fightDurationSeconds,
   casts,
-  phaseMarkers,
+  phaseSegments,
   isTooltipSuppressed
 }: BossAbilityRowProps) {
   const rowIcon = casts.find(
@@ -69,10 +49,10 @@ export function BossAbilityRow({
 
       <div className="cooldown-timeline-row-track cooldown-timeline-row-track-readonly">
         {casts.map((cast, index) => {
-          const phaseLabel =
-            resolvePhaseLabel(
+          const activePhase =
+            resolveActivePhase(
               cast.timestampSeconds,
-              phaseMarkers
+              phaseSegments
             );
 
           const previousCast =
@@ -106,10 +86,29 @@ export function BossAbilityRow({
                 )}
               </span>
 
-              {phaseLabel && (
-                <span className="tooltip-meta">
-                  {phaseLabel}
-                </span>
+              {activePhase && (
+                <>
+                  <span className="tooltip-meta">
+                    {activePhase.label}
+                  </span>
+
+                  <span className="tooltip-meta">
+                    {formatSeconds(
+                      activePhase.startSeconds
+                    )}{" "}
+                    –{" "}
+                    {formatSeconds(
+                      activePhase.endSeconds
+                    )}
+                  </span>
+
+                  <span className="tooltip-meta">
+                    Phase duration:{" "}
+                    {formatSeconds(
+                      activePhase.durationSeconds
+                    )}
+                  </span>
+                </>
               )}
 
               {secondsSincePrevious !==

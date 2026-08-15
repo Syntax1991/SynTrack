@@ -560,6 +560,66 @@ different marker still persisted a reposition; opening the popover on
 an empty row and clicking Cancel created nothing. Confirmed the old
 `.boss-add-form` no longer exists anywhere under the timeline panel.
 
+### Step 7 — 7:00 fallback duration + derived phase timing (2026-08-16)
+
+Two more real gaps, both fixed without reintroducing anything manual.
+
+**Fight duration fallback.** The timeline previously refused to render
+at all when a boss had no synced `fightDurationSeconds` — a full
+`<p>` message instead of any axis. Now `BossCooldownTimeline.tsx`
+computes `fightDurationSeconds ?? defaultFightDurationSeconds` (a new
+`420`-second constant in `timelineFormat.ts`) and always renders the
+timeline; a small note above it explains the fallback is active only
+when `fightDurationSeconds` is genuinely `null`. The 420 is a pure
+UI/domain default — never written back to `RaidBoss.fightDurationSeconds`,
+and a real synced (or otherwise stored) duration always wins the
+moment it exists. No manual duration input was reintroduced to set
+it.
+
+**Phase timing is derived, never manually entered.** New
+`derivePhaseSegments(phaseMarkers, fightDurationSeconds)` (pure,
+tested) sorts real `RaidBossPhaseMarker` rows by `startSeconds` and
+computes each segment's `endSeconds` as the *next* marker's start —
+the final segment ends at the fight's real-or-fallback duration. Zero
+markers means zero segments; the function never fabricates a P1/P2/P3
+split. Checked directly before building this: Warcraft Logs phase/
+stage data isn't captured anywhere in this codebase's WCL client, so
+the only real transition-timestamp source today is the existing
+officer-added phase markers — no new WCL fetching was built to chase
+a "priority #1" source that doesn't exist yet. `resolveActivePhase(timestamp,
+segments)` finds the segment where `start <= timestamp < end` (or the
+final segment for a timestamp exactly at the fight's end), returning
+`null` — not a guess — for anything before the first real marker.
+
+**New `PhaseBar.tsx`** renders real segments as a WoWUtils-style
+labeled bar, reusing the exact same `.cooldown-timeline-row-track`
+box (148px label + `flex:1` track) every other row already uses, so
+segment widths via `percentOf()` land pixel-perfectly alongside boss
+casts, cooldown assignments, and the hover playhead — confirmed live,
+not just by construction. Renders nothing for an unphased fight. The
+existing dashed vertical phase-marker lines (click-to-remove) are
+untouched; the bar is additive, not a replacement.
+
+**Boss Ability tooltip** now shows the derived phase (`Phase 1`), its
+real range (`0:00 – 1:42`), and its real duration (`Phase duration:
+1:42`) — computed from `phaseSegments` via `resolveActivePhase`, not
+stored redundantly per cast. `BossAbilityRow.tsx` dropped its old
+local `resolvePhaseLabel` in favor of the shared function — one
+source of truth.
+
+Live-verified against real demo data across two events: "Voidspire
+Night 1"'s bosses all had real stored durations from earlier sessions
+(one, coincidentally, already `420` — confirmed the fallback note
+correctly stayed hidden for it, since `fightDurationSeconds !== null`
+there); "Venomous Abyss - Reset Night"'s never-synced bosses correctly
+showed the fallback note and ticks running `0:00` → `7:00` in exact
+42-second steps, `3:30` at exactly `50%` (`style.left`), and hovering
+the far-right edge reporting `7:00`. A real single phase marker
+("Intermission" at `1:42`) derived to `1:42 – 7:00`, duration `5:18`,
+positioned at `left: 24.2857%` / `width: 75.7143%` — matching the math
+exactly. A boss with zero phase markers rendered no phase bar row at
+all.
+
 ## Signups
 
 The first genuinely self-service Raid feature, built 2026-08-14 after

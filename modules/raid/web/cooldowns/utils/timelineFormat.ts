@@ -204,6 +204,102 @@ export function isAssignedMemberInLineup(
   );
 }
 
+/**
+ * When no real synced Warcraft Logs fight duration exists yet, the
+ * timeline still needs *some* axis to render against. 7:00 is a
+ * plain UI/domain fallback, never written to RaidBoss.fightDurationSeconds
+ * — a real synced duration always overrides it.
+ */
+export const defaultFightDurationSeconds = 420;
+
+export type DerivedPhaseSegment = {
+  label: string;
+  startSeconds: number;
+  endSeconds: number;
+  durationSeconds: number;
+};
+
+/**
+ * Phase timing is never manually entered — it's derived from real
+ * phase-transition timestamps only (today: officer-added
+ * RaidBossPhaseMarker rows; Warcraft Logs exposes no phase/stage data
+ * for this app to prefer instead). A phase's end is simply the next
+ * phase's start; the final phase ends at the fight's real or
+ * fallback duration. No markers means no segments — never fabricate
+ * a P1/P2/P3 split that isn't backed by real data.
+ */
+export function derivePhaseSegments(
+  phaseMarkers: Array<{
+    label: string;
+    startSeconds: number;
+  }>,
+  fightDurationSeconds: number
+): DerivedPhaseSegment[] {
+  const sorted = [...phaseMarkers].sort(
+    (a, b) =>
+      a.startSeconds - b.startSeconds
+  );
+
+  return sorted.map(
+    (marker, index) => {
+      const nextMarker =
+        sorted[index + 1];
+
+      const endSeconds = nextMarker
+        ? nextMarker.startSeconds
+        : fightDurationSeconds;
+
+      return {
+        label: marker.label,
+        startSeconds:
+          marker.startSeconds,
+        endSeconds,
+        durationSeconds: Math.max(
+          0,
+          endSeconds -
+            marker.startSeconds
+        )
+      };
+    }
+  );
+}
+
+/**
+ * `phase.start <= timestamp < phase.end`, so a cast lands in exactly
+ * one segment. A timestamp before the first real marker has no
+ * derivable phase (never guessed); a timestamp at or past the last
+ * boundary (e.g. exactly at the fight's end) resolves to the final
+ * segment rather than falling through.
+ */
+export function resolveActivePhase(
+  timestampSeconds: number,
+  segments: DerivedPhaseSegment[]
+): DerivedPhaseSegment | null {
+  for (const segment of segments) {
+    if (
+      timestampSeconds >=
+        segment.startSeconds &&
+      timestampSeconds <
+        segment.endSeconds
+    ) {
+      return segment;
+    }
+  }
+
+  const lastSegment =
+    segments[segments.length - 1];
+
+  if (
+    lastSegment &&
+    timestampSeconds >=
+      lastSegment.startSeconds
+  ) {
+    return lastSegment;
+  }
+
+  return null;
+}
+
 export function getWowIconUrl(
   icon: string
 ): string {
