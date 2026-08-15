@@ -66,9 +66,41 @@ export function BossAbilityRow({
                 previousCast.timestampSeconds
               : null;
 
+          const elapsedIntoPhase =
+            activePhase
+              ? cast.timestampSeconds -
+                activePhase.startSeconds
+              : null;
+
           const tooltipContent = (
             <>
-              <span className="tooltip-title">
+              <span className="tooltip-timestamp">
+                {formatSeconds(
+                  cast.timestampSeconds
+                )}
+              </span>
+
+              {activePhase &&
+                elapsedIntoPhase !== null && (
+                  <span className="tooltip-phase-elapsed">
+                    {formatSeconds(
+                      elapsedIntoPhase
+                    )}{" "}
+                    into {activePhase.label}
+                  </span>
+                )}
+
+              {/*
+                Classification (Raid AOE / Event / Phase Change) and
+                Cast time / Duration lines belong here, above the
+                ability name — omitted for now because
+                RaidBossAbilityCast carries no authoritative source
+                for any of them yet. Add them as their own tooltip-*
+                lines in this slot once real data exists; don't infer
+                from the name or icon.
+              */}
+
+              <span className="tooltip-ability-row">
                 {cast.abilityIcon && (
                   <img
                     alt=""
@@ -79,37 +111,6 @@ export function BossAbilityRow({
                 )}
                 {abilityName}
               </span>
-
-              <span className="tooltip-time">
-                {formatSeconds(
-                  cast.timestampSeconds
-                )}
-              </span>
-
-              {activePhase && (
-                <>
-                  <span className="tooltip-meta">
-                    {activePhase.label}
-                  </span>
-
-                  <span className="tooltip-meta">
-                    {formatSeconds(
-                      activePhase.startSeconds
-                    )}{" "}
-                    –{" "}
-                    {formatSeconds(
-                      activePhase.endSeconds
-                    )}
-                  </span>
-
-                  <span className="tooltip-meta">
-                    Phase duration:{" "}
-                    {formatSeconds(
-                      activePhase.durationSeconds
-                    )}
-                  </span>
-                </>
-              )}
 
               {secondsSincePrevious !==
                 null && (
