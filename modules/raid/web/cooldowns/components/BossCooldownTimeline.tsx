@@ -6,7 +6,6 @@ import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
-import type { CooldownDisplayCategory } from "../utils/cooldownCategories";
 import { planningDurationSeconds } from "../utils/timelineFormat";
 import { TimelineGrid } from "./TimelineGrid";
 
@@ -49,8 +48,7 @@ export function BossCooldownTimeline({
     pendingCreation,
     setPendingCreation
   ] = useState<{
-    memberId: string;
-    category: CooldownDisplayCategory;
+    rowKey: string;
     seconds: number;
   } | null>(null);
 
@@ -75,13 +73,11 @@ export function BossCooldownTimeline({
         );
       }}
       onRaiderTrackClick={(
-        memberId,
-        category,
+        rowKey,
         seconds
       ) =>
         setPendingCreation({
-          memberId,
-          category,
+          rowKey,
           seconds
         })
       }

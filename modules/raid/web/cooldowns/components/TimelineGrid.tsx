@@ -11,8 +11,6 @@ import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
-import type { CooldownDisplayCategory } from "../utils/cooldownCategories";
-import { groupAssignmentsByCategory } from "../utils/cooldownCategories";
 import {
   derivePhaseSegments,
   formatSeconds,
@@ -21,7 +19,7 @@ import {
   secondsFromClickX
 } from "../utils/timelineFormat";
 import { BossAbilityRow } from "./BossAbilityRow";
-import { CooldownCategorySection } from "./CooldownCategorySection";
+import { CooldownPlanArea } from "./CooldownPlanArea";
 import { PhaseBar } from "./PhaseBar";
 import { PhaseBoundaryGuides } from "./PhaseBoundaryGuides";
 import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
@@ -29,8 +27,7 @@ import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
 const tickCount = 10;
 
 type PendingCreation = {
-  memberId: string;
-  category: CooldownDisplayCategory;
+  rowKey: string;
   seconds: number;
 };
 
@@ -43,8 +40,7 @@ type TimelineGridProps = {
   lineupMemberIds: Set<string>;
   pendingCreation: PendingCreation | null;
   onRaiderTrackClick: (
-    memberId: string,
-    category: CooldownDisplayCategory,
+    rowKey: string,
     seconds: number
   ) => void;
   onCreateAssignment: (
@@ -86,11 +82,6 @@ export function TimelineGrid({
     derivePhaseSegments(
       phaseMarkers,
       planningDurationSeconds
-    );
-
-  const categoryGroups =
-    groupAssignmentsByCategory(
-      assignments
     );
 
   const trackOverlayRef =
@@ -239,53 +230,42 @@ export function TimelineGrid({
           </div>
         )}
 
-        {categoryGroups.map(
-          (group) => (
-            <CooldownCategorySection
-              category={
-                group.category
-              }
-              isTooltipSuppressed={
-                isDragActive
-              }
-              key={group.category}
-              label={group.label}
-              lineupMemberIds={
-                lineupMemberIds
-              }
-              memberGroups={
-                group.memberGroups
-              }
-              onCancelCreate={
-                onCancelCreate
-              }
-              onCreateAssignment={
-                onCreateAssignment
-              }
-              onDragPreview={
-                setDragSeconds
-              }
-              onRemoveAssignment={
-                onRemoveAssignment
-              }
-              onRepositionAssignment={
-                onRepositionAssignment
-              }
-              onRowClick={
-                onRaiderTrackClick
-              }
-              pendingCreation={
-                pendingCreation
-              }
-              planningDurationSeconds={
-                planningDurationSeconds
-              }
-              rosterMembers={
-                rosterMembers
-              }
-            />
-          )
-        )}
+        <CooldownPlanArea
+          assignments={assignments}
+          isTooltipSuppressed={
+            isDragActive
+          }
+          lineupMemberIds={
+            lineupMemberIds
+          }
+          onCancelCreate={
+            onCancelCreate
+          }
+          onCreateAssignment={
+            onCreateAssignment
+          }
+          onDragPreview={
+            setDragSeconds
+          }
+          onRemoveAssignment={
+            onRemoveAssignment
+          }
+          onRepositionAssignment={
+            onRepositionAssignment
+          }
+          onRowClick={
+            onRaiderTrackClick
+          }
+          pendingCreation={
+            pendingCreation
+          }
+          planningDurationSeconds={
+            planningDurationSeconds
+          }
+          rosterMembers={
+            rosterMembers
+          }
+        />
       </div>
     </div>
   );

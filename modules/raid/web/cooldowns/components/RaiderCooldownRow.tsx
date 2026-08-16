@@ -1,12 +1,14 @@
 import {
   useRef,
   type CSSProperties,
-  type MouseEvent
+  type MouseEvent,
+  type ReactNode
 } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
 import { AssignmentMarker } from "./AssignmentMarker";
 import { CooldownCreatePopover } from "./CooldownCreatePopover";
+import type { RaidCooldownSpellCategory } from "../../../shared/catalog/raidCooldownSpellCatalog";
 import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
@@ -18,6 +20,15 @@ import {
 
 type RaiderCooldownRowProps = {
   member: GuildMember;
+  /**
+   * Overrides the default player-name label content — used for a
+   * real spell-identity row (icon + spell name + player name). Left
+   * unset for a temporary click-to-create lane, which doesn't know
+   * the spell yet and just shows the player's name.
+   */
+  label?: ReactNode;
+  /** Restricts the click-to-create spell picker to one category. */
+  categoryFilter?: RaidCooldownSpellCategory;
   planningDurationSeconds: number;
   assignments: RaidCooldownAssignment[];
   isInLineup: boolean;
@@ -44,6 +55,8 @@ type RaiderCooldownRowProps = {
 
 export function RaiderCooldownRow({
   member,
+  label,
+  categoryFilter,
   planningDurationSeconds,
   assignments,
   isInLineup,
@@ -94,7 +107,7 @@ export function RaiderCooldownRow({
           } as CSSProperties
         }
       >
-        {member.name}
+        {label ?? member.name}
 
         {!isInLineup && (
           <span
@@ -166,6 +179,9 @@ export function RaiderCooldownRow({
             }
           >
             <CooldownCreatePopover
+              categoryFilter={
+                categoryFilter
+              }
               member={member}
               onCancel={
                 onCancelCreate

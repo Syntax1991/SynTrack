@@ -5,6 +5,23 @@ import {
   resolveAssignmentCategory
 } from "./cooldownCategories.js";
 
+function assignment(
+  overrides: Partial<{
+    memberId: string;
+    spellId: number | null;
+    abilityName: string;
+    abilityIcon: string | null;
+  }>
+) {
+  return {
+    memberId: "member-1",
+    spellId: 97462,
+    abilityName: "Rallying Cry",
+    abilityIcon: "icon.jpg",
+    ...overrides
+  };
+}
+
 describe("resolveAssignmentCategory", () => {
   it("resolves a catalogued spellId to its real category", () => {
     expect(
@@ -32,7 +49,7 @@ describe("resolveAssignmentCategory", () => {
 });
 
 describe("groupAssignmentsByCategory", () => {
-  it("returns all six categories, most empty, when there are no assignments", () => {
+  it("returns all six categories, all empty, when there are no assignments", () => {
     const groups = groupAssignmentsByCategory(
       []
     );
@@ -44,18 +61,16 @@ describe("groupAssignmentsByCategory", () => {
     expect(
       groups.every(
         (group) =>
-          group.memberGroups.length === 0
+          group.spellRows.length === 0
       )
     ).toBe(true);
   });
 
-  it("only produces a member group for a member who holds a real assignment in that category", () => {
+  it("groups repeated same-spell assignments for one member into one row with multiple markers", () => {
     const groups = groupAssignmentsByCategory(
       [
-        {
-          memberId: "member-1",
-          spellId: 97462
-        } // Rallying Cry -> Raid DR
+        assignment({}),
+        assignment({})
       ]
     );
 
@@ -63,83 +78,54 @@ describe("groupAssignmentsByCategory", () => {
       (group) => group.category === "Raid DR"
     );
 
-    const healCd = groups.find(
-      (group) => group.category === "Heal CD"
+    expect(raidDr?.spellRows).toHaveLength(
+      1
     );
 
     expect(
-      raidDr?.memberGroups
-    ).toEqual([
-      {
-        memberId: "member-1",
-        assignments: [
-          {
-            memberId: "member-1",
-            spellId: 97462
-          }
-        ]
-      }
-    ]);
-
-    expect(healCd?.memberGroups).toEqual(
-      []
-    );
+      raidDr?.spellRows[0]?.assignments
+    ).toHaveLength(2);
   });
 
-  it("gives one member two independent rows when they hold assignments in two different categories", () => {
+  it("gives one member two separate rows for two different spells in the same category", () => {
     const groups = groupAssignmentsByCategory(
       [
-        {
-          memberId: "member-1",
-          spellId: 97462
-        }, // Raid DR
-        {
-          memberId: "member-1",
-          spellId: 33206
-        } // Pain Suppression -> External
+        assignment({
+          spellId: 1022,
+          abilityName:
+            "Blessing of Protection"
+        }),
+        assignment({
+          spellId: 6940,
+          abilityName:
+            "Blessing of Sacrifice"
+        })
       ]
     );
 
-    const raidDr = groups.find(
-      (group) => group.category === "Raid DR"
-    );
-
-    const external = groups.find(
+    const externals = groups.find(
       (group) => group.category === "External"
     );
 
     expect(
-      raidDr?.memberGroups.map(
-        (memberGroup) => memberGroup.memberId
+      externals?.spellRows
+    ).toHaveLength(2);
+
+    expect(
+      externals?.spellRows.map(
+        (row) => row.abilityName
       )
-    ).toEqual(["member-1"]);
-
-    expect(
-      external?.memberGroups.map(
-        (memberGroup) => memberGroup.memberId
-      )
-    ).toEqual(["member-1"]);
-
-    expect(
-      raidDr?.memberGroups[0]?.assignments
-    ).toHaveLength(1);
-
-    expect(
-      external?.memberGroups[0]?.assignments
-    ).toHaveLength(1);
+    ).toEqual([
+      "Blessing of Protection",
+      "Blessing of Sacrifice"
+    ]);
   });
 
-  it("groups repeated same-category assignments for one member into that member's single row", () => {
+  it("gives the same spell used by two different members two separate rows", () => {
     const groups = groupAssignmentsByCategory(
       [
-        {
-          memberId: "member-1",
-          spellId: 97462
-        },
-        {
-          memberId: "member-1",
-          spellId: 97462
-        }
+        assignment({ memberId: "member-1" }),
+        assignment({ memberId: "member-2" })
       ]
     );
 
@@ -147,22 +133,32 @@ describe("groupAssignmentsByCategory", () => {
       (group) => group.category === "Raid DR"
     );
 
-    expect(
-      raidDr?.memberGroups
-    ).toHaveLength(1);
+    expect(raidDr?.spellRows).toHaveLength(
+      2
+    );
 
     expect(
-      raidDr?.memberGroups[0]?.assignments
-    ).toHaveLength(2);
+      raidDr?.spellRows.every(
+        (row) => row.assignments.length === 1
+      )
+    ).toBe(true);
   });
 
-  it("buckets a free-text assignment under Other", () => {
+  it("buckets a free-text assignment under Other, grouping conservatively by exact name", () => {
     const groups = groupAssignmentsByCategory(
       [
-        {
-          memberId: "member-1",
-          spellId: null
-        }
+        assignment({
+          spellId: null,
+          abilityName: "Custom Cooldown"
+        }),
+        assignment({
+          spellId: null,
+          abilityName: "Custom Cooldown"
+        }),
+        assignment({
+          spellId: null,
+          abilityName: "Different Name"
+        })
       ]
     );
 
@@ -170,8 +166,16 @@ describe("groupAssignmentsByCategory", () => {
       (group) => group.category === "Other"
     );
 
+    expect(other?.spellRows).toHaveLength(
+      2
+    );
+
     expect(
-      other?.memberGroups
-    ).toHaveLength(1);
+      other?.spellRows.find(
+        (row) =>
+          row.abilityName ===
+          "Custom Cooldown"
+      )?.assignments
+    ).toHaveLength(2);
   });
 });

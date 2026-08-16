@@ -6,8 +6,8 @@ export type CooldownDisplayCategory =
   | "Other";
 
 export const cooldownDisplayCategories: CooldownDisplayCategory[] = [
-  "Heal CD",
   "Raid DR",
+  "Heal CD",
   "External",
   "Defensive",
   "Utility",
@@ -43,31 +43,42 @@ export function resolveAssignmentCategory(assignment: {
   );
 }
 
-export type CooldownCategoryMemberGroup<T> = {
+export type CooldownSpellRow<T> = {
+  /**
+   * Stable per (category, member, spell-identity) key — the unit a
+   * Timeline row and its click-to-create state are keyed against.
+   * Spell identity is the real `spellId` when known, otherwise the
+   * exact free-text `abilityName` (conservative — never merges two
+   * differently-named free-text entries).
+   */
+  key: string;
   memberId: string;
+  spellId: number | null;
+  abilityName: string;
+  abilityIcon: string | null;
   assignments: T[];
 };
 
 export type CooldownCategoryGroup<T> = {
   category: CooldownDisplayCategory;
   label: string;
-  memberGroups: Array<
-    CooldownCategoryMemberGroup<T>
-  >;
+  spellRows: Array<CooldownSpellRow<T>>;
 };
 
 /**
- * Rows must be driven by real assignments, never by class eligibility
- * — a row rendered just because a class *can* hold a category's spell
- * is the "permanent empty row" problem this exists to remove. Class
- * eligibility (`getSpellsForClass`) stays a creation-time filter,
- * applied by the caller when deciding which not-yet-assigned members
- * to offer as a compact pick, never here.
+ * The spell — not the player — is a row's primary identity. A member
+ * casting the same spell repeatedly is one row with multiple
+ * markers; a member holding two different spells in one category is
+ * two separate rows. Rows only ever come from real assignments —
+ * class eligibility (`getSpellsForClass`) plays no part here, it's
+ * purely a creation-time filter applied by the caller.
  */
 export function groupAssignmentsByCategory<
   T extends {
     memberId: string;
     spellId: number | null;
+    abilityName: string;
+    abilityIcon: string | null;
   }
 >(
   assignments: T[]
@@ -81,22 +92,40 @@ export function groupAssignmentsByCategory<
           ) === category
       );
 
-      const byMember = new Map<
+      const bySpellKey = new Map<
         string,
-        T[]
+        CooldownSpellRow<T>
       >();
 
       for (const assignment of inCategory) {
-        const existing =
-          byMember.get(
-            assignment.memberId
-          ) ?? [];
+        const spellIdentity =
+          assignment.spellId !== null
+            ? `spell:${assignment.spellId}`
+            : `text:${assignment.abilityName}`;
 
-        existing.push(assignment);
-        byMember.set(
-          assignment.memberId,
-          existing
-        );
+        const key = `${category}::${assignment.memberId}::${spellIdentity}`;
+
+        const existing =
+          bySpellKey.get(key);
+
+        if (existing) {
+          existing.assignments.push(
+            assignment
+          );
+        }
+        else {
+          bySpellKey.set(key, {
+            key,
+            memberId:
+              assignment.memberId,
+            spellId: assignment.spellId,
+            abilityName:
+              assignment.abilityName,
+            abilityIcon:
+              assignment.abilityIcon,
+            assignments: [assignment]
+          });
+        }
       }
 
       return {
@@ -105,17 +134,8 @@ export function groupAssignmentsByCategory<
           cooldownCategoryLabels[
             category
           ],
-        memberGroups: Array.from(
-          byMember.entries()
-        ).map(
-          ([
-            memberId,
-            memberAssignments
-          ]) => ({
-            memberId,
-            assignments:
-              memberAssignments
-          })
+        spellRows: Array.from(
+          bySpellKey.values()
         )
       };
     }

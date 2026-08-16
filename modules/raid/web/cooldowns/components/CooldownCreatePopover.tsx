@@ -6,13 +6,22 @@ import {
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import {
   getSpellsForClass,
-  type RaidCooldownSpell
+  type RaidCooldownSpell,
+  type RaidCooldownSpellCategory
 } from "../../../shared/catalog/raidCooldownSpellCatalog";
 import { formatSeconds } from "../utils/timelineFormat";
 
 type CooldownCreatePopoverProps = {
   member: GuildMember;
   seconds: number;
+  /**
+   * When set, restricts the spell picker to just this category —
+   * used when creating from within a specific category's section, so
+   * the picker doesn't also surface the member's spells from other
+   * categories. Omitted for the legacy List-view creation path,
+   * which still shows the member's full class list.
+   */
+  categoryFilter?: RaidCooldownSpellCategory;
   onSelectSpell: (
     spell: RaidCooldownSpell
   ) => void;
@@ -30,6 +39,7 @@ type CooldownCreatePopoverProps = {
 export function CooldownCreatePopover({
   member,
   seconds,
+  categoryFilter,
   onSelectSpell,
   onSelectFreeText,
   onCancel
@@ -40,9 +50,17 @@ export function CooldownCreatePopover({
   const [freeTextValue, setFreeTextValue] =
     useState("");
 
-  const spells = getSpellsForClass(
+  const allSpells = getSpellsForClass(
     member.className
   );
+
+  const spells = categoryFilter
+    ? allSpells.filter(
+        (spell) =>
+          spell.category ===
+          categoryFilter
+      )
+    : allSpells;
 
   const byCategory = new Map<
     string,
@@ -125,8 +143,11 @@ export function CooldownCreatePopover({
         <div className="cooldown-create-popover-spells">
           {spells.length === 0 ? (
             <p className="muted-text">
-              No catalogued spells
-              for {member.className}.
+              No catalogued{" "}
+              {categoryFilter ??
+                ""}{" "}
+              spells for{" "}
+              {member.className}.
             </p>
           ) : (
             Array.from(
@@ -140,9 +161,11 @@ export function CooldownCreatePopover({
                   className="cooldown-create-popover-category"
                   key={category}
                 >
-                  <span className="cooldown-create-popover-category-label">
-                    {category}
-                  </span>
+                  {!categoryFilter && (
+                    <span className="cooldown-create-popover-category-label">
+                      {category}
+                    </span>
+                  )}
 
                   {group.map(
                     (spell) => (

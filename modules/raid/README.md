@@ -785,6 +785,115 @@ this task's "do not add major new backend/domain features" rules out:
 - **`castStart ── [icon] ── duration` tick rendering** — no real
   cast-start/duration data source exists yet.
 
+### Step 8, continued — category grouping corrected, then a shared category toolbar (2026-08-16, same day)
+
+Two rounds of real, explicit correction on the category work above,
+both landing before it shipped in its final form.
+
+**Round 1 — rows must be spell-centric, chips must not be
+permanent.** The first cut still had two real problems flagged
+directly: (1) a member's row was keyed by `(category, memberId)`
+only, so a player holding two different spells in one category (e.g.
+a Paladin with both Blessing of Protection and Blessing of Sacrifice)
+would incorrectly share one row; (2) every category permanently
+rendered its full eligible-player chip list, which is exactly the
+"wall of noise" the whole redesign was meant to remove — worse, since
+one player is eligible for several categories, it could produce *more*
+total visible chips than the old flat list had rows. Fixed:
+`groupAssignmentsByCategory` (`cooldownCategories.ts`) now keys rows
+by `(category, memberId, spellId-or-free-text-name)` — real spell
+identity, never inferred — so repeat casts of the same spell group
+into one row with multiple markers, and two different spells become
+two independent rows. Eligible-player chips only ever appear inside a
+new `CooldownCategoryAddFlow.tsx`, and only while that flow is
+actively open — never as a resting-state fixture.
+
+**Round 2 — categories are a filter, not five stacked panels.** Still
+too CRUD-like: five permanently-visible category blocks, each with
+its own detached "+ Add" button, still read as independent
+forms/tables rather than one raid-planning surface. Corrected to a
+single shared `CooldownPlanFilterToolbar.tsx` (`All` plus the five
+real categories) owned by a new `CooldownPlanArea.tsx`: "All" shows
+only the categories that actually hold a real assignment (`Healing
+CDs`/`Externals` render nothing when empty — no repeated "No X
+assigned" blocks down the page); selecting one category narrows to
+just that category, shows the one compact empty state only when it's
+the sole thing on screen, and reveals `CooldownCategoryAddFlow`'s
+creation control right under the toolbar — no per-section button.
+Row identity was also tightened per feedback: `[icon] Spell name`
+primary, player name secondary/class-colored, both inside the row's
+existing 140px label column (`cooldown-spell-row-*` classes,
+`apps/web/src/styles/cooldown-plan-area.css`).
+
+**Real bug caught during this pass, not by the user**: a naive
+version of the "Add to {category}:" label sat as a flex sibling
+*before* the temporary creation row, which would have pushed that
+row's track past the shared 148px coordinate origin every other row
+uses — silently breaking pixel alignment between a brand-new
+assignment's marker and everything else on the timeline. Fixed by
+block-stacking the label above the row instead of beside it; the
+`cooldown-plan-area.css` comment on `.cooldown-plan-add-row` records
+why, so it isn't reintroduced.
+
+**Real, unrelated data-loss incident found and fixed during live
+verification, not caused by this pass's code**: the two real phase
+markers added earlier this session for verification had disappeared
+from the database (`GET .../phase-markers` returned `total: 0`,
+confirmed at the API level, not just "PhaseBar isn't rendering").
+`PhaseBar.tsx` correctly renders nothing for zero real markers — that
+part was working as designed, not a rendering regression. The
+markers themselves were gone; the most likely explanation is a stray
+click on the phase bar's existing "click to remove" affordance, which
+has no confirmation step — worth hardening later, flagged but not
+fixed in this pass. Re-added both real markers via the same officer
+`+ Add phase marker` feature and re-verified the phase bar/boundary
+guides render correctly (contiguous, pixel-aligned) before calling
+the resting state done.
+
+`npm run verify` passes (89 tests) after both rounds. Live-verified
+against Imperator Averzian's real demo data — including a real,
+independently-created case this pass didn't anticipate: a member
+(Grimmshade) ended up with three real assignments across two
+categories (two `Unending Resolve` casts + one `Dark Pact`), and the
+resting state correctly rendered them as one grouped `Unending
+Resolve` row (two markers) plus one separate `Dark Pact` row, both
+under `Personals` — real proof the spell-identity grouping holds up
+on data this pass didn't fabricate for the test.
+
+### Step 8, continued — a persistent player rail, separate from the category filter (2026-08-16, same day)
+
+Round 2 (above) went too far: filtering the assignment-only rows down
+to just the categories that had data also meant a player with zero
+cooldowns had no way to be discovered anywhere in the PLAN area —
+"assignment-only" had quietly become "player-only-if-assigned." The
+brief drew a hard line between two layers that Round 2 had
+conflated: the boss's real player lineup (always discoverable) vs.
+the cooldown plan (only real assignments get a Timeline lane).
+
+New `CooldownPlayerRail.tsx` — one compact, always-visible row of
+every active Setup member (`lineupMemberIds`, the same non-BENCH set
+every other lineup-aware part of the timeline already uses; no new
+roster source), rendered above the category toolbar. Clicking a
+player only selects them (highlighted) — never creates anything, and
+the category filter no longer doubles as an ad-hoc, category-scoped
+roster picker (the "Add:" chip list from Round 1/2 is gone; there is
+now exactly one player picker for the whole PLAN area).
+`CooldownCategoryAddFlow.tsx` simplified accordingly — it no longer
+owns any player-selection state or eligibility filtering of its own;
+it just renders the one temporary click-to-create lane once both a
+player (rail) and a category (toolbar) are selected, in either order.
+
+Live-verified: resting state shows all 15 lineup members in one
+29px-tall compact row (confirmed via `getBoundingClientRect()` — no
+`.cooldown-timeline-row` inside the rail) alongside the same
+assignment-only category blocks from Round 2; selecting a player
+alone creates nothing; selecting a player then a category reveals the
+one creation lane with the spell picker already filtered to that
+category, with correct exact-timestamp math; cancelling or switching
+category/player away cleanly removes the lane with no assignment
+created. `npm run verify` passes (89 tests, unchanged — this round
+was pure component restructuring, no grouping-logic changes).
+
 ## Signups
 
 The first genuinely self-service Raid feature, built 2026-08-14 after

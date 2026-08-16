@@ -226,56 +226,6 @@
   white-space: nowrap;
 }
 
-.cooldown-category-section {
-  margin-bottom: 4px;
-}
-
-.cooldown-category-header {
-  margin: 6px 0 2px 148px;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.6rem;
-  font-weight: 800;
-}
-
-.cooldown-category-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 2px 0 6px 148px;
-}
-
-.cooldown-category-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border: 1px dashed var(--border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.64rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.cooldown-category-chip:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.cooldown-category-chip.is-active {
-  border-color: var(--primary);
-  border-style: solid;
-  color: var(--text);
-}
-
-.cooldown-category-chip-dot {
-  flex: 0 0 auto;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--marker-color, var(--text-secondary));
-}
+/* PLAN section (category toolbar, category rows, add-flow) styling
+   lives in cooldown-plan-area.css. */
 

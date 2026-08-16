@@ -37,6 +37,7 @@ import "./styles/boss-roster-overview.css";
 import "./styles/cooldown-timeline.css";
 import "./styles/cooldown-timeline-markers.css";
 import "./styles/cooldown-workspace-header.css";
+import "./styles/cooldown-plan-area.css";
 import "./styles/cooldown-create-popover.css";
 import "./styles/profession-overview.css";
 import "./styles/profession-module-workspaces.css";
