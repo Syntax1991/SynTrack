@@ -43,37 +43,36 @@ export function resolveAssignmentCategory(assignment: {
   );
 }
 
-export type CooldownSpellRow<T> = {
+export type PlayerSpellRow<T> = {
   /**
-   * Stable per (category, member, spell-identity) key — the unit a
-   * Timeline row and its click-to-create state are keyed against.
-   * Spell identity is the real `spellId` when known, otherwise the
-   * exact free-text `abilityName` (conservative — never merges two
-   * differently-named free-text entries).
+   * Stable per (member, spell-identity) key. Spell identity is the
+   * real `spellId` when known, otherwise the exact free-text
+   * `abilityName` (conservative — never merges two differently-named
+   * free-text entries).
    */
   key: string;
-  memberId: string;
   spellId: number | null;
   abilityName: string;
   abilityIcon: string | null;
   assignments: T[];
 };
 
-export type CooldownCategoryGroup<T> = {
-  category: CooldownDisplayCategory;
-  label: string;
-  spellRows: Array<CooldownSpellRow<T>>;
+export type PlayerGroup<T> = {
+  memberId: string;
+  spellRows: Array<PlayerSpellRow<T>>;
 };
 
 /**
- * The spell — not the player — is a row's primary identity. A member
- * casting the same spell repeatedly is one row with multiple
- * markers; a member holding two different spells in one category is
- * two separate rows. Rows only ever come from real assignments —
- * class eligibility (`getSpellsForClass`) plays no part here, it's
- * purely a creation-time filter applied by the caller.
+ * The player is the group; the spell is the lane inside it — never
+ * the other way around. The category filter (when set) narrows which
+ * real assignments are considered at all, but never becomes a
+ * structural grouping level of its own: a player group only appears
+ * here when they have at least one real assignment matching the
+ * filter, and only that assignment's spell lane(s) render under
+ * them. Rows only ever come from real assignments; class eligibility
+ * plays no part in this function at all.
  */
-export function groupAssignmentsByCategory<
+export function groupAssignmentsByPlayer<
   T extends {
     memberId: string;
     spellId: number | null;
@@ -81,63 +80,68 @@ export function groupAssignmentsByCategory<
     abilityIcon: string | null;
   }
 >(
-  assignments: T[]
-): CooldownCategoryGroup<T>[] {
-  return cooldownDisplayCategories.map(
-    (category) => {
-      const inCategory = assignments.filter(
+  assignments: T[],
+  categoryFilter?: CooldownDisplayCategory
+): Array<PlayerGroup<T>> {
+  const filtered = categoryFilter
+    ? assignments.filter(
         (assignment) =>
           resolveAssignmentCategory(
             assignment
-          ) === category
+          ) === categoryFilter
+      )
+    : assignments;
+
+  const rowsByMember = new Map<
+    string,
+    Map<string, PlayerSpellRow<T>>
+  >();
+
+  for (const assignment of filtered) {
+    const spellIdentity =
+      assignment.spellId !== null
+        ? `spell:${assignment.spellId}`
+        : `text:${assignment.abilityName}`;
+
+    const rowKey = `${assignment.memberId}::${spellIdentity}`;
+
+    const memberRows =
+      rowsByMember.get(
+        assignment.memberId
+      ) ?? new Map();
+
+    const existingRow =
+      memberRows.get(rowKey);
+
+    if (existingRow) {
+      existingRow.assignments.push(
+        assignment
       );
-
-      const bySpellKey = new Map<
-        string,
-        CooldownSpellRow<T>
-      >();
-
-      for (const assignment of inCategory) {
-        const spellIdentity =
-          assignment.spellId !== null
-            ? `spell:${assignment.spellId}`
-            : `text:${assignment.abilityName}`;
-
-        const key = `${category}::${assignment.memberId}::${spellIdentity}`;
-
-        const existing =
-          bySpellKey.get(key);
-
-        if (existing) {
-          existing.assignments.push(
-            assignment
-          );
-        }
-        else {
-          bySpellKey.set(key, {
-            key,
-            memberId:
-              assignment.memberId,
-            spellId: assignment.spellId,
-            abilityName:
-              assignment.abilityName,
-            abilityIcon:
-              assignment.abilityIcon,
-            assignments: [assignment]
-          });
-        }
-      }
-
-      return {
-        category,
-        label:
-          cooldownCategoryLabels[
-            category
-          ],
-        spellRows: Array.from(
-          bySpellKey.values()
-        )
-      };
     }
-  );
+    else {
+      memberRows.set(rowKey, {
+        key: rowKey,
+        spellId: assignment.spellId,
+        abilityName:
+          assignment.abilityName,
+        abilityIcon:
+          assignment.abilityIcon,
+        assignments: [assignment]
+      });
+    }
+
+    rowsByMember.set(
+      assignment.memberId,
+      memberRows
+    );
+  }
+
+  return Array.from(
+    rowsByMember.entries()
+  ).map(([memberId, rows]) => ({
+    memberId,
+    spellRows: Array.from(
+      rows.values()
+    )
+  }));
 }

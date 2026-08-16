@@ -20,6 +20,7 @@ import {
 } from "../utils/timelineFormat";
 import { BossAbilityRow } from "./BossAbilityRow";
 import { CooldownPlanArea } from "./CooldownPlanArea";
+import { CooldownRosterPanel } from "./CooldownRosterPanel";
 import { PhaseBar } from "./PhaseBar";
 import { PhaseBoundaryGuides } from "./PhaseBoundaryGuides";
 import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
@@ -93,6 +94,11 @@ export function TimelineGrid({
   const [dragSeconds, setDragSeconds] =
     useState<number | null>(null);
 
+  const [
+    selectedMemberId,
+    setSelectedMemberId
+  ] = useState<string | null>(null);
+
   const isDragActive =
     dragSeconds !== null;
 
@@ -139,133 +145,158 @@ export function TimelineGrid({
   );
 
   return (
-    <div className="cooldown-timeline-grid">
-      <div className="cooldown-timeline-ticks">
-        {ticks.map((seconds) => (
-          <span
-            key={seconds}
-            style={
-              {
-                left: `${percentOf(seconds, planningDurationSeconds)}%`
-              } as CSSProperties
-            }
-          >
-            {formatSeconds(seconds)}
-          </span>
-        ))}
-      </div>
-
-      <div
-        className="cooldown-timeline-rows"
-        onMouseLeave={() =>
-          setHoverSeconds(null)
+    <div className="cooldown-timeline-workspace">
+      <CooldownRosterPanel
+        lineupMemberIds={
+          lineupMemberIds
         }
-        onMouseMove={
-          handleRowsMouseMove
+        onSelectMember={
+          setSelectedMemberId
         }
-      >
-        <div
-          className="cooldown-timeline-track-overlay"
-          ref={trackOverlayRef}
-        >
-          <TimelineHoverPlayhead
-            planningDurationSeconds={
-              planningDurationSeconds
-            }
-            isDragging={isDragActive}
-            seconds={playheadSeconds}
-          />
+        rosterMembers={rosterMembers}
+        selectedMemberId={
+          selectedMemberId
+        }
+      />
 
-          <PhaseBoundaryGuides
-            phaseMarkers={
-              phaseMarkers
-            }
-            planningDurationSeconds={
-              planningDurationSeconds
-            }
-          />
+      <div className="cooldown-timeline-grid">
+        <div className="cooldown-timeline-ticks">
+          {ticks.map((seconds) => (
+            <span
+              key={seconds}
+              style={
+                {
+                  left: `${percentOf(seconds, planningDurationSeconds)}%`
+                } as CSSProperties
+              }
+            >
+              {formatSeconds(seconds)}
+            </span>
+          ))}
         </div>
 
-        <PhaseBar
-          planningDurationSeconds={
-            planningDurationSeconds
+        <div
+          className="cooldown-timeline-rows"
+          onMouseLeave={() =>
+            setHoverSeconds(null)
           }
-          onRemovePhaseMarker={
-            onRemovePhaseMarker
+          onMouseMove={
+            handleRowsMouseMove
           }
-          phaseMarkers={phaseMarkers}
-          segments={phaseSegments}
-        />
-
-        {abilityRows.length > 0 && (
-          <div className="cooldown-timeline-section-label">
-            ENCOUNTER
-          </div>
-        )}
-
-        {abilityRows.map(
-          (row) => (
-            <BossAbilityRow
-              abilityName={
-                row.abilityName
-              }
-              casts={row.casts}
+        >
+          <div
+            className="cooldown-timeline-track-overlay"
+            ref={trackOverlayRef}
+          >
+            <TimelineHoverPlayhead
               planningDurationSeconds={
                 planningDurationSeconds
               }
-              isTooltipSuppressed={
+              isDragging={
                 isDragActive
               }
-              key={row.abilityName}
-              phaseSegments={
-                phaseSegments
+              seconds={playheadSeconds}
+            />
+
+            <PhaseBoundaryGuides
+              phaseMarkers={
+                phaseMarkers
+              }
+              planningDurationSeconds={
+                planningDurationSeconds
               }
             />
-          )
-        )}
-
-        {rosterMembers.length > 0 && (
-          <div className="cooldown-timeline-section-label">
-            PLAN
           </div>
-        )}
 
-        <CooldownPlanArea
-          assignments={assignments}
-          isTooltipSuppressed={
-            isDragActive
-          }
-          lineupMemberIds={
-            lineupMemberIds
-          }
-          onCancelCreate={
-            onCancelCreate
-          }
-          onCreateAssignment={
-            onCreateAssignment
-          }
-          onDragPreview={
-            setDragSeconds
-          }
-          onRemoveAssignment={
-            onRemoveAssignment
-          }
-          onRepositionAssignment={
-            onRepositionAssignment
-          }
-          onRowClick={
-            onRaiderTrackClick
-          }
-          pendingCreation={
-            pendingCreation
-          }
-          planningDurationSeconds={
-            planningDurationSeconds
-          }
-          rosterMembers={
-            rosterMembers
-          }
-        />
+          <PhaseBar
+            planningDurationSeconds={
+              planningDurationSeconds
+            }
+            onRemovePhaseMarker={
+              onRemovePhaseMarker
+            }
+            phaseMarkers={
+              phaseMarkers
+            }
+            segments={phaseSegments}
+          />
+
+          {abilityRows.length > 0 && (
+            <div className="cooldown-timeline-section-label">
+              ENCOUNTER
+            </div>
+          )}
+
+          {abilityRows.map(
+            (row) => (
+              <BossAbilityRow
+                abilityName={
+                  row.abilityName
+                }
+                casts={row.casts}
+                planningDurationSeconds={
+                  planningDurationSeconds
+                }
+                isTooltipSuppressed={
+                  isDragActive
+                }
+                key={row.abilityName}
+                phaseSegments={
+                  phaseSegments
+                }
+              />
+            )
+          )}
+
+          {rosterMembers.length >
+            0 && (
+            <div className="cooldown-timeline-section-label">
+              PLAN
+            </div>
+          )}
+
+          <CooldownPlanArea
+            assignments={
+              assignments
+            }
+            isTooltipSuppressed={
+              isDragActive
+            }
+            lineupMemberIds={
+              lineupMemberIds
+            }
+            onCancelCreate={
+              onCancelCreate
+            }
+            onCreateAssignment={
+              onCreateAssignment
+            }
+            onDragPreview={
+              setDragSeconds
+            }
+            onRemoveAssignment={
+              onRemoveAssignment
+            }
+            onRepositionAssignment={
+              onRepositionAssignment
+            }
+            onRowClick={
+              onRaiderTrackClick
+            }
+            pendingCreation={
+              pendingCreation
+            }
+            planningDurationSeconds={
+              planningDurationSeconds
+            }
+            rosterMembers={
+              rosterMembers
+            }
+            selectedMemberId={
+              selectedMemberId
+            }
+          />
+        </div>
       </div>
     </div>
   );

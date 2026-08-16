@@ -894,6 +894,56 @@ category/player away cleanly removes the lane with no assignment
 created. `npm run verify` passes (89 tests, unchanged — this round
 was pure component restructuring, no grouping-logic changes).
 
+### Step 8, continued — WoWUtils-style split: left roster panel, player-grouped plan area (2026-08-16, same day)
+
+A fourth correction, this time to the information architecture
+itself rather than the interaction details: the horizontal player
+rail above PLAN is gone entirely, replaced with the two-column
+WoWUtils-style layout the brief specifically asked for.
+
+**Left `CooldownRosterPanel.tsx`**, a true sibling column to the
+whole `.cooldown-timeline-grid` (ticks + encounter + plan), not
+nested inside its row/track system — confirmed live via
+`getBoundingClientRect()` that the roster column sits fully to the
+left of the grid and that adding it changed nothing about the
+grid's own 148px label/track alignment (`ENCOUNTER` and `PLAN` track
+`left` stayed pixel-identical, 598px in the verification run). Same
+`lineupMemberIds` source as always, one compact vertical list, click
+to select as creation context — never creates anything by itself.
+
+**PLAN restructured around the player, not the category.** New
+`groupAssignmentsByPlayer(assignments, categoryFilter?)`
+(`cooldownCategories.ts`, replacing the old category-primary
+grouping) groups real assignments by member first, then by spell —
+the category toolbar became a pure filter argument to this function,
+never a structural grouping level. `CooldownPlayerGroup.tsx` renders
+one compact header per player (class-colored name, no card) with
+their real spell lanes underneath (icon + spell name only — the
+player name doesn't need repeating on every lane since the group
+header already establishes it). `CooldownCategoryAddFlow.tsx`
+simplified further: it takes the already-selected player as a direct
+prop and just renders the one temporary lane, no eligibility logic
+of its own.
+
+**Real, independently-created data proved the model live**, not a
+synthetic test case: Grimmshade — a Warlock with three real
+assignments across three different spells (`Unending Resolve`,
+`Demonic Gateway`, `Dark Pact`) — now renders as ONE player group
+with three real spell lanes underneath, instead of being scattered
+across separate category blocks as in Round 2/3. Also worth noting
+for future sessions: a brand-new `Demonic Gateway` assignment for
+Grimmshade appeared mid-verification with no action from this
+session (real independent use of the shared dev server, same pattern
+as the Round 3 note below) — it merged correctly into the existing
+`Demonic Gateway` lane as a second marker, which is itself a live
+confirmation the same-spell-multiple-markers grouping rule holds on
+data this pass never fabricated.
+
+`npm run verify` passes (91 tests — `cooldownCategories.test.ts`
+rewritten for `groupAssignmentsByPlayer`). `CooldownCategoryRows.tsx`
+and `CooldownPlayerRail.tsx` (both superseded, not merely unused)
+were deleted rather than left in place.
+
 ## Signups
 
 The first genuinely self-service Raid feature, built 2026-08-14 after

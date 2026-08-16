@@ -5,11 +5,14 @@ import type {
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 import type { CooldownDisplayCategory } from "../utils/cooldownCategories";
-import { groupAssignmentsByCategory } from "../utils/cooldownCategories";
+import {
+  cooldownCategoryLabels,
+  cooldownDisplayCategories,
+  groupAssignmentsByPlayer
+} from "../utils/cooldownCategories";
 import { CooldownCategoryAddFlow } from "./CooldownCategoryAddFlow";
-import { CooldownCategoryRows } from "./CooldownCategoryRows";
 import { CooldownPlanFilterToolbar } from "./CooldownPlanFilterToolbar";
-import { CooldownPlayerRail } from "./CooldownPlayerRail";
+import { CooldownPlayerGroup } from "./CooldownPlayerGroup";
 
 type PendingCreation = {
   rowKey: string;
@@ -20,6 +23,7 @@ type CooldownPlanAreaProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  selectedMemberId: string | null;
   planningDurationSeconds: number;
   isTooltipSuppressed: boolean;
   pendingCreation: PendingCreation | null;
@@ -43,21 +47,26 @@ type CooldownPlanAreaProps = {
   ) => void;
 };
 
+const toolbarCategories = cooldownDisplayCategories
+  .filter((category) => category !== "Other")
+  .map((category) => ({
+    category,
+    label: cooldownCategoryLabels[category]
+  }));
+
 /**
- * Two layers, deliberately kept separate: the persistent
- * `CooldownPlayerRail` (every active Setup member, always visible,
- * compact — the ONE roster picker) and the cooldown-plan rows below
- * (only real assignments ever consume a full Timeline lane). A
- * player never disappears for lacking a cooldown; they just never
- * get a lane for one until they actually have it. Creation needs
- * both a selected player (rail) and a selected category (toolbar) —
- * whichever is picked second reveals the one temporary click-to-
- * create lane for that combination.
+ * Categories here are a filter/creation tool, never the structural
+ * owner of a permanent row — that's `CooldownPlayerGroup`, one per
+ * player who has at least one real assignment matching the current
+ * filter. The player picker lives one level up (`CooldownRosterPanel`,
+ * a sibling of the whole timeline, not part of this area) — this
+ * component only reads `selectedMemberId`, it never offers its own.
  */
 export function CooldownPlanArea({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  selectedMemberId,
   planningDurationSeconds,
   isTooltipSuppressed,
   pendingCreation,
@@ -73,36 +82,31 @@ export function CooldownPlanArea({
       CooldownDisplayCategory | "all"
     >("all");
 
-  const [
-    selectedMemberId,
-    setSelectedMemberId
-  ] = useState<string | null>(null);
+  const categoryFilter =
+    activeCategory === "all"
+      ? undefined
+      : activeCategory;
 
-  const categoryGroups =
-    groupAssignmentsByCategory(
-      assignments
+  const playerGroups =
+    groupAssignmentsByPlayer(
+      assignments,
+      categoryFilter
     );
 
-  const toolbarCategories = categoryGroups
-    .filter(
-      (group) => group.category !== "Other"
+  const orderedGroups = rosterMembers
+    .map((member) => member.id)
+    .map((memberId) =>
+      playerGroups.find(
+        (group) =>
+          group.memberId === memberId
+      )
     )
-    .map((group) => ({
-      category: group.category,
-      label: group.label
-    }));
-
-  const visibleGroups =
-    activeCategory === "all"
-      ? categoryGroups.filter(
-          (group) =>
-            group.spellRows.length > 0
-        )
-      : categoryGroups.filter(
-          (group) =>
-            group.category ===
-            activeCategory
-        );
+    .filter(
+      (
+        group
+      ): group is (typeof playerGroups)[number] =>
+        group !== undefined
+    );
 
   const selectedMember = selectedMemberId
     ? rosterMembers.find(
@@ -113,19 +117,6 @@ export function CooldownPlanArea({
 
   return (
     <div className="cooldown-plan-area">
-      <CooldownPlayerRail
-        lineupMemberIds={
-          lineupMemberIds
-        }
-        onSelectMember={
-          setSelectedMemberId
-        }
-        rosterMembers={rosterMembers}
-        selectedMemberId={
-          selectedMemberId
-        }
-      />
-
       <CooldownPlanFilterToolbar
         active={activeCategory}
         categories={toolbarCategories}
@@ -138,11 +129,9 @@ export function CooldownPlanArea({
           <CooldownCategoryAddFlow
             category={activeCategory}
             categoryLabel={
-              categoryGroups.find(
-                (group) =>
-                  group.category ===
-                  activeCategory
-              )?.label ?? activeCategory
+              cooldownCategoryLabels[
+                activeCategory
+              ]
             }
             isTooltipSuppressed={
               isTooltipSuppressed
@@ -176,54 +165,68 @@ export function CooldownPlanArea({
           />
         )}
 
-      {visibleGroups.map((group) => (
-        <CooldownCategoryRows
-          categoryFilter={
-            group.category !== "Other"
-              ? group.category
-              : undefined
+      {orderedGroups.length === 0 ? (
+        <p className="cooldown-plan-empty">
+          No{" "}
+          {activeCategory === "all"
+            ? "cooldowns"
+            : cooldownCategoryLabels[
+                activeCategory
+              ].toLowerCase()}{" "}
+          planned yet.
+        </p>
+      ) : (
+        orderedGroups.map((group) => {
+          const member =
+            rosterMembers.find(
+              (candidate) =>
+                candidate.id ===
+                group.memberId
+            );
+
+          if (!member) {
+            return null;
           }
-          isTooltipSuppressed={
-            isTooltipSuppressed
-          }
-          key={group.category}
-          label={group.label}
-          lineupMemberIds={
-            lineupMemberIds
-          }
-          onCancelCreate={
-            onCancelCreate
-          }
-          onCreateAssignment={
-            onCreateAssignment
-          }
-          onDragPreview={
-            onDragPreview
-          }
-          onRemoveAssignment={
-            onRemoveAssignment
-          }
-          onRepositionAssignment={
-            onRepositionAssignment
-          }
-          onRowClick={onRowClick}
-          pendingCreation={
-            pendingCreation
-          }
-          planningDurationSeconds={
-            planningDurationSeconds
-          }
-          rosterMembers={
-            rosterMembers
-          }
-          showEmptyState={
-            activeCategory !== "all"
-          }
-          spellRows={
-            group.spellRows
-          }
-        />
-      ))}
+
+          return (
+            <CooldownPlayerGroup
+              isTooltipSuppressed={
+                isTooltipSuppressed
+              }
+              key={group.memberId}
+              lineupMemberIds={
+                lineupMemberIds
+              }
+              member={member}
+              onCancelCreate={
+                onCancelCreate
+              }
+              onCreateAssignment={
+                onCreateAssignment
+              }
+              onDragPreview={
+                onDragPreview
+              }
+              onRemoveAssignment={
+                onRemoveAssignment
+              }
+              onRepositionAssignment={
+                onRepositionAssignment
+              }
+              onRowClick={onRowClick}
+              pendingCreation={
+                pendingCreation
+              }
+              planningDurationSeconds={
+                planningDurationSeconds
+              }
+              spellRows={
+                group.spellRows
+              }
+            />
+          );
+        })
+      )}
     </div>
   );
 }

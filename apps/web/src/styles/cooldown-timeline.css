@@ -2,6 +2,62 @@
   margin-top: 24px;
 }
 
+.cooldown-timeline-workspace {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/*
+ * Structurally separate from .cooldown-timeline-grid — a sibling
+ * column, not nested inside it, so it never participates in (or
+ * distorts) the shared 148px label/track coordinate system every
+ * row inside the grid uses.
+ */
+.cooldown-roster-panel {
+  flex: 0 0 148px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.cooldown-roster-panel-label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.cooldown-roster-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cooldown-roster-entry {
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--marker-color, var(--text-muted));
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cooldown-roster-entry:hover {
+  background: var(--surface-hover);
+}
+
+.cooldown-roster-entry.is-selected {
+  border-color: var(--marker-color, var(--primary));
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 .cooldown-sync-pill {
   padding: 3px 9px;
   border: 1px solid transparent;
@@ -35,6 +91,8 @@
 }
 
 .cooldown-timeline-grid {
+  flex: 1;
+  min-width: 0;
   margin: 8px 0 16px;
 }
 
