@@ -1,14 +1,17 @@
 import { useState } from "react";
+import type { RaidBoss } from "../../boss-rosters/types/bossRoster.types";
 import { formatRelativeTime } from "../utils/timelineFormat";
 
-type BossWorkspaceView = "timeline" | "list";
+type PlanningWorkspaceView = "timeline" | "list";
 
-type BossWorkspaceHeaderProps = {
+type PlanningWorkspaceHeaderProps = {
   bossName: string;
-  view: BossWorkspaceView;
-  onViewChange: (
-    view: BossWorkspaceView
-  ) => void;
+  bosses: RaidBoss[];
+  selectedBossId: string;
+  onSelectBoss: (bossId: string) => void;
+  onBackToEvents: () => void;
+  view: PlanningWorkspaceView;
+  onViewChange: (view: PlanningWorkspaceView) => void;
   wclSyncedAt: string | null;
   isSyncing: boolean;
   onSync: () => void;
@@ -16,18 +19,30 @@ type BossWorkspaceHeaderProps = {
   onTogglePhaseForm: () => void;
 };
 
+const viewModes: Array<{
+  id: PlanningWorkspaceView;
+  label: string;
+}> = [
+  { id: "timeline", label: "Timeline" },
+  { id: "list", label: "List" }
+];
+
 /**
- * One compact workspace header replacing what used to be spread
- * across three components (boss title + sync pill + help in
- * BossCooldownTimeline's own toolbar, the Timeline/List toggle in
- * BossCooldownView, a separate "+Phase" actions row). Manual phase-
- * marker entry lives behind the overflow menu, not as a peer control
- * next to the primary workspace actions — automatic/real phase data
- * from RaidBossPhaseMarker sync is the normal path, this is the
- * fallback for when it isn't available yet.
+ * Consolidates what used to be five separate page-level rows (the
+ * page title/description, a standalone "Back to events" button, a
+ * full-width boss tab strip, a duplicate boss <h2>, and a separate
+ * Timeline/List row) into one dense workspace header, so the
+ * planning canvas below starts almost immediately instead of after
+ * a stack of generic page chrome. `viewModes` is a plain array
+ * specifically so a future Grid/Deaths slice only needs new entries
+ * here, not another header redesign.
  */
-export function BossWorkspaceHeader({
+export function PlanningWorkspaceHeader({
   bossName,
+  bosses,
+  selectedBossId,
+  onSelectBoss,
+  onBackToEvents,
   view,
   onViewChange,
   wclSyncedAt,
@@ -35,44 +50,67 @@ export function BossWorkspaceHeader({
   onSync,
   isPhaseFormOpen,
   onTogglePhaseForm
-}: BossWorkspaceHeaderProps) {
+}: PlanningWorkspaceHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] =
     useState(false);
 
   return (
-    <div className="cooldown-workspace-header">
-      <h2>{bossName}</h2>
-
-      <div className="cooldown-workspace-header-row">
-        <div className="cooldown-view-toggle">
+    <div className="planning-workspace-header">
+      <div className="planning-workspace-header-row">
+        <div className="planning-workspace-identity">
           <button
-            className={
-              view === "timeline"
-                ? "button button-secondary active"
-                : "button button-secondary"
-            }
-            onClick={() =>
-              onViewChange("timeline")
-            }
+            className="planning-workspace-back"
+            onClick={onBackToEvents}
             type="button"
           >
-            Timeline
+            ← Raids
           </button>
 
-          <button
-            className={
-              view === "list"
-                ? "button button-secondary active"
-                : "button button-secondary"
-            }
-            onClick={() =>
-              onViewChange("list")
-            }
-            type="button"
-          >
-            List
-          </button>
+          <span className="planning-workspace-boss-name">
+            {bossName}
+          </span>
         </div>
+
+        <div className="cooldown-view-toggle">
+          {viewModes.map((mode) => (
+            <button
+              className={
+                view === mode.id
+                  ? "button button-secondary active"
+                  : "button button-secondary"
+              }
+              key={mode.id}
+              onClick={() =>
+                onViewChange(mode.id)
+              }
+              type="button"
+            >
+              {mode.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="planning-workspace-header-row">
+        <select
+          aria-label="Switch boss"
+          className="planning-workspace-boss-select"
+          onChange={(event) =>
+            onSelectBoss(
+              event.target.value
+            )
+          }
+          value={selectedBossId}
+        >
+          {bosses.map((boss) => (
+            <option
+              key={boss.id}
+              value={boss.id}
+            >
+              {boss.name}
+            </option>
+          ))}
+        </select>
 
         <div className="cooldown-workspace-header-status">
           <button

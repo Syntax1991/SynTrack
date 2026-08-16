@@ -5,12 +5,14 @@ import {
   type MouseEvent as ReactMouseEvent
 } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
+import type { RaidSetupMember } from "../../raid-setup/types/raidSetup.types";
 import type {
   RaidBossAbilityCast,
   RaidBossPhaseMarker,
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
+import { useCooldownPlannerSelection } from "../hooks/useCooldownPlannerSelection";
 import {
   derivePhaseSegments,
   formatSeconds,
@@ -27,11 +29,6 @@ import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
 
 const tickCount = 10;
 
-type PendingCreation = {
-  rowKey: string;
-  seconds: number;
-};
-
 type TimelineGridProps = {
   planningDurationSeconds: number;
   phaseMarkers: RaidBossPhaseMarker[];
@@ -39,15 +36,18 @@ type TimelineGridProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
-  pendingCreation: PendingCreation | null;
-  onRaiderTrackClick: (
-    rowKey: string,
-    seconds: number
+  setupMembers: RaidSetupMember[];
+  planMemberIds: Set<string>;
+  onAddPlanMember: (
+    memberId: string
   ) => void;
+  onRemovePlanMember: (
+    memberId: string
+  ) => void;
+  setupUrl: string;
   onCreateAssignment: (
     input: RaidCooldownAssignmentInput
   ) => void;
-  onCancelCreate: () => void;
   onRemoveAssignment: (
     assignmentId: string
   ) => void;
@@ -67,10 +67,12 @@ export function TimelineGrid({
   assignments,
   rosterMembers,
   lineupMemberIds,
-  pendingCreation,
-  onRaiderTrackClick,
+  setupMembers,
+  planMemberIds,
+  onAddPlanMember,
+  onRemovePlanMember,
+  setupUrl,
   onCreateAssignment,
-  onCancelCreate,
   onRemoveAssignment,
   onRepositionAssignment,
   onRemovePhaseMarker
@@ -94,18 +96,26 @@ export function TimelineGrid({
   const [dragSeconds, setDragSeconds] =
     useState<number | null>(null);
 
-  const [
+  const {
     selectedMemberId,
-    setSelectedMemberId
-  ] = useState<string | null>(null);
+    setSelectedMemberId,
+    hiddenMemberIds,
+    toggleHiddenMember,
+    hiddenSpellIdsByMember,
+    toggleSpellVisibility
+  } = useCooldownPlannerSelection();
+
+  const assignedMemberIds = new Set(
+    assignments.map(
+      (assignment) => assignment.memberId
+    )
+  );
 
   const isDragActive =
     dragSeconds !== null;
 
   const playheadSeconds =
-    dragSeconds ??
-    pendingCreation?.seconds ??
-    hoverSeconds;
+    dragSeconds ?? hoverSeconds;
 
   const handleRowsMouseMove = (
     event: ReactMouseEvent<HTMLDivElement>
@@ -147,16 +157,42 @@ export function TimelineGrid({
   return (
     <div className="cooldown-timeline-workspace">
       <CooldownRosterPanel
+        assignedMemberIds={
+          assignedMemberIds
+        }
+        hiddenMemberIds={
+          hiddenMemberIds
+        }
+        hiddenSpellIdsByMember={
+          hiddenSpellIdsByMember
+        }
         lineupMemberIds={
           lineupMemberIds
         }
+        onAddPlanMember={
+          onAddPlanMember
+        }
+        onRemovePlanMember={
+          onRemovePlanMember
+        }
         onSelectMember={
           setSelectedMemberId
+        }
+        onToggleHidden={
+          toggleHiddenMember
+        }
+        onToggleSpellVisibility={
+          toggleSpellVisibility
+        }
+        planMemberIds={
+          planMemberIds
         }
         rosterMembers={rosterMembers}
         selectedMemberId={
           selectedMemberId
         }
+        setupMembers={setupMembers}
+        setupUrl={setupUrl}
       />
 
       <div className="cooldown-timeline-grid">
@@ -259,14 +295,17 @@ export function TimelineGrid({
             assignments={
               assignments
             }
+            hiddenMemberIds={
+              hiddenMemberIds
+            }
+            hiddenSpellIdsByMember={
+              hiddenSpellIdsByMember
+            }
             isTooltipSuppressed={
               isDragActive
             }
             lineupMemberIds={
               lineupMemberIds
-            }
-            onCancelCreate={
-              onCancelCreate
             }
             onCreateAssignment={
               onCreateAssignment
@@ -280,11 +319,8 @@ export function TimelineGrid({
             onRepositionAssignment={
               onRepositionAssignment
             }
-            onRowClick={
-              onRaiderTrackClick
-            }
-            pendingCreation={
-              pendingCreation
+            planMemberIds={
+              planMemberIds
             }
             planningDurationSeconds={
               planningDurationSeconds

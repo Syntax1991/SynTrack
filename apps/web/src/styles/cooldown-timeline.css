@@ -2,61 +2,22 @@
   margin-top: 24px;
 }
 
+/*
+ * The workspace body: fills whatever height .planning-workspace has
+ * left after its header (flex:1, min-height:0 so it can actually
+ * shrink/scroll instead of forcing the shell taller), roster and
+ * canvas as two flush columns with no gap between them — a single
+ * editor, not two panels with daylight between them.
+ */
 .cooldown-timeline-workspace {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
-/*
- * Structurally separate from .cooldown-timeline-grid — a sibling
- * column, not nested inside it, so it never participates in (or
- * distorts) the shared 148px label/track coordinate system every
- * row inside the grid uses.
- */
-.cooldown-roster-panel {
-  flex: 0 0 148px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 2px;
-}
-
-.cooldown-roster-panel-label {
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.58rem;
-  font-weight: 800;
-}
-
-.cooldown-roster-panel-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.cooldown-roster-entry {
-  padding: 3px 8px;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--marker-color, var(--text-muted));
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-align: left;
-  cursor: pointer;
-}
-
-.cooldown-roster-entry:hover {
-  background: var(--surface-hover);
-}
-
-.cooldown-roster-entry.is-selected {
-  border-color: var(--marker-color, var(--primary));
-  background: var(--surface-hover);
-  color: var(--text);
-}
+/* Roster sidebar (.cooldown-roster-panel and its contents) styling
+   lives in cooldown-roster-panel.css. */
 
 .cooldown-sync-pill {
   padding: 3px 9px;
@@ -90,10 +51,20 @@
   color: var(--text);
 }
 
+/*
+ * The timeline canvas itself — no border/radius of its own, so it
+ * reads as the rest of the same editor the roster sidebar opens
+ * into, not a second card next to the first. Padding is applied
+ * here, at the level both the ticks row and the rows container
+ * share, so their mutual 148px alignment is unaffected — everything
+ * inside just shifts together.
+ */
 .cooldown-timeline-grid {
   flex: 1;
   min-width: 0;
-  margin: 8px 0 16px;
+  padding: 10px 14px 14px;
+  background: var(--surface);
+  overflow-y: auto;
 }
 
 .cooldown-timeline-ticks {
@@ -116,6 +87,17 @@
   gap: 2px;
 }
 
+/*
+ * The one shared vertical time grid, painted once behind every row
+ * instead of each row drawing its own independent gridlines — a
+ * line traced straight down through ENCOUNTER and PLAN rows now
+ * lands on a single continuous grid rather than N separately-
+ * computed copies. This box already spans the exact height/x-origin
+ * every row shares (TimelineHoverPlayhead and PhaseBoundaryGuides
+ * use the same box), so the grid backdrop rides along for free.
+ * Purely visual: pointer-events stays off so it never intercepts
+ * row clicks/drags happening on the rows underneath/above it.
+ */
 .cooldown-timeline-track-overlay {
   position: absolute;
   top: 0;
@@ -123,6 +105,13 @@
   bottom: 0;
   left: 148px;
   pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent,
+    transparent calc(10% - 1px),
+    var(--border) calc(10% - 1px),
+    var(--border) 10%
+  );
 }
 
 .cooldown-timeline-section-label {
@@ -138,6 +127,8 @@
   display: flex;
   align-items: stretch;
   gap: 8px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--border);
 }
 
 .cooldown-timeline-row-label {
@@ -190,18 +181,19 @@
   font-size: 0.62rem;
 }
 
+/*
+ * A lane on the shared canvas, not a boxed input: no border,
+ * radius, or background of its own — the vertical grid lives once
+ * in .cooldown-timeline-track-overlay behind every row, and
+ * .cooldown-timeline-row's border-bottom is the only horizontal
+ * separator, so ENCOUNTER and PLAN rows read as one continuous
+ * surface instead of a stack of separately-drawn fields.
+ */
 .cooldown-timeline-row-track {
   position: relative;
   flex: 1;
-  height: 28px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface-hover);
+  height: 26px;
   cursor: crosshair;
-}
-
-.cooldown-timeline-row-boss .cooldown-timeline-row-track {
-  background: var(--surface);
 }
 
 .cooldown-timeline-row-track-readonly {
@@ -251,11 +243,12 @@
   margin-bottom: 2px;
 }
 
-.cooldown-timeline-phase-bar-track {
-  background: transparent;
-  border-color: transparent;
-}
-
+/*
+ * Phase spans as tinted bands embedded in the canvas, not boxed
+ * widgets — only a right-edge divider marks a boundary, and the
+ * shared vertical grid (painted in .cooldown-timeline-track-overlay)
+ * still shows through underneath.
+ */
 .cooldown-timeline-phase-bar-segment {
   position: absolute;
   top: 0;
@@ -264,9 +257,12 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-right: 1px solid var(--border);
   background: var(--surface-hover);
+}
+
+.cooldown-timeline-phase-bar-segment:last-child {
+  border-right: none;
 }
 
 .cooldown-timeline-phase-bar-segment:nth-child(even) {

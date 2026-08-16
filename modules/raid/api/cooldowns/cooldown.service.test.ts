@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { GuildVerificationGuard } from "../../../guild/api/verification/verification.types.js";
+import type { RaidSetupRepository } from "../setups/setup.repository.js";
 import type { RaidCooldownRepository } from "./cooldown.repository.js";
 import { RaidCooldownService } from "./cooldown.service.js";
-import type { WarcraftLogsClient } from "./warcraftlogs.client.js";
 
 function createService() {
   const calls: string[] = [];
@@ -12,6 +12,7 @@ function createService() {
       calls.push("repository");
       return {
         id: "boss-1",
+        raidEventId: "event-1",
         name: "Imperator Averzian",
         fightDurationSeconds: null,
         wclReportCode: null,
@@ -21,7 +22,11 @@ function createService() {
     }),
     findAssignmentById: vi.fn(async () => {
       calls.push("repository");
-      return { id: "assignment-1" };
+      return {
+        id: "assignment-1",
+        setupId: "setup-1",
+        bossId: "boss-1"
+      };
     }),
     findMemberById: vi.fn(async () => {
       calls.push("repository");
@@ -38,37 +43,18 @@ function createService() {
     deleteAssignment: vi.fn(async () => {
       calls.push("repository");
     }),
-    updateFightDuration: vi.fn(async () => {
-      calls.push("repository");
-      return { id: "boss-1" };
-    }),
-    findPhaseMarkersForBoss: vi.fn(async () => {
+    findForSetup: vi.fn(async () => {
       calls.push("repository");
       return [];
-    }),
-    findPhaseMarkerById: vi.fn(async () => {
-      calls.push("repository");
-      return { id: "marker-1" };
-    }),
-    createPhaseMarker: vi.fn(async () => {
-      calls.push("repository");
-      return { id: "marker-1" };
-    }),
-    deletePhaseMarker: vi.fn(async () => {
-      calls.push("repository");
-    }),
-    findAbilityCastsForBoss: vi.fn(async () => {
-      calls.push("repository");
-      return [];
-    }),
-    findForEvent: vi.fn(async () => {
-      calls.push("repository");
-      return [];
-    }),
-    replaceAbilityCastsFromSync: vi.fn(async () => {
-      calls.push("repository");
     })
   } as unknown as RaidCooldownRepository;
+
+  const setupRepository = {
+    findSetupById: vi.fn(async () => ({
+      id: "setup-1",
+      raidEventId: "event-1"
+    }))
+  } as unknown as RaidSetupRepository;
 
   const verification: GuildVerificationGuard = {
     ensureVerified: vi.fn(async () => {
@@ -80,39 +66,19 @@ function createService() {
     })
   };
 
-  const warcraftLogs = {
-    findEncounterId: vi.fn(async () => {
-      calls.push("warcraftLogs");
-      return 42;
-    }),
-    getTopFight: vi.fn(async () => {
-      calls.push("warcraftLogs");
-      return { reportCode: "R1", fightId: 1 };
-    }),
-    getFightCasts: vi.fn(async () => {
-      calls.push("warcraftLogs");
-      return {
-        fightDurationSeconds: 120,
-        reportCode: "R1",
-        fightId: 1,
-        casts: [
-          {
-            abilityName: "Heaven's Lance",
-            abilityIcon: null,
-            timestampSeconds: 5
-          }
-        ]
-      };
-    })
-  } as unknown as WarcraftLogsClient;
-
   const service = new RaidCooldownService(
     repository,
-    verification,
-    warcraftLogs
+    setupRepository,
+    verification
   );
 
-  return { service, repository, verification, calls };
+  return {
+    service,
+    repository,
+    setupRepository,
+    verification,
+    calls
+  };
 }
 
 const assignmentInput = {
@@ -131,6 +97,7 @@ describe("RaidCooldownService mutating methods", () => {
       createService();
 
     await service.createAssignment(
+      "setup-1",
       "boss-1",
       assignmentInput
     );
@@ -141,11 +108,35 @@ describe("RaidCooldownService mutating methods", () => {
     expect(calls[0]).toBe("verification");
   });
 
+  it("createAssignment rejects a Setup and Boss from different events", async () => {
+    const { service, setupRepository } =
+      createService();
+
+    vi.mocked(
+      setupRepository.findSetupById
+    ).mockResolvedValueOnce({
+      id: "setup-2",
+      raidEventId: "other-event"
+    } as never);
+
+    await expect(
+      service.createAssignment(
+        "setup-2",
+        "boss-1",
+        assignmentInput
+      )
+    ).rejects.toMatchObject({
+      statusCode: 400
+    });
+  });
+
   it("updateAssignment verifies before touching the repository", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.updateAssignment(
+      "setup-1",
+      "boss-1",
       "assignment-1",
       assignmentInput
     );
@@ -156,11 +147,41 @@ describe("RaidCooldownService mutating methods", () => {
     expect(calls[0]).toBe("verification");
   });
 
+  it("updateAssignment refuses an assignment that belongs to a different Setup", async () => {
+    const { service, repository } =
+      createService();
+
+    vi.mocked(
+      repository.findAssignmentById
+    ).mockResolvedValueOnce({
+      id: "assignment-1",
+      setupId: "other-setup",
+      bossId: "boss-1"
+    } as never);
+
+    await expect(
+      service.updateAssignment(
+        "setup-1",
+        "boss-1",
+        "assignment-1",
+        assignmentInput
+      )
+    ).rejects.toMatchObject({
+      statusCode: 404
+    });
+
+    expect(
+      repository.updateAssignment
+    ).not.toHaveBeenCalled();
+  });
+
   it("deleteAssignment verifies before touching the repository", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.deleteAssignment(
+      "setup-1",
+      "boss-1",
       "assignment-1"
     );
 
@@ -170,93 +191,40 @@ describe("RaidCooldownService mutating methods", () => {
     expect(calls[0]).toBe("verification");
   });
 
-  it("updateFightDuration verifies before touching the repository", async () => {
-    const { service, verification, calls } =
+  it("deleteAssignment refuses an assignment that belongs to a different Boss", async () => {
+    const { service, repository } =
       createService();
 
-    await service.updateFightDuration(
-      "boss-1",
-      { fightDurationSeconds: 300 }
-    );
+    vi.mocked(
+      repository.findAssignmentById
+    ).mockResolvedValueOnce({
+      id: "assignment-1",
+      setupId: "setup-1",
+      bossId: "other-boss"
+    } as never);
+
+    await expect(
+      service.deleteAssignment(
+        "setup-1",
+        "boss-1",
+        "assignment-1"
+      )
+    ).rejects.toMatchObject({
+      statusCode: 404
+    });
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
-    expect(calls[0]).toBe("verification");
-  });
-
-  it("createPhaseMarker verifies before touching the repository", async () => {
-    const { service, verification, calls } =
-      createService();
-
-    await service.createPhaseMarker(
-      "boss-1",
-      { label: "Pull", startSeconds: 0, sortOrder: 0 }
-    );
-
-    expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
-    expect(calls[0]).toBe("verification");
-  });
-
-  it("deletePhaseMarker verifies before touching the repository", async () => {
-    const { service, verification, calls } =
-      createService();
-
-    await service.deletePhaseMarker(
-      "marker-1"
-    );
-
-    expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
-    expect(calls[0]).toBe("verification");
-  });
-
-  it("syncBossFromWarcraftLogs verifies before touching the repository or Warcraft Logs", async () => {
-    const { service, verification, calls } =
-      createService();
-
-    await service.syncBossFromWarcraftLogs(
-      "boss-1"
-    );
-
-    expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
-    expect(calls[0]).toBe("verification");
+      repository.deleteAssignment
+    ).not.toHaveBeenCalled();
   });
 });
 
 describe("RaidCooldownService read methods", () => {
-  it("listForEvent does not require verification", async () => {
+  it("listForSetup does not require verification", async () => {
     const { service, verification } =
       createService();
 
-    await service.listForEvent("event-1");
-
-    expect(
-      verification.ensureVerified
-    ).not.toHaveBeenCalled();
-  });
-
-  it("listPhaseMarkers does not require verification", async () => {
-    const { service, verification } =
-      createService();
-
-    await service.listPhaseMarkers("boss-1");
-
-    expect(
-      verification.ensureVerified
-    ).not.toHaveBeenCalled();
-  });
-
-  it("listAbilityCasts does not require verification", async () => {
-    const { service, verification } =
-      createService();
-
-    await service.listAbilityCasts("boss-1");
+    await service.listForSetup("setup-1");
 
     expect(
       verification.ensureVerified

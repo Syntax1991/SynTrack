@@ -7,7 +7,6 @@ import { CooldownAssignmentForm } from "./CooldownAssignmentForm";
 
 type CooldownBossPanelProps = {
   bossId: string;
-  bossName: string;
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   abilitySuggestions: string[];
@@ -20,9 +19,13 @@ type CooldownBossPanelProps = {
   ) => void;
 };
 
+/**
+ * The boss's own identity is already shown once, by
+ * PlanningWorkspaceHeader — this view only owns the add-assignment
+ * control and the table, not another title.
+ */
 export function CooldownBossPanel({
   bossId,
-  bossName,
   assignments,
   rosterMembers,
   abilitySuggestions,
@@ -41,15 +44,7 @@ export function CooldownBossPanel({
 
   return (
     <section className="panel">
-      <div className="panel-header">
-        <div>
-          <p className="eyebrow">
-            COOLDOWNS
-          </p>
-
-          <h2>{bossName}</h2>
-        </div>
-
+      <div className="cooldown-list-panel-header">
         <button
           className="button button-secondary"
           onClick={() =>

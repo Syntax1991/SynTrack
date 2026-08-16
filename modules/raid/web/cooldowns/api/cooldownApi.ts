@@ -7,23 +7,29 @@ import type {
   RaidBossWarcraftLogsSyncResult,
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput,
-  RaidCooldownAssignmentListResponse
+  RaidCooldownAssignmentListResponse,
+  RaidCooldownPlanMember,
+  RaidCooldownPlanMemberListResponse
 } from "../types/cooldown.types";
 
-export function getCooldownAssignmentsForEvent(
-  eventId: string
+// Planning data (assignments, plan members) is Setup+Boss scoped — a
+// Setup belongs to exactly one RaidEvent, so scoping by setupId alone
+// already covers every boss of that event.
+export function getCooldownAssignmentsForSetup(
+  setupId: string
 ): Promise<RaidCooldownAssignmentListResponse> {
   return apiRequest<RaidCooldownAssignmentListResponse>(
-    `/raid/cooldowns/events/${eventId}`
+    `/raid/cooldowns/setups/${setupId}`
   );
 }
 
 export function createCooldownAssignment(
+  setupId: string,
   bossId: string,
   input: RaidCooldownAssignmentInput
 ): Promise<RaidCooldownAssignment> {
   return apiRequest<RaidCooldownAssignment>(
-    `/raid/cooldowns/bosses/${bossId}`,
+    `/raid/cooldowns/setups/${setupId}/bosses/${bossId}`,
     {
       method: "POST",
       body: JSON.stringify(input)
@@ -32,11 +38,13 @@ export function createCooldownAssignment(
 }
 
 export function updateCooldownAssignment(
+  setupId: string,
+  bossId: string,
   assignmentId: string,
   input: RaidCooldownAssignmentInput
 ): Promise<RaidCooldownAssignment> {
   return apiRequest<RaidCooldownAssignment>(
-    `/raid/cooldowns/${assignmentId}`,
+    `/raid/cooldowns/setups/${setupId}/bosses/${bossId}/${assignmentId}`,
     {
       method: "PUT",
       body: JSON.stringify(input)
@@ -45,16 +53,57 @@ export function updateCooldownAssignment(
 }
 
 export function deleteCooldownAssignment(
+  setupId: string,
+  bossId: string,
   assignmentId: string
 ): Promise<void> {
   return apiRequest<void>(
-    `/raid/cooldowns/${assignmentId}`,
+    `/raid/cooldowns/setups/${setupId}/bosses/${bossId}/${assignmentId}`,
     {
       method: "DELETE"
     }
   );
 }
 
+export function getPlanMembersForSetupAndBoss(
+  setupId: string,
+  bossId: string
+): Promise<RaidCooldownPlanMemberListResponse> {
+  return apiRequest<RaidCooldownPlanMemberListResponse>(
+    `/raid/cooldowns/setups/${setupId}/bosses/${bossId}/plan-members`
+  );
+}
+
+export function addPlanMember(
+  setupId: string,
+  bossId: string,
+  memberId: string
+): Promise<RaidCooldownPlanMember> {
+  return apiRequest<RaidCooldownPlanMember>(
+    `/raid/cooldowns/setups/${setupId}/bosses/${bossId}/plan-members`,
+    {
+      method: "POST",
+      body: JSON.stringify({ memberId })
+    }
+  );
+}
+
+export function removePlanMember(
+  setupId: string,
+  bossId: string,
+  memberId: string
+): Promise<void> {
+  return apiRequest<void>(
+    `/raid/cooldowns/setups/${setupId}/bosses/${bossId}/plan-members/${memberId}`,
+    {
+      method: "DELETE"
+    }
+  );
+}
+
+// Encounter facts (WCL casts, phases, fight duration) describe the
+// fight itself, not any particular composition — these stay boss-only
+// regardless of Setup.
 export function updateBossFightDuration(
   bossId: string,
   fightDurationSeconds: number | null

@@ -2,15 +2,27 @@
   margin-bottom: 4px;
 }
 
+/*
+ * Full-width top/bottom rules (no 148px inset on the border itself,
+ * only on the buttons' padding) so this reads as a section divider
+ * between ENCOUNTER and PLAN, not just another row.
+ */
 .cooldown-plan-filter-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin: 2px 0 8px 148px;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 10px;
+  padding: 7px 0 7px 148px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .cooldown-plan-filter-button {
-  padding: 2px 9px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: transparent;
@@ -31,22 +43,38 @@
   color: var(--surface);
 }
 
-.cooldown-plan-add-row {
-  margin-bottom: 6px;
+/*
+ * A safety net, not another category: it never narrows what CAN be
+ * planned, it only guarantees a spell/player already carrying a real
+ * RaidCooldownAssignment can't disappear behind a category/visibility
+ * filter (see resolveEffectiveCategoryFilter and
+ * filterVisiblePlayerGroups/filterVisibleSpellRows). Pushed to the far
+ * right so it never reads as one more filter option in the row.
+ */
+.cooldown-plan-filter-safety {
+  margin-left: auto;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-/*
- * Deliberately block-stacked, not a flex row alongside the track
- * below: a preceding inline label would push the track's left edge
- * past the shared 148px coordinate origin every other row uses,
- * breaking pixel alignment with ENCOUNTER/other PLAN rows.
- */
-.cooldown-plan-add-label {
-  display: block;
-  margin: 2px 0 3px 148px;
-  color: var(--text-muted);
-  font-size: 0.62rem;
-  font-weight: 700;
+.cooldown-plan-filter-safety:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.cooldown-plan-filter-safety.is-active {
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .cooldown-plan-empty {
@@ -55,18 +83,64 @@
   font-size: 0.64rem;
 }
 
-.cooldown-player-group {
-  margin-bottom: 6px;
+/*
+ * A selected player with zero assignments still gets a real planning
+ * context here — "I selected Brightwow and can now plan Brightwow" —
+ * instead of the bare generic empty message this replaces for that
+ * case. Left accent matches the player's class color like a real
+ * player-group header would, so it reads as "this player's context",
+ * not a dead page.
+ */
+.cooldown-plan-player-context {
+  margin: 4px 0 4px 0;
+  padding: 5px 12px;
+  border-left: 3px solid var(--marker-color, var(--border-strong));
+  background: var(--surface-hover);
 }
 
+.cooldown-plan-player-context-name {
+  display: block;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cooldown-plan-player-context .cooldown-plan-empty {
+  margin: 4px 0 0;
+}
+
+/*
+ * Just a spacing gap between groups now — the header bar below is
+ * what carries the group's visual identity, not a wrapping card.
+ */
+.cooldown-player-group {
+  margin-bottom: 4px;
+}
+
+/*
+ * A full-width player banner spanning label column + timeline track
+ * together (no 148px indent), so it reads as one group header the
+ * spell lanes below visually belong to — not a small colored label
+ * floating above unrelated rows. The left accent bar carries the
+ * player's class color; the tinted background is what ties the
+ * lanes underneath back to this header without needing a border
+ * around the whole group.
+ */
 .cooldown-player-group-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 6px 0 2px 148px;
-  color: var(--marker-color, var(--text));
+  gap: 8px;
+  padding: 5px 12px;
+  border-left: 3px solid var(--marker-color, var(--border-strong));
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-hover);
+  color: var(--text);
   font-size: 0.72rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .cooldown-spell-row-label {

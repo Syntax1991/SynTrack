@@ -1,6 +1,7 @@
 export type RaidCooldownAssignment = {
   id: string;
   bossId: string;
+  setupId: string;
   memberId: string;
   abilityName: string;
   spellId: number | null;
@@ -61,6 +62,20 @@ export type RaidBossAbilityCast = {
 
 export type RaidBossAbilityCastListResponse = {
   items: RaidBossAbilityCast[];
+  total: number;
+};
+
+export type RaidCooldownPlanMember = {
+  id: string;
+  bossId: string;
+  setupId: string;
+  memberId: string;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type RaidCooldownPlanMemberListResponse = {
+  items: RaidCooldownPlanMember[];
   total: number;
 };
 

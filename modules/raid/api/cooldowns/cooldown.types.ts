@@ -17,3 +17,7 @@ export type RaidBossPhaseMarkerInput = {
 export type RaidBossFightDurationInput = {
   fightDurationSeconds: number | null;
 };
+
+export type RaidCooldownPlanMemberInput = {
+  memberId: string;
+};

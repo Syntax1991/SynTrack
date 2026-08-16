@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
+import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
 import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
@@ -7,34 +8,30 @@ import type {
 import type { CooldownDisplayCategory } from "../utils/cooldownCategories";
 import {
   cooldownCategoryLabels,
-  cooldownDisplayCategories,
-  groupAssignmentsByPlayer
+  cooldownDisplayCategories
 } from "../utils/cooldownCategories";
-import { CooldownCategoryAddFlow } from "./CooldownCategoryAddFlow";
+import {
+  buildPlayerPlanLanes,
+  isLaneVisible,
+  isPlayerVisible,
+  type PlayerPlanLane
+} from "../utils/cooldownPlannerFilters";
 import { CooldownPlanFilterToolbar } from "./CooldownPlanFilterToolbar";
 import { CooldownPlayerGroup } from "./CooldownPlayerGroup";
-
-type PendingCreation = {
-  rowKey: string;
-  seconds: number;
-};
 
 type CooldownPlanAreaProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  planMemberIds: Set<string>;
   selectedMemberId: string | null;
+  hiddenMemberIds: Set<string>;
+  hiddenSpellIdsByMember: Map<string, Set<number>>;
   planningDurationSeconds: number;
   isTooltipSuppressed: boolean;
-  pendingCreation: PendingCreation | null;
-  onRowClick: (
-    rowKey: string,
-    seconds: number
-  ) => void;
   onCreateAssignment: (
     input: RaidCooldownAssignmentInput
   ) => void;
-  onCancelCreate: () => void;
   onRemoveAssignment: (
     assignmentId: string
   ) => void;
@@ -54,25 +51,29 @@ const toolbarCategories = cooldownDisplayCategories
     label: cooldownCategoryLabels[category]
   }));
 
+const emptySpellIdSet = new Set<number>();
+
 /**
- * Categories here are a filter/creation tool, never the structural
- * owner of a permanent row — that's `CooldownPlayerGroup`, one per
- * player who has at least one real assignment matching the current
- * filter. The player picker lives one level up (`CooldownRosterPanel`,
- * a sibling of the whole timeline, not part of this area) — this
- * component only reads `selectedMemberId`, it never offers its own.
+ * A Cooldown Plan Participant (planMemberIds, plus anyone with a real
+ * assignment as a safety net even if the plan-member row is somehow
+ * missing) always gets a real player group here — every one of their
+ * real class spells becomes a lane via buildPlayerPlanLanes, with or
+ * without an assignment yet. This is the core correction from the
+ * old "only render players with real assignments" rule: a freshly
+ * Added-to-Timeline player with zero markers is a valid, permanent
+ * state, not something that collapses into a generic empty message.
  */
 export function CooldownPlanArea({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  planMemberIds,
   selectedMemberId,
+  hiddenMemberIds,
+  hiddenSpellIdsByMember,
   planningDurationSeconds,
   isTooltipSuppressed,
-  pendingCreation,
-  onRowClick,
   onCreateAssignment,
-  onCancelCreate,
   onRemoveAssignment,
   onRepositionAssignment,
   onDragPreview
@@ -82,30 +83,77 @@ export function CooldownPlanArea({
       CooldownDisplayCategory | "all"
     >("all");
 
-  const categoryFilter =
-    activeCategory === "all"
-      ? undefined
-      : activeCategory;
+  const [
+    alwaysShowAssigned,
+    setAlwaysShowAssigned
+  ] = useState(false);
 
-  const playerGroups =
-    groupAssignmentsByPlayer(
-      assignments,
-      categoryFilter
+  const assignedMemberIds = new Set(
+    assignments.map(
+      (assignment) => assignment.memberId
+    )
+  );
+
+  const participantMemberIds = new Set([
+    ...planMemberIds,
+    ...assignedMemberIds
+  ]);
+
+  const participants = rosterMembers.filter(
+    (member) =>
+      participantMemberIds.has(member.id)
+  );
+
+  const visibleParticipants =
+    participants.filter((member) =>
+      isPlayerVisible(
+        member.id,
+        assignedMemberIds.has(member.id),
+        {
+          selectedMemberId,
+          hiddenMemberIds,
+          alwaysShowAssigned
+        }
+      )
     );
 
-  const orderedGroups = rosterMembers
-    .map((member) => member.id)
-    .map((memberId) =>
-      playerGroups.find(
-        (group) =>
-          group.memberId === memberId
-      )
-    )
+  const renderableGroups = visibleParticipants
+    .map((member) => {
+      const lanes = buildPlayerPlanLanes(
+        member.id,
+        member.className,
+        assignments
+      );
+
+      const hiddenSpellIds =
+        hiddenSpellIdsByMember.get(
+          member.id
+        ) ?? emptySpellIdSet;
+
+      const visibleLanes = lanes.filter(
+        (lane) =>
+          isLaneVisible(lane, {
+            activeCategory,
+            hiddenSpellIds,
+            alwaysShowAssigned
+          })
+      );
+
+      if (visibleLanes.length === 0) {
+        return null;
+      }
+
+      return { member, lanes: visibleLanes };
+    })
     .filter(
       (
-        group
-      ): group is (typeof playerGroups)[number] =>
-        group !== undefined
+        entry
+      ): entry is {
+        member: GuildMember;
+        lanes: Array<
+          PlayerPlanLane<RaidCooldownAssignment>
+        >;
+      } => entry !== null
     );
 
   const selectedMember = selectedMemberId
@@ -115,92 +163,81 @@ export function CooldownPlanArea({
       )
     : undefined;
 
+  const selectedIsParticipant =
+    selectedMemberId !== null &&
+    participantMemberIds.has(
+      selectedMemberId
+    );
+
   return (
     <div className="cooldown-plan-area">
       <CooldownPlanFilterToolbar
         active={activeCategory}
+        alwaysShowAssigned={
+          alwaysShowAssigned
+        }
         categories={toolbarCategories}
         onChange={setActiveCategory}
+        onToggleAlwaysShowAssigned={() =>
+          setAlwaysShowAssigned(
+            (current) => !current
+          )
+        }
       />
 
-      {selectedMember &&
-        activeCategory !== "all" &&
-        activeCategory !== "Other" && (
-          <CooldownCategoryAddFlow
-            category={activeCategory}
-            categoryLabel={
-              cooldownCategoryLabels[
-                activeCategory
-              ]
+      {renderableGroups.length === 0 ? (
+        selectedMember ? (
+          <div
+            className="cooldown-plan-player-context"
+            style={
+              {
+                "--marker-color":
+                  resolveClassColor(
+                    selectedMember.className
+                  )
+              } as CSSProperties
             }
-            isTooltipSuppressed={
-              isTooltipSuppressed
-            }
-            lineupMemberIds={
-              lineupMemberIds
-            }
-            member={selectedMember}
-            onCancelCreate={
-              onCancelCreate
-            }
-            onCreateAssignment={
-              onCreateAssignment
-            }
-            onDragPreview={
-              onDragPreview
-            }
-            onRemoveAssignment={
-              onRemoveAssignment
-            }
-            onRepositionAssignment={
-              onRepositionAssignment
-            }
-            onRowClick={onRowClick}
-            pendingCreation={
-              pendingCreation
-            }
-            planningDurationSeconds={
-              planningDurationSeconds
-            }
-          />
-        )}
+          >
+            <span className="cooldown-plan-player-context-name">
+              {selectedMember.name}
+            </span>
 
-      {orderedGroups.length === 0 ? (
-        <p className="cooldown-plan-empty">
-          No{" "}
-          {activeCategory === "all"
-            ? "cooldowns"
-            : cooldownCategoryLabels[
-                activeCategory
-              ].toLowerCase()}{" "}
-          planned yet.
-        </p>
+            <p className="cooldown-plan-empty">
+              {selectedIsParticipant
+                ? `No ${
+                    activeCategory === "all"
+                      ? "cooldowns"
+                      : cooldownCategoryLabels[
+                          activeCategory
+                        ].toLowerCase()
+                  } to show for this filter.`
+                : "Not yet added to this Cooldown Plan — click + next to their name in Timeline Controls to add them."}
+            </p>
+          </div>
+        ) : (
+          <p className="cooldown-plan-empty">
+            No{" "}
+            {activeCategory === "all"
+              ? "cooldowns"
+              : cooldownCategoryLabels[
+                  activeCategory
+                ].toLowerCase()}{" "}
+            planned yet.
+          </p>
+        )
       ) : (
-        orderedGroups.map((group) => {
-          const member =
-            rosterMembers.find(
-              (candidate) =>
-                candidate.id ===
-                group.memberId
-            );
-
-          if (!member) {
-            return null;
-          }
-
-          return (
+        renderableGroups.map(
+          ({ member, lanes }) => (
             <CooldownPlayerGroup
               isTooltipSuppressed={
                 isTooltipSuppressed
               }
-              key={group.memberId}
+              key={member.id}
+              lanes={lanes}
               lineupMemberIds={
                 lineupMemberIds
               }
               member={member}
-              onCancelCreate={
-                onCancelCreate
-              }
               onCreateAssignment={
                 onCreateAssignment
               }
@@ -213,19 +250,12 @@ export function CooldownPlanArea({
               onRepositionAssignment={
                 onRepositionAssignment
               }
-              onRowClick={onRowClick}
-              pendingCreation={
-                pendingCreation
-              }
               planningDurationSeconds={
                 planningDurationSeconds
               }
-              spellRows={
-                group.spellRows
-              }
             />
-          );
-        })
+          )
+        )
       )}
     </div>
   );

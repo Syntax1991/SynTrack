@@ -6,7 +6,6 @@ import {
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
-import { Tabs } from "../../../../../apps/web/src/shared/components/Tabs";
 import { useRoster } from "../../../../guild/web/roster/hooks/useRoster";
 import { getBossesForSetup } from "../../boss-rosters/api/bossRosterApi";
 import type { RaidBoss } from "../../boss-rosters/types/bossRoster.types";
@@ -15,7 +14,7 @@ import { useRaidEvents } from "../../planner/hooks/useRaidEvents";
 import type { RaidEvent } from "../../planner/types/raidEvent.types";
 import { useRaidSetup } from "../../raid-setup/hooks/useRaidSetup";
 import { syncBossWarcraftLogs } from "../api/cooldownApi";
-import { BossCooldownView } from "../components/BossCooldownView";
+import { RaidPlanningWorkspace } from "../components/RaidPlanningWorkspace";
 import { useCooldownAssignments } from "../hooks/useCooldownAssignments";
 
 export function CooldownsLandingPage() {
@@ -57,7 +56,7 @@ export function CooldownsLandingPage() {
     editAssignment,
     removeAssignment
   } = useCooldownAssignments(
-    selectedEvent?.id ?? null
+    setup?.id ?? null
   );
 
   const loadBosses = useCallback(
@@ -114,13 +113,21 @@ export function CooldownsLandingPage() {
     setSelectedBossId(null);
   };
 
+  const handleBackToEvents = () => {
+    setSelectedEvent(null);
+    setBosses([]);
+    setSelectedBossId(null);
+  };
+
   return (
     <div>
-      <PageHeader
-        description="Plan raid cooldowns and healing/defensive assignments per boss."
-        eyebrow="RAID"
-        title="Cooldowns"
-      />
+      {!selectedEvent && (
+        <PageHeader
+          description="Plan raid cooldowns and healing/defensive assignments per boss."
+          eyebrow="RAID"
+          title="Cooldowns"
+        />
+      )}
 
       {(cooldownError ||
         setupError) && (
@@ -138,116 +145,92 @@ export function CooldownsLandingPage() {
             handleSelectEvent
           }
         />
+      ) : selectedBoss && setup ? (
+        <RaidPlanningWorkspace
+          abilitySuggestions={Array.from(
+            new Set(
+              assignments.map(
+                (a) =>
+                  a.abilityName
+              )
+            )
+          )}
+          assignments={assignments.filter(
+            (assignment) =>
+              assignment.bossId ===
+              selectedBoss.id
+          )}
+          bossId={selectedBoss.id}
+          bossName={
+            selectedBoss.name
+          }
+          bosses={bosses}
+          lineupMemberIds={
+            lineupMemberIds
+          }
+          onAddAssignment={
+            addAssignment
+          }
+          onBackToEvents={
+            handleBackToEvents
+          }
+          onRemoveAssignment={(
+            assignmentId
+          ) => {
+            void removeAssignment(
+              selectedBoss.id,
+              assignmentId
+            );
+          }}
+          onRepositionAssignment={(
+            assignment,
+            seconds
+          ) => {
+            void editAssignment(
+              selectedBoss.id,
+              assignment.id,
+              {
+                memberId:
+                  assignment.memberId,
+                abilityName:
+                  assignment.abilityName,
+                spellId:
+                  assignment.spellId,
+                abilityIcon:
+                  assignment.abilityIcon,
+                phaseLabel:
+                  assignment.phaseLabel,
+                timestampSeconds:
+                  seconds,
+                sortOrder:
+                  assignment.sortOrder
+              }
+            );
+          }}
+          onSelectBoss={
+            setSelectedBossId
+          }
+          onSyncWarcraftLogs={async () => {
+            await syncBossWarcraftLogs(
+              selectedBoss.id
+            );
+
+            await loadBosses();
+          }}
+          rosterMembers={
+            rosterMembers
+          }
+          setupId={setup.id}
+          setupMembers={
+            setup.members
+          }
+          setupUrl={`/raid/planner/${selectedEvent.id}`}
+          wclSyncedAt={
+            selectedBoss.wclSyncedAt
+          }
+        />
       ) : (
-        <>
-          <button
-            className="button button-secondary"
-            onClick={() => {
-              setSelectedEvent(null);
-              setBosses([]);
-              setSelectedBossId(
-                null
-              );
-            }}
-            type="button"
-          >
-            ← Back to events
-          </button>
-
-          {bosses.length > 0 && (
-            <Tabs
-              activeTab={
-                selectedBossId ??
-                bosses[0].id
-              }
-              ariaLabel="Bosses"
-              onChange={
-                setSelectedBossId
-              }
-              tabs={bosses.map(
-                (boss) => ({
-                  id: boss.id,
-                  label: boss.name
-                })
-              )}
-            />
-          )}
-
-          {selectedBoss && (
-            <BossCooldownView
-              abilitySuggestions={Array.from(
-                new Set(
-                  assignments.map(
-                    (a) =>
-                      a.abilityName
-                  )
-                )
-              )}
-              assignments={assignments.filter(
-                (assignment) =>
-                  assignment.bossId ===
-                  selectedBoss.id
-              )}
-              bossId={selectedBoss.id}
-              bossName={
-                selectedBoss.name
-              }
-              fightDurationSeconds={
-                selectedBoss.fightDurationSeconds
-              }
-              lineupMemberIds={
-                lineupMemberIds
-              }
-              onAddAssignment={
-                addAssignment
-              }
-              onRemoveAssignment={(
-                assignmentId
-              ) => {
-                void removeAssignment(
-                  assignmentId
-                );
-              }}
-              onRepositionAssignment={(
-                assignment,
-                seconds
-              ) => {
-                void editAssignment(
-                  assignment.id,
-                  {
-                    memberId:
-                      assignment.memberId,
-                    abilityName:
-                      assignment.abilityName,
-                    spellId:
-                      assignment.spellId,
-                    abilityIcon:
-                      assignment.abilityIcon,
-                    phaseLabel:
-                      assignment.phaseLabel,
-                    timestampSeconds:
-                      seconds,
-                    sortOrder:
-                      assignment.sortOrder
-                  }
-                );
-              }}
-              onSyncWarcraftLogs={async () => {
-                await syncBossWarcraftLogs(
-                  selectedBoss.id
-                );
-
-                await loadBosses();
-              }}
-              rosterMembers={
-                rosterMembers
-              }
-              wclSyncedAt={
-                selectedBoss.wclSyncedAt
-              }
-            />
-          )}
-        </>
+        <LoadingPanel />
       )}
     </div>
   );

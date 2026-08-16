@@ -1,46 +1,29 @@
 import {
   useRef,
   type CSSProperties,
-  type MouseEvent,
-  type ReactNode
+  type MouseEvent
 } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
 import { AssignmentMarker } from "./AssignmentMarker";
-import { CooldownCreatePopover } from "./CooldownCreatePopover";
-import type { RaidCooldownSpellCategory } from "../../../shared/catalog/raidCooldownSpellCatalog";
 import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
-import {
-  percentOf,
-  secondsFromClickX
-} from "../utils/timelineFormat";
+import { secondsFromClickX } from "../utils/timelineFormat";
 
 type RaiderCooldownRowProps = {
   member: GuildMember;
-  /**
-   * Overrides the default player-name label content — used for a
-   * real spell-identity row (icon + spell name + player name). Left
-   * unset for a temporary click-to-create lane, which doesn't know
-   * the spell yet and just shows the player's name.
-   */
-  label?: ReactNode;
-  /** Restricts the click-to-create spell picker to one category. */
-  categoryFilter?: RaidCooldownSpellCategory;
+  abilityName: string;
+  spellId: number | null;
+  abilityIcon: string | null;
   planningDurationSeconds: number;
   assignments: RaidCooldownAssignment[];
   isInLineup: boolean;
   isTooltipSuppressed: boolean;
-  pendingCreationSeconds: number | null;
-  onTrackClick: (
-    seconds: number
-  ) => void;
   onCreateAssignment: (
     input: RaidCooldownAssignmentInput
   ) => void;
-  onCancelCreate: () => void;
   onRemoveAssignment: (
     assignmentId: string
   ) => void;
@@ -53,18 +36,27 @@ type RaiderCooldownRowProps = {
   ) => void;
 };
 
+/**
+ * This lane's spell identity (spellId/abilityName/abilityIcon) is
+ * always fully known up front — it comes from a real class spell
+ * (getSpellsForClass) or a historical assignment, never a picker —
+ * so a click on empty track directly creates the assignment for
+ * THIS spell at the clicked timestamp. No popover, no re-asking
+ * "which spell": Player Group -> Spell Lane -> click timestamp ->
+ * assignment created. Disabled for a player no longer in the current
+ * boss lineup, matching the "can't be changed until re-added" rule
+ * already shown by the warning badge.
+ */
 export function RaiderCooldownRow({
   member,
-  label,
-  categoryFilter,
+  abilityName,
+  spellId,
+  abilityIcon,
   planningDurationSeconds,
   assignments,
   isInLineup,
   isTooltipSuppressed,
-  pendingCreationSeconds,
-  onTrackClick,
   onCreateAssignment,
-  onCancelCreate,
   onRemoveAssignment,
   onRepositionAssignment,
   onDragPreview
@@ -75,17 +67,25 @@ export function RaiderCooldownRow({
   const handleClick = (
     event: MouseEvent<HTMLDivElement>
   ) => {
-    if (!trackRef.current) {
+    if (!trackRef.current || !isInLineup) {
       return;
     }
 
-    onTrackClick(
-      secondsFromClickX(
-        event.clientX,
-        trackRef.current,
-        planningDurationSeconds
-      )
+    const seconds = secondsFromClickX(
+      event.clientX,
+      trackRef.current,
+      planningDurationSeconds
     );
+
+    onCreateAssignment({
+      memberId: member.id,
+      abilityName,
+      spellId,
+      abilityIcon,
+      phaseLabel: null,
+      timestampSeconds: seconds,
+      sortOrder: 0
+    });
   };
 
   return (
@@ -107,7 +107,19 @@ export function RaiderCooldownRow({
           } as CSSProperties
         }
       >
-        {label ?? member.name}
+        <span className="cooldown-spell-row-label">
+          {abilityIcon && (
+            <img
+              alt=""
+              className="cooldown-spell-row-icon"
+              src={abilityIcon}
+            />
+          )}
+
+          <span className="cooldown-spell-row-spell">
+            {abilityName}
+          </span>
+        </span>
 
         {!isInLineup && (
           <span
@@ -120,7 +132,11 @@ export function RaiderCooldownRow({
       </div>
 
       <div
-        className="cooldown-timeline-row-track"
+        className={
+          isInLineup
+            ? "cooldown-timeline-row-track"
+            : "cooldown-timeline-row-track cooldown-timeline-row-track-readonly"
+        }
         onClick={handleClick}
         ref={trackRef}
         role="button"
@@ -167,72 +183,6 @@ export function RaiderCooldownRow({
               trackRef={trackRef}
             />
           ))}
-
-        {pendingCreationSeconds !==
-          null && (
-          <div
-            className="cooldown-create-popover-anchor"
-            style={
-              {
-                left: `${percentOf(pendingCreationSeconds, planningDurationSeconds)}%`
-              } as CSSProperties
-            }
-          >
-            <CooldownCreatePopover
-              categoryFilter={
-                categoryFilter
-              }
-              member={member}
-              onCancel={
-                onCancelCreate
-              }
-              onSelectFreeText={(
-                name
-              ) =>
-                onCreateAssignment(
-                  {
-                    memberId:
-                      member.id,
-                    abilityName:
-                      name,
-                    spellId: null,
-                    abilityIcon:
-                      null,
-                    phaseLabel:
-                      null,
-                    timestampSeconds:
-                      pendingCreationSeconds,
-                    sortOrder: 0
-                  }
-                )
-              }
-              onSelectSpell={(
-                spell
-              ) =>
-                onCreateAssignment(
-                  {
-                    memberId:
-                      member.id,
-                    abilityName:
-                      spell.name,
-                    spellId:
-                      spell.spellId,
-                    abilityIcon:
-                      spell.icon,
-                    phaseLabel:
-                      null,
-                    timestampSeconds:
-                      pendingCreationSeconds,
-                    sortOrder: 0
-                  }
-                )
-              }
-              seconds={
-                pendingCreationSeconds
-              }
-            />
-          </div>
-        )}
       </div>
     </div>
   );

@@ -3,33 +3,37 @@ import type {
 } from "express";
 import { RaidCooldownService } from "./cooldown.service.js";
 import {
-  raidBossFightDurationInputSchema,
-  raidBossPhaseMarkerIdSchema,
-  raidBossPhaseMarkerInputSchema,
   raidCooldownAssignmentIdSchema,
   raidCooldownAssignmentInputSchema,
   raidCooldownBossIdSchema,
-  raidCooldownEventIdParamSchema
+  raidCooldownPlanMemberIdParamSchema,
+  raidCooldownPlanMemberInputSchema,
+  raidCooldownSetupIdParamSchema
 } from "./cooldown.validation.js";
 
+/**
+ * The Cooldown Plan — plan members and assignments — always Setup+Boss
+ * scoped. Encounter facts (casts, phases, fight duration) are handled
+ * by RaidCooldownEncounterController instead.
+ */
 export class RaidCooldownController {
   constructor(
     private readonly service:
       RaidCooldownService
   ) {}
 
-  listForEvent: RequestHandler = async (
+  listForSetup: RequestHandler = async (
     request,
     response
   ) => {
-    const eventId =
-      raidCooldownEventIdParamSchema.parse(
-        request.params.eventId
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
       );
 
     const assignments =
-      await this.service.listForEvent(
-        eventId
+      await this.service.listForSetup(
+        setupId
       );
 
     response.json({
@@ -42,6 +46,11 @@ export class RaidCooldownController {
     request,
     response
   ) => {
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
+      );
+
     const bossId =
       raidCooldownBossIdSchema.parse(
         request.params.bossId
@@ -54,6 +63,7 @@ export class RaidCooldownController {
 
     const assignment =
       await this.service.createAssignment(
+        setupId,
         bossId,
         {
           ...input,
@@ -81,6 +91,16 @@ export class RaidCooldownController {
     request,
     response
   ) => {
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
+      );
+
+    const bossId =
+      raidCooldownBossIdSchema.parse(
+        request.params.bossId
+      );
+
     const assignmentId =
       raidCooldownAssignmentIdSchema.parse(
         request.params.assignmentId
@@ -93,6 +113,8 @@ export class RaidCooldownController {
 
     const assignment =
       await this.service.updateAssignment(
+        setupId,
+        bossId,
         assignmentId,
         {
           ...input,
@@ -118,136 +140,112 @@ export class RaidCooldownController {
     request,
     response
   ) => {
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
+      );
+
+    const bossId =
+      raidCooldownBossIdSchema.parse(
+        request.params.bossId
+      );
+
     const assignmentId =
       raidCooldownAssignmentIdSchema.parse(
         request.params.assignmentId
       );
 
     await this.service.deleteAssignment(
+      setupId,
+      bossId,
       assignmentId
     );
 
     response.status(204).send();
   };
 
-  updateFightDuration: RequestHandler = async (
+  listPlanMembers: RequestHandler = async (
     request,
     response
   ) => {
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
+      );
+
     const bossId =
       raidCooldownBossIdSchema.parse(
         request.params.bossId
       );
 
-    const input =
-      raidBossFightDurationInputSchema.parse(
-        request.body
-      );
-
-    const boss =
-      await this.service.updateFightDuration(
-        bossId,
-        input
-      );
-
-    response.json(boss);
-  };
-
-  listPhaseMarkers: RequestHandler = async (
-    request,
-    response
-  ) => {
-    const bossId =
-      raidCooldownBossIdSchema.parse(
-        request.params.bossId
-      );
-
-    const markers =
-      await this.service.listPhaseMarkers(
+    const members =
+      await this.service.listPlanMembers(
+        setupId,
         bossId
       );
 
     response.json({
-      items: markers,
-      total: markers.length
+      items: members,
+      total: members.length
     });
   };
 
-  createPhaseMarker: RequestHandler = async (
+  addPlanMember: RequestHandler = async (
     request,
     response
   ) => {
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
+      );
+
     const bossId =
       raidCooldownBossIdSchema.parse(
         request.params.bossId
       );
 
     const input =
-      raidBossPhaseMarkerInputSchema.parse(
+      raidCooldownPlanMemberInputSchema.parse(
         request.body
       );
 
-    const marker =
-      await this.service.createPhaseMarker(
+    const planMember =
+      await this.service.addPlanMember(
+        setupId,
         bossId,
-        input
+        input.memberId
       );
 
     response
       .status(201)
-      .json(marker);
+      .json(planMember);
   };
 
-  deletePhaseMarker: RequestHandler = async (
+  removePlanMember: RequestHandler = async (
     request,
     response
   ) => {
-    const markerId =
-      raidBossPhaseMarkerIdSchema.parse(
-        request.params.markerId
+    const setupId =
+      raidCooldownSetupIdParamSchema.parse(
+        request.params.setupId
       );
 
-    await this.service.deletePhaseMarker(
-      markerId
+    const bossId =
+      raidCooldownBossIdSchema.parse(
+        request.params.bossId
+      );
+
+    const memberId =
+      raidCooldownPlanMemberIdParamSchema.parse(
+        request.params.memberId
+      );
+
+    await this.service.removePlanMember(
+      setupId,
+      bossId,
+      memberId
     );
 
     response.status(204).send();
-  };
-
-  listAbilityCasts: RequestHandler = async (
-    request,
-    response
-  ) => {
-    const bossId =
-      raidCooldownBossIdSchema.parse(
-        request.params.bossId
-      );
-
-    const casts =
-      await this.service.listAbilityCasts(
-        bossId
-      );
-
-    response.json({
-      items: casts,
-      total: casts.length
-    });
-  };
-
-  syncBossFromWarcraftLogs: RequestHandler = async (
-    request,
-    response
-  ) => {
-    const bossId =
-      raidCooldownBossIdSchema.parse(
-        request.params.bossId
-      );
-
-    const result =
-      await this.service.syncBossFromWarcraftLogs(
-        bossId
-      );
-
-    response.json(result);
   };
 }

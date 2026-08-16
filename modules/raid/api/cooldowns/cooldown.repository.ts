@@ -26,13 +26,16 @@ export class RaidCooldownRepository {
     );
   }
 
-  findForEvent(eventId: string) {
+  /**
+   * A Setup belongs to exactly one RaidEvent, so scoping by setupId
+   * alone already covers every boss of that event — no separate
+   * eventId parameter needed.
+   */
+  findForSetup(setupId: string) {
     return prisma.raidCooldownAssignment.findMany(
       {
         where: {
-          boss: {
-            raidEventId: eventId
-          }
+          setupId
         },
         orderBy: [
           {
@@ -42,6 +45,85 @@ export class RaidCooldownRepository {
             sortOrder: "asc"
           }
         ]
+      }
+    );
+  }
+
+  findPlanMembersForSetupAndBoss(
+    setupId: string,
+    bossId: string
+  ) {
+    return prisma.raidCooldownPlanMember.findMany(
+      {
+        where: {
+          setupId,
+          bossId
+        },
+        orderBy: {
+          sortOrder: "asc"
+        }
+      }
+    );
+  }
+
+  /**
+   * Idempotent by design (upsert on the bossId+setupId+memberId
+   * unique constraint) — "add to timeline" from Timeline Controls
+   * should never error just because the player is already a plan
+   * member of this exact Setup+Boss.
+   */
+  addPlanMember(
+    setupId: string,
+    bossId: string,
+    memberId: string
+  ) {
+    return prisma.raidCooldownPlanMember.upsert(
+      {
+        where: {
+          bossId_setupId_memberId: {
+            bossId,
+            setupId,
+            memberId
+          }
+        },
+        create: {
+          bossId,
+          setupId,
+          memberId
+        },
+        update: {}
+      }
+    );
+  }
+
+  countAssignmentsForSetupBossMember(
+    setupId: string,
+    bossId: string,
+    memberId: string
+  ) {
+    return prisma.raidCooldownAssignment.count(
+      {
+        where: {
+          setupId,
+          bossId,
+          memberId
+        }
+      }
+    );
+  }
+
+  deletePlanMember(
+    setupId: string,
+    bossId: string,
+    memberId: string
+  ) {
+    return prisma.raidCooldownPlanMember.deleteMany(
+      {
+        where: {
+          setupId,
+          bossId,
+          memberId
+        }
       }
     );
   }
@@ -59,12 +141,14 @@ export class RaidCooldownRepository {
   }
 
   createAssignment(
+    setupId: string,
     bossId: string,
     input: RaidCooldownAssignmentInput
   ) {
     return prisma.raidCooldownAssignment.create(
       {
         data: {
+          setupId,
           bossId,
           memberId: input.memberId,
           abilityName:

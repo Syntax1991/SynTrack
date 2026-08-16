@@ -6,7 +6,7 @@ import {
 import {
   createCooldownAssignment,
   deleteCooldownAssignment,
-  getCooldownAssignmentsForEvent,
+  getCooldownAssignmentsForSetup,
   updateCooldownAssignment
 } from "../api/cooldownApi";
 import type {
@@ -14,8 +14,14 @@ import type {
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 
+/**
+ * Scoped by Setup (a Setup belongs to exactly one RaidEvent, so this
+ * already covers every boss of that event) — never by bossId alone,
+ * so two Setups sharing the same boss can never see each other's
+ * assignments.
+ */
 export function useCooldownAssignments(
-  eventId: string | null
+  setupId: string | null
 ) {
   const [
     assignments,
@@ -32,7 +38,7 @@ export function useCooldownAssignments(
 
   const loadAssignments =
     useCallback(async () => {
-      if (!eventId) {
+      if (!setupId) {
         setAssignments([]);
         return;
       }
@@ -42,8 +48,8 @@ export function useCooldownAssignments(
 
       try {
         const response =
-          await getCooldownAssignmentsForEvent(
-            eventId
+          await getCooldownAssignmentsForSetup(
+            setupId
           );
 
         setAssignments(
@@ -60,7 +66,7 @@ export function useCooldownAssignments(
       finally {
         setIsLoading(false);
       }
-    }, [eventId]);
+    }, [setupId]);
 
   useEffect(() => {
     void loadAssignments();
@@ -70,10 +76,15 @@ export function useCooldownAssignments(
     bossId: string,
     input: RaidCooldownAssignmentInput
   ) => {
+    if (!setupId) {
+      return;
+    }
+
     setError(null);
 
     try {
       await createCooldownAssignment(
+        setupId,
         bossId,
         input
       );
@@ -92,13 +103,20 @@ export function useCooldownAssignments(
   };
 
   const editAssignment = async (
+    bossId: string,
     assignmentId: string,
     input: RaidCooldownAssignmentInput
   ) => {
+    if (!setupId) {
+      return;
+    }
+
     setError(null);
 
     try {
       await updateCooldownAssignment(
+        setupId,
+        bossId,
         assignmentId,
         input
       );
@@ -117,12 +135,19 @@ export function useCooldownAssignments(
   };
 
   const removeAssignment = async (
+    bossId: string,
     assignmentId: string
   ) => {
+    if (!setupId) {
+      return;
+    }
+
     setError(null);
 
     try {
       await deleteCooldownAssignment(
+        setupId,
+        bossId,
         assignmentId
       );
 

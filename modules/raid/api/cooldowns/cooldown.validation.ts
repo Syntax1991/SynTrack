@@ -87,7 +87,7 @@ export const raidBossFightDurationInputSchema =
     })
     .strict();
 
-export const raidCooldownEventIdParamSchema =
+export const raidCooldownSetupIdParamSchema =
   z.string().min(1);
 
 export const raidCooldownBossIdSchema =
@@ -97,4 +97,16 @@ export const raidCooldownAssignmentIdSchema =
   z.string().min(1);
 
 export const raidBossPhaseMarkerIdSchema =
+  z.string().min(1);
+
+export const raidCooldownPlanMemberInputSchema =
+  z
+    .object({
+      memberId: z
+        .string()
+        .min(1)
+    })
+    .strict();
+
+export const raidCooldownPlanMemberIdParamSchema =
   z.string().min(1);

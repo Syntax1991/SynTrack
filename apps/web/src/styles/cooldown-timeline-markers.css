@@ -128,6 +128,12 @@
   border: 1px solid var(--border-strong);
 }
 
+.cooldown-list-panel-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 .cooldown-list-ability {
   display: inline-flex;
   align-items: center;

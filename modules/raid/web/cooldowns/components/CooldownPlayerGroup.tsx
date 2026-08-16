@@ -5,33 +5,21 @@ import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
-import type { PlayerSpellRow } from "../utils/cooldownCategories";
-import { resolveAssignmentCategory } from "../utils/cooldownCategories";
+import type { PlayerPlanLane } from "../utils/cooldownPlannerFilters";
 import { isAssignedMemberInLineup } from "../utils/timelineFormat";
 import { RaiderCooldownRow } from "./RaiderCooldownRow";
 
-type PendingCreation = {
-  rowKey: string;
-  seconds: number;
-};
-
 type CooldownPlayerGroupProps = {
   member: GuildMember;
-  spellRows: Array<
-    PlayerSpellRow<RaidCooldownAssignment>
+  lanes: Array<
+    PlayerPlanLane<RaidCooldownAssignment>
   >;
   lineupMemberIds: Set<string>;
   planningDurationSeconds: number;
   isTooltipSuppressed: boolean;
-  pendingCreation: PendingCreation | null;
-  onRowClick: (
-    rowKey: string,
-    seconds: number
-  ) => void;
   onCreateAssignment: (
     input: RaidCooldownAssignmentInput
   ) => void;
-  onCancelCreate: () => void;
   onRemoveAssignment: (
     assignmentId: string
   ) => void;
@@ -45,21 +33,19 @@ type CooldownPlayerGroupProps = {
 };
 
 /**
- * The player is the group; each real spell they hold is one lane
- * inside it — never a lane per class-eligible spell they merely
- * could hold. The group header carries the player's identity once,
- * so each lane's own label only needs the spell (icon + name).
+ * The player is the group; each visible lane (real class spell, or a
+ * historical spell that predates the catalog) is a row inside it —
+ * present whether or not it currently has any assignment. The group
+ * header carries the player's identity once, so each lane's own
+ * label only needs the spell (icon + name).
  */
 export function CooldownPlayerGroup({
   member,
-  spellRows,
+  lanes,
   lineupMemberIds,
   planningDurationSeconds,
   isTooltipSuppressed,
-  pendingCreation,
-  onRowClick,
   onCreateAssignment,
-  onCancelCreate,
   onRemoveAssignment,
   onRepositionAssignment,
   onDragPreview
@@ -94,46 +80,23 @@ export function CooldownPlayerGroup({
         )}
       </div>
 
-      {spellRows.map((row) => {
-        const rowCategory =
-          row.spellId !== null
-            ? resolveAssignmentCategory({
-                spellId: row.spellId
-              })
-            : "Other";
-
-        return (
+      {lanes.map((lane) => (
         <RaiderCooldownRow
-          assignments={row.assignments}
-          categoryFilter={
-            rowCategory !== "Other"
-              ? rowCategory
-              : undefined
+          abilityIcon={
+            lane.abilityIcon
+          }
+          abilityName={
+            lane.abilityName
+          }
+          assignments={
+            lane.assignments
           }
           isInLineup={isInLineup}
           isTooltipSuppressed={
             isTooltipSuppressed
           }
-          key={row.key}
-          label={
-            <span className="cooldown-spell-row-label">
-              {row.abilityIcon && (
-                <img
-                  alt=""
-                  className="cooldown-spell-row-icon"
-                  src={row.abilityIcon}
-                />
-              )}
-
-              <span className="cooldown-spell-row-spell">
-                {row.abilityName}
-              </span>
-            </span>
-          }
+          key={lane.key}
           member={member}
-          onCancelCreate={
-            onCancelCreate
-          }
           onCreateAssignment={
             onCreateAssignment
           }
@@ -144,21 +107,12 @@ export function CooldownPlayerGroup({
           onRepositionAssignment={
             onRepositionAssignment
           }
-          onTrackClick={(seconds) =>
-            onRowClick(row.key, seconds)
-          }
-          pendingCreationSeconds={
-            pendingCreation?.rowKey ===
-            row.key
-              ? pendingCreation.seconds
-              : null
-          }
           planningDurationSeconds={
             planningDurationSeconds
           }
+          spellId={lane.spellId}
         />
-        );
-      })}
+      ))}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { useState } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
+import type { RaidSetupMember } from "../../raid-setup/types/raidSetup.types";
 import type {
   RaidBossAbilityCast,
   RaidBossPhaseMarker,
@@ -16,6 +16,15 @@ type BossCooldownTimelineProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  setupMembers: RaidSetupMember[];
+  planMemberIds: Set<string>;
+  onAddPlanMember: (
+    memberId: string
+  ) => void;
+  onRemovePlanMember: (
+    memberId: string
+  ) => void;
+  setupUrl: string;
   onAddAssignment: (
     bossId: string,
     input: RaidCooldownAssignmentInput
@@ -39,19 +48,16 @@ export function BossCooldownTimeline({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  setupMembers,
+  planMemberIds,
+  onAddPlanMember,
+  onRemovePlanMember,
+  setupUrl,
   onAddAssignment,
   onRemoveAssignment,
   onRepositionAssignment,
   onRemovePhaseMarker
 }: BossCooldownTimelineProps) {
-  const [
-    pendingCreation,
-    setPendingCreation
-  ] = useState<{
-    rowKey: string;
-    seconds: number;
-  } | null>(null);
-
   return (
     <TimelineGrid
       assignments={assignments}
@@ -59,45 +65,39 @@ export function BossCooldownTimeline({
       lineupMemberIds={
         lineupMemberIds
       }
-      onCancelCreate={() =>
-        setPendingCreation(null)
+      onAddPlanMember={
+        onAddPlanMember
       }
       onCreateAssignment={(
         input
       ) => {
-        setPendingCreation(null);
-
         void onAddAssignment(
           bossId,
           input
         );
       }}
-      onRaiderTrackClick={(
-        rowKey,
-        seconds
-      ) =>
-        setPendingCreation({
-          rowKey,
-          seconds
-        })
-      }
       onRemoveAssignment={
         onRemoveAssignment
       }
       onRemovePhaseMarker={
         onRemovePhaseMarker
       }
+      onRemovePlanMember={
+        onRemovePlanMember
+      }
       onRepositionAssignment={
         onRepositionAssignment
       }
-      pendingCreation={
-        pendingCreation
+      planMemberIds={
+        planMemberIds
       }
       planningDurationSeconds={
         planningDurationSeconds
       }
       phaseMarkers={phaseMarkers}
       rosterMembers={rosterMembers}
+      setupMembers={setupMembers}
+      setupUrl={setupUrl}
     />
   );
 }

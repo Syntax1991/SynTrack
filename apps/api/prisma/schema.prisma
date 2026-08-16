@@ -456,10 +456,12 @@ model RaidSetup {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  plan        RaidPlan              @relation(fields: [raidPlanId], references: [id], onDelete: Cascade)
-  event       RaidEvent?            @relation(fields: [raidEventId], references: [id], onDelete: Cascade)
-  members     RaidSetupMember[]
-  bossEntries RaidBossRosterEntry[]
+  plan                RaidPlan                 @relation(fields: [raidPlanId], references: [id], onDelete: Cascade)
+  event               RaidEvent?               @relation(fields: [raidEventId], references: [id], onDelete: Cascade)
+  members             RaidSetupMember[]
+  bossEntries         RaidBossRosterEntry[]
+  planMembers         RaidCooldownPlanMember[]
+  cooldownAssignments RaidCooldownAssignment[]
 
   @@unique([raidEventId, key])
   @@index([raidPlanId])
@@ -522,8 +524,34 @@ model RaidBoss {
   cooldownAssignments RaidCooldownAssignment[]
   phaseMarkers        RaidBossPhaseMarker[]
   abilityCasts        RaidBossAbilityCast[]
+  planMembers         RaidCooldownPlanMember[]
 
   @@index([raidEventId])
+}
+
+/**
+ * "This member has been added to this boss's cooldown plan" — distinct
+ * from RaidBossRosterEntry (Setup/boss-lineup participation) and from
+ * RaidCooldownAssignment (an actual placed marker). A row here means
+ * the player's real class spell lanes render on the Timeline canvas
+ * even with zero assignments; removing it must never cascade-delete
+ * RaidCooldownAssignment (enforced in the service layer, not here).
+ */
+model RaidCooldownPlanMember {
+  id        String   @id @default(cuid())
+  bossId    String
+  setupId   String
+  memberId  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  boss  RaidBoss  @relation(fields: [bossId], references: [id], onDelete: Cascade)
+  setup RaidSetup @relation(fields: [setupId], references: [id], onDelete: Cascade)
+
+  @@unique([bossId, setupId, memberId])
+  @@index([bossId])
+  @@index([setupId])
+  @@index([memberId])
 }
 
 model RaidBossPhaseMarker {
@@ -575,6 +603,7 @@ model RaidBossRosterEntry {
 model RaidCooldownAssignment {
   id               String   @id @default(cuid())
   bossId           String
+  setupId          String
   memberId         String
   abilityName      String
   spellId          Int?
@@ -585,9 +614,11 @@ model RaidCooldownAssignment {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  boss RaidBoss @relation(fields: [bossId], references: [id], onDelete: Cascade)
+  boss  RaidBoss  @relation(fields: [bossId], references: [id], onDelete: Cascade)
+  setup RaidSetup @relation(fields: [setupId], references: [id], onDelete: Cascade)
 
   @@index([bossId])
+  @@index([setupId])
   @@index([memberId])
 }
 
