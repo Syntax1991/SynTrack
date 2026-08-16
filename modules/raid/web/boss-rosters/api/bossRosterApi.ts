@@ -80,3 +80,20 @@ export function clearBossRosterEntry(
     }
   );
 }
+
+export function setBossRosterEntrySpec(
+  setupId: string,
+  bossId: string,
+  memberId: string,
+  specId: number | null
+): Promise<RaidBoss> {
+  return apiRequest<RaidBoss>(
+    `/raid/boss-rosters/setups/${setupId}/bosses/${bossId}/members/${memberId}/spec`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        specId
+      })
+    }
+  );
+}

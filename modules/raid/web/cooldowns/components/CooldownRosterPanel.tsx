@@ -6,16 +6,19 @@ import { Link } from "react-router-dom";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
 import type { RaidSetupMember } from "../../raid-setup/types/raidSetup.types";
-import { CooldownRosterSpellPanel } from "./CooldownRosterSpellPanel";
 import {
-  EyeIcon,
-  EyeOffIcon,
-  SpellSettingsIcon
-} from "./CooldownRosterIcons";
+  getSpecById,
+  resolveEffectiveRole,
+  type EffectiveRole
+} from "../../../shared/catalog/raidSpecializationCatalog";
+import { CooldownRosterEntryRow } from "./CooldownRosterEntryRow";
+import { CooldownRosterRoleFilter } from "./CooldownRosterRoleFilter";
+import { CooldownRosterSpellPanel } from "./CooldownRosterSpellPanel";
 
 type CooldownRosterPanelProps = {
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  specIdByMemberId: Map<string, number | null>;
   setupMembers: RaidSetupMember[];
   selectedMemberId: string | null;
   onSelectMember: (memberId: string | null) => void;
@@ -58,6 +61,7 @@ const emptySpellIdSet = new Set<number>();
 export function CooldownRosterPanel({
   rosterMembers,
   lineupMemberIds,
+  specIdByMemberId,
   setupMembers,
   selectedMemberId,
   onSelectMember,
@@ -76,9 +80,22 @@ export function CooldownRosterPanel({
     setIsInactiveExpanded
   ] = useState(false);
 
-  const lineupMembers = rosterMembers.filter(
-    (member) => lineupMemberIds.has(member.id)
-  );
+  const [roleFilter, setRoleFilter] =
+    useState<"ALL" | EffectiveRole>("ALL");
+
+  const lineupMembers = rosterMembers
+    .filter((member) =>
+      lineupMemberIds.has(member.id)
+    )
+    .filter(
+      (member) =>
+        roleFilter === "ALL" ||
+        resolveEffectiveRole(
+          specIdByMemberId.get(
+            member.id
+          ) ?? null
+        ) === roleFilter
+    );
 
   const inactiveMembers = setupMembers
     .filter(
@@ -138,149 +155,47 @@ export function CooldownRosterPanel({
         </Link>
       </div>
 
+      <CooldownRosterRoleFilter
+        active={roleFilter}
+        onChange={setRoleFilter}
+      />
+
       <div className="cooldown-roster-panel-list">
-        {lineupMembers.map((member) => {
-          const isHidden = hiddenMemberIds.has(
-            member.id
-          );
-
-          const isSelected =
-            selectedMemberId === member.id;
-
-          const rowClassName = [
-            "cooldown-roster-entry",
-            isHidden ? "is-hidden" : null,
-            isSelected ? "is-selected" : null
-          ]
-            .filter(Boolean)
-            .join(" ");
-
-          return (
-            <div
-              className={rowClassName}
-              key={member.id}
-              style={
-                {
-                  "--marker-color":
-                    resolveClassColor(
-                      member.className
-                    )
-                } as CSSProperties
-              }
-            >
-              <button
-                className={
-                  isSelected
-                    ? "cooldown-roster-entry-name is-selected"
-                    : "cooldown-roster-entry-name"
-                }
-                onClick={() =>
-                  handleSelectToggle(
-                    member.id
-                  )
-                }
-                type="button"
-              >
-                {member.name}
-              </button>
-
-              <button
-                aria-label={
-                  isHidden
-                    ? `Show ${member.name} in PLAN`
-                    : `Hide ${member.name} from PLAN`
-                }
-                className="cooldown-roster-entry-visibility"
-                onClick={() =>
-                  onToggleHidden(member.id)
-                }
-                title={
-                  isHidden
-                    ? "Hidden from PLAN — click to show"
-                    : "Visible in PLAN — click to hide"
-                }
-                type="button"
-              >
-                {isHidden ? (
-                  <EyeOffIcon />
-                ) : (
-                  <EyeIcon />
-                )}
-              </button>
-
-              <button
-                aria-label={`Open ${member.name}'s spell controls`}
-                className={
-                  isSelected
-                    ? "cooldown-roster-entry-visibility is-selected"
-                    : "cooldown-roster-entry-visibility"
-                }
-                onClick={() =>
-                  handleSelectToggle(
-                    member.id
-                  )
-                }
-                title="Spell visibility for this player"
-                type="button"
-              >
-                <SpellSettingsIcon />
-              </button>
-
-              {(() => {
-                const isPlanMember =
-                  planMemberIds.has(
-                    member.id
-                  );
-
-                const hasAssignments =
-                  assignedMemberIds.has(
-                    member.id
-                  );
-
-                if (!isPlanMember) {
-                  return (
-                    <button
-                      aria-label={`Add ${member.name} to the Cooldown Plan`}
-                      className="cooldown-roster-entry-plan-toggle"
-                      onClick={() =>
-                        onAddPlanMember(
-                          member.id
-                        )
-                      }
-                      title="Add to Timeline"
-                      type="button"
-                    >
-                      +
-                    </button>
-                  );
-                }
-
-                return (
-                  <button
-                    aria-label={`Remove ${member.name} from the Cooldown Plan`}
-                    className="cooldown-roster-entry-plan-toggle is-in-plan"
-                    disabled={
-                      hasAssignments
-                    }
-                    onClick={() =>
-                      onRemovePlanMember(
-                        member.id
-                      )
-                    }
-                    title={
-                      hasAssignments
-                        ? "Remove assignments before removing this player from the timeline."
-                        : "Remove from Timeline"
-                    }
-                    type="button"
-                  >
-                    ✓
-                  </button>
-                );
-              })()}
-            </div>
-          );
-        })}
+        {lineupMembers.map((member) => (
+          <CooldownRosterEntryRow
+            hasAssignments={assignedMemberIds.has(
+              member.id
+            )}
+            isHidden={hiddenMemberIds.has(
+              member.id
+            )}
+            isPlanMember={planMemberIds.has(
+              member.id
+            )}
+            isSelected={
+              selectedMemberId === member.id
+            }
+            key={member.id}
+            member={member}
+            onAddPlanMember={
+              onAddPlanMember
+            }
+            onRemovePlanMember={
+              onRemovePlanMember
+            }
+            onSelectToggle={
+              handleSelectToggle
+            }
+            onToggleHidden={
+              onToggleHidden
+            }
+            spec={getSpecById(
+              specIdByMemberId.get(
+                member.id
+              ) ?? null
+            )}
+          />
+        ))}
       </div>
 
       {selectedMember && (

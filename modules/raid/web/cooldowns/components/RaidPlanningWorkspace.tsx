@@ -26,6 +26,7 @@ type RaidPlanningWorkspaceProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  specIdByMemberId: Map<string, number | null>;
   setupMembers: RaidSetupMember[];
   setupUrl: string;
   abilitySuggestions: string[];
@@ -62,6 +63,7 @@ export function RaidPlanningWorkspace({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  specIdByMemberId,
   setupMembers,
   setupUrl,
   abilitySuggestions,
@@ -220,6 +222,9 @@ export function RaidPlanningWorkspace({
             setupMembers
           }
           setupUrl={setupUrl}
+          specIdByMemberId={
+            specIdByMemberId
+          }
         />
       ) : (
         <CooldownBossPanel

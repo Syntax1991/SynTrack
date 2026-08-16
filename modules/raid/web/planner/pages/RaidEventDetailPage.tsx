@@ -80,7 +80,8 @@ export function RaidEventDetailPage() {
     addBoss,
     removeBoss,
     setEntry,
-    clearEntry
+    clearEntry,
+    setSpec
   } = useBossRosters(
     eventId ?? null,
     setup?.id ?? null
@@ -264,6 +265,17 @@ export function RaidEventDetailPage() {
           ) => {
             void handleDeleteBoss(
               boss
+            );
+          }}
+          onSetSpec={(
+            bossId,
+            memberId,
+            specId
+          ) => {
+            void setSpec(
+              bossId,
+              memberId,
+              specId
             );
           }}
           onSetStatus={(

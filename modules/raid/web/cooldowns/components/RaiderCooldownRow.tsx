@@ -20,6 +20,7 @@ type RaiderCooldownRowProps = {
   planningDurationSeconds: number;
   assignments: RaidCooldownAssignment[];
   isInLineup: boolean;
+  isIncompatibleWithSpec: boolean;
   isTooltipSuppressed: boolean;
   onCreateAssignment: (
     input: RaidCooldownAssignmentInput
@@ -55,6 +56,7 @@ export function RaiderCooldownRow({
   planningDurationSeconds,
   assignments,
   isInLineup,
+  isIncompatibleWithSpec,
   isTooltipSuppressed,
   onCreateAssignment,
   onRemoveAssignment,
@@ -64,10 +66,13 @@ export function RaiderCooldownRow({
   const trackRef =
     useRef<HTMLDivElement>(null);
 
+  const canCreate =
+    isInLineup && !isIncompatibleWithSpec;
+
   const handleClick = (
     event: MouseEvent<HTMLDivElement>
   ) => {
-    if (!trackRef.current || !isInLineup) {
+    if (!trackRef.current || !canCreate) {
       return;
     }
 
@@ -129,11 +134,20 @@ export function RaiderCooldownRow({
             Not in current setup
           </span>
         )}
+
+        {isInLineup && isIncompatibleWithSpec && (
+          <span
+            className="cooldown-timeline-row-warning"
+            title={`${abilityName} is not available for this raider's currently selected specialization — the existing assignment is preserved and becomes available again if the spec changes back.`}
+          >
+            Not available for spec
+          </span>
+        )}
       </div>
 
       <div
         className={
-          isInLineup
+          canCreate
             ? "cooldown-timeline-row-track"
             : "cooldown-timeline-row-track cooldown-timeline-row-track-readonly"
         }
@@ -158,6 +172,9 @@ export function RaiderCooldownRow({
               }
               isInLineup={
                 isInLineup
+              }
+              isIncompatibleWithSpec={
+                isIncompatibleWithSpec
               }
               isTooltipSuppressed={
                 isTooltipSuppressed

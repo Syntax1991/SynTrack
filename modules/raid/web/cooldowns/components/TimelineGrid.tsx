@@ -36,6 +36,7 @@ type TimelineGridProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  specIdByMemberId: Map<string, number | null>;
   setupMembers: RaidSetupMember[];
   planMemberIds: Set<string>;
   onAddPlanMember: (
@@ -67,6 +68,7 @@ export function TimelineGrid({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  specIdByMemberId,
   setupMembers,
   planMemberIds,
   onAddPlanMember,
@@ -193,6 +195,9 @@ export function TimelineGrid({
         }
         setupMembers={setupMembers}
         setupUrl={setupUrl}
+        specIdByMemberId={
+          specIdByMemberId
+        }
       />
 
       <div className="cooldown-timeline-grid">
@@ -330,6 +335,9 @@ export function TimelineGrid({
             }
             selectedMemberId={
               selectedMemberId
+            }
+            specIdByMemberId={
+              specIdByMemberId
             }
           />
         </div>

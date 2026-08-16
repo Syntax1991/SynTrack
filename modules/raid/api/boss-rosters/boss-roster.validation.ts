@@ -33,6 +33,17 @@ export const raidBossRosterEntryInputSchema =
     })
     .strict();
 
+export const raidBossRosterEntrySpecInputSchema =
+  z
+    .object({
+      specId: z
+        .number()
+        .int()
+        .positive()
+        .nullable()
+    })
+    .strict();
+
 export const raidEventIdParamSchema =
   z.string().min(1);
 

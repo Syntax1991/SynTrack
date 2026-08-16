@@ -9,6 +9,7 @@ import {
   deleteBoss,
   getBossesForSetup,
   setBossRosterEntry,
+  setBossRosterEntrySpec,
   updateBoss
 } from "../api/bossRosterApi";
 import type {
@@ -201,6 +202,38 @@ export function useBossRosters(
     }
   };
 
+  const setSpec = async (
+    bossId: string,
+    memberId: string,
+    specId: number | null
+  ) => {
+    if (!setupId) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await setBossRosterEntrySpec(
+        setupId,
+        bossId,
+        memberId,
+        specId
+      );
+
+      await loadBosses();
+    }
+    catch (setSpecError) {
+      const message =
+        setSpecError instanceof Error
+          ? setSpecError.message
+          : "Specialization could not be set.";
+
+      setError(message);
+      throw setSpecError;
+    }
+  };
+
   return {
     bosses,
     isLoading,
@@ -209,6 +242,7 @@ export function useBossRosters(
     editBoss,
     removeBoss,
     setEntry,
-    clearEntry
+    clearEntry,
+    setSpec
   };
 }

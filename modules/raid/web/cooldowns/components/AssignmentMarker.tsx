@@ -19,6 +19,7 @@ type AssignmentMarkerProps = {
   planningDurationSeconds: number;
   trackRef: RefObject<HTMLDivElement | null>;
   isInLineup: boolean;
+  isIncompatibleWithSpec: boolean;
   isTooltipSuppressed: boolean;
   onRemove: () => void;
   onReposition: (
@@ -35,6 +36,7 @@ export function AssignmentMarker({
   planningDurationSeconds,
   trackRef,
   isInLineup,
+  isIncompatibleWithSpec,
   isTooltipSuppressed,
   onRemove,
   onReposition,
@@ -60,7 +62,10 @@ export function AssignmentMarker({
     assignment.abilityIcon
       ? "cooldown-timeline-marker-icon"
       : "",
-    isDragging ? "is-dragging" : ""
+    isDragging ? "is-dragging" : "",
+    isIncompatibleWithSpec
+      ? "is-incompatible-with-spec"
+      : ""
   ]
     .filter(Boolean)
     .join(" ");
@@ -106,6 +111,12 @@ export function AssignmentMarker({
       {!isInLineup && (
         <span className="tooltip-warning">
           Not in current setup
+        </span>
+      )}
+
+      {isInLineup && isIncompatibleWithSpec && (
+        <span className="tooltip-warning">
+          Not available for spec
         </span>
       )}
     </>

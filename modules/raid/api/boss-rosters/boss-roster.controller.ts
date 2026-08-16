@@ -5,10 +5,9 @@ import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerT
 import { RaidBossRosterService } from "./boss-roster.service.js";
 import {
   raidBossIdSchema,
-  raidBossInputSchema,
   raidBossMemberIdSchema,
   raidBossRosterEntryInputSchema,
-  raidEventIdParamSchema,
+  raidBossRosterEntrySpecInputSchema,
   raidSetupIdParamSchema
 } from "./boss-roster.validation.js";
 
@@ -40,70 +39,6 @@ export class RaidBossRosterController {
       items: bosses,
       total: bosses.length
     });
-  };
-
-  createBoss: RequestHandler = async (
-    request,
-    response
-  ) => {
-    const eventId =
-      raidEventIdParamSchema.parse(
-        request.params.eventId
-      );
-
-    const input =
-      raidBossInputSchema.parse(
-        request.body
-      );
-
-    const boss =
-      await this.service.createBoss(
-        eventId,
-        input
-      );
-
-    response
-      .status(201)
-      .json(boss);
-  };
-
-  updateBoss: RequestHandler = async (
-    request,
-    response
-  ) => {
-    const bossId =
-      raidBossIdSchema.parse(
-        request.params.bossId
-      );
-
-    const input =
-      raidBossInputSchema.parse(
-        request.body
-      );
-
-    const boss =
-      await this.service.updateBoss(
-        bossId,
-        input
-      );
-
-    response.json(boss);
-  };
-
-  deleteBoss: RequestHandler = async (
-    request,
-    response
-  ) => {
-    const bossId =
-      raidBossIdSchema.parse(
-        request.params.bossId
-      );
-
-    await this.service.deleteBoss(
-      bossId
-    );
-
-    response.status(204).send();
   };
 
   setEntry: RequestHandler = async (
@@ -173,6 +108,45 @@ export class RaidBossRosterController {
         bossId,
         setupId,
         memberId
+      );
+
+    response.json(boss);
+  };
+
+  setSpec: RequestHandler = async (
+    request,
+    response
+  ) => {
+    const setupId =
+      raidSetupIdParamSchema.parse(
+        request.params.setupId
+      );
+
+    const bossId =
+      raidBossIdSchema.parse(
+        request.params.bossId
+      );
+
+    const memberId =
+      raidBossMemberIdSchema.parse(
+        request.params.memberId
+      );
+
+    const token =
+      requireBearerToken(request);
+
+    const input =
+      raidBossRosterEntrySpecInputSchema.parse(
+        request.body
+      );
+
+    const boss =
+      await this.service.setSpec(
+        token,
+        bossId,
+        setupId,
+        memberId,
+        input.specId
       );
 
     response.json(boss);

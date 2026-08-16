@@ -36,6 +36,17 @@
   z-index: 3;
 }
 
+/*
+ * A spec change made this assignment's spell ineligible — the marker
+ * stays fully visible and interactive (remove/drag both still work),
+ * just visually flagged as needing attention, never hidden or
+ * disabled.
+ */
+.cooldown-timeline-marker.is-incompatible-with-spec {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
 .cooldown-timeline-marker-button {
   width: 100%;
   height: 100%;

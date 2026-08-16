@@ -49,9 +49,6 @@ function createService(
         return boss;
       }
     ),
-    createBoss: vi.fn(async () => boss),
-    updateBoss: vi.fn(async () => boss),
-    deleteBoss: vi.fn(async () => {}),
     upsertEntry: vi.fn(async () => {
       calls.push("repository");
     }),
@@ -288,25 +285,5 @@ describe("RaidBossRosterService.clearEntry", () => {
         "member-1"
       )
     ).rejects.toThrow(AppError);
-  });
-});
-
-describe("RaidBossRosterService boss CRUD", () => {
-  it("createBoss still uses ensureVerified, not requireCurrentOfficer", async () => {
-    const { service, verification } =
-      createService();
-
-    await service.createBoss("event-1", {
-      name: "New Boss",
-      sortOrder: 0
-    });
-
-    expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
-
-    expect(
-      verification.requireCurrentOfficer
-    ).not.toHaveBeenCalled();
   });
 });

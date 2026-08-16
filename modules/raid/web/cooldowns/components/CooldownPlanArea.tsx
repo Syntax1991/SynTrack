@@ -23,6 +23,7 @@ type CooldownPlanAreaProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  specIdByMemberId: Map<string, number | null>;
   planMemberIds: Set<string>;
   selectedMemberId: string | null;
   hiddenMemberIds: Set<string>;
@@ -67,6 +68,7 @@ export function CooldownPlanArea({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  specIdByMemberId,
   planMemberIds,
   selectedMemberId,
   hiddenMemberIds,
@@ -122,6 +124,8 @@ export function CooldownPlanArea({
       const lanes = buildPlayerPlanLanes(
         member.id,
         member.className,
+        specIdByMemberId.get(member.id) ??
+          null,
         assignments
       );
 
@@ -238,6 +242,11 @@ export function CooldownPlanArea({
                 lineupMemberIds
               }
               member={member}
+              specId={
+                specIdByMemberId.get(
+                  member.id
+                ) ?? null
+              }
               onCreateAssignment={
                 onCreateAssignment
               }

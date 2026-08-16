@@ -1,12 +1,10 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { GuildRosterRepository } from "../../../guild/api/roster/roster.repository.js";
 import type { GuildVerificationGuard } from "../../../guild/api/verification/verification.types.js";
+import { getSpecById } from "../../shared/catalog/raidSpecializationCatalog.js";
 import { RaidSetupRepository } from "../setups/setup.repository.js";
 import { RaidBossRosterRepository } from "./boss-roster.repository.js";
-import type {
-  RaidBossInput,
-  RaiderLinkGuard
-} from "./boss-roster.types.js";
+import type { RaiderLinkGuard } from "./boss-roster.types.js";
 
 export class RaidBossRosterService {
   constructor(
@@ -58,76 +56,6 @@ export class RaidBossRosterService {
     return this.enrichBosses(
       bosses,
       members
-    );
-  }
-
-  async createBoss(
-    eventId: string,
-    input: RaidBossInput
-  ) {
-    await this.verification.ensureVerified();
-
-    const event =
-      await this.repository.findEventById(
-        eventId
-      );
-
-    if (!event) {
-      throw new AppError(
-        404,
-        "Raid-Termin nicht gefunden."
-      );
-    }
-
-    return this.repository.createBoss(
-      eventId,
-      this.normalize(input)
-    );
-  }
-
-  async updateBoss(
-    bossId: string,
-    input: RaidBossInput
-  ) {
-    await this.verification.ensureVerified();
-
-    const boss =
-      await this.repository.findBossById(
-        bossId
-      );
-
-    if (!boss) {
-      throw new AppError(
-        404,
-        "Boss nicht gefunden."
-      );
-    }
-
-    return this.repository.updateBoss(
-      bossId,
-      this.normalize(input)
-    );
-  }
-
-  async deleteBoss(
-    bossId: string
-  ) {
-    await this.verification.ensureVerified();
-
-    const boss =
-      await this.repository.findBossById(
-        bossId
-      );
-
-    if (!boss) {
-      throw new AppError(
-        404,
-        "Boss nicht gefunden."
-      );
-    }
-
-    await this.repository.deleteBoss(
-      bossId
     );
   }
 
@@ -206,6 +134,86 @@ export class RaidBossRosterService {
       boss.id,
       setup.id,
       memberId
+    );
+
+    return this.enrichBossForSetup(
+      boss.id,
+      setup.id
+    );
+  }
+
+  /**
+   * The member's effective specialization for THIS Setup+Boss
+   * composition entry only — never a general "this player's spec"
+   * write. Requires an existing lineup entry (a spec describes an
+   * existing participation, it doesn't create one) and, when a spec
+   * is given, validates it's both a real catalog spec and one that
+   * actually belongs to the member's real class — never trusts the
+   * frontend's own filtering.
+   */
+  async setSpec(
+    token: string,
+    bossId: string,
+    setupId: string,
+    memberId: string,
+    specId: number | null
+  ) {
+    await this.verification.requireCurrentOfficer(
+      token
+    );
+
+    const { boss, setup } =
+      await this.requireConsistentBossAndSetup(
+        bossId,
+        setupId
+      );
+
+    const member =
+      await this.repository.findMemberById(
+        memberId
+      );
+
+    if (!member) {
+      throw new AppError(
+        404,
+        "Gildenmitglied nicht gefunden."
+      );
+    }
+
+    const entry =
+      await this.repository.findEntry(
+        boss.id,
+        setup.id,
+        memberId
+      );
+
+    if (!entry) {
+      throw new AppError(
+        404,
+        "Dieses Mitglied hat noch keinen Eintrag für diesen Boss."
+      );
+    }
+
+    if (specId !== null) {
+      const spec = getSpecById(specId);
+
+      if (
+        !spec ||
+        spec.className.toLowerCase() !==
+          member.className.toLowerCase()
+      ) {
+        throw new AppError(
+          400,
+          "Diese Spezialisierung passt nicht zur Klasse dieses Mitglieds."
+        );
+      }
+    }
+
+    await this.repository.updateSpec(
+      boss.id,
+      setup.id,
+      memberId,
+      specId
     );
 
     return this.enrichBossForSetup(
@@ -329,14 +337,5 @@ export class RaidBossRosterService {
           })
         )
     }));
-  }
-
-  private normalize(
-    input: RaidBossInput
-  ): RaidBossInput {
-    return {
-      ...input,
-      name: input.name.trim()
-    };
   }
 }

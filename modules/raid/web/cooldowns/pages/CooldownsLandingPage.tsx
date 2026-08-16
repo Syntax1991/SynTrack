@@ -106,6 +106,15 @@ export function CooldownsLandingPage() {
       )
   );
 
+  const specIdByMemberId = new Map(
+    (
+      selectedBoss?.rosterEntries ?? []
+    ).map((entry) => [
+      entry.memberId,
+      entry.specId
+    ])
+  );
+
   const handleSelectEvent = (
     event: RaidEvent
   ) => {
@@ -223,6 +232,9 @@ export function CooldownsLandingPage() {
           setupId={setup.id}
           setupMembers={
             setup.members
+          }
+          specIdByMemberId={
+            specIdByMemberId
           }
           setupUrl={`/raid/planner/${selectedEvent.id}`}
           wclSyncedAt={

@@ -1,4 +1,7 @@
-import { getSpellsForClass } from "../../../shared/catalog/raidCooldownSpellCatalog.js";
+import {
+  getSpellsForCharacter,
+  getSpellsForClass
+} from "../../../shared/catalog/raidCooldownSpellCatalog.js";
 import type { CooldownDisplayCategory } from "./cooldownCategories.js";
 import { resolveAssignmentCategory } from "./cooldownCategories.js";
 
@@ -22,23 +25,35 @@ export type PlayerPlanLane<T> = {
   abilityIcon: string | null;
   category: CooldownDisplayCategory;
   assignments: T[];
+  /**
+   * True only for a lane whose spell is a real, recognized entry for
+   * this member's class but is not eligible for their currently
+   * selected specialization (e.g. Aura Mastery kept visible after a
+   * Holy -> Retribution spec change). Never true for a lane that's
+   * currently eligible, and never true for a genuinely uncatalogued
+   * spell/free-text lane — those aren't "incompatible", they're just
+   * not in the catalog at all.
+   */
+  isIncompatibleWithSpec: boolean;
 };
 
 /**
- * Every real class spell becomes a lane up front — even with zero
- * assignments — because being a Cooldown Plan Participant means
- * "these lanes are ready to plan", not "these spells happen to have
- * a marker already". Any assignment whose spell isn't in the catalog
- * (an uncatalogued spellId, or free-text) still gets its own lane, so
- * no existing RaidCooldownAssignment ever loses its row. Never
- * invents a spell: only getSpellsForClass entries and real
- * assignments produce lanes.
+ * Every spell eligible for this member's class + specialization
+ * becomes a lane up front — even with zero assignments — because
+ * being a Cooldown Plan Participant means "these lanes are ready to
+ * plan", not "these spells happen to have a marker already". Any
+ * assignment whose spell isn't currently eligible (a spec change made
+ * it incompatible, it's an uncatalogued spellId, or free-text) still
+ * gets its own lane — a spec change must never delete, hide, or
+ * remap a real RaidCooldownAssignment. Never invents a spell: only
+ * getSpellsForCharacter entries and real assignments produce lanes.
  */
 export function buildPlayerPlanLanes<
   T extends PlanAssignmentLike
 >(
   memberId: string,
   className: string,
+  specId: number | null,
   allAssignments: T[]
 ): PlayerPlanLane<T>[] {
   const memberAssignments =
@@ -47,23 +62,33 @@ export function buildPlayerPlanLanes<
         assignment.memberId === memberId
     );
 
-  const catalogSpells =
-    getSpellsForClass(className);
+  const eligibleSpells =
+    getSpellsForCharacter({
+      className,
+      specId
+    });
 
-  const catalogSpellIds = new Set(
-    catalogSpells.map(
+  const eligibleSpellIds = new Set(
+    eligibleSpells.map(
+      (spell) => spell.spellId
+    )
+  );
+
+  const classSpellIds = new Set(
+    getSpellsForClass(className).map(
       (spell) => spell.spellId
     )
   );
 
   const catalogLanes: Array<
     PlayerPlanLane<T>
-  > = catalogSpells.map((spell) => ({
+  > = eligibleSpells.map((spell) => ({
     key: `spell:${spell.spellId}`,
     spellId: spell.spellId,
     abilityName: spell.name,
     abilityIcon: spell.icon,
     category: spell.category,
+    isIncompatibleWithSpec: false,
     assignments:
       memberAssignments.filter(
         (assignment) =>
@@ -80,7 +105,7 @@ export function buildPlayerPlanLanes<
   for (const assignment of memberAssignments) {
     if (
       assignment.spellId !== null &&
-      catalogSpellIds.has(
+      eligibleSpellIds.has(
         assignment.spellId
       )
     ) {
@@ -111,6 +136,11 @@ export function buildPlayerPlanLanes<
         category:
           resolveAssignmentCategory(
             assignment
+          ),
+        isIncompatibleWithSpec:
+          assignment.spellId !== null &&
+          classSpellIds.has(
+            assignment.spellId
           ),
         assignments: [assignment]
       });

@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
+import { getSpecById } from "../../../shared/catalog/raidSpecializationCatalog";
 import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
@@ -11,6 +12,7 @@ import { RaiderCooldownRow } from "./RaiderCooldownRow";
 
 type CooldownPlayerGroupProps = {
   member: GuildMember;
+  specId: number | null;
   lanes: Array<
     PlayerPlanLane<RaidCooldownAssignment>
   >;
@@ -41,6 +43,7 @@ type CooldownPlayerGroupProps = {
  */
 export function CooldownPlayerGroup({
   member,
+  specId,
   lanes,
   lineupMemberIds,
   planningDurationSeconds,
@@ -55,6 +58,8 @@ export function CooldownPlayerGroup({
     lineupMemberIds
   );
 
+  const spec = getSpecById(specId);
+
   return (
     <div className="cooldown-player-group">
       <div
@@ -68,7 +73,21 @@ export function CooldownPlayerGroup({
           } as CSSProperties
         }
       >
+        {spec && (
+          <img
+            alt=""
+            className="cooldown-player-group-spec-icon"
+            src={spec.icon}
+          />
+        )}
+
         {member.name}
+
+        {spec && (
+          <span className="cooldown-player-group-spec-name">
+            {spec.name}
+          </span>
+        )}
 
         {!isInLineup && (
           <span
@@ -92,6 +111,9 @@ export function CooldownPlayerGroup({
             lane.assignments
           }
           isInLineup={isInLineup}
+          isIncompatibleWithSpec={
+            lane.isIncompatibleWithSpec
+          }
           isTooltipSuppressed={
             isTooltipSuppressed
           }

@@ -583,12 +583,25 @@ model RaidBossAbilityCast {
   @@index([bossId])
 }
 
+/**
+ * `specId` is the member's effective specialization for THIS Setup +
+ * Boss composition only — never the sole source of truth for "what
+ * spec is this player" in general (a player can be Holy here and
+ * Retribution on another boss, or in another Setup). Null means
+ * UNKNOWN, a valid and expected state until an officer explicitly
+ * selects a spec here; never inferred from class. See
+ * raidSpecializationCatalog.ts for the canonical, Blizzard-verified
+ * specialization ids this references (no FK — same loose-reference
+ * convention as memberId, since specId is reference-catalog data, not
+ * a database-owned entity).
+ */
 model RaidBossRosterEntry {
   id        String   @id @default(cuid())
   bossId    String
   setupId   String
   memberId  String
   status    String   @default("CONFIRMED")
+  specId    Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

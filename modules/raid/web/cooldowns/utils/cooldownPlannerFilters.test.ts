@@ -27,6 +27,7 @@ describe("buildPlayerPlanLanes", () => {
     const lanes = buildPlayerPlanLanes(
       "member-1",
       "Warlock",
+      null,
       []
     );
 
@@ -50,6 +51,7 @@ describe("buildPlayerPlanLanes", () => {
     const lanes = buildPlayerPlanLanes(
       "member-1",
       "Warlock",
+      null,
       [
         assignment({}),
         assignment({})
@@ -73,6 +75,7 @@ describe("buildPlayerPlanLanes", () => {
     const lanes = buildPlayerPlanLanes(
       "member-1",
       "Warlock",
+      null,
       [
         assignment({
           spellId: 999999,
@@ -96,6 +99,7 @@ describe("buildPlayerPlanLanes", () => {
     const lanes = buildPlayerPlanLanes(
       "member-1",
       "Warlock",
+      null,
       [
         assignment({
           spellId: null,
@@ -121,6 +125,7 @@ describe("buildPlayerPlanLanes", () => {
     const lanes = buildPlayerPlanLanes(
       "member-1",
       "Not A Real Class",
+      null,
       []
     );
 

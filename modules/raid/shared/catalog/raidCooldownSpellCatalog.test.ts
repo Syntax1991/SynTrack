@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getSpellById,
+  getSpellsForCharacter,
   getSpellsForClass,
   raidCooldownSpellCatalog
 } from "./raidCooldownSpellCatalog.js";
@@ -72,5 +73,105 @@ describe("raidCooldownSpellCatalog", () => {
     );
 
     expect(classes.size).toBe(13);
+  });
+
+  it("has both class-wide and spec-specific entries — never fabricates a restriction", () => {
+    const classWide = raidCooldownSpellCatalog.filter(
+      (spell) => spell.specIds === null
+    );
+
+    const specSpecific = raidCooldownSpellCatalog.filter(
+      (spell) => spell.specIds !== null
+    );
+
+    expect(classWide.length).toBeGreaterThan(0);
+    expect(specSpecific.length).toBeGreaterThan(0);
+  });
+});
+
+describe("getSpellsForCharacter", () => {
+  it("includes class-wide Paladin spells for any real spec", () => {
+    const holySpells = getSpellsForCharacter({
+      className: "Paladin",
+      specId: 65
+    });
+
+    const retSpells = getSpellsForCharacter({
+      className: "Paladin",
+      specId: 70
+    });
+
+    expect(
+      holySpells.some(
+        (spell) => spell.name === "Blessing of Protection"
+      )
+    ).toBe(true);
+
+    expect(
+      retSpells.some(
+        (spell) => spell.name === "Blessing of Protection"
+      )
+    ).toBe(true);
+  });
+
+  it("includes a spec-specific spell only for its own spec", () => {
+    const holySpells = getSpellsForCharacter({
+      className: "Paladin",
+      specId: 65
+    });
+
+    const retSpells = getSpellsForCharacter({
+      className: "Paladin",
+      specId: 70
+    });
+
+    expect(
+      holySpells.some(
+        (spell) => spell.name === "Aura Mastery"
+      )
+    ).toBe(true);
+
+    expect(
+      retSpells.some(
+        (spell) => spell.name === "Aura Mastery"
+      )
+    ).toBe(false);
+  });
+
+  it("returns only class-wide spells for an UNKNOWN (null) spec — never zero, never a guess", () => {
+    const spells = getSpellsForCharacter({
+      className: "Paladin",
+      specId: null
+    });
+
+    expect(spells.length).toBeGreaterThan(0);
+
+    expect(
+      spells.every((spell) => spell.specIds === null)
+    ).toBe(true);
+  });
+
+  it("a spell shared by two specs (Guardian Spirit) appears for both", () => {
+    const discSpells = getSpellsForCharacter({
+      className: "Priest",
+      specId: 256
+    });
+
+    const holySpells = getSpellsForCharacter({
+      className: "Priest",
+      specId: 257
+    });
+
+    expect(
+      discSpells.some(
+        (spell) => spell.name === "Guardian Spirit"
+      )
+    ).toBe(true);
+
+    expect(
+      holySpells.some(
+        (spell) => spell.name === "Guardian Spirit"
+      )
+    ).toBe(true);
   });
 });

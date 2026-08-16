@@ -165,4 +165,40 @@ export class RaidBossRosterRepository {
       }
     });
   }
+
+  findEntry(
+    bossId: string,
+    setupId: string,
+    memberId: string
+  ) {
+    return prisma.raidBossRosterEntry.findUnique({
+      where: {
+        bossId_setupId_memberId: {
+          bossId,
+          setupId,
+          memberId
+        }
+      }
+    });
+  }
+
+  updateSpec(
+    bossId: string,
+    setupId: string,
+    memberId: string,
+    specId: number | null
+  ) {
+    return prisma.raidBossRosterEntry.update({
+      where: {
+        bossId_setupId_memberId: {
+          bossId,
+          setupId,
+          memberId
+        }
+      },
+      data: {
+        specId
+      }
+    });
+  }
 }

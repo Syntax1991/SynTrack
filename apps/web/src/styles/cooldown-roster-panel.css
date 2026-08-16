@@ -96,6 +96,9 @@
 .cooldown-roster-entry-name {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 1px 0;
   border: 0;
   background: transparent;
@@ -103,10 +106,22 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-align: left;
+  cursor: pointer;
+}
+
+.cooldown-roster-entry-spec-icon {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+}
+
+.cooldown-roster-entry-name-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
 }
 
 .cooldown-roster-entry-name.is-selected {

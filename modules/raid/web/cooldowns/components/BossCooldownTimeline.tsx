@@ -16,6 +16,7 @@ type BossCooldownTimelineProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
+  specIdByMemberId: Map<string, number | null>;
   setupMembers: RaidSetupMember[];
   planMemberIds: Set<string>;
   onAddPlanMember: (
@@ -48,6 +49,7 @@ export function BossCooldownTimeline({
   assignments,
   rosterMembers,
   lineupMemberIds,
+  specIdByMemberId,
   setupMembers,
   planMemberIds,
   onAddPlanMember,
@@ -64,6 +66,9 @@ export function BossCooldownTimeline({
       bossAbilityCasts={abilityCasts}
       lineupMemberIds={
         lineupMemberIds
+      }
+      specIdByMemberId={
+        specIdByMemberId
       }
       onAddPlanMember={
         onAddPlanMember

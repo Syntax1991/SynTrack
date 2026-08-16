@@ -143,6 +143,20 @@
   letter-spacing: 0.03em;
 }
 
+.cooldown-player-group-spec-icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--border-strong);
+}
+
+.cooldown-player-group-spec-name {
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .cooldown-spell-row-label {
   display: flex;
   align-items: center;

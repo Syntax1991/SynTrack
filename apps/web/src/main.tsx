@@ -36,6 +36,7 @@ import "./styles/boss-roster-matrix.css";
 import "./styles/boss-roster-overview.css";
 import "./styles/cooldown-timeline.css";
 import "./styles/cooldown-roster-panel.css";
+import "./styles/cooldown-roster-role-filter.css";
 import "./styles/cooldown-timeline-markers.css";
 import "./styles/cooldown-workspace-header.css";
 import "./styles/cooldown-plan-area.css";

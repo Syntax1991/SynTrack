@@ -31,6 +31,11 @@ type BossRosterSectionProps = {
     bossId: string,
     memberId: string
   ) => void;
+  onSetSpec: (
+    bossId: string,
+    memberId: string,
+    specId: number | null
+  ) => void;
 };
 
 export function BossRosterSection({
@@ -42,7 +47,8 @@ export function BossRosterSection({
   onAddBoss,
   onDeleteBoss,
   onSetStatus,
-  onClearStatus
+  onClearStatus,
+  onSetSpec
 }: BossRosterSectionProps) {
   const [isEditing, setIsEditing] =
     useState(false);
@@ -87,6 +93,7 @@ export function BossRosterSection({
           onDeleteBoss={
             onDeleteBoss
           }
+          onSetSpec={onSetSpec}
           onSetStatus={
             onSetStatus
           }

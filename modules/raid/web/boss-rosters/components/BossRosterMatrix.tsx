@@ -7,8 +7,7 @@ import {
 } from "../../../../guild/web/roster/utils/rosterRoles";
 import { BossMatrixFooter } from "./BossMatrixFooter";
 import { BossMatrixHeader } from "./BossMatrixHeader";
-import { BossMatrixMemberCell } from "./BossMatrixMemberCell";
-import { BossMatrixStatusCell } from "./BossMatrixStatusCell";
+import { BossMatrixMemberRow } from "./BossMatrixMemberRow";
 import { BossForm } from "./BossForm";
 import type {
   RaidBoss,
@@ -37,6 +36,11 @@ type BossRosterMatrixProps = {
     bossId: string,
     memberId: string
   ) => void;
+  onSetSpec: (
+    bossId: string,
+    memberId: string,
+    specId: number | null
+  ) => void;
 };
 
 const cycleOrder: Array<
@@ -56,7 +60,8 @@ export function BossRosterMatrix({
   onAddBoss,
   onDeleteBoss,
   onSetStatus,
-  onClearStatus
+  onClearStatus,
+  onSetSpec
 }: BossRosterMatrixProps) {
   const [
     isAddFormOpen,
@@ -234,76 +239,26 @@ export function BossRosterMatrix({
 
                     {group.members.map(
                       (member) => (
-                        <tr
+                        <BossMatrixMemberRow
+                          bosses={
+                            bosses
+                          }
                           key={
                             member.id
                           }
-                        >
-                          <td>
-                            <BossMatrixMemberCell
-                              className={
-                                member.className
-                              }
-                              name={
-                                member.name
-                              }
-                            />
-                          </td>
-
-                          {bosses.map(
-                            (
-                              boss
-                            ) => {
-                              const entry =
-                                boss.rosterEntries.find(
-                                  (
-                                    candidate
-                                  ) =>
-                                    candidate.memberId ===
-                                    member.id
-                                );
-
-                              const savedStatus =
-                                entry?.status ??
-                                null;
-
-                              const isSuggested =
-                                !savedStatus &&
-                                presentMemberIds.has(
-                                  member.id
-                                );
-
-                              const displayStatus:
-                                | RaidBossRosterStatus
-                                | null =
-                                savedStatus ??
-                                (isSuggested
-                                  ? "CONFIRMED"
-                                  : null);
-
-                              return (
-                                <BossMatrixStatusCell
-                                  displayStatus={
-                                    displayStatus
-                                  }
-                                  isSuggested={
-                                    isSuggested
-                                  }
-                                  key={
-                                    boss.id
-                                  }
-                                  onClick={() =>
-                                    handleCellClick(
-                                      boss,
-                                      member.id,
-                                      displayStatus
-                                    )
-                                  }
-                                />
-                              );
-                            }
-                          )}
-                        </tr>
+                          member={
+                            member
+                          }
+                          onCellClick={
+                            handleCellClick
+                          }
+                          onSetSpec={
+                            onSetSpec
+                          }
+                          presentMemberIds={
+                            presentMemberIds
+                          }
+                        />
                       )
                     )}
                   </Fragment>
