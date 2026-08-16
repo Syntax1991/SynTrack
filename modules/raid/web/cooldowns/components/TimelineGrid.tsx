@@ -11,20 +11,28 @@ import type {
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
+import type { CooldownDisplayCategory } from "../utils/cooldownCategories";
+import { groupAssignmentsByCategory } from "../utils/cooldownCategories";
 import {
   derivePhaseSegments,
   formatSeconds,
   groupCastsByAbility,
-  isAssignedMemberInLineup,
   percentOf,
   secondsFromClickX
 } from "../utils/timelineFormat";
 import { BossAbilityRow } from "./BossAbilityRow";
+import { CooldownCategorySection } from "./CooldownCategorySection";
 import { PhaseBar } from "./PhaseBar";
-import { RaiderCooldownRow } from "./RaiderCooldownRow";
+import { PhaseBoundaryGuides } from "./PhaseBoundaryGuides";
 import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
 
 const tickCount = 10;
+
+type PendingCreation = {
+  memberId: string;
+  category: CooldownDisplayCategory;
+  seconds: number;
+};
 
 type TimelineGridProps = {
   planningDurationSeconds: number;
@@ -33,12 +41,10 @@ type TimelineGridProps = {
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
-  pendingCreation: {
-    memberId: string;
-    seconds: number;
-  } | null;
+  pendingCreation: PendingCreation | null;
   onRaiderTrackClick: (
     memberId: string,
+    category: CooldownDisplayCategory,
     seconds: number
   ) => void;
   onCreateAssignment: (
@@ -80,6 +86,11 @@ export function TimelineGrid({
     derivePhaseSegments(
       phaseMarkers,
       planningDurationSeconds
+    );
+
+  const categoryGroups =
+    groupAssignmentsByCategory(
+      assignments
     );
 
   const trackOverlayRef =
@@ -125,34 +136,6 @@ export function TimelineGrid({
       )
     );
   };
-
-  const memberById = new Map(
-    rosterMembers.map((member) => [
-      member.id,
-      member
-    ])
-  );
-
-  const assignedMemberIds = Array.from(
-    new Set(
-      assignments.map(
-        (assignment) =>
-          assignment.memberId
-      )
-    )
-  );
-
-  const visibleMemberIds = new Set([
-    ...assignedMemberIds,
-    ...lineupMemberIds
-  ]);
-
-  const orderedVisibleMemberIds =
-    rosterMembers
-      .map((member) => member.id)
-      .filter((id) =>
-        visibleMemberIds.has(id)
-      );
 
   const ticks = Array.from(
     { length: tickCount + 1 },
@@ -201,6 +184,15 @@ export function TimelineGrid({
             isDragging={isDragActive}
             seconds={playheadSeconds}
           />
+
+          <PhaseBoundaryGuides
+            phaseMarkers={
+              phaseMarkers
+            }
+            planningDurationSeconds={
+              planningDurationSeconds
+            }
+          />
         </div>
 
         <PhaseBar
@@ -213,6 +205,12 @@ export function TimelineGrid({
           phaseMarkers={phaseMarkers}
           segments={phaseSegments}
         />
+
+        {abilityRows.length > 0 && (
+          <div className="cooldown-timeline-section-label">
+            ENCOUNTER
+          </div>
+        )}
 
         {abilityRows.map(
           (row) => (
@@ -235,75 +233,58 @@ export function TimelineGrid({
           )
         )}
 
-        {orderedVisibleMemberIds.length >
-          0 && (
+        {rosterMembers.length > 0 && (
           <div className="cooldown-timeline-section-label">
-            RAIDERS
+            PLAN
           </div>
         )}
 
-        {orderedVisibleMemberIds.map(
-          (memberId) => {
-            const member =
-              memberById.get(
-                memberId
-              );
-
-            if (!member) {
-              return null;
-            }
-
-            return (
-              <RaiderCooldownRow
-                assignments={assignments.filter(
-                  (assignment) =>
-                    assignment.memberId ===
-                    memberId
-                )}
-                planningDurationSeconds={
-                  planningDurationSeconds
-                }
-                isInLineup={isAssignedMemberInLineup(
-                  memberId,
-                  lineupMemberIds
-                )}
-                isTooltipSuppressed={
-                  isDragActive
-                }
-                key={memberId}
-                member={member}
-                onCancelCreate={
-                  onCancelCreate
-                }
-                onCreateAssignment={
-                  onCreateAssignment
-                }
-                onDragPreview={
-                  setDragSeconds
-                }
-                onRemoveAssignment={
-                  onRemoveAssignment
-                }
-                onRepositionAssignment={
-                  onRepositionAssignment
-                }
-                onTrackClick={(
-                  seconds
-                ) =>
-                  onRaiderTrackClick(
-                    memberId,
-                    seconds
-                  )
-                }
-                pendingCreationSeconds={
-                  pendingCreation?.memberId ===
-                  memberId
-                    ? pendingCreation.seconds
-                    : null
-                }
-              />
-            );
-          }
+        {categoryGroups.map(
+          (group) => (
+            <CooldownCategorySection
+              category={
+                group.category
+              }
+              isTooltipSuppressed={
+                isDragActive
+              }
+              key={group.category}
+              label={group.label}
+              lineupMemberIds={
+                lineupMemberIds
+              }
+              memberGroups={
+                group.memberGroups
+              }
+              onCancelCreate={
+                onCancelCreate
+              }
+              onCreateAssignment={
+                onCreateAssignment
+              }
+              onDragPreview={
+                setDragSeconds
+              }
+              onRemoveAssignment={
+                onRemoveAssignment
+              }
+              onRepositionAssignment={
+                onRepositionAssignment
+              }
+              onRowClick={
+                onRaiderTrackClick
+              }
+              pendingCreation={
+                pendingCreation
+              }
+              planningDurationSeconds={
+                planningDurationSeconds
+              }
+              rosterMembers={
+                rosterMembers
+              }
+            />
+          )
         )}
       </div>
     </div>

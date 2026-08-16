@@ -1,35 +1,22 @@
 import { useState } from "react";
-import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
-import { useBossAbilityCasts } from "../hooks/useBossAbilityCasts";
-import { usePhaseMarkers } from "../hooks/usePhaseMarkers";
 import type {
+  RaidBossAbilityCast,
+  RaidBossPhaseMarker,
   RaidCooldownAssignment,
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
-import {
-  formatRelativeTime,
-  planningDurationSeconds
-} from "../utils/timelineFormat";
-import { PhaseMarkerForm } from "./PhaseMarkerForm";
+import type { CooldownDisplayCategory } from "../utils/cooldownCategories";
+import { planningDurationSeconds } from "../utils/timelineFormat";
 import { TimelineGrid } from "./TimelineGrid";
 
 type BossCooldownTimelineProps = {
   bossId: string;
-  bossName: string;
-  /**
-   * The real duration of the currently synced Warcraft Logs pull —
-   * useful source metadata, kept around and never overwritten, but
-   * NOT the Cooldown Planner's coordinate-system width. The timeline
-   * always renders against `planningDurationSeconds` regardless of
-   * how long (or short) this pull was.
-   */
-  fightDurationSeconds: number | null;
-  wclSyncedAt: string | null;
+  abilityCasts: RaidBossAbilityCast[];
+  phaseMarkers: RaidBossPhaseMarker[];
   assignments: RaidCooldownAssignment[];
   rosterMembers: GuildMember[];
   lineupMemberIds: Set<string>;
-  onSyncWarcraftLogs: () => Promise<void>;
   onAddAssignment: (
     bossId: string,
     input: RaidCooldownAssignmentInput
@@ -41,196 +28,80 @@ type BossCooldownTimelineProps = {
     assignment: RaidCooldownAssignment,
     seconds: number
   ) => void;
+  onRemovePhaseMarker: (
+    markerId: string
+  ) => void;
 };
 
 export function BossCooldownTimeline({
   bossId,
-  bossName,
-  wclSyncedAt,
+  abilityCasts,
+  phaseMarkers,
   assignments,
   rosterMembers,
   lineupMemberIds,
-  onSyncWarcraftLogs,
   onAddAssignment,
   onRemoveAssignment,
-  onRepositionAssignment
+  onRepositionAssignment,
+  onRemovePhaseMarker
 }: BossCooldownTimelineProps) {
-  const phaseMarkers =
-    usePhaseMarkers(bossId);
-
-  const abilityCasts =
-    useBossAbilityCasts(bossId);
-
   const [
     pendingCreation,
     setPendingCreation
   ] = useState<{
     memberId: string;
+    category: CooldownDisplayCategory;
     seconds: number;
   } | null>(null);
 
-  const [isSyncing, setIsSyncing] =
-    useState(false);
-
-  const [syncError, setSyncError] =
-    useState<string | null>(null);
-
-  const [isPhaseFormOpen, setIsPhaseFormOpen] =
-    useState(false);
-
-  const handleSync = async () => {
-    setSyncError(null);
-    setIsSyncing(true);
-
-    try {
-      await onSyncWarcraftLogs();
-      await abilityCasts.reload();
-    }
-    catch (error) {
-      setSyncError(
-        error instanceof Error
-          ? error.message
-          : "Sync fehlgeschlagen."
-      );
-    }
-    finally {
-      setIsSyncing(false);
-    }
-  };
-
   return (
-    <section className="cooldown-timeline-panel">
-      <div className="cooldown-timeline-toolbar">
-        <h2>{bossName}</h2>
+    <TimelineGrid
+      assignments={assignments}
+      bossAbilityCasts={abilityCasts}
+      lineupMemberIds={
+        lineupMemberIds
+      }
+      onCancelCreate={() =>
+        setPendingCreation(null)
+      }
+      onCreateAssignment={(
+        input
+      ) => {
+        setPendingCreation(null);
 
-        <button
-          className={
-            isSyncing
-              ? "cooldown-sync-pill is-syncing"
-              : "cooldown-sync-pill"
-          }
-          disabled={isSyncing}
-          onClick={() =>
-            void handleSync()
-          }
-          title={
-            wclSyncedAt
-              ? `Synced from Warcraft Logs — ${new Date(wclSyncedAt).toLocaleString()}. Click to re-sync.`
-              : "Not synced from Warcraft Logs yet. Click to sync."
-          }
-          type="button"
-        >
-          {isSyncing
-            ? "⟳ Syncing…"
-            : wclSyncedAt
-              ? `⟳ ${formatRelativeTime(wclSyncedAt)}`
-              : "⟳ Not synced"}
-        </button>
-
-        <button
-          aria-label="How this timeline works"
-          className="cooldown-help-button"
-          title="Boss ability rows are synced from Warcraft Logs — click the sync pill to refresh. Click a raider's row to assign their cooldown; drag a placed cooldown to move it."
-          type="button"
-        >
-          ⓘ
-        </button>
-      </div>
-
-      {syncError && (
-        <StatusMessage type="error">
-          {syncError}
-        </StatusMessage>
-      )}
-
-      <div className="cooldown-timeline-actions">
-        <button
-          className="text-button"
-          onClick={() =>
-            setIsPhaseFormOpen(
-              (current) => !current
-            )
-          }
-          type="button"
-        >
-          {isPhaseFormOpen
-            ? "Cancel"
-            : "+ Phase"}
-        </button>
-      </div>
-
-      {isPhaseFormOpen && (
-        <PhaseMarkerForm
-          onSubmit={async (
-            input
-          ) => {
-            await phaseMarkers.addMarker(
-              input
-            );
-
-            setIsPhaseFormOpen(
-              false
-            );
-          }}
-        />
-      )}
-
-      <TimelineGrid
-        assignments={assignments}
-        bossAbilityCasts={
-          abilityCasts.casts
-        }
-        lineupMemberIds={
-          lineupMemberIds
-        }
-        onCancelCreate={() =>
-          setPendingCreation(null)
-        }
-        onCreateAssignment={(
+        void onAddAssignment(
+          bossId,
           input
-        ) => {
-          setPendingCreation(null);
-
-          void onAddAssignment(
-            bossId,
-            input
-          );
-        }}
-        onRaiderTrackClick={(
+        );
+      }}
+      onRaiderTrackClick={(
+        memberId,
+        category,
+        seconds
+      ) =>
+        setPendingCreation({
           memberId,
+          category,
           seconds
-        ) =>
-          setPendingCreation({
-            memberId,
-            seconds
-          })
-        }
-        onRemoveAssignment={
-          onRemoveAssignment
-        }
-        onRemovePhaseMarker={(
-          markerId
-        ) => {
-          void phaseMarkers.removeMarker(
-            markerId
-          );
-        }}
-        onRepositionAssignment={
-          onRepositionAssignment
-        }
-        pendingCreation={
-          pendingCreation
-        }
-        planningDurationSeconds={
-          planningDurationSeconds
-        }
-        phaseMarkers={
-          phaseMarkers.markers
-        }
-        rosterMembers={
-          rosterMembers
-        }
-      />
-    </section>
+        })
+      }
+      onRemoveAssignment={
+        onRemoveAssignment
+      }
+      onRemovePhaseMarker={
+        onRemovePhaseMarker
+      }
+      onRepositionAssignment={
+        onRepositionAssignment
+      }
+      pendingCreation={
+        pendingCreation
+      }
+      planningDurationSeconds={
+        planningDurationSeconds
+      }
+      phaseMarkers={phaseMarkers}
+      rosterMembers={rosterMembers}
+    />
   );
 }

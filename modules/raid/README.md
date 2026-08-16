@@ -620,6 +620,171 @@ positioned at `left: 24.2857%` / `width: 75.7143%` — matching the math
 exactly. A boss with zero phase markers rendered no phase bar row at
 all.
 
+### Step 8 — tooltip fix, planning-horizon/source-duration split, and a workspace UX pass (2026-08-16)
+
+Four follow-up rounds, same day as Step 7, that fix real bugs Step 7
+left behind and turn the Cooldown page from a stack of loosely related
+controls into one workspace. Superseded naming from Step 7:
+`defaultFightDurationSeconds` is now `planningDurationSeconds`
+(`timelineFormat.ts`) and is **always** used for the timeline's
+coordinate system — never conditionally, see below.
+
+**Tooltip portal fix.** The Boss Ability tooltip was invisible live
+despite the component existing and its tests passing — the popover
+was a DOM child of its own anchor span, and the anchor
+(`.cooldown-timeline-boss-marker-icon`/`.cooldown-timeline-marker-icon`)
+has `overflow: hidden` (to clip the ability icon into a rounded
+shape), silently clipping the popover regardless of its own
+`position`/`z-index`. `Tooltip.tsx` (`apps/web/src/shared/components/`)
+now renders through `createPortal(..., document.body)`, positioned
+via the anchor's real `getBoundingClientRect()`; DOM presence
+(`popover.innerText`) does not prove visual visibility, only the
+ancestor overflow chain or a real render does — this was a real gap
+in earlier verification.
+
+**Boss Ability tooltip content redesign**, same pass:
+`BossAbilityRow.tsx`'s tooltip is now hierarchy-driven — the exact
+timestamp is the large primary line, `"{elapsed} into {phase label}"`
+sits directly beneath it (derived from the same `resolveActivePhase`
+segments the phase bar uses, omitted when the cast falls before any
+phase marker), then a de-emphasized small-icon ability name, then
+"Time since last" (omitted on a cast's first occurrence). Ability
+classification, cast time, and duration lines are deliberately **not**
+shown — `RaidBossAbilityCast` has no authoritative field for any of
+them.
+
+**Phase-label collision fix.** A leftover per-marker floating
+dashed-line-plus-label overlay (predating `PhaseBar.tsx`) was still
+rendering each phase marker's label directly above the tick row,
+visually colliding with tick numbers whenever a phase started near a
+tick. Removed; click-to-remove now lives on the `PhaseBar` segment
+itself, matched to its source marker by `startSeconds`.
+
+**Planning horizon vs. source fight duration — real bug, not
+polish.** The timeline was using the currently synced WCL pull's real
+`fightDurationSeconds` as its coordinate-system width, so a short
+pull (e.g. 2:37) shrank the whole planning workspace, and the phase
+bar had no visible Phase 1 segment before the first real transition.
+Fixed by separating the two concepts: `planningDurationSeconds`
+(`timelineFormat.ts`) is now unconditionally `420` — never a
+"fallback" contingent on sync state — and is the only value every
+timeline coordinate (ticks, boss/assignment markers, playhead, drag,
+phase segments) positions against. The real
+`RaidBoss.fightDurationSeconds` is kept as separate source metadata
+on `BossCooldownView`'s props, never overwritten, just no longer read
+for layout. `derivePhaseSegments` now prepends an implicit "Phase 1"
+covering `0` up to the first real marker when that marker doesn't
+start at `0`, so the phase bar and tooltip's "time into phase" are
+contiguous across the full horizon — still entirely derived from real
+marker timestamps, never a guessed boundary.
+
+**Workspace UX pass** — the Cooldown page's controls were spread
+across three components (boss tabs in `CooldownsLandingPage`, a
+Timeline/List toggle in `BossCooldownView`, a title/sync/help/+Phase
+toolbar in `BossCooldownTimeline`) with no clear hierarchy between
+boss-mechanic rows and player rows, and every roster member got a
+permanent empty row regardless of whether they'd ever hold a
+cooldown. Scoped deliberately smaller than the brief's full 18-point
+ask (Planning Hub, Setups-as-nav, a dense Grid view, a Deaths view —
+see "Deferred" below); everything shipped stays inside
+`modules/raid/web/cooldowns/`, no schema or route changes.
+
+- **Consolidated header.** New `BossWorkspaceHeader.tsx` owns the
+  boss name, the Timeline/List toggle, the sync-status pill, a static
+  "0:00 – 7:00" planning-horizon readout, and a small overflow ("⋯")
+  menu holding the secondary/manual actions ("How this timeline
+  works" help text and "+ Add phase marker") — manual phase entry no
+  longer competes visually with the primary controls since real
+  synced phase data is the normal path. `BossCooldownView.tsx` is now
+  the owner of view-toggle state, `usePhaseMarkers`, and
+  `useBossAbilityCasts` (both lifted up from `BossCooldownTimeline`,
+  which trimmed down to just `pendingCreation` state + rendering
+  `TimelineGrid`).
+- **ENCOUNTER vs. PLAN.** `TimelineGrid.tsx` labels the boss-ability
+  block "ENCOUNTER" and the assignment block "PLAN" (renamed from
+  "RAIDERS"), with PLAN rows using a slightly lighter track background
+  (`--surface-hover`) than ENCOUNTER's muted one (`--surface`) —
+  labels plus a subtle background distinction, not dimmed text, so
+  boss mechanics stay just as easy to scan.
+- **Phase boundary guides.** New `PhaseBoundaryGuides.tsx` renders a
+  subtle, unlabeled dashed vertical line at each real phase-marker
+  `startSeconds`, spanning the full encounter+plan surface so cast/
+  assignment timestamps visually align with the `PhaseBar`'s
+  boundaries below. No line at `0` (nothing real to mark there); no
+  label (`PhaseBar` already owns labels).
+- **Category-centric assignment sections, corrected to be
+  assignment-driven.** The first design (class-eligibility-driven
+  rows per category) was explicitly rejected during review: since one
+  player is often eligible for several categories, it would have
+  produced *more* total rows than the old flat list, not fewer. The
+  shipped design: new `groupAssignmentsByCategory` (`cooldownCategories.ts`,
+  tested) groups only **real** assignments by category
+  (`getSpellById(spellId)?.category`, `"Other"` for free-text/
+  uncatalogued) and by member — a member gets a persistent
+  `RaiderCooldownRow` only where they hold a real assignment, so a
+  member with assignments in two categories correctly gets two
+  independent rows (verified live against real demo data: Grimmshade
+  holds a Warlock Defensive spell and a Warlock Utility spell, and
+  now renders as two separate one-row sections instead of two markers
+  buried on one shared "RAIDERS" row). `getSpellsForClass` is used
+  only to compute a compact line of class-colored name chips below
+  each category's real rows — lineup members eligible for that
+  category who don't yet have a row there — never to create a
+  permanent row. New `CooldownCategorySection.tsx` owns this: clicking
+  a chip reveals a real, temporary `RaiderCooldownRow` track for just
+  that member (no dropdown/manual player-selector), so the existing
+  click-to-create interaction works completely unchanged; creating a
+  real assignment there makes the member's row permanent on the next
+  render and the chip disappears. `pendingCreation` (lifted in
+  `BossCooldownTimeline`) is now `{memberId, category, seconds}` —
+  matched on both `memberId` and `category` — since a member can have
+  a real row in one category and a temporarily-activated row in
+  another simultaneously; the old `{memberId, seconds}` shape would
+  have opened a duplicate creation popover in both.
+
+**Live-verified** against Imperator Averzian's real demo data (not
+reset): the header renders as one compact block; the timeline still
+runs `0:00`–`7:00` with real casts at exact percentages; the phase
+bar's Phase 1/2/3 stay contiguous with boundary guides aligned to the
+same coordinates; "Healing CDs"/"Raid CDs"/"Externals"/"Personals"/
+"Utility" sections only show a real row for a member holding a real
+assignment there (Thornclad under Raid CDs only, Grimmshade under
+both Personals and Utility); the compact chip lists show only real
+eligible-and-unassigned lineup members; clicking a chip opens a real
+click-to-create flow with no popover duplication across a two-category
+member's independent rows; drag/reposition and both tooltip types
+work unchanged (a live drag-and-restore round-trip on Thornclad's
+real assignment confirmed exact `timestampSeconds` values both ways);
+the List view and its assignment count are unaffected; total
+assignment count and all phase markers were unchanged before and
+after. `npm run verify` passes (89 tests — new
+`cooldownCategories.test.ts`; `cooldown-timeline.css` split further
+into a new `cooldown-workspace-header.css` to stay under the 350-line
+cap).
+
+**Deferred, documented, not built this pass** — each because it's
+either explicitly out of scope for this brief or a real new feature
+this task's "do not add major new backend/domain features" rules out:
+
+- **Grid view** (dense chronological-events × assignment-slots
+  table) — a real new view; `Timeline`/`List` stay the two working
+  views for now, matching the brief's own allowance to establish the
+  view architecture and document the next step rather than build a
+  minimal Grid this pass.
+- **Deaths view** — brief explicitly says not to build this yet.
+- **Planning Hub page** — existing precedent found for when it's
+  built: `GuildDashboardPage.tsx` (`modules/guild/web/dashboard/`),
+  a `PageHeader` + loading gate + `Link`-tile CSS-grid pattern.
+- **Setups as first-class top-level nav** — `RaidSetupPanel` already
+  sits prominently on `RaidEventDetailPage` (2nd of 3 sections);
+  promoting it to its own route/nav entry is an `AppRouter.tsx`/
+  `raid.definition.ts` change, kept separate from this component pass.
+- **Compact fight-length editor/popover** — `planningDurationSeconds`
+  is a hard constant today, not per-boss stored state; making it
+  editable is new domain state.
+- **`castStart ── [icon] ── duration` tick rendering** — no real
+  cast-start/duration data source exists yet.
+
 ## Signups
 
 The first genuinely self-service Raid feature, built 2026-08-14 after

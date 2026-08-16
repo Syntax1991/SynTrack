@@ -2,19 +2,6 @@
   margin-top: 24px;
 }
 
-.cooldown-timeline-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.cooldown-timeline-toolbar h2 {
-  margin-right: auto;
-  font-size: 1.05rem;
-}
-
 .cooldown-sync-pill {
   padding: 3px 9px;
   border: 1px solid transparent;
@@ -37,32 +24,9 @@
   opacity: 0.7;
 }
 
-.cooldown-help-button {
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.72rem;
-  cursor: help;
-}
-
-.cooldown-help-button:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.cooldown-timeline-actions {
-  margin-bottom: 6px;
-}
-
 .cooldown-view-toggle {
   display: flex;
   gap: 6px;
-  margin-bottom: 12px;
 }
 
 .cooldown-view-toggle .active {
@@ -174,12 +138,12 @@
   height: 28px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--surface-elevated);
+  background: var(--surface-hover);
   cursor: crosshair;
 }
 
 .cooldown-timeline-row-boss .cooldown-timeline-row-track {
-  background: var(--surface-hover);
+  background: var(--surface);
 }
 
 .cooldown-timeline-row-track-readonly {
@@ -199,6 +163,16 @@
 .cooldown-timeline-playhead.is-dragging {
   border-left-color: var(--primary);
   opacity: 0.9;
+}
+
+.cooldown-timeline-phase-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--border-strong);
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .cooldown-timeline-playhead-time {
@@ -250,5 +224,58 @@
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.cooldown-category-section {
+  margin-bottom: 4px;
+}
+
+.cooldown-category-header {
+  margin: 6px 0 2px 148px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+
+.cooldown-category-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 6px 148px;
+}
+
+.cooldown-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cooldown-category-chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.cooldown-category-chip.is-active {
+  border-color: var(--primary);
+  border-style: solid;
+  color: var(--text);
+}
+
+.cooldown-category-chip-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--marker-color, var(--text-secondary));
 }
 
