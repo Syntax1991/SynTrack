@@ -1,7 +1,6 @@
 import {
   useRef,
   useState,
-  type CSSProperties,
   type MouseEvent as ReactMouseEvent
 } from "react";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
@@ -13,11 +12,10 @@ import type {
   RaidCooldownAssignmentInput
 } from "../types/cooldown.types";
 import { useCooldownPlannerSelection } from "../hooks/useCooldownPlannerSelection";
+import { useMeasuredWidth } from "../hooks/useMeasuredWidth";
 import {
   derivePhaseSegments,
-  formatSeconds,
   groupCastsByAbility,
-  percentOf,
   secondsFromClickX
 } from "../utils/timelineFormat";
 import { BossAbilityRow } from "./BossAbilityRow";
@@ -26,8 +24,7 @@ import { CooldownRosterPanel } from "./CooldownRosterPanel";
 import { PhaseBar } from "./PhaseBar";
 import { PhaseBoundaryGuides } from "./PhaseBoundaryGuides";
 import { TimelineHoverPlayhead } from "./TimelineHoverPlayhead";
-
-const tickCount = 10;
+import { TimelineTicks } from "./TimelineTicks";
 
 type TimelineGridProps = {
   planningDurationSeconds: number;
@@ -92,6 +89,10 @@ export function TimelineGrid({
   const trackOverlayRef =
     useRef<HTMLDivElement>(null);
 
+  const trackWidthPx = useMeasuredWidth(
+    trackOverlayRef
+  );
+
   const [hoverSeconds, setHoverSeconds] =
     useState<number | null>(null);
 
@@ -146,16 +147,6 @@ export function TimelineGrid({
     );
   };
 
-  const ticks = Array.from(
-    { length: tickCount + 1 },
-    (_, index) =>
-      Math.round(
-        (planningDurationSeconds /
-          tickCount) *
-          index
-      )
-  );
-
   return (
     <div className="cooldown-timeline-workspace">
       <CooldownRosterPanel
@@ -201,20 +192,11 @@ export function TimelineGrid({
       />
 
       <div className="cooldown-timeline-grid">
-        <div className="cooldown-timeline-ticks">
-          {ticks.map((seconds) => (
-            <span
-              key={seconds}
-              style={
-                {
-                  left: `${percentOf(seconds, planningDurationSeconds)}%`
-                } as CSSProperties
-              }
-            >
-              {formatSeconds(seconds)}
-            </span>
-          ))}
-        </div>
+        <TimelineTicks
+          planningDurationSeconds={
+            planningDurationSeconds
+          }
+        />
 
         <div
           className="cooldown-timeline-rows"
@@ -284,6 +266,9 @@ export function TimelineGrid({
                 key={row.abilityName}
                 phaseSegments={
                   phaseSegments
+                }
+                trackWidthPx={
+                  trackWidthPx
                 }
               />
             )

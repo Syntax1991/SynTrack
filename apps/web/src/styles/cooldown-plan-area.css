@@ -3,9 +3,12 @@
 }
 
 /*
- * Full-width top/bottom rules (no 148px inset on the border itself,
- * only on the buttons' padding) so this reads as a section divider
- * between ENCOUNTER and PLAN, not just another row.
+ * Full-width top/bottom rules (no label-column inset on the border
+ * itself, only on the buttons' padding) so this reads as a section
+ * divider between ENCOUNTER and PLAN, not just another row. The
+ * padding derives from cooldown-timeline.css's single
+ * --timeline-label-width, inherited from the shared .cooldown-
+ * timeline-grid ancestor.
  */
 .cooldown-plan-filter-toolbar {
   display: flex;
@@ -13,7 +16,7 @@
   align-items: center;
   gap: 6px;
   margin: 6px 0 10px;
-  padding: 7px 0 7px 148px;
+  padding: 7px 0 7px var(--timeline-label-width);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
@@ -78,7 +81,7 @@
 }
 
 .cooldown-plan-empty {
-  margin: 4px 0 4px 148px;
+  margin: 4px 0 4px var(--timeline-label-width);
   color: var(--text-muted);
   font-size: 0.64rem;
 }
@@ -112,28 +115,29 @@
 }
 
 /*
- * Just a spacing gap between groups now — the header bar below is
- * what carries the group's visual identity, not a wrapping card.
+ * Zero gap between groups now — WoWUtils-style flush blocks. The
+ * header bar's own background/border-left tint is what separates one
+ * player's block from the next, not empty space between them.
  */
 .cooldown-player-group {
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 /*
  * A full-width player banner spanning label column + timeline track
- * together (no 148px indent), so it reads as one group header the
- * spell lanes below visually belong to — not a small colored label
- * floating above unrelated rows. The left accent bar carries the
- * player's class color; the tinted background is what ties the
- * lanes underneath back to this header without needing a border
- * around the whole group.
+ * together (no label-column indent), so it reads as one group header
+ * the spell lanes below visually belong to — not a small colored
+ * label floating above unrelated rows. A thicker left accent bar
+ * (4px, up from 3px) plus the tinted background is what ties the
+ * lanes underneath back to this header and gives it more ownership
+ * weight now that spell rows themselves are denser.
  */
 .cooldown-player-group-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
-  border-left: 3px solid var(--marker-color, var(--border-strong));
+  padding: 4px 12px;
+  border-left: 4px solid var(--marker-color, var(--border-strong));
   border-bottom: 1px solid var(--border);
   background: var(--surface-hover);
   color: var(--text);

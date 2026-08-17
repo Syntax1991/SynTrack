@@ -20,6 +20,10 @@
 }
 
 .cooldown-roster-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -29,21 +33,6 @@
   border-bottom: 1px solid var(--border);
 }
 
-.cooldown-roster-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.cooldown-roster-panel-label {
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.6rem;
-  font-weight: 800;
-}
-
 /*
  * Boss-lineup membership (who's in/out, benched) is exclusively a
  * Setup/BossRosterMatrix operation — this link is the only bridge to
@@ -51,6 +40,8 @@
  */
 .cooldown-roster-open-setup {
   color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: normal;
   font-size: 0.6rem;
   font-weight: 700;
   text-decoration: none;
@@ -72,7 +63,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 4px 3px 8px;
+  padding: 2px 4px 2px 8px;
   border-left: 2px solid transparent;
   border-radius: 5px;
 }

@@ -1,50 +1,23 @@
+/*
+ * The interactive hit target (24x24) is deliberately larger than the
+ * visual icon it contains (16x16, see .cooldown-timeline-marker-
+ * visual) — shrinking the VISIBLE marker for density must never
+ * shrink the actual click/drag hitbox, especially for reposition
+ * drags where a too-small target is a real usability regression.
+ * Both are centered on the exact same timestamp via the same
+ * transform, so the visual size change never affects positioning.
+ */
 .cooldown-timeline-marker {
   position: absolute;
   top: 50%;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
   transform: translate(-50%, -50%);
-  border: 2px solid var(--marker-color, var(--border-strong));
-  border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 0.54rem;
-  font-weight: 800;
   cursor: grab;
   padding: 0;
   overflow: visible;
-}
-
-.cooldown-timeline-marker-icon {
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.cooldown-timeline-marker-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 2px;
-}
-
-.cooldown-timeline-marker.is-dragging {
-  cursor: grabbing;
-  opacity: 0.62;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
-  z-index: 3;
-}
-
-/*
- * A spec change made this assignment's spell ineligible — the marker
- * stays fully visible and interactive (remove/drag both still work),
- * just visually flagged as needing attention, never hidden or
- * disabled.
- */
-.cooldown-timeline-marker.is-incompatible-with-spec {
-  border-style: dashed;
-  opacity: 0.75;
 }
 
 .cooldown-timeline-marker-button {
@@ -60,9 +33,66 @@
   cursor: inherit;
 }
 
-.cooldown-timeline-marker-ghost {
-  opacity: 0.25;
+.cooldown-timeline-marker-visual {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--marker-color, var(--border-strong));
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.5rem;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.cooldown-timeline-marker-icon .cooldown-timeline-marker-visual {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cooldown-timeline-marker-icon .cooldown-timeline-marker-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.cooldown-timeline-marker.is-dragging {
+  cursor: grabbing;
+  z-index: 3;
+}
+
+.cooldown-timeline-marker.is-dragging .cooldown-timeline-marker-visual {
+  opacity: 0.62;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * A spec change made this assignment's spell ineligible — the marker
+ * stays fully visible and interactive (remove/drag both still work),
+ * just visually flagged as needing attention, never hidden or
+ * disabled.
+ */
+.cooldown-timeline-marker.is-incompatible-with-spec .cooldown-timeline-marker-visual {
   border-style: dashed;
+  opacity: 0.75;
+}
+
+/*
+ * A bare decorative outline (no button/icon inside), so unlike a real
+ * marker it needs its own self-contained size/border rather than
+ * relying on .cooldown-timeline-marker-visual — unaffected by the
+ * hitbox/visual split above, matches the real marker's 16px visual
+ * size for a faithful "marker was here" outline.
+ */
+.cooldown-timeline-marker-ghost {
+  width: 16px;
+  height: 16px;
+  border: 2px dashed var(--border-strong);
+  border-radius: 50%;
+  opacity: 0.25;
   pointer-events: none;
   z-index: 1;
 }
@@ -84,10 +114,10 @@
 }
 
 .cooldown-timeline-boss-marker {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--primary);
   border-radius: 3px;
-  border-color: var(--primary);
   background: var(--primary-soft);
   cursor: default;
 }
@@ -95,8 +125,8 @@
 .cooldown-timeline-boss-marker-icon {
   position: absolute;
   top: 50%;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   transform: translate(-50%, -50%);
   border: 1px solid var(--border-strong);
   border-radius: 4px;
@@ -108,6 +138,27 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/*
+ * A compact "when does this happen" label immediately beside a real
+ * boss-ability marker — decluttered by computeCastLabelVisibility
+ * using actual measured pixel geometry, never a fixed seconds
+ * threshold, so it degrades correctly on any track width. No
+ * background/border of its own (unlike the playhead's time badge) so
+ * a dense row of these doesn't turn into a row of pills; the marker
+ * + tooltip remain the always-available detailed source regardless
+ * of whether this label is currently shown.
+ */
+.cooldown-timeline-cast-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(13px, -50%);
+  color: var(--text-muted);
+  font-size: 0.56rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .cooldown-timeline-placing-at {

@@ -168,18 +168,20 @@ export function AssignmentMarker({
             </span>
           )}
 
-          {assignment.abilityIcon ? (
-            <img
-              alt=""
-              src={
-                assignment.abilityIcon
-              }
-            />
-          ) : (
-            (member?.name ?? "?")
-              .slice(0, 2)
-              .toUpperCase()
-          )}
+          <span className="cooldown-timeline-marker-visual">
+            {assignment.abilityIcon ? (
+              <img
+                alt=""
+                src={
+                  assignment.abilityIcon
+                }
+              />
+            ) : (
+              (member?.name ?? "?")
+                .slice(0, 2)
+                .toUpperCase()
+            )}
+          </span>
         </button>
       </Tooltip>
     </>

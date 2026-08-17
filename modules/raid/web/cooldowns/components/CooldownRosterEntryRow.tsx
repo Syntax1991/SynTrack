@@ -139,12 +139,12 @@ export function CooldownRosterEntryRow({
           }
           title={
             hasAssignments
-              ? "Remove assignments before removing this player from the timeline."
-              : "Remove from Timeline"
+              ? "In this Cooldown Plan — remove assignments before removing this player from the timeline."
+              : "In this Cooldown Plan — click to remove from Timeline"
           }
           type="button"
         >
-          ✓
+          ×
         </button>
       ) : (
         <button
@@ -153,7 +153,7 @@ export function CooldownRosterEntryRow({
           onClick={() =>
             onAddPlanMember(member.id)
           }
-          title="Add to Timeline"
+          title="Not in this Cooldown Plan — click to add to Timeline"
           type="button"
         >
           +

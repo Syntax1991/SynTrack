@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import { Tooltip } from "../../../../../apps/web/src/shared/components/Tooltip";
 import type { RaidBossAbilityCast } from "../types/cooldown.types";
 import type { DerivedPhaseSegment } from "../utils/timelineFormat";
@@ -8,6 +8,7 @@ import {
   percentOf,
   resolveActivePhase
 } from "../utils/timelineFormat";
+import { computeCastLabelVisibility } from "../utils/timelineLabelDeclutter";
 
 type BossAbilityRowProps = {
   abilityName: string;
@@ -15,6 +16,7 @@ type BossAbilityRowProps = {
   casts: RaidBossAbilityCast[];
   phaseSegments: DerivedPhaseSegment[];
   isTooltipSuppressed: boolean;
+  trackWidthPx: number;
 };
 
 export function BossAbilityRow({
@@ -22,11 +24,23 @@ export function BossAbilityRow({
   planningDurationSeconds,
   casts,
   phaseSegments,
-  isTooltipSuppressed
+  isTooltipSuppressed,
+  trackWidthPx
 }: BossAbilityRowProps) {
   const rowIcon = casts.find(
     (cast) => cast.abilityIcon
   )?.abilityIcon;
+
+  // casts is already time-ordered (groupCastsByAbility sorts before
+  // bucketing), which computeCastLabelVisibility requires.
+  const showLabel =
+    computeCastLabelVisibility(
+      casts.map(
+        (cast) => cast.timestampSeconds
+      ),
+      trackWidthPx,
+      planningDurationSeconds
+    );
 
   return (
     <div className="cooldown-timeline-row cooldown-timeline-row-boss">
@@ -129,32 +143,46 @@ export function BossAbilityRow({
           } as CSSProperties;
 
           return (
-            <Tooltip
-              anchorClassName={
-                cast.abilityIcon
-                  ? "cooldown-timeline-marker cooldown-timeline-boss-marker-icon"
-                  : "cooldown-timeline-marker cooldown-timeline-boss-marker"
-              }
-              anchorStyle={
-                markerStyle
-              }
-              content={
-                tooltipContent
-              }
-              disabled={
-                isTooltipSuppressed
-              }
-              key={cast.id}
-            >
-              {cast.abilityIcon && (
-                <img
-                  alt={abilityName}
-                  src={getWowIconUrl(
-                    cast.abilityIcon
+            <Fragment key={cast.id}>
+              <Tooltip
+                anchorClassName={
+                  cast.abilityIcon
+                    ? "cooldown-timeline-marker cooldown-timeline-boss-marker-icon"
+                    : "cooldown-timeline-marker cooldown-timeline-boss-marker"
+                }
+                anchorStyle={
+                  markerStyle
+                }
+                content={
+                  tooltipContent
+                }
+                disabled={
+                  isTooltipSuppressed
+                }
+              >
+                {cast.abilityIcon && (
+                  <img
+                    alt={abilityName}
+                    src={getWowIconUrl(
+                      cast.abilityIcon
+                    )}
+                  />
+                )}
+              </Tooltip>
+
+              {showLabel[index] && (
+                <span
+                  className="cooldown-timeline-cast-label"
+                  style={
+                    markerStyle
+                  }
+                >
+                  {formatSeconds(
+                    cast.timestampSeconds
                   )}
-                />
+                </span>
               )}
-            </Tooltip>
+            </Fragment>
           );
         })}
       </div>

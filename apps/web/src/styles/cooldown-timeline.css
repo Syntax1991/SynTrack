@@ -56,10 +56,20 @@
  * reads as the rest of the same editor the roster sidebar opens
  * into, not a second card next to the first. Padding is applied
  * here, at the level both the ticks row and the rows container
- * share, so their mutual 148px alignment is unaffected — everything
- * inside just shifts together.
+ * share, so their mutual label-column alignment is unaffected —
+ * everything inside just shifts together.
+ *
+ * --timeline-label-width is the ONE canonical offset every label-
+ * column-aware consumer in this canvas derives from (ticks, the
+ * shared grid overlay, section labels, the PLAN toolbar, the empty-
+ * state message, and each row's own label flex-basis via calc()) —
+ * changing it here is the only place that needs to change. 180px is
+ * wide enough for real Blizzard ability/spell names (e.g. "Blessing
+ * of Protection") to stop truncating in the common case; genuine
+ * outliers still ellipsis + rely on the row's title tooltip.
  */
 .cooldown-timeline-grid {
+  --timeline-label-width: 180px;
   flex: 1;
   min-width: 0;
   padding: 10px 14px 14px;
@@ -70,7 +80,7 @@
 .cooldown-timeline-ticks {
   position: relative;
   height: 16px;
-  margin: 0 0 4px 148px;
+  margin: 0 0 4px var(--timeline-label-width);
 }
 
 .cooldown-timeline-ticks span {
@@ -97,25 +107,33 @@
  * use the same box), so the grid backdrop rides along for free.
  * Purely visual: pointer-events stays off so it never intercepts
  * row clicks/drags happening on the rows underneath/above it.
+ *
+ * Deliberate visual hierarchy, weakest to strongest: this tick-
+ * aligned grid (var(--border-strong), solid, still subtle) <
+ * .cooldown-timeline-phase-guide (dashed + higher opacity) <
+ * .cooldown-timeline-playhead (bright, solid). A finer "minor" tier
+ * between ticks was considered and deliberately dropped — there's no
+ * real sub-interval to divide into without turning this into an
+ * Excel-style grid.
  */
 .cooldown-timeline-track-overlay {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  left: 148px;
+  left: var(--timeline-label-width);
   pointer-events: none;
   background-image: repeating-linear-gradient(
     to right,
     transparent,
     transparent calc(10% - 1px),
-    var(--border) calc(10% - 1px),
-    var(--border) 10%
+    var(--border-strong) calc(10% - 1px),
+    var(--border-strong) 10%
   );
 }
 
 .cooldown-timeline-section-label {
-  margin: 8px 0 2px 148px;
+  margin: 6px 0 2px var(--timeline-label-width);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -127,12 +145,12 @@
   display: flex;
   align-items: stretch;
   gap: 8px;
-  padding-bottom: 2px;
+  padding-bottom: 1px;
   border-bottom: 1px solid var(--border);
 }
 
 .cooldown-timeline-row-label {
-  flex: 0 0 140px;
+  flex: 0 0 calc(var(--timeline-label-width) - 8px);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -192,7 +210,7 @@
 .cooldown-timeline-row-track {
   position: relative;
   flex: 1;
-  height: 26px;
+  height: 22px;
   cursor: crosshair;
 }
 
@@ -200,19 +218,25 @@
   cursor: default;
 }
 
+/*
+ * The strongest positional indicator on the canvas — deliberately
+ * brighter than the phase guides below it, which are themselves
+ * brighter than the tick-aligned grid in .cooldown-timeline-track-
+ * overlay. See that rule's comment for the full hierarchy.
+ */
 .cooldown-timeline-playhead {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 0;
   border-left: 1px solid var(--text);
-  opacity: 0.55;
+  opacity: 0.75;
   z-index: 2;
 }
 
 .cooldown-timeline-playhead.is-dragging {
   border-left-color: var(--primary);
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
 .cooldown-timeline-phase-guide {
@@ -221,7 +245,7 @@
   bottom: 0;
   width: 0;
   border-left: 1px dashed var(--border-strong);
-  opacity: 0.35;
+  opacity: 0.6;
   pointer-events: none;
 }
 

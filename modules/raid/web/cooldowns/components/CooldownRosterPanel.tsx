@@ -54,9 +54,12 @@ const emptySpellIdSet = new Set<number>();
  * A name click narrows PLAN to that player (documented WoWUtils
  * behavior: "click a player name to filter spells for that player
  * only"); the gear icon does the same thing but doubles as the
- * discoverable way into the Spells section below. Removing a plan
- * member is disabled whenever they still have real assignments —
- * the server enforces this too, this is just the friendlier UI half.
+ * discoverable way into the Spells section below. The +/× toggle is
+ * deliberately not a checkmark — Setup/BossRosterMatrix already uses
+ * ✓ for CONFIRMED lineup status, a different concept entirely, so
+ * this control never borrows that glyph. Removing a plan member is
+ * disabled whenever they still have real assignments — the server
+ * enforces this too, this is just the friendlier UI half.
  */
 export function CooldownRosterPanel({
   rosterMembers,
@@ -138,13 +141,7 @@ export function CooldownRosterPanel({
   return (
     <div className="cooldown-roster-panel">
       <div className="cooldown-roster-panel-title">
-        TIMELINE CONTROLS
-      </div>
-
-      <div className="cooldown-roster-panel-header">
-        <span className="cooldown-roster-panel-label">
-          Roster
-        </span>
+        <span>TIMELINE CONTROLS</span>
 
         <Link
           className="cooldown-roster-open-setup"
