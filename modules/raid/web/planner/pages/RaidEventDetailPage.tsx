@@ -65,6 +65,10 @@ export function RaidEventDetailPage() {
 
   const {
     setup,
+    setups,
+    selectedSetupId,
+    selectSetup,
+    createSetup,
     isLoading: isLoadingSetup,
     isSubmitting: isSubmittingSetup,
     error: setupError,
@@ -236,13 +240,19 @@ export function RaidEventDetailPage() {
               memberId
             );
           }}
+          onCreateSetup={createSetup}
+          onSelectSetup={selectSetup}
           onUpdateRosterFromTeam={() => {
             void updateRosterFromTeam();
           }}
           rosterMembers={
             rosterMembers
           }
+          selectedSetupId={
+            selectedSetupId
+          }
           setup={setup}
+          setups={setups}
         />
 
         <BossRosterSection

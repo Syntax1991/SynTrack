@@ -18,3 +18,8 @@ export type RaidSetup = {
   updatedAt: string;
   members: RaidSetupMember[];
 };
+
+export type RaidSetupListResponse = {
+  items: RaidSetup[];
+  total: number;
+};

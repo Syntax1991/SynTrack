@@ -1,6 +1,7 @@
 import type {
   RequestHandler
 } from "express";
+import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
 import { RaidCooldownEncounterService } from "./cooldownEncounter.service.js";
 import {
   raidBossFightDurationInputSchema,
@@ -29,8 +30,12 @@ export class RaidCooldownEncounterController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const boss =
       await this.service.updateFightDuration(
+        token,
         bossId,
         input
       );
@@ -72,8 +77,12 @@ export class RaidCooldownEncounterController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const marker =
       await this.service.createPhaseMarker(
+        token,
         bossId,
         input
       );
@@ -92,7 +101,11 @@ export class RaidCooldownEncounterController {
         request.params.markerId
       );
 
+    const token =
+      requireBearerToken(request);
+
     await this.service.deletePhaseMarker(
+      token,
       markerId
     );
 
@@ -128,8 +141,12 @@ export class RaidCooldownEncounterController {
         request.params.bossId
       );
 
+    const token =
+      requireBearerToken(request);
+
     const result =
       await this.service.syncBossFromWarcraftLogs(
+        token,
         bossId
       );
 

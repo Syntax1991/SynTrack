@@ -63,11 +63,14 @@ export class RaidAttendanceService {
   }
 
   async setRecord(
+    token: string,
     eventId: string,
     memberId: string,
     status: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const event =
       await this.repository.findEventById(
@@ -103,10 +106,13 @@ export class RaidAttendanceService {
   }
 
   async clearRecord(
+    token: string,
     eventId: string,
     memberId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const event =
       await this.repository.findEventById(

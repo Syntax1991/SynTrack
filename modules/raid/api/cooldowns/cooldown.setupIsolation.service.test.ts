@@ -12,12 +12,14 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     );
 
     await service.addPlanMember(
+      "token",
       "setup-a",
       "boss-1",
       "member-a"
     );
 
     await service.createAssignment(
+      "token",
       "setup-a",
       "boss-1",
       isolationAssignmentInput(
@@ -27,12 +29,14 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     );
 
     await service.addPlanMember(
+      "token",
       "setup-b",
       "boss-1",
       "member-b"
     );
 
     await service.createAssignment(
+      "token",
       "setup-b",
       "boss-1",
       isolationAssignmentInput(
@@ -98,12 +102,14 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     );
 
     await service.addPlanMember(
+      "token",
       "setup-a",
       "boss-1",
       "member-shared"
     );
 
     await service.addPlanMember(
+      "token",
       "setup-b",
       "boss-1",
       "member-shared"
@@ -140,18 +146,21 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     );
 
     await service.addPlanMember(
+      "token",
       "setup-a",
       "boss-1",
       "member-shared"
     );
 
     await service.addPlanMember(
+      "token",
       "setup-b",
       "boss-1",
       "member-shared"
     );
 
     await service.removePlanMember(
+      "token",
       "setup-a",
       "boss-1",
       "member-shared"
@@ -186,12 +195,14 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     );
 
     await service.addPlanMember(
+      "token",
       "setup-a",
       "boss-1",
       "member-shared"
     );
 
     await service.addPlanMember(
+      "token",
       "setup-b",
       "boss-1",
       "member-shared"
@@ -199,6 +210,7 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
 
     // Only Setup B has a real assignment for this member.
     await service.createAssignment(
+      "token",
       "setup-b",
       "boss-1",
       isolationAssignmentInput(
@@ -210,6 +222,7 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     // Setup A has zero assignments for this member — removal succeeds.
     await expect(
       service.removePlanMember(
+        "token",
         "setup-a",
         "boss-1",
         "member-shared"
@@ -219,6 +232,7 @@ describe("RaidCooldownService Setup+Boss isolation (architectural acceptance tes
     // Setup B has a real assignment — removal is blocked.
     await expect(
       service.removePlanMember(
+        "token",
         "setup-b",
         "boss-1",
         "member-shared"

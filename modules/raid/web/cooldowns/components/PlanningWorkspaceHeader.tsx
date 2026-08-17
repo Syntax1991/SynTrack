@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { RaidBoss } from "../../boss-rosters/types/bossRoster.types";
+import { SetupSelector } from "../../raid-setup/components/SetupSelector";
+import type { RaidSetup } from "../../raid-setup/types/raidSetup.types";
 import { formatRelativeTime } from "../utils/timelineFormat";
 
 type PlanningWorkspaceView = "timeline" | "list";
@@ -9,6 +11,9 @@ type PlanningWorkspaceHeaderProps = {
   bosses: RaidBoss[];
   selectedBossId: string;
   onSelectBoss: (bossId: string) => void;
+  setups: RaidSetup[];
+  selectedSetupId: string | null;
+  onSelectSetup: (setupId: string) => void;
   onBackToEvents: () => void;
   view: PlanningWorkspaceView;
   onViewChange: (view: PlanningWorkspaceView) => void;
@@ -42,6 +47,9 @@ export function PlanningWorkspaceHeader({
   bosses,
   selectedBossId,
   onSelectBoss,
+  setups,
+  selectedSetupId,
+  onSelectSetup,
   onBackToEvents,
   view,
   onViewChange,
@@ -92,6 +100,15 @@ export function PlanningWorkspaceHeader({
       </div>
 
       <div className="planning-workspace-header-row">
+        <SetupSelector
+          isSubmitting={false}
+          onSelect={onSelectSetup}
+          selectedSetupId={
+            selectedSetupId
+          }
+          setups={setups}
+        />
+
         <select
           aria-label="Switch boss"
           className="planning-workspace-boss-select"

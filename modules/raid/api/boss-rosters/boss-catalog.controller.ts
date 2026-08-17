@@ -1,4 +1,5 @@
 import type { RequestHandler } from "express";
+import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
 import { RaidBossCatalogService } from "./boss-catalog.service.js";
 import {
   raidBossIdSchema,
@@ -21,6 +22,9 @@ export class RaidBossCatalogController {
         request.params.eventId
       );
 
+    const token =
+      requireBearerToken(request);
+
     const input =
       raidBossInputSchema.parse(
         request.body
@@ -28,6 +32,7 @@ export class RaidBossCatalogController {
 
     const boss =
       await this.service.createBoss(
+        token,
         eventId,
         input
       );
@@ -46,6 +51,9 @@ export class RaidBossCatalogController {
         request.params.bossId
       );
 
+    const token =
+      requireBearerToken(request);
+
     const input =
       raidBossInputSchema.parse(
         request.body
@@ -53,6 +61,7 @@ export class RaidBossCatalogController {
 
     const boss =
       await this.service.updateBoss(
+        token,
         bossId,
         input
       );
@@ -69,7 +78,11 @@ export class RaidBossCatalogController {
         request.params.bossId
       );
 
+    const token =
+      requireBearerToken(request);
+
     await this.service.deleteBoss(
+      token,
       bossId
     );
 

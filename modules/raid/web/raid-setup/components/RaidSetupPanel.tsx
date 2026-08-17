@@ -2,10 +2,15 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { resolveClassColor } from "../../../../guild/web/roster/utils/classColors";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
+import { SetupSelector } from "./SetupSelector";
 import type { RaidSetup } from "../types/raidSetup.types";
 
 type RaidSetupPanelProps = {
   setup: RaidSetup | null;
+  setups: RaidSetup[];
+  selectedSetupId: string | null;
+  onSelectSetup: (setupId: string) => void;
+  onCreateSetup: (name: string) => Promise<void>;
   isLoading: boolean;
   isSubmitting: boolean;
   rosterMembers: GuildMember[];
@@ -17,6 +22,10 @@ type RaidSetupPanelProps = {
 
 export function RaidSetupPanel({
   setup,
+  setups,
+  selectedSetupId,
+  onSelectSetup,
+  onCreateSetup,
   isLoading,
   isSubmitting,
   rosterMembers,
@@ -80,6 +89,14 @@ export function RaidSetupPanel({
           Update Roster
         </button>
       </div>
+
+      <SetupSelector
+        isSubmitting={isSubmitting}
+        onCreate={onCreateSetup}
+        onSelect={onSelectSetup}
+        selectedSetupId={selectedSetupId}
+        setups={setups}
+      />
 
       {setup.members.length === 0 ? (
         <p className="muted-text">

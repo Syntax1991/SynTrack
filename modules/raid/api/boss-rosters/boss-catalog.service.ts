@@ -9,6 +9,16 @@ import type { RaidBossInput } from "./boss-roster.types.js";
  * it, with what status/spec). Split out to keep boss-roster.service.ts
  * under the architecture line limit; both share the same thin
  * repository since neither owns distinct storage.
+ *
+ * Mutations require the CURRENT request's authenticated officer
+ * (`requireCurrentOfficer`), the same standard already used by
+ * RaidSetupService/RaidBossRosterService mutations — not
+ * `ensureVerified()`, which only proves the guild was verified by
+ * *someone*, *once*, ever, with no check on who is calling right now.
+ * Deleting a boss cascades through its entire composition (roster
+ * entries, cooldown plan members, assignments, phase markers, ability
+ * casts), so this is the most consequential mutation in the module
+ * and must not be the most weakly guarded one.
  */
 export class RaidBossCatalogService {
   constructor(
@@ -20,10 +30,13 @@ export class RaidBossCatalogService {
   ) {}
 
   async createBoss(
+    token: string,
     eventId: string,
     input: RaidBossInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const event =
       await this.repository.findEventById(
@@ -44,10 +57,13 @@ export class RaidBossCatalogService {
   }
 
   async updateBoss(
+    token: string,
     bossId: string,
     input: RaidBossInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const boss =
       await this.repository.findBossById(
@@ -68,9 +84,12 @@ export class RaidBossCatalogService {
   }
 
   async deleteBoss(
+    token: string,
     bossId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const boss =
       await this.repository.findBossById(

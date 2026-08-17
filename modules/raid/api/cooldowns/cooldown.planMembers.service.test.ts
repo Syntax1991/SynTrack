@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
+import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import type { GuildVerificationGuard } from "../../../guild/api/verification/verification.types.js";
 import type { RaidSetupRepository } from "../setups/setup.repository.js";
 import type { RaidCooldownRepository } from "./cooldown.repository.js";
 import { RaidCooldownService } from "./cooldown.service.js";
 
-function createService() {
+function createService(
+  options: {
+    isOfficer?: boolean;
+  } = {}
+) {
   const repository = {
     findBossById: vi.fn(async () => ({
       id: "boss-1",
@@ -43,7 +48,16 @@ function createService() {
   const verification: GuildVerificationGuard = {
     ensureVerified: vi.fn(async () => {}),
     requireCurrentOfficer: vi.fn(
-      async () => ({ id: "member-1" })
+      async () => {
+        if (options.isOfficer === false) {
+          throw new AppError(
+            403,
+            "Not an officer."
+          );
+        }
+
+        return { id: "member-1" };
+      }
     )
   };
 
@@ -74,21 +88,43 @@ describe("RaidCooldownService plan-member methods", () => {
     expect(
       verification.ensureVerified
     ).not.toHaveBeenCalled();
+    expect(
+      verification.requireCurrentOfficer
+    ).not.toHaveBeenCalled();
   });
 
-  it("addPlanMember verifies before touching the repository", async () => {
+  it("addPlanMember requires the current request's authenticated officer, not ensureVerified", async () => {
     const { service, verification } =
       createService();
 
     await service.addPlanMember(
+      "token",
       "setup-1",
       "boss-1",
       "member-1"
     );
 
     expect(
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+    expect(
       verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+    ).not.toHaveBeenCalled();
+  });
+
+  it("addPlanMember rejects a non-officer (or unauthenticated) caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.addPlanMember(
+        "token",
+        "setup-1",
+        "boss-1",
+        "member-1"
+      )
+    ).rejects.toThrow(AppError);
   });
 
   it("addPlanMember rejects a Setup and Boss from different events", async () => {
@@ -104,6 +140,7 @@ describe("RaidCooldownService plan-member methods", () => {
 
     await expect(
       service.addPlanMember(
+        "token",
         "setup-2",
         "boss-1",
         "member-1"
@@ -113,19 +150,35 @@ describe("RaidCooldownService plan-member methods", () => {
     });
   });
 
-  it("removePlanMember verifies before touching the repository", async () => {
+  it("removePlanMember requires the current request's authenticated officer", async () => {
     const { service, verification } =
       createService();
 
     await service.removePlanMember(
+      "token",
       "setup-1",
       "boss-1",
       "member-1"
     );
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+  });
+
+  it("removePlanMember rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.removePlanMember(
+        "token",
+        "setup-1",
+        "boss-1",
+        "member-1"
+      )
+    ).rejects.toThrow(AppError);
   });
 
   it("removePlanMember refuses to delete a plan member who still has real assignments under this exact Setup+Boss", async () => {
@@ -138,6 +191,7 @@ describe("RaidCooldownService plan-member methods", () => {
 
     await expect(
       service.removePlanMember(
+        "token",
         "setup-1",
         "boss-1",
         "member-1"
@@ -156,6 +210,7 @@ describe("RaidCooldownService plan-member methods", () => {
       createService();
 
     await service.removePlanMember(
+      "token",
       "setup-1",
       "boss-1",
       "member-1"

@@ -36,6 +36,9 @@ export function CooldownsLandingPage() {
 
   const {
     setup,
+    setups,
+    selectedSetupId,
+    selectSetup,
     error: setupError
   } = useRaidSetup(
     selectedEvent?.id ?? null
@@ -226,13 +229,18 @@ export function CooldownsLandingPage() {
 
             await loadBosses();
           }}
+          onSelectSetup={selectSetup}
           rosterMembers={
             rosterMembers
+          }
+          selectedSetupId={
+            selectedSetupId
           }
           setupId={setup.id}
           setupMembers={
             setup.members
           }
+          setups={setups}
           specIdByMemberId={
             specIdByMemberId
           }

@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
+import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import type { GuildVerificationGuard } from "../../../guild/api/verification/verification.types.js";
 import type { RaidSetupRepository } from "../setups/setup.repository.js";
 import type { RaidCooldownRepository } from "./cooldown.repository.js";
 import { RaidCooldownService } from "./cooldown.service.js";
 
-function createService() {
+function createService(
+  options: {
+    isOfficer?: boolean;
+  } = {}
+) {
   const calls: string[] = [];
 
   const repository = {
@@ -62,6 +67,14 @@ function createService() {
     }),
     requireCurrentOfficer: vi.fn(async () => {
       calls.push("verification");
+
+      if (options.isOfficer === false) {
+        throw new AppError(
+          403,
+          "Not an officer."
+        );
+      }
+
       return { id: "member-1" };
     })
   };
@@ -92,20 +105,39 @@ const assignmentInput = {
 };
 
 describe("RaidCooldownService mutating methods", () => {
-  it("createAssignment verifies before touching the repository", async () => {
+  it("createAssignment requires the current request's authenticated officer, not ensureVerified", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.createAssignment(
+      "token",
       "setup-1",
       "boss-1",
       assignmentInput
     );
 
     expect(
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+    expect(
       verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+    ).not.toHaveBeenCalled();
     expect(calls[0]).toBe("verification");
+  });
+
+  it("createAssignment rejects a non-officer (or unauthenticated) caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.createAssignment(
+        "token",
+        "setup-1",
+        "boss-1",
+        assignmentInput
+      )
+    ).rejects.toThrow(AppError);
   });
 
   it("createAssignment rejects a Setup and Boss from different events", async () => {
@@ -121,6 +153,7 @@ describe("RaidCooldownService mutating methods", () => {
 
     await expect(
       service.createAssignment(
+        "token",
         "setup-2",
         "boss-1",
         assignmentInput
@@ -130,11 +163,12 @@ describe("RaidCooldownService mutating methods", () => {
     });
   });
 
-  it("updateAssignment verifies before touching the repository", async () => {
+  it("updateAssignment requires the current request's authenticated officer", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.updateAssignment(
+      "token",
       "setup-1",
       "boss-1",
       "assignment-1",
@@ -142,9 +176,25 @@ describe("RaidCooldownService mutating methods", () => {
     );
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
     expect(calls[0]).toBe("verification");
+  });
+
+  it("updateAssignment rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.updateAssignment(
+        "token",
+        "setup-1",
+        "boss-1",
+        "assignment-1",
+        assignmentInput
+      )
+    ).rejects.toThrow(AppError);
   });
 
   it("updateAssignment refuses an assignment that belongs to a different Setup", async () => {
@@ -161,6 +211,7 @@ describe("RaidCooldownService mutating methods", () => {
 
     await expect(
       service.updateAssignment(
+        "token",
         "setup-1",
         "boss-1",
         "assignment-1",
@@ -175,20 +226,36 @@ describe("RaidCooldownService mutating methods", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("deleteAssignment verifies before touching the repository", async () => {
+  it("deleteAssignment requires the current request's authenticated officer", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.deleteAssignment(
+      "token",
       "setup-1",
       "boss-1",
       "assignment-1"
     );
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
     expect(calls[0]).toBe("verification");
+  });
+
+  it("deleteAssignment rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.deleteAssignment(
+        "token",
+        "setup-1",
+        "boss-1",
+        "assignment-1"
+      )
+    ).rejects.toThrow(AppError);
   });
 
   it("deleteAssignment refuses an assignment that belongs to a different Boss", async () => {
@@ -205,6 +272,7 @@ describe("RaidCooldownService mutating methods", () => {
 
     await expect(
       service.deleteAssignment(
+        "token",
         "setup-1",
         "boss-1",
         "assignment-1"
@@ -228,6 +296,9 @@ describe("RaidCooldownService read methods", () => {
 
     expect(
       verification.ensureVerified
+    ).not.toHaveBeenCalled();
+    expect(
+      verification.requireCurrentOfficer
     ).not.toHaveBeenCalled();
   });
 });

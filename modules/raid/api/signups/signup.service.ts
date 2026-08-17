@@ -59,11 +59,14 @@ export class RaidSignupService {
   }
 
   async setSignup(
+    token: string,
     eventId: string,
     memberId: string,
     status: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     return this.upsert(
       eventId,
@@ -97,10 +100,13 @@ export class RaidSignupService {
   }
 
   async clearSignup(
+    token: string,
     eventId: string,
     memberId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     await this.assertEventExists(
       eventId

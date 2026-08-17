@@ -33,6 +33,16 @@ raidSetupRouter.get(
   asyncHandler(controller.getForEvent)
 );
 
+raidSetupRouter.get(
+  "/events/:eventId/setups",
+  asyncHandler(controller.listForEvent)
+);
+
+raidSetupRouter.post(
+  "/events/:eventId/setups",
+  asyncHandler(controller.createSetup)
+);
+
 raidSetupRouter.post(
   "/:setupId/members",
   asyncHandler(controller.addMembers)

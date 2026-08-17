@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import type { GuildVerificationGuard } from "../../../guild/api/verification/verification.types.js";
 import { RaidBossCatalogService } from "./boss-catalog.service.js";
 import type { RaidBossRosterRepository } from "./boss-roster.repository.js";
@@ -11,7 +12,11 @@ const boss = {
   rosterEntries: []
 };
 
-function createService() {
+function createService(
+  options: {
+    isOfficer?: boolean;
+  } = {}
+) {
   const repository = {
     findEventById: vi.fn(async () => ({
       id: "event-1"
@@ -25,7 +30,16 @@ function createService() {
   const verification: GuildVerificationGuard = {
     ensureVerified: vi.fn(async () => {}),
     requireCurrentOfficer: vi.fn(
-      async () => ({ id: "member-1" })
+      async () => {
+        if (options.isOfficer === false) {
+          throw new AppError(
+            403,
+            "Not an officer."
+          );
+        }
+
+        return { id: "member-1" };
+      }
     )
   };
 
@@ -38,32 +52,80 @@ function createService() {
 }
 
 describe("RaidBossCatalogService", () => {
-  it("createBoss uses ensureVerified, not requireCurrentOfficer", async () => {
+  it("createBoss requires the current request's authenticated officer, not ensureVerified", async () => {
     const { service, verification } =
       createService();
 
-    await service.createBoss("event-1", {
-      name: "New Boss",
-      sortOrder: 0
-    });
-
-    expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+    await service.createBoss(
+      "token",
+      "event-1",
+      {
+        name: "New Boss",
+        sortOrder: 0
+      }
+    );
 
     expect(
       verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+
+    expect(
+      verification.ensureVerified
     ).not.toHaveBeenCalled();
+  });
+
+  it("createBoss rejects a non-officer (or unauthenticated) caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.createBoss(
+        "token",
+        "event-1",
+        { name: "New Boss", sortOrder: 0 }
+      )
+    ).rejects.toThrow(AppError);
+  });
+
+  it("updateBoss requires the current request's authenticated officer", async () => {
+    const { service, verification } =
+      createService();
+
+    await service.updateBoss(
+      "token",
+      "boss-1",
+      { name: "  Padded Name  ", sortOrder: 1 }
+    );
+
+    expect(
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+  });
+
+  it("updateBoss rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.updateBoss(
+        "token",
+        "boss-1",
+        { name: "Name", sortOrder: 0 }
+      )
+    ).rejects.toThrow(AppError);
   });
 
   it("updateBoss trims the name", async () => {
     const { service, repository } =
       createService();
 
-    await service.updateBoss("boss-1", {
-      name: "  Padded Name  ",
-      sortOrder: 1
-    });
+    await service.updateBoss(
+      "token",
+      "boss-1",
+      { name: "  Padded Name  ", sortOrder: 1 }
+    );
 
     expect(
       repository.updateBoss
@@ -73,11 +135,38 @@ describe("RaidBossCatalogService", () => {
     });
   });
 
+  it("deleteBoss requires the current request's authenticated officer", async () => {
+    const { service, verification } =
+      createService();
+
+    await service.deleteBoss(
+      "token",
+      "boss-1"
+    );
+
+    expect(
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+  });
+
+  it("deleteBoss rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.deleteBoss("token", "boss-1")
+    ).rejects.toThrow(AppError);
+  });
+
   it("deleteBoss removes an existing boss", async () => {
     const { service, repository } =
       createService();
 
-    await service.deleteBoss("boss-1");
+    await service.deleteBoss(
+      "token",
+      "boss-1"
+    );
 
     expect(
       repository.deleteBoss

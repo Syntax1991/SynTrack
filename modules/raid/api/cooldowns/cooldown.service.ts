@@ -32,11 +32,14 @@ export class RaidCooldownService {
   }
 
   async createAssignment(
+    token: string,
     setupId: string,
     bossId: string,
     input: RaidCooldownAssignmentInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const { boss, setup } =
       await this.requireConsistentBossAndSetup(
@@ -64,12 +67,15 @@ export class RaidCooldownService {
   }
 
   async updateAssignment(
+    token: string,
     setupId: string,
     bossId: string,
     assignmentId: string,
     input: RaidCooldownAssignmentInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const { boss, setup } =
       await this.requireConsistentBossAndSetup(
@@ -103,11 +109,14 @@ export class RaidCooldownService {
   }
 
   async deleteAssignment(
+    token: string,
     setupId: string,
     bossId: string,
     assignmentId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const { boss, setup } =
       await this.requireConsistentBossAndSetup(
@@ -138,11 +147,14 @@ export class RaidCooldownService {
   }
 
   async addPlanMember(
+    token: string,
     setupId: string,
     bossId: string,
     memberId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const { boss, setup } =
       await this.requireConsistentBossAndSetup(
@@ -179,11 +191,14 @@ export class RaidCooldownService {
    * assignment under a different Setup can never block removal here.
    */
   async removePlanMember(
+    token: string,
     setupId: string,
     bossId: string,
     memberId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const { boss, setup } =
       await this.requireConsistentBossAndSetup(

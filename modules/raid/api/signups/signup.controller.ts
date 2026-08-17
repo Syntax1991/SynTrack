@@ -54,8 +54,12 @@ export class RaidSignupController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     response.json(
       await this.service.setSignup(
+        token,
         eventId,
         memberId,
         input.status
@@ -103,7 +107,11 @@ export class RaidSignupController {
         request.params.memberId
       );
 
+    const token =
+      requireBearerToken(request);
+
     await this.service.clearSignup(
+      token,
       eventId,
       memberId
     );

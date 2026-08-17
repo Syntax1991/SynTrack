@@ -1,6 +1,7 @@
 import type {
   RequestHandler
 } from "express";
+import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
 import { RaidAttendanceService } from "./attendance.service.js";
 import {
   raidAttendanceEventIdSchema,
@@ -66,8 +67,12 @@ export class RaidAttendanceController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const records =
       await this.service.setRecord(
+        token,
         eventId,
         memberId,
         input.status
@@ -93,8 +98,12 @@ export class RaidAttendanceController {
         request.params.memberId
       );
 
+    const token =
+      requireBearerToken(request);
+
     const records =
       await this.service.clearRecord(
+        token,
         eventId,
         memberId
       );

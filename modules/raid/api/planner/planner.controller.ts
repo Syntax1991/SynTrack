@@ -1,6 +1,7 @@
 import type {
   RequestHandler
 } from "express";
+import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
 import { RaidPlannerService } from "./planner.service.js";
 import {
   raidEventIdSchema,
@@ -35,8 +36,12 @@ export class RaidPlannerController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const event =
       await this.service.create(
+        token,
         input
       );
 
@@ -59,8 +64,12 @@ export class RaidPlannerController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const event =
       await this.service.update(
+        token,
         eventId,
         input
       );
@@ -77,7 +86,11 @@ export class RaidPlannerController {
         request.params.eventId
       );
 
+    const token =
+      requireBearerToken(request);
+
     await this.service.delete(
+      token,
       eventId
     );
 

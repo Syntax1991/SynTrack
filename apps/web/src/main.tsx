@@ -32,6 +32,7 @@ import "./styles/guild-workspace.css";
 import "./styles/guild-workspace-sections.css";
 import "./styles/guild-modal.css";
 import "./styles/raid.css";
+import "./styles/raid-setup.css";
 import "./styles/boss-roster-matrix.css";
 import "./styles/boss-roster-overview.css";
 import "./styles/cooldown-timeline.css";

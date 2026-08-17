@@ -53,9 +53,12 @@ export class RaidPlannerService {
   }
 
   async create(
+    token: string,
     input: RaidEventInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     await this.assertTeamExists(
       input.teamId
@@ -78,10 +81,13 @@ export class RaidPlannerService {
   }
 
   async update(
+    token: string,
     eventId: string,
     input: RaidEventInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const existing =
       await this.repository.findById(
@@ -106,9 +112,12 @@ export class RaidPlannerService {
   }
 
   async delete(
+    token: string,
     eventId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const existing =
       await this.repository.findById(

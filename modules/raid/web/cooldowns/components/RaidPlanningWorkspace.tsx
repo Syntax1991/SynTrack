@@ -2,7 +2,10 @@ import { useState } from "react";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import type { GuildMember } from "../../../../guild/web/roster/types/roster.types";
 import type { RaidBoss } from "../../boss-rosters/types/bossRoster.types";
-import type { RaidSetupMember } from "../../raid-setup/types/raidSetup.types";
+import type {
+  RaidSetup,
+  RaidSetupMember
+} from "../../raid-setup/types/raidSetup.types";
 import { useBossAbilityCasts } from "../hooks/useBossAbilityCasts";
 import { usePhaseMarkers } from "../hooks/usePhaseMarkers";
 import { usePlanMembers } from "../hooks/usePlanMembers";
@@ -17,6 +20,9 @@ import { PlanningWorkspaceHeader } from "./PlanningWorkspaceHeader";
 
 type RaidPlanningWorkspaceProps = {
   setupId: string;
+  setups: RaidSetup[];
+  selectedSetupId: string | null;
+  onSelectSetup: (setupId: string) => void;
   bossId: string;
   bossName: string;
   bosses: RaidBoss[];
@@ -54,6 +60,9 @@ type RaidPlanningWorkspaceProps = {
  */
 export function RaidPlanningWorkspace({
   setupId,
+  setups,
+  selectedSetupId,
+  onSelectSetup,
   bossId,
   bossName,
   bosses,
@@ -130,6 +139,7 @@ export function RaidPlanningWorkspace({
         onSync={() =>
           void handleSync()
         }
+        onSelectSetup={onSelectSetup}
         onTogglePhaseForm={() =>
           setIsPhaseFormOpen(
             (current) => !current
@@ -137,6 +147,8 @@ export function RaidPlanningWorkspace({
         }
         onViewChange={setView}
         selectedBossId={bossId}
+        selectedSetupId={selectedSetupId}
+        setups={setups}
         view={view}
         wclSyncedAt={wclSyncedAt}
       />

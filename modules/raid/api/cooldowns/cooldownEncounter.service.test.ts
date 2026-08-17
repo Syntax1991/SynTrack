@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { vi } from "vitest";
+import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import type { GuildVerificationGuard } from "../../../guild/api/verification/verification.types.js";
 import type { RaidCooldownRepository } from "./cooldown.repository.js";
 import { RaidCooldownEncounterService } from "./cooldownEncounter.service.js";
 import type { WarcraftLogsClient } from "./warcraftlogs.client.js";
 
-function createService() {
+function createService(
+  options: {
+    isOfficer?: boolean;
+  } = {}
+) {
   const calls: string[] = [];
 
   const repository = {
@@ -54,6 +59,14 @@ function createService() {
     }),
     requireCurrentOfficer: vi.fn(async () => {
       calls.push("verification");
+
+      if (options.isOfficer === false) {
+        throw new AppError(
+          403,
+          "Not an officer."
+        );
+      }
+
       return { id: "member-1" };
     })
   };
@@ -95,62 +108,123 @@ function createService() {
 }
 
 describe("RaidCooldownEncounterService mutating methods", () => {
-  it("updateFightDuration verifies before touching the repository", async () => {
+  it("updateFightDuration requires the current request's authenticated officer, not ensureVerified", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.updateFightDuration(
+      "token",
       "boss-1",
       { fightDurationSeconds: 300 }
     );
 
     expect(
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
+    expect(
       verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+    ).not.toHaveBeenCalled();
     expect(calls[0]).toBe("verification");
   });
 
-  it("createPhaseMarker verifies before touching the repository", async () => {
+  it("updateFightDuration rejects a non-officer (or unauthenticated) caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.updateFightDuration(
+        "token",
+        "boss-1",
+        { fightDurationSeconds: 300 }
+      )
+    ).rejects.toThrow(AppError);
+  });
+
+  it("createPhaseMarker requires the current request's authenticated officer", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.createPhaseMarker(
+      "token",
       "boss-1",
       { label: "Pull", startSeconds: 0, sortOrder: 0 }
     );
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
     expect(calls[0]).toBe("verification");
   });
 
-  it("deletePhaseMarker verifies before touching the repository", async () => {
+  it("createPhaseMarker rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.createPhaseMarker(
+        "token",
+        "boss-1",
+        { label: "Pull", startSeconds: 0, sortOrder: 0 }
+      )
+    ).rejects.toThrow(AppError);
+  });
+
+  it("deletePhaseMarker requires the current request's authenticated officer", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.deletePhaseMarker(
+      "token",
       "marker-1"
     );
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
     expect(calls[0]).toBe("verification");
   });
 
-  it("syncBossFromWarcraftLogs verifies before touching the repository or Warcraft Logs", async () => {
+  it("deletePhaseMarker rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.deletePhaseMarker(
+        "token",
+        "marker-1"
+      )
+    ).rejects.toThrow(AppError);
+  });
+
+  it("syncBossFromWarcraftLogs requires the current request's authenticated officer", async () => {
     const { service, verification, calls } =
       createService();
 
     await service.syncBossFromWarcraftLogs(
+      "token",
       "boss-1"
     );
 
     expect(
-      verification.ensureVerified
-    ).toHaveBeenCalledTimes(1);
+      verification.requireCurrentOfficer
+    ).toHaveBeenCalledWith("token");
     expect(calls[0]).toBe("verification");
+  });
+
+  it("syncBossFromWarcraftLogs rejects a non-officer caller", async () => {
+    const { service } = createService({
+      isOfficer: false
+    });
+
+    await expect(
+      service.syncBossFromWarcraftLogs(
+        "token",
+        "boss-1"
+      )
+    ).rejects.toThrow(AppError);
   });
 });
 
@@ -164,6 +238,9 @@ describe("RaidCooldownEncounterService read methods", () => {
     expect(
       verification.ensureVerified
     ).not.toHaveBeenCalled();
+    expect(
+      verification.requireCurrentOfficer
+    ).not.toHaveBeenCalled();
   });
 
   it("listAbilityCasts does not require verification", async () => {
@@ -174,6 +251,9 @@ describe("RaidCooldownEncounterService read methods", () => {
 
     expect(
       verification.ensureVerified
+    ).not.toHaveBeenCalled();
+    expect(
+      verification.requireCurrentOfficer
     ).not.toHaveBeenCalled();
   });
 });

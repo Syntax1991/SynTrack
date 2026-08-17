@@ -26,10 +26,13 @@ export class RaidCooldownEncounterService {
   ) {}
 
   async updateFightDuration(
+    token: string,
     bossId: string,
     input: RaidBossFightDurationInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     await this.requireBoss(bossId);
 
@@ -46,10 +49,13 @@ export class RaidCooldownEncounterService {
   }
 
   async createPhaseMarker(
+    token: string,
     bossId: string,
     input: RaidBossPhaseMarkerInput
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     await this.requireBoss(bossId);
 
@@ -63,9 +69,12 @@ export class RaidCooldownEncounterService {
   }
 
   async deletePhaseMarker(
+    token: string,
     markerId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const marker =
       await this.repository.findPhaseMarkerById(
@@ -91,9 +100,12 @@ export class RaidCooldownEncounterService {
   }
 
   async syncBossFromWarcraftLogs(
+    token: string,
     bossId: string
   ) {
-    await this.verification.ensureVerified();
+    await this.verification.requireCurrentOfficer(
+      token
+    );
 
     const boss = await this.requireBoss(
       bossId

@@ -30,6 +30,73 @@ export class RaidSetupService {
     return this.enrichSetup(setup);
   }
 
+  /**
+   * Every Setup for the event, "main" included — bootstraps "main"
+   * first (via getOrCreateForEvent) so an event that's never been
+   * opened yet still returns a non-empty list instead of forcing the
+   * caller to separately know to call getForEvent first.
+   */
+  async listForEvent(
+    token: string,
+    eventId: string
+  ) {
+    await this.requireLinkedMember(token);
+
+    const bootstrapped =
+      await this.repository.getOrCreateForEvent(
+        eventId
+      );
+
+    if (!bootstrapped) {
+      throw new AppError(
+        404,
+        "Raid-Termin nicht gefunden."
+      );
+    }
+
+    const setups =
+      await this.repository.findAllForEvent(
+        eventId
+      );
+
+    return Promise.all(
+      setups.map((setup) =>
+        this.enrichSetup(setup)
+      )
+    );
+  }
+
+  /**
+   * A genuinely new, empty Setup for this event — never copies
+   * another Setup's pool/lineup/plan. Officer-gated like every other
+   * Setup mutation; read access (listForEvent/getForEvent) only needs
+   * a linked member.
+   */
+  async createSetup(
+    token: string,
+    eventId: string,
+    name: string
+  ) {
+    await this.verification.requireCurrentOfficer(
+      token
+    );
+
+    const setup =
+      await this.repository.createSetup(
+        eventId,
+        name
+      );
+
+    if (!setup) {
+      throw new AppError(
+        404,
+        "Raid-Termin nicht gefunden."
+      );
+    }
+
+    return this.enrichSetup(setup);
+  }
+
   async addMembers(
     token: string,
     setupId: string,

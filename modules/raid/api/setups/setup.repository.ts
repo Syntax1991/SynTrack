@@ -1,5 +1,6 @@
 import { prisma } from "../../../../apps/api/src/infrastructure/database/prismaClient.js";
 import { resolveRaidWeek } from "../../shared/catalog/raidWeek.js";
+import { generateSetupKey } from "./setupKey.js";
 
 const DEFAULT_SETUP_KEY = "main";
 
@@ -33,7 +34,11 @@ export class RaidSetupRepository {
    * upsert is keyed on the real @@unique([raidEventId, key]) DB
    * constraint, so two concurrent requests for the same event can
    * never create two "main" setups — the constraint itself, not this
-   * code, is what guarantees that.
+   * code, is what guarantees that. Kept as the guaranteed bootstrap
+   * path: every event needs at least one Setup to exist before
+   * `findAllForEvent` has anything to return, and old integrations
+   * calling this directly still get exactly the same "main" Setup
+   * they always did.
    */
   async getOrCreateForEvent(eventId: string) {
     const event = await this.findEventById(eventId);
@@ -42,25 +47,9 @@ export class RaidSetupRepository {
       return null;
     }
 
-    const { startsAt, endsAt } = resolveRaidWeek(
-      event.scheduledAt
+    const plan = await this.resolvePlanForEvent(
+      event
     );
-
-    const week = await prisma.raidWeek.upsert({
-      where: { startsAt },
-      create: { startsAt, endsAt },
-      update: {}
-    });
-
-    let plan = await prisma.raidPlan.findFirst({
-      where: { raidWeekId: week.id }
-    });
-
-    if (!plan) {
-      plan = await prisma.raidPlan.create({
-        data: { raidWeekId: week.id }
-      });
-    }
 
     return prisma.raidSetup.upsert({
       where: {
@@ -76,6 +65,76 @@ export class RaidSetupRepository {
       },
       update: {},
       include: setupInclude
+    });
+  }
+
+  findAllForEvent(eventId: string) {
+    return prisma.raidSetup.findMany({
+      where: { raidEventId: eventId },
+      include: setupInclude,
+      orderBy: { createdAt: "asc" }
+    });
+  }
+
+  /**
+   * A genuinely new, empty Setup — never copies another Setup's
+   * members/lineup/plan. `generateSetupKey` derives a slug from the
+   * name plus a random suffix, so two officers independently creating
+   * a Setup named "Split 1" for the same event can never collide on
+   * the real @@unique([raidEventId, key]) constraint.
+   */
+  async createSetup(
+    eventId: string,
+    name: string
+  ) {
+    const event = await this.findEventById(
+      eventId
+    );
+
+    if (!event) {
+      return null;
+    }
+
+    const plan = await this.resolvePlanForEvent(
+      event
+    );
+
+    return prisma.raidSetup.create({
+      data: {
+        raidPlanId: plan.id,
+        raidEventId: eventId,
+        key: generateSetupKey(name),
+        name
+      },
+      include: setupInclude
+    });
+  }
+
+  private async resolvePlanForEvent(
+    event: { scheduledAt: Date }
+  ) {
+    const { startsAt, endsAt } =
+      resolveRaidWeek(event.scheduledAt);
+
+    const week = await prisma.raidWeek.upsert(
+      {
+        where: { startsAt },
+        create: { startsAt, endsAt },
+        update: {}
+      }
+    );
+
+    const existingPlan =
+      await prisma.raidPlan.findFirst({
+        where: { raidWeekId: week.id }
+      });
+
+    if (existingPlan) {
+      return existingPlan;
+    }
+
+    return prisma.raidPlan.create({
+      data: { raidWeekId: week.id }
     });
   }
 

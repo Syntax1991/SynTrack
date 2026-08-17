@@ -1,6 +1,7 @@
 import type {
   RequestHandler
 } from "express";
+import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
 import { RaidCooldownService } from "./cooldown.service.js";
 import {
   raidCooldownAssignmentIdSchema,
@@ -61,8 +62,12 @@ export class RaidCooldownController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const assignment =
       await this.service.createAssignment(
+        token,
         setupId,
         bossId,
         {
@@ -111,8 +116,12 @@ export class RaidCooldownController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const assignment =
       await this.service.updateAssignment(
+        token,
         setupId,
         bossId,
         assignmentId,
@@ -155,7 +164,11 @@ export class RaidCooldownController {
         request.params.assignmentId
       );
 
+    const token =
+      requireBearerToken(request);
+
     await this.service.deleteAssignment(
+      token,
       setupId,
       bossId,
       assignmentId
@@ -209,8 +222,12 @@ export class RaidCooldownController {
         request.body
       );
 
+    const token =
+      requireBearerToken(request);
+
     const planMember =
       await this.service.addPlanMember(
+        token,
         setupId,
         bossId,
         input.memberId
@@ -240,7 +257,11 @@ export class RaidCooldownController {
         request.params.memberId
       );
 
+    const token =
+      requireBearerToken(request);
+
     await this.service.removePlanMember(
+      token,
       setupId,
       bossId,
       memberId
