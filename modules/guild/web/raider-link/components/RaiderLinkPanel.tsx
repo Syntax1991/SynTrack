@@ -1,4 +1,5 @@
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
+import { getRaiderLoginUrl } from "../../../../data-platform/web/raider-auth/api/raiderAuthApi";
 import type { RaiderLinkResolution } from "../types/raiderLink.types";
 
 type RaiderLinkPanelProps = {
@@ -55,7 +56,24 @@ export function RaiderLinkPanel({
             {resolution.member.realm}
           </p>
 
+          <p className="muted-text">
+            SynTrack still knows this is
+            you. Battle.net authorization
+            can expire separately — if
+            raid actions start failing
+            with a Battle.net error,
+            reconnect below.
+          </p>
+
           <div className="integration-actions">
+            <a
+              className="button button-secondary"
+              href={getRaiderLoginUrl()}
+              title="Runs a fresh Battle.net sign-in for this same character — does not sign you out or change your link."
+            >
+              Reconnect Battle.net
+            </a>
+
             <button
               className="button button-secondary"
               onClick={onLogout}
