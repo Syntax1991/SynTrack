@@ -11,10 +11,6 @@ import { RosterPage } from "../../../../modules/guild/web/roster/pages/RosterPag
 import { GuildSettingsPage } from "../../../../modules/guild/web/settings/pages/GuildSettingsPage";
 import { TeamsPage } from "../../../../modules/guild/web/teams/pages/TeamsPage";
 import { WeeklyProgressPage } from "../../../../modules/guild/web/weekly-progress/pages/WeeklyProgressPage";
-import { AttendancePage } from "../../../../modules/raid/web/attendance/pages/AttendancePage";
-import { CooldownsLandingPage } from "../../../../modules/raid/web/cooldowns/pages/CooldownsLandingPage";
-import { RaidEventDetailPage } from "../../../../modules/raid/web/planner/pages/RaidEventDetailPage";
-import { RaidPlannerPage } from "../../../../modules/raid/web/planner/pages/RaidPlannerPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
 import { DashboardPage } from "../../../../modules/my-syntrack/web/dashboard/pages/DashboardPage";
 import { GearReadinessPage } from "../../../../modules/my-syntrack/web/gear-readiness/pages/GearReadinessPage";
@@ -196,16 +192,6 @@ export function AppRouter() {
         />
 
         <Route
-          path="guild/attendance"
-          element={
-            <Navigate
-              replace
-              to="/raid/attendance"
-            />
-          }
-        />
-
-        <Route
           path="guild/raider-link"
           element={
             <Navigate
@@ -213,26 +199,6 @@ export function AppRouter() {
               to="/settings"
             />
           }
-        />
-
-        <Route
-          path="raid/planner"
-          element={<RaidPlannerPage />}
-        />
-
-        <Route
-          path="raid/planner/:eventId"
-          element={<RaidEventDetailPage />}
-        />
-
-        <Route
-          path="raid/attendance"
-          element={<AttendancePage />}
-        />
-
-        <Route
-          path="raid/cooldowns"
-          element={<CooldownsLandingPage />}
         />
 
         <Route

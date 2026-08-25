@@ -172,13 +172,13 @@ finalizes a pick and rejects both an unowned character and a member
 already linked to a different account. `GET /guild/raider-link/me`
 returns the current link, or `null`.
 
-This is a prerequisite for self-service raid Signups (Raid module,
-not yet built) — the next step needing "who is submitting this" now
-has an answer that doesn't require the officer to act on every
-raider's behalf. Added 2026-08-14 after direct user feedback that the
-Raid Planner/Boss Rosters were far short of WoWAudit/WoWUtils, whose
-core differentiator is exactly this kind of self-service (see the
-`project_wowaudit_reference` memory).
+This was originally added 2026-08-14 as a prerequisite for the Raid
+module's self-service Signups feature. The Raid product segment
+(Raid Planner, Boss Rosters, Signups, Attendance, Cooldown Planning)
+was removed on 2026-08-25 — see git history — but this raider-link
+mechanism remains, since it's general Battle.net identity
+infrastructure also used by Loot's self-service Wishlist and
+Droptimizer.
 
 The web page for this (`RaiderLinkPanel` — "which character is you?"
 + sign out) moved from `/raider-link` to a new personal `SettingsPage`
@@ -195,8 +195,9 @@ Heroic team — independent of any specific raid event. A member can
 belong to multiple teams; each membership carries a `role`
 (`MEMBER`, `SUBSTITUTE`, `LEAD`). Teams only reference roster members
 by ID, so deleting a `GuildMember` cascades and removes their team
-memberships too. A boss-specific raid roster built from a team
-belongs to the Raid module, not here.
+memberships too. (Prior to the 2026-08-25 removal of the Raid product
+segment, a boss-specific raid roster built from a team belonged to
+the Raid module rather than here — see git history.)
 
 ## Gear Audit
 

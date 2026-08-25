@@ -4,7 +4,6 @@ import { lootModule } from "./definitions/loot.definition";
 import { mySynTrackModule } from "./definitions/mySynTrack.definition";
 import { professionsModule } from "./definitions/professions.definition";
 import { recruitmentModule } from "./definitions/recruitment.definition";
-import { raidModule } from "./definitions/raid.definition";
 import type { MainModuleDefinition } from "./moduleTypes";
 
 export type {
@@ -18,7 +17,6 @@ export const mainModules:
   MainModuleDefinition[] = [
     mySynTrackModule,
     guildModule,
-    raidModule,
     lootModule,
     professionsModule,
     recruitmentModule,

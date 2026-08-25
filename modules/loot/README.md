@@ -12,7 +12,9 @@ Loot planning and distribution.
 - Tier / Token Planning (planned)
 - Split Planning (planned)
 
-Loot references Raid events and Guild members through stable contracts.
+Loot references Guild members through stable contracts. (Prior to the
+2026-08-25 removal of the Raid product segment, this also referenced
+Raid events — see git history.)
 
 ## Loot Table (Step 1 of the WoWAudit-derived roadmap)
 

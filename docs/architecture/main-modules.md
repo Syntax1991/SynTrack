@@ -30,15 +30,6 @@ SynTrack
 |   +-- Requirements
 |   +-- Officer Notes
 |
-+-- Raid
-|   +-- Raid Planner
-|   +-- Boss Rosters
-|   +-- Assignments
-|   +-- Cooldowns
-|   +-- Raid Notes
-|   +-- Attendance
-|   +-- WCL Analysis
-|
 +-- Loot
 |   +-- Wishlist
 |   +-- Droptimizer
@@ -68,7 +59,6 @@ SynTrack
 |   +-- Discord Bot
 |   +-- Reminders
 |   +-- Missing Weeklies
-|   +-- Raid Signup Alerts
 |   +-- Officer Alerts
 |
 +-- Data Platform
@@ -99,10 +89,9 @@ owning their underlying business rules.
 
 ### Dependency rule
 
-My SynTrack may read projections from Guild, Raid, Loot and
-Professions.
+My SynTrack may read projections from Guild, Loot and Professions.
 
-It must not implement duplicate profession, raid or loot logic.
+It must not implement duplicate profession or loot logic.
 
 ## 2. Guild
 
@@ -116,14 +105,12 @@ Guild organization and persistent guild state.
 - guild leadership verification
 - gear audit (live item level / enchant / socket compliance)
 - teams
-- attendance policy and guild-level attendance views
 - weekly guild progress
 - guild requirements
 - officer notes
 
 ### Does not own
 
-- boss-specific raid assignments
 - loot decisions
 - recruitment application lifecycle
 - the Battle.net OAuth connection itself (Data Platform owns that;
@@ -132,8 +119,7 @@ Guild organization and persistent guild state.
 ### Existing implementation
 
 Guild is fully implemented — all seven planned capabilities exist,
-plus a Gear Audit added afterward at the user's explicit direction to
-model SynTrack's guild tooling on WoWAudit (and eventually WoWUtils).
+plus a Gear Audit added afterward.
 
 Web:
 
@@ -144,7 +130,6 @@ Web:
 - `modules/guild/web/teams`
 - `modules/guild/web/requirements`
 - `modules/guild/web/officer-notes`
-- `modules/guild/web/attendance`
 - `modules/guild/web/weekly-progress`
 
 API:
@@ -156,7 +141,6 @@ API:
 - `modules/guild/api/teams`
 - `modules/guild/api/requirements`
 - `modules/guild/api/officer-notes`
-- `modules/guild/api/attendance`
 - `modules/guild/api/weekly-progress`
 
 Module-owned addon:
@@ -190,83 +174,24 @@ documented list of expectations (gear, keystone, attendance, ...); a
 checked live against the Gear Audit data — other categories remain
 plain documentation. Officer Notes are freeform per-member
 commentary, stamped server-side with the verified officer's character
-name — never taken from client input. Attendance tracks raid events
-and per-member status, with a bulk "mark all" action and an
-attendance percentage computed client-side (excused absences count
-toward neither attended nor missed). Weekly Progress is a read-only
+name — never taken from client input. Weekly Progress is a read-only
 cross-reference against My SynTrack's `Character` /
 `WeeklyChecklistCompletion` / `WeeklyMythicPlusRun` data, matched by
 exact name/realm/region identity — an identity match, not a deeper
-integration. Requirements, Officer Notes, Attendance and the Gear
-Audit refresh all go through the same verification gate as the
-roster; Weekly Progress and the Dashboard are read-only and stay
-open. Boss-specific raid rosters built from a team are owned by the
-Raid module, not Guild.
+integration. Requirements, Officer Notes and the Gear Audit refresh
+all go through the same verification gate as the roster; Weekly
+Progress and the Dashboard are read-only and stay open. (Attendance
+was tracked by the Raid module's own event/per-member records, not a
+separate Guild-owned feature — see the removal note below.)
 
-## 3. Raid
+> The Raid main module (Raid Planner, Boss Rosters, Setups,
+> Attendance, Signups, Cooldown Planning) existed from 2026-08-14
+> through 2026-08-25, when the product direction changed to a
+> personal multi-character tracking focus and the entire Raid
+> product segment was removed. See git history for its prior
+> implementation.
 
-### Responsibility
-
-Raid preparation, execution and analysis.
-
-### Owns
-
-Refined 2026-08-14 by the full product vision (see the
-`project_syntrack_vision` memory) — supersedes the original 7-item
-list below it replaced. Warcraft Logs analysis now belongs to a
-separate, not-yet-started Progress Intelligence main module rather
-than Raid itself.
-
-- raid events (raid planner)
-- signups
-- boss rosters
-- bench management
-- assignments
-- cooldown planning
-- strategies
-- strategy acknowledgements
-
-### Dependency rule
-
-Raid may reference Guild members and Teams but does not own the guild
-roster.
-
-### Existing implementation
-
-Being built incrementally, one capability per pass, starting
-2026-08-14 — an explicit, repeated product-owner instruction, not
-just a style choice.
-
-Web:
-
-- `modules/raid/web/planner`
-- `modules/raid/web/boss-rosters`
-
-API:
-
-- `modules/raid/api/planner`
-- `modules/raid/api/boss-rosters`
-
-The Raid Planner (`RaidEvent`: title, raid instance, difficulty,
-scheduled time, optional team link, notes) is the first capability.
-Its link to a `GuildTeam` is a loose `teamId` string rather than a
-Prisma foreign key, per the "stable identifiers" dependency
-principle. Boss Rosters (`RaidBoss` per event, real Prisma relation
-with cascade delete since both are Raid-owned, holding
-`RaidBossRosterEntry` rows per member with a
-`CONFIRMED`/`TENTATIVE`/`BENCH` status) is the second; its
-`memberId` stays a loose cross-module reference to `GuildMember`,
-matching `RaidEvent.teamId`, enriched with member details by
-querying Guild's roster repository directly rather than a join. Both
-capabilities' mutations reuse Guild's `GuildVerificationGuard` and
-their pages reuse Guild's `GuildVerificationGate` (and, for the
-Planner, Guild's team list) directly — raid officers are guild
-officers, so the same verified leadership link gates all of it. The
-remaining six capabilities (Signups, Bench Management, Assignments,
-Cooldown Planning, Strategies, Strategy Acknowledgements) are
-deliberately not started yet.
-
-## 4. Loot
+## 3. Loot
 
 ### Responsibility
 
@@ -283,10 +208,10 @@ Loot planning and distribution.
 
 ### Dependency rule
 
-Loot references Raid events and Guild members through stable
-identifiers or contracts.
+Loot references Guild members through stable identifiers or
+contracts.
 
-## 5. Professions
+## 4. Professions
 
 ### Responsibility
 
@@ -331,7 +256,7 @@ Module-owned addon:
 The SavedVariables database name remains unchanged to preserve
 existing WoW user data.
 
-## 6. Recruitment
+## 5. Recruitment
 
 ### Responsibility
 
@@ -351,7 +276,7 @@ Applicant and trial lifecycle.
 Accepted recruits may transition into Guild membership through an
 explicit application service.
 
-## 7. Automation
+## 6. Automation
 
 ### Responsibility
 
@@ -362,7 +287,6 @@ Cross-module triggers and notifications.
 - Discord bot workflows
 - reminders
 - missing weekly alerts
-- raid signup alerts
 - officer alerts
 
 ### Dependency rule
@@ -372,7 +296,7 @@ Automation consumes events and read models from other modules.
 Automation must not become the owner of the business state that caused
 an alert.
 
-## 8. Data Platform
+## 7. Data Platform
 
 ### Responsibility
 
@@ -425,8 +349,6 @@ For example:
 
 - Data Platform imports crafting data.
 - Professions determines craft recommendations.
-- Data Platform imports Warcraft Logs.
-- Raid performs raid analysis.
 - Data Platform imports Raider.io.
 - Recruitment evaluates applicant context.
 
@@ -605,9 +527,9 @@ Completed for current production code:
 
 ### Phase 18E - New capabilities
 
-The root manifests establish Guild, Raid, Loot, Recruitment and
-Automation. API and web directories are created only with the first
-real capability.
+The root manifests establish Guild, Loot, Recruitment and Automation.
+API and web directories are created only with the first real
+capability.
 
 Do not create large empty module trees.
 
@@ -643,13 +565,14 @@ addon exists. The directory itself is only the module boundary; each
 real addon must be placed in a separate technical-name subdirectory so
 several addons can coexist without mixing source files.
 
-The current profession addon therefore lives under Professions. Future
-Raid, Guild or personal-tracking addons can live under their respective
-main modules without growing one global addon directory.
+The profession and guild addons therefore live under Professions and
+Guild respectively. Future personal-tracking or loot addons can live
+under their own main modules without growing one global addon
+directory.
 
 `SynTrack_Core` is the shared Data Platform runtime used for stable
 identity, module registration, events and SavedVariables transport. It
-contains no profession, raid, guild or loot business rules.
+contains no profession, guild or loot business rules.
 
 Data Platform owns the shared import, validation, identity and
 synchronization contracts. Addons and the future SynTrack Companion use

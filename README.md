@@ -1,24 +1,28 @@
 # SynTrack
 
-SynTrack is a modular World of Warcraft guild, raid, loot,
-profession and player tracking platform.
+SynTrack is a personal, multi-character World of Warcraft tracking
+platform: what do you still need to do on which character this week?
 
-The project started as a profession tracking tool. The platform now
-uses explicit main-module boundaries so additional guild-management
-features can be added without coupling them to the profession system.
+The project started as a profession tracking tool and later grew a
+guild-management side (roster, teams, loot, requirements). As of
+2026-08-25 the product direction is personal multi-character tracking
+first — the guild raid-planning segment (Raid Planner, Boss Rosters,
+Cooldown Planning, Attendance, Signups) was removed rather than
+continued; see git history for its prior implementation. The platform
+still uses explicit main-module boundaries so features stay decoupled
+from each other.
 
 ## Main modules
 
-SynTrack is divided into eight primary domains:
+SynTrack is divided into seven primary domains:
 
 1. My SynTrack
 2. Guild
-3. Raid
-4. Loot
-5. Professions
-6. Recruitment
-7. Automation
-8. Data Platform
+3. Loot
+4. Professions
+5. Recruitment
+6. Automation
+7. Data Platform
 
 The complete capability map and dependency rules are documented in:
 
@@ -33,8 +37,13 @@ The existing production code currently covers parts of:
   - Characters
   - Weekly Checklist
   - Vault / Mythic+
-  - Raid Tasks
+  - Raid Tasks (personal per-character tasks, not guild raid planning)
   - Gear / Enchants / Gems
+- Guild
+  - Roster, Teams, Gear Audit, Requirements, Officer Notes, Weekly
+    Progress
+- Loot
+  - Loot Table, Wishlist, Droptimizer
 - Professions
   - Profession overview
   - Profession details
@@ -49,8 +58,8 @@ The existing production code currently covers parts of:
   - Addon SavedVariables capture
   - SynTrack Core addon runtime
 
-Guild, Raid, Loot, Recruitment and Automation are established as
-platform domains and will be implemented incrementally.
+Recruitment and Automation are established as platform domains and
+will be implemented incrementally.
 
 ## Architecture
 
@@ -84,7 +93,7 @@ check.
 ## Platform ownership
 
 My SynTrack is a personalized projection layer. It may present data
-from Guild, Raid, Loot and Professions, but does not duplicate their
+from Guild, Loot and Professions, but does not duplicate their
 business rules.
 
 Data Platform owns external data ingestion and synchronization.

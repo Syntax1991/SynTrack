@@ -7,7 +7,6 @@ Cross-module triggers, reminders and notifications.
 - Discord Bot
 - Reminders
 - Missing Weeklies
-- Raid Signup Alerts
 - Officer Alerts
 
 Automation reacts to events and read models. It does not own the source

@@ -16,7 +16,6 @@ const sourceRoots = [
 const mainModuleSlugs = [
   "my-syntrack",
   "guild",
-  "raid",
   "loot",
   "professions",
   "recruitment",

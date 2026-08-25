@@ -1,9 +1,6 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import {
-  findRaidByName
-} from "../../../modules/raid/shared/catalog/raidCatalog.js";
 
 const adapter = new PrismaBetterSqlite3({
   url:
@@ -223,124 +220,14 @@ async function seedOfficerNotes(members: { id: string; name: string }[]) {
   }
 }
 
-async function seedRaidEvent(input: {
-  title: string;
-  raidInstance: string;
-  difficulty: string;
-  scheduledAt: string;
-  teamId: string;
-  members: { id: string; name: string }[];
-  recordAttendance: boolean;
-}) {
-  const existing = await prisma.raidEvent.findFirst({
-    where: { title: input.title }
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  const event = await prisma.raidEvent.create({
-    data: {
-      title: input.title,
-      raidInstance: input.raidInstance,
-      difficulty: input.difficulty,
-      scheduledAt: new Date(input.scheduledAt),
-      teamId: input.teamId,
-      notes: null
-    }
-  });
-
-  const catalogRaid = findRaidByName(input.raidInstance);
-
-  const bosses = [];
-
-  if (catalogRaid) {
-    for (const catalogBoss of catalogRaid.bosses) {
-      const boss = await prisma.raidBoss.create({
-        data: {
-          raidEventId: event.id,
-          name: catalogBoss.name,
-          sortOrder: catalogBoss.sortOrder
-        }
-      });
-
-      bosses.push(boss);
-    }
-  }
-
-  for (const [index, member] of input.members.entries()) {
-    const signupStatus =
-      index % 6 === 5 ? "ABSENT" : index % 5 === 4 ? "TENTATIVE" : "PRESENT";
-
-    await prisma.raidSignup.create({
-      data: {
-        raidEventId: event.id,
-        memberId: member.id,
-        status: signupStatus
-      }
-    });
-
-    if (input.recordAttendance) {
-      const attendanceStatus =
-        index % 6 === 5 ? "ABSENT" : index % 7 === 6 ? "LATE" : "PRESENT";
-
-      await prisma.raidAttendanceRecord.create({
-        data: {
-          raidEventId: event.id,
-          memberId: member.id,
-          status: attendanceStatus
-        }
-      });
-
-      const clearedBossCount = Math.max(
-        1,
-        bosses.length - (index % 3)
-      );
-
-      for (const boss of bosses.slice(0, clearedBossCount)) {
-        await prisma.raidBossRosterEntry.create({
-          data: {
-            bossId: boss.id,
-            memberId: member.id,
-            status: signupStatus === "ABSENT" ? "BENCH" : "CONFIRMED"
-          }
-        });
-      }
-    }
-  }
-
-  return event;
-}
-
 async function seed() {
   const members = await seedMembers();
   const team = await seedTeam(members);
   await seedRequirements();
   await seedOfficerNotes(members);
 
-  await seedRaidEvent({
-    title: "Voidspire Night 1",
-    raidInstance: "The Voidspire",
-    difficulty: "HEROIC",
-    scheduledAt: "2026-08-10T20:00:00.000Z",
-    teamId: team.id,
-    members,
-    recordAttendance: true
-  });
-
-  await seedRaidEvent({
-    title: "Venomous Abyss - Reset Night",
-    raidInstance: "The Venomous Abyss",
-    difficulty: "HEROIC",
-    scheduledAt: "2026-08-20T20:00:00.000Z",
-    teamId: team.id,
-    members,
-    recordAttendance: false
-  });
-
   console.log(
-    `Seeded demo guild data: ${members.length} members, team "${team.name}", 2 raid nights.`
+    `Seeded demo guild data: ${members.length} members, team "${team.name}".`
   );
 }
 

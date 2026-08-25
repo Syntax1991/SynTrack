@@ -8,7 +8,6 @@ import path from "node:path";
 const mainModuleSlugs = [
   "my-syntrack",
   "guild",
-  "raid",
   "loot",
   "professions",
   "recruitment",

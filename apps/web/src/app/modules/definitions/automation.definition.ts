@@ -21,10 +21,6 @@ export const automationModule: MainModuleDefinition =
         status: "planned"
       },
       {
-        label: "Raid Signup Alerts",
-        status: "planned"
-      },
-      {
         label: "Officer Alerts",
         status: "planned"
       }

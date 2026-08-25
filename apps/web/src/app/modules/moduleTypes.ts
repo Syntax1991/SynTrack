@@ -17,7 +17,6 @@ export type MainModuleDefinition = {
   id:
     | "my-syntrack"
     | "guild"
-    | "raid"
     | "loot"
     | "professions"
     | "recruitment"
