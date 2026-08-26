@@ -74,6 +74,10 @@ local function getOutputItemInfo(
 
     if not outputItemID then
         return nil,
+            nil,
+            nil,
+            nil,
+            nil,
             nil
     end
 
@@ -91,6 +95,10 @@ local function getOutputItemInfo(
 
     if not getter then
         return outputItemID,
+            nil,
+            nil,
+            nil,
+            nil,
             nil
     end
 
@@ -98,7 +106,10 @@ local function getOutputItemInfo(
         resolvedItemID,
         _,
         _,
-        itemEquipLoc =
+        itemEquipLoc,
+        _,
+        itemClassId,
+        itemSubclassId =
         pcall(
             getter,
             outputItemID
@@ -106,12 +117,26 @@ local function getOutputItemInfo(
 
     if not success then
         return outputItemID,
+            nil,
+            nil,
+            nil,
+            nil,
             nil
     end
 
     return resolvedItemID
         or outputItemID,
-        itemEquipLoc
+        itemEquipLoc,
+        itemClassId,
+        itemSubclassId,
+        PT.ResolveArmorSubclassKey(
+            itemClassId,
+            itemSubclassId
+        ),
+        PT.ResolveWeaponSubclassKey(
+            itemClassId,
+            itemSubclassId
+        )
 end
 
 function PT.CreateRecipeCatalogEntry(
@@ -185,7 +210,11 @@ function PT.CreateRecipeCatalogEntry(
         )
 
     local outputItemID,
-        outputItemEquipLoc =
+        outputItemEquipLoc,
+        outputItemClassId,
+        outputItemSubclassId,
+        outputItemArmorSubclassKey,
+        outputItemWeaponSubclassKey =
         getOutputItemInfo(
             reagentSchema
         )
@@ -228,6 +257,18 @@ function PT.CreateRecipeCatalogEntry(
 
         outputItemEquipLoc =
             outputItemEquipLoc,
+
+        outputItemClassId =
+            outputItemClassId,
+
+        outputItemSubclassId =
+            outputItemSubclassId,
+
+        outputItemArmorSubclassKey =
+            outputItemArmorSubclassKey,
+
+        outputItemWeaponSubclassKey =
+            outputItemWeaponSubclassKey,
 
         skillLineAbilityId =
             recipeInfo.skillLineAbilityID,

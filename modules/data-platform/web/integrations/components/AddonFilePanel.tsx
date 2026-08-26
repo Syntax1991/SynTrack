@@ -70,7 +70,7 @@ export function AddonFilePanel({
           </p>
 
           <h2>
-            ProfessionTracker.lua
+            SynTrack_Professions.lua
           </h2>
         </div>
 
@@ -86,9 +86,11 @@ export function AddonFilePanel({
 
         <p>
           Open your WoW folder and select
-          under WTF → Account → your account →
-          SavedVariables die Datei
-          ProfessionTracker.lua aus.
+          the file under WTF → Account →
+          your account → SavedVariables →
+          SynTrack_Professions.lua. Legacy
+          ProfessionTracker.lua exports are
+          also supported.
         </p>
       </div>
 

@@ -176,6 +176,8 @@ model ProfessionSpecializationNode {
   description      String?
   maxRank          Int?
   knowledgeMaxRank Int?
+  spellId          Int?
+  iconUrl          String?
   sortOrder        Int     @default(0)
 
   tree     ProfessionSpecializationTree      @relation(fields: [treeId], references: [id], onDelete: Cascade)
@@ -235,6 +237,9 @@ model CraftRecipe {
   name                 String
   categoryId           Int?
   craftedItemId        Int?
+  iconUrl              String?
+  itemQuality          String?
+  itemLevel            Int?
   baseDifficulty       Int?
   operationMetricsJson String?
   reagentSchemaJson    String?

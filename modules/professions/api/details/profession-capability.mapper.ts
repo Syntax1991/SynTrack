@@ -20,6 +20,22 @@ type AggregatedCapability =
     sortOrder: number;
   };
 
+/*
+ * EQUIPMENT_FAMILY, WEAPON_TYPE, and EQUIPMENT_SLOT capabilities are
+ * intentionally excluded here. Surfacing them as independent rows (e.g.
+ * "Mail" next to "Wrist", or "Sword" next to "Two-Hand") lets a reader
+ * combine facts from two unrelated recipes into an unearned "Mail Wrist"
+ * or "2H Sword" claim. The only safe, combined claim is produced by
+ * profession-equipment-coverage.mapper.ts, which requires both to originate
+ * from the SAME learned recipe.
+ */
+const EXCLUDED_CAPABILITY_TYPES =
+  new Set([
+    "EQUIPMENT_FAMILY",
+    "WEAPON_TYPE",
+    "EQUIPMENT_SLOT"
+  ]);
+
 export function mapProfessionCapabilities(
   assignment: DetailAssignment
 ): ProfessionCapabilityCoverage[] {
@@ -41,6 +57,14 @@ export function mapProfessionCapabilities(
     ) {
       const capability =
         relation.capability;
+
+      if (
+        EXCLUDED_CAPABILITY_TYPES.has(
+          capability.type
+        )
+      ) {
+        continue;
+      }
 
       const existing =
         capabilityById.get(

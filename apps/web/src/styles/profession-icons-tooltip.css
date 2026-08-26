@@ -1,0 +1,143 @@
+.syntrack-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.syntrack-icon-class {
+  color: #12121a;
+  background: var(--syntrack-icon-color, #6b6b7a);
+}
+
+.syntrack-icon-family {
+  color: var(--text-secondary);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+}
+
+.syntrack-icon-fallback {
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+  border: 1px dashed var(--border-strong);
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+/*
+ * Real WoW icons (recipe/item and specialization node) render larger
+ * than the small glyph icons above - big enough to actually help
+ * scanning, per the icon-legibility requirement. The true-fallback
+ * diamond/star is sized to match so a row never visibly shifts
+ * depending on whether an icon resolved.
+ */
+.syntrack-icon-entity,
+.syntrack-icon-fallback.recipe,
+.syntrack-icon-fallback.specialization {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+}
+
+.syntrack-icon-entity {
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.syntrack-icon-entity.specialization,
+.syntrack-icon-fallback.specialization {
+  width: 30px;
+  height: 30px;
+}
+
+.syntrack-icon-craft-status {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  font-size: 0.6rem;
+}
+
+.syntrack-icon-craft-status.safe {
+  color: #12121a;
+  background: var(--success-text, #7ee2a8);
+}
+
+.syntrack-icon-craft-status.concentration {
+  color: #12121a;
+  background: var(--warning-text, #ffc670);
+}
+
+.syntrack-icon-craft-status.not_safe {
+  color: #12121a;
+  background: var(--danger-text, #ff9aa4);
+}
+
+.syntrack-icon-craft-status.unknown {
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+}
+
+/* Tooltip */
+
+.syntrack-tooltip-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/*
+ * Positioning (position/top/left) is computed in JS (see
+ * SynTrackTooltip.tsx + tooltipPlacement.ts) and applied as an inline
+ * style, since the tooltip is portalled to document.body and must
+ * stay clear of any scrolling ancestor's clipping box. This class only
+ * owns the tooltip's visual appearance.
+ */
+.syntrack-tooltip-content.syntrack-tooltip-portal {
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  max-width: 280px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  white-space: normal;
+}
+
+.syntrack-tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.syntrack-tooltip-body strong {
+  font-size: 0.76rem;
+}
+
+.syntrack-tooltip-body span {
+  color: var(--text-secondary);
+  font-size: 0.66rem;
+}
+
+.syntrack-tooltip-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.syntrack-tooltip-item-header strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

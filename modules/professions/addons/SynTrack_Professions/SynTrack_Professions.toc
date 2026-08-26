@@ -33,6 +33,7 @@ RecipeSchematic.lua
 RecipeReagentSimulationCandidates.lua
 RecipeReagentSimulationInputs.lua
 RecipeReagentSimulation.lua
+RecipeItemSubclass.lua
 RecipeCatalogEntry.lua
 RecipeCatalog.lua
 CharacterRecipeOperations.lua

@@ -15,38 +15,13 @@ export const professionsModule: MainModuleDefinition =
         end: true
       },
       {
-        label: "Crafter Finder",
+        label: "Find Craft",
         path: "/professions/crafters",
-        status: "available"
-      },
-      {
-        label: "Recipes",
-        path: "/professions/recipes",
-        status: "available"
-      },
-      {
-        label: "Knowledge",
-        path: "/professions/knowledge",
         status: "available"
       },
       {
         label: "Specializations",
         path: "/professions/specializations",
-        status: "available"
-      },
-      {
-        label: "Material Quality",
-        path: "/professions/material-quality",
-        status: "available"
-      },
-      {
-        label: "Concentration",
-        path: "/professions/concentration",
-        status: "available"
-      },
-      {
-        label: "Craft Recommendations",
-        path: "/professions/recommendations",
         status: "available"
       }
     ]

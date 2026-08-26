@@ -14,6 +14,10 @@ import {
 import type {
   ProfessionDetail
 } from "../types/professionDetail.types";
+import type {
+  QualityFilterOption
+} from "../utils/professionItemQuality.helpers";
+import { filterRecipesByQuality } from "../utils/professionItemQuality.helpers";
 import {
   ProfessionCrafterCharacterPanel
 } from "./ProfessionCrafterCharacterPanel";
@@ -24,11 +28,13 @@ import {
 type ProfessionCrafterWorkspaceProps = {
   detail: ProfessionDetail;
   professionId: string;
+  qualityFilter: QualityFilterOption;
 };
 
 export function ProfessionCrafterWorkspace({
   detail,
-  professionId
+  professionId,
+  qualityFilter
 }: ProfessionCrafterWorkspaceProps) {
   const {
     catalog,
@@ -49,16 +55,26 @@ export function ProfessionCrafterWorkspace({
         ""
     );
 
+  /*
+   * Filtered once here, before summaries/entries are built - the same
+   * shared predicate Browse/Search use, so specialization/craft-result/
+   * concentration data for the remaining recipes is untouched, only the
+   * recipe SET is narrowed.
+   */
   const summaries =
     useMemo(
       () =>
         createCrafterSummaries(
           detail.characters,
-          catalog?.items ?? []
+          filterRecipesByQuality(
+            catalog?.items ?? [],
+            qualityFilter
+          )
         ),
       [
         catalog,
-        detail.characters
+        detail.characters,
+        qualityFilter
       ]
     );
 
@@ -86,8 +102,13 @@ export function ProfessionCrafterWorkspace({
         </div>
 
         <p>
-          Recipes, craft safety and
-          required material quality.
+          Recipe knowledge,
+          Specialization alignment and
+          craft result are three
+          separate signals - a
+          character can know a recipe
+          without being specialized
+          for it.
         </p>
       </div>
 
@@ -166,11 +187,11 @@ export function ProfessionCrafterWorkspace({
                               summary.entries
                                 .length
                             }
-                            {" Recipes · "}
+                            {" recipes · "}
                             {
                               summary.safeCount
                             }
-                            {" safe"}
+                            {" no-conc"}
                           </small>
                         </span>
                       </button>
@@ -185,6 +206,10 @@ export function ProfessionCrafterWorkspace({
                     selectedSummary
                       .coverage
                       .character.id
+                  }
+                  specializationMappingAvailable={
+                    detail
+                      .specializationMappingAvailable
                   }
                   summary={
                     selectedSummary

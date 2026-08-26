@@ -154,6 +154,10 @@ export type ProfessionRecipeCatalogItem = {
   name: string;
   expansion: string;
   categoryId: number | null;
+  craftedItemId: number | null;
+  iconUrl: string | null;
+  itemQuality: string | null;
+  itemLevel: number | null;
   baseDifficulty: number | null;
   craftStatus: ProfessionRecipeCraftStatus;
   capabilities: ProfessionRecipeCapability[];

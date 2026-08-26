@@ -1,3 +1,22 @@
+export type BattleNetMediaAsset = {
+  key?: string;
+  value?: string;
+};
+
+export type BattleNetMediaResponse = {
+  assets?: BattleNetMediaAsset[];
+};
+
+export type BattleNetItemQuality = {
+  type?: string;
+  name?: string;
+};
+
+export type BattleNetItemResponse = {
+  quality?: BattleNetItemQuality;
+  level?: number;
+};
+
 export type BattleNetTokenResponse = {
   access_token: string;
   token_type: string;

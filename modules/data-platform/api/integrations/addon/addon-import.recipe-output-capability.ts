@@ -159,6 +159,113 @@ const equipmentFamilies = [
   }
 ] as const;
 
+/*
+ * Keyed by Enum.ItemArmorSubclass's own key spelling, resolved live by the
+ * addon (RecipeCatalogEntry.lua, resolveArmorSubclassKey) against the
+ * running client's actual enum table. This is a stable, non-localized
+ * Blizzard-internal token backed by a real numeric item subclass ID -
+ * never guessed from a player-facing display string - so a match here is
+ * VERIFIED, unlike the category-name-derived fallback below.
+ */
+const armorSubclassKeyToFamily:
+  Record<
+    string,
+    { key: string; name: string }
+  > = {
+    Cloth: {
+      key: "CLOTH",
+      name: "Cloth"
+    },
+
+    Leather: {
+      key: "LEATHER",
+      name: "Leather"
+    },
+
+    Mail: {
+      key: "MAIL",
+      name: "Mail"
+    },
+
+    Plate: {
+      key: "PLATE",
+      name: "Plate"
+    }
+  };
+
+export function resolveRecipeEquipmentFamilyFromArmorSubclassKey(
+  armorSubclassKey: string | null
+): {
+  key: string;
+  name: string;
+} | null {
+  if (!armorSubclassKey) {
+    return null;
+  }
+
+  return (
+    armorSubclassKeyToFamily[
+      armorSubclassKey
+    ] ??
+    null
+  );
+}
+
+/*
+ * Keyed by Enum.ItemWeaponSubclass's own key spelling, resolved live by
+ * the addon (RecipeCatalogEntry.lua, resolveWeaponSubclassKey) against
+ * the running client's actual enum table - the exact same reversal
+ * pattern as armorSubclassKeyToFamily above, never a hardcoded numeric
+ * constant. Handedness (ONE_HAND/TWO_HAND/OFF_HAND/RANGED/MAIN_HAND) is
+ * NOT derived here - it already comes from outputItemEquipLoc via
+ * resolveRecipeOutputSlot below, so a "1H"/"2H" suffix on the Blizzard
+ * enum key (Sword1H vs Sword2H, Axe1H vs Axe2H, Mace1H vs Mace2H) is
+ * stripped to the shared weapon type; the slot capability already carries
+ * the handedness distinction.
+ */
+const weaponSubclassKeyToType:
+  Record<
+    string,
+    { key: string; name: string }
+  > = {
+    Axe1H: { key: "AXE", name: "Axe" },
+    Axe2H: { key: "AXE", name: "Axe" },
+    Mace1H: { key: "MACE", name: "Mace" },
+    Mace2H: { key: "MACE", name: "Mace" },
+    Sword1H: { key: "SWORD", name: "Sword" },
+    Sword2H: { key: "SWORD", name: "Sword" },
+    Dagger: { key: "DAGGER", name: "Dagger" },
+    Fist: { key: "FIST_WEAPON", name: "Fist Weapon" },
+    Polearm: { key: "POLEARM", name: "Polearm" },
+    Staff: { key: "STAFF", name: "Staff" },
+    Warglaives: { key: "WARGLAIVE", name: "Warglaive" },
+    Bows: { key: "BOW", name: "Bow" },
+    Guns: { key: "GUN", name: "Gun" },
+    Crossbow: { key: "CROSSBOW", name: "Crossbow" },
+    Wand: { key: "WAND", name: "Wand" },
+    Thrown: { key: "THROWN", name: "Thrown" },
+    Spear: { key: "SPEAR", name: "Spear" },
+    FishingPole: { key: "FISHING_POLE", name: "Fishing Pole" }
+  };
+
+export function resolveRecipeWeaponTypeFromWeaponSubclassKey(
+  weaponSubclassKey: string | null
+): {
+  key: string;
+  name: string;
+} | null {
+  if (!weaponSubclassKey) {
+    return null;
+  }
+
+  return (
+    weaponSubclassKeyToType[
+      weaponSubclassKey
+    ] ??
+    null
+  );
+}
+
 export function resolveRecipeOutputSlot(
   equipLoc: string | null
 ): RecipeOutputSlot | null {
@@ -174,6 +281,15 @@ export function resolveRecipeOutputSlot(
   );
 }
 
+/*
+ * DERIVED, not VERIFIED: this substring-matches the recipe's own
+ * trade-skill category display name. It is recipe-scoped (a fixed fact
+ * about the recipe, not a per-character guess), so it is far safer than
+ * the deleted specialization-name inference, but it is still a
+ * localized-text interpretation. Used only as a fallback for recipes
+ * captured before outputItemArmorSubclassKey existed, or where Blizzard's
+ * client did not expose a resolvable armor subclass for the output item.
+ */
 export function resolveRecipeEquipmentFamily(
   categoryName: string | null
 ): {

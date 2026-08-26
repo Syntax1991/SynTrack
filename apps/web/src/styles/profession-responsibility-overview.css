@@ -1,0 +1,136 @@
+/*
+ * Leatherworking-detail Overview tab (profession-detail responsibility
+ * table): ARMOR FAMILY -> CHARACTER -> slot rows. Deliberately named
+ * "responsibility", not "overview", to keep it structurally distinct
+ * from the TOP-LEVEL Professions -> Overview list (profession-overview
+ * .css) - a prior session accidentally overwrote that file because
+ * both used a "profession-overview-*" class prefix and this file's
+ * name collided with it exactly. Family and character identity are
+ * each rendered once (as headings), never repeated per row - a
+ * spreadsheet-like, visually merged hierarchy without literal <table>
+ * rowspan.
+ */
+
+.profession-responsibility-table-section {
+  max-width: 1180px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.profession-responsibility-family-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profession-responsibility-family-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.profession-responsibility-character-group {
+  padding-left: 4px;
+  border-left: 2px solid var(--border);
+}
+
+.profession-responsibility-character-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px 10px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.profession-responsibility-character-heading:hover {
+  color: #cdbcf4;
+  text-decoration: underline;
+}
+
+.profession-responsibility-slot-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.profession-responsibility-slot-row {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 0.8fr)
+    minmax(160px, 1.2fr)
+    72px;
+  gap: 16px;
+  align-items: center;
+  padding: 6px 4px 6px 10px;
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.76rem;
+}
+
+.profession-responsibility-slot-row:first-child {
+  border-top: 0;
+}
+
+.profession-responsibility-table-footnote {
+  margin: 4px 4px 0;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.profession-responsibility-table-linkish {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  color: var(--text-secondary);
+  background: none;
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.profession-responsibility-table-linkish:not(:disabled):hover {
+  color: #cdbcf4;
+  text-decoration: underline;
+}
+
+.profession-responsibility-table-linkish:disabled {
+  cursor: default;
+}
+
+.profession-responsibility-slot-node {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profession-responsibility-table-state {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .profession-responsibility-slot-row {
+    grid-template-columns:
+      minmax(0, 1fr);
+    gap: 2px;
+    padding-left: 4px;
+  }
+}

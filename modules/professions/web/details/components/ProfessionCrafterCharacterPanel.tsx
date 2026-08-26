@@ -9,9 +9,6 @@ import {
   ProfessionCrafterRecipeTable
 } from "./ProfessionCrafterRecipeTable";
 import {
-  ProfessionCrafterSummaryHeader
-} from "./ProfessionCrafterSummaryHeader";
-import {
   getCrafterGroups,
   matchesCrafterRecipeQuery
 } from "./professionCrafterView.helpers";
@@ -24,8 +21,10 @@ type StatusFilter =
   | ProfessionRecipeCraftStatus;
 
 export function ProfessionCrafterCharacterPanel({
+  specializationMappingAvailable,
   summary
 }: {
+  specializationMappingAvailable: boolean;
   summary:
     ProfessionCrafterSummary;
 }) {
@@ -108,16 +107,25 @@ export function ProfessionCrafterCharacterPanel({
 
   return (
     <>
-      <ProfessionCrafterSummaryHeader
-        summary={
-          summary
-        }
-      />
+      <section className="profession-crafter-toolbar">
+        <p className="profession-crafter-toolbar-summary">
+          <strong>
+            {entries.length}
+          </strong>
+          {" recipes · "}
+          <strong>
+            {summary.safeCount}
+          </strong>
+          {" no-conc · "}
+          <strong>
+            {filteredEntries.length}
+          </strong>
+          {" shown"}
+        </p>
 
-      <section className="panel profession-crafter-toolbar">
         <label>
           <span>
-            Search Recipes
+            Search
           </span>
 
           <input
@@ -135,7 +143,7 @@ export function ProfessionCrafterCharacterPanel({
 
         <label>
           <span>
-            Status
+            Craft result
           </span>
 
           <select
@@ -154,15 +162,15 @@ export function ProfessionCrafterCharacterPanel({
             </option>
 
             <option value="SAFE">
-              Safe
+              No Concentration
             </option>
 
             <option value="CONCENTRATION">
-              Concentration
+              Needs Concentration
             </option>
 
             <option value="NOT_SAFE">
-              Not Safe
+              Cannot Reach
             </option>
 
             <option value="UNKNOWN">
@@ -232,22 +240,16 @@ export function ProfessionCrafterCharacterPanel({
         )}
       </div>
 
-      <div className="profession-crafter-result-count">
-        <strong>
-          {
-            filteredEntries
-              .length
-          }
-        </strong>
-
-        <span>
-          {" matching recipes"}
-        </span>
-      </div>
-
       <ProfessionCrafterRecipeTable
         entries={
           filteredEntries
+        }
+        specializationEquipment={
+          summary.coverage
+            .specializationEquipment
+        }
+        specializationMappingAvailable={
+          specializationMappingAvailable
         }
       />
     </>

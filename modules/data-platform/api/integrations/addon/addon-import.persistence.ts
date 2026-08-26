@@ -1,5 +1,7 @@
 import { prisma } from "../../../../../apps/api/src/infrastructure/database/prismaClient.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
+import { professionIconResolutionService } from "../../../../professions/api/icons/profession-icon-resolution.service.js";
+import { professionItemQualityResolutionService } from "../../../../professions/api/icons/profession-item-quality-resolution.service.js";
 import { AddonCatalogPersistence } from "./addon-import.catalog.persistence.js";
 import { AddonCharacterPersistence } from "./addon-import.character.persistence.js";
 import { collectProfessionKeys } from "./addon-import.persistence-utils.js";
@@ -23,6 +25,45 @@ export class AddonImportPersistence {
     new AddonRecipePersistence();
 
   async persist(
+    snapshot: AddonSnapshot
+  ): Promise<AddonImportResult> {
+    const result =
+      await this.persistTransaction(
+        snapshot
+      );
+
+    /*
+     * Fire-and-forget: newly imported recipes/nodes may now have
+     * craftedItemId/spellId values with no cached icon yet. This never
+     * blocks the import response, and any Blizzard-side failure is only
+     * ever logged - it can never fail the import itself.
+     */
+    void professionIconResolutionService
+      .backfillMissingIcons()
+      .catch(
+        (error: unknown) => {
+          console.error(
+            "Profession icon backfill after addon import failed.",
+            error
+          );
+        }
+      );
+
+    void professionItemQualityResolutionService
+      .backfillMissingQuality()
+      .catch(
+        (error: unknown) => {
+          console.error(
+            "Profession item quality backfill after addon import failed.",
+            error
+          );
+        }
+      );
+
+    return result;
+  }
+
+  private async persistTransaction(
     snapshot: AddonSnapshot
   ): Promise<AddonImportResult> {
     return prisma.$transaction(

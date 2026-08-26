@@ -33,6 +33,7 @@ export type AddonSpecializationNode = {
   maxRank: number | null;
   knowledgeEntryId: number | null;
   knowledgeMaxRank: number | null;
+  spellId: number | null;
   sortOrder: number;
   isRoot: boolean;
 };
@@ -94,6 +95,10 @@ export type AddonRecipe = {
   parentCategoryName: string | null;
   outputItemId: number | null;
   outputItemEquipLoc: string | null;
+  outputItemClassId: number | null;
+  outputItemSubclassId: number | null;
+  outputItemArmorSubclassKey: string | null;
+  outputItemWeaponSubclassKey: string | null;
   baseDifficulty: number | null;
   operationMetrics:
     AddonRecipeOperationMetrics;

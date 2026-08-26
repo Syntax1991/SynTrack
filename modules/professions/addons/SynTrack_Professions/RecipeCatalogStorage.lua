@@ -95,6 +95,18 @@ local function createCompactRecipe(
         outputItemEquipLoc =
             recipe.outputItemEquipLoc,
 
+        outputItemClassId =
+            recipe.outputItemClassId,
+
+        outputItemSubclassId =
+            recipe.outputItemSubclassId,
+
+        outputItemArmorSubclassKey =
+            recipe.outputItemArmorSubclassKey,
+
+        outputItemWeaponSubclassKey =
+            recipe.outputItemWeaponSubclassKey,
+
         skillLineAbilityId =
             recipe.skillLineAbilityId,
 

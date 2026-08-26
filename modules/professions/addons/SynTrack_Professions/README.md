@@ -129,16 +129,24 @@ Afterward run:
 
 ## SavedVariables
 
-Typical path:
+WoW names the SavedVariables file after the addon folder, not after the
+`## SavedVariables:` table declared in the .toc. The addon folder is
+`SynTrack_Professions`, so the file WoW writes is:
 
-    WTF\Account\<Account>\SavedVariables\ProfessionTracker.lua
+    WTF\Account\<Account>\SavedVariables\SynTrack_Professions.lua
+
+Its top-level Lua table is still named `ProfessionTrackerDB` on purpose,
+to preserve existing user data across the addon rename. The legacy
+`ProfessionTracker` compatibility shim (see its own README) writes the
+same `ProfessionTrackerDB` table under `ProfessionTracker.lua` for as
+long as that addon stays enabled.
 
 ## Development installation
 
-Copy the ProfessionTracker directory into:
+Copy the SynTrack_Professions directory into:
 
     World of Warcraft\_retail_\Interface\AddOns\
 
 The manifest must be located at:
 
-    World of Warcraft\_retail_\Interface\AddOns\ProfessionTracker\ProfessionTracker.toc
+    World of Warcraft\_retail_\Interface\AddOns\SynTrack_Professions\SynTrack_Professions.toc

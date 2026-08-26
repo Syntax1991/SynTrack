@@ -1,8 +1,9 @@
 import { LoadingPanel } from "../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../apps/web/src/shared/components/StatusMessage";
-import { ProfessionOverviewCard } from "../details/components/ProfessionOverviewCard";
+import { ProfessionOverviewRow } from "../details/components/ProfessionOverviewRow";
 import { useProfessionOverview } from "../details/hooks/useProfessionOverview";
+import { groupProfessionOverviewByCategory } from "../details/utils/professionOverviewPresentation";
 
 export function ProfessionsPage() {
   const {
@@ -10,6 +11,11 @@ export function ProfessionsPage() {
     isLoading,
     error
   } = useProfessionOverview();
+
+  const categoryGroups =
+    groupProfessionOverviewByCategory(
+      items
+    );
 
   return (
     <>
@@ -51,15 +57,34 @@ export function ProfessionsPage() {
               No professions yet.
             </div>
           ) : (
-            <div className="profession-overview-grid">
-              {items.map(
-                (profession) => (
-                  <ProfessionOverviewCard
-                    key={profession.id}
-                    profession={
-                      profession
+            <div className="profession-overview-list">
+              {categoryGroups.map(
+                (categoryGroup) => (
+                  <div
+                    className="profession-overview-category-group"
+                    key={
+                      categoryGroup.category
                     }
-                  />
+                  >
+                    <p className="profession-overview-category-heading">
+                      {
+                        categoryGroup.categoryLabel
+                      }
+                    </p>
+
+                    {categoryGroup.items.map(
+                      (profession) => (
+                        <ProfessionOverviewRow
+                          key={
+                            profession.id
+                          }
+                          profession={
+                            profession
+                          }
+                        />
+                      )
+                    )}
+                  </div>
                 )
               )}
             </div>

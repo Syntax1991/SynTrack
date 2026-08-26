@@ -6,6 +6,8 @@ import type {
   ProfessionCharacterCoverage,
   ProfessionDetailView
 } from "./profession-detail.types.js";
+import { buildSpecializationNodeCatalog } from "./profession-explicit-slot-node.mapper.js";
+import { professionsWithSpecializationEquipmentMapping } from "./profession-specialization-equipment.definitions.js";
 
 type DetailRecord =
   NonNullable<
@@ -34,6 +36,16 @@ export function mapProfessionDetail(
       .capabilities
       .length > 0;
 
+  const specializationMappingAvailable =
+    professionsWithSpecializationEquipmentMapping.has(
+      profession.key
+    );
+
+  const specializationNodeCatalog =
+    buildSpecializationNodeCatalog(
+      profession.specializationTrees
+    );
+
   const characters =
     profession.assignments
       .map(
@@ -42,7 +54,10 @@ export function mapProfessionDetail(
             assignment,
             hasSpecializationCatalog,
             hasRecipeCatalog,
-            hasCapabilityCatalog
+            hasCapabilityCatalog,
+            specializationMappingAvailable,
+            specializationNodeCatalog,
+            profession.key
           )
       )
       .sort(
@@ -71,6 +86,8 @@ export function mapProfessionDetail(
         profession.category
     },
 
+    specializationMappingAvailable,
+
     summary: {
       characterCount:
         characters.length,
@@ -81,8 +98,8 @@ export function mapProfessionDetail(
         characters.length -
         trackedCharacterCount,
 
-      slotCount:
-        sumSlotCoverage(
+      craftableEquipmentCount:
+        sumCraftableEquipmentCoverage(
           characters
         ),
 
@@ -111,7 +128,7 @@ export function mapProfessionDetail(
   };
 }
 
-function sumSlotCoverage(
+function sumCraftableEquipmentCoverage(
   characters:
     ProfessionCharacterCoverage[]
 ): number {
@@ -121,7 +138,9 @@ function sumSlotCoverage(
       character
     ) =>
       total +
-      character.slots.length,
+      character
+        .craftableEquipment
+        .length,
     0
   );
 }

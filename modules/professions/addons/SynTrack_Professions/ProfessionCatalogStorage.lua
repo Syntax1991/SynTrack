@@ -106,6 +106,19 @@ local function createCompactNode(
                 knowledgeEntry
                 and knowledgeEntry.maxRanks
             )
+            or nil,
+
+        --[[
+            The node's spell ID (never the raw icon fileID, which
+            Blizzard's public web APIs cannot resolve into a URL). This
+            is the one stable, ID-backed handle SynTrack's backend can
+            use to look up the node's real spell icon later via
+            Blizzard's Spell Media API - never inferred from name or
+            description.
+        ]]
+        spellId =
+            displayEntry
+            and displayEntry.spellId
             or nil
     }
 end

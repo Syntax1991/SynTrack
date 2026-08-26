@@ -1,7 +1,15 @@
+import { useState } from "react";
 import type {
   ProfessionRecipeCatalogItem,
   ProfessionRecipeCrafter
 } from "../types/professionRecipe.types";
+import type {
+  ProfessionSpecializationEquipmentClaim
+} from "../types/professionDetail.types";
+import { EntityIcon } from "../../shared/components/ProfessionIcons";
+import { SynTrackTooltip } from "../../shared/components/SynTrackTooltip";
+import { RecipeTooltipContent } from "../../shared/components/ProfessionTooltipContent";
+import { getItemQualityColor } from "../utils/professionItemQuality.helpers";
 import {
   getProfessionRecipeMaterialRequirementLabel
 } from "../utils/professionRecipeRecommendation";
@@ -9,8 +17,16 @@ import {
   getProfessionRecipeProductLabel
 } from "../utils/professionRecipePresentation";
 import {
-  getProfessionRecipeCraftStatusClassName
-} from "../utils/professionRecipeStatus";
+  getRecipeSpecializationLabel,
+  resolveRecipeSpecializationAlignment
+} from "../utils/professionRecipeSpecializationAlignment";
+import {
+  getCompactCraftLabel,
+  getResultLabel,
+  getSpecializationClassName,
+  getStatusLabel,
+  sortEntries
+} from "./professionCrafterRecipeTable.helpers";
 
 export type ProfessionCrafterRecipeEntry = {
   recipe:
@@ -20,130 +36,25 @@ export type ProfessionCrafterRecipeEntry = {
   group: string;
 };
 
-function getStatusLabel(
-  entry:
-    ProfessionCrafterRecipeEntry
-): string {
-  switch (
-    entry.crafter.craftStatus
-  ) {
-    case "SAFE":
-      return "SAFE";
-
-    case "CONCENTRATION":
-      return "CONC.";
-
-    case "NOT_SAFE":
-      return "NOT SAFE";
-
-    case "UNKNOWN":
-      return "UNKNOWN";
-  }
-}
-
-function getResultLabel(
-  entry:
-    ProfessionCrafterRecipeEntry
-): string {
-  const recommendation =
-    entry.crafter
-      .recommendation;
-
-  const parts: string[] =
-    [];
-
-  if (
-    recommendation
-      .craftingQuality !==
-    null
-  ) {
-    parts.push(
-      `Q${recommendation.craftingQuality}`
-    );
-  }
-
-  if (
-    recommendation
-      .effectiveSkill !==
-    null
-  ) {
-    parts.push(
-      `Skill ${recommendation.effectiveSkill}`
-    );
-  }
-
-  return parts.length > 0
-    ? parts.join(" · ")
-    : "–";
-}
-
-function groupEntries(
-  entries:
-    ProfessionCrafterRecipeEntry[]
-): Array<{
-  name: string;
-  entries:
-    ProfessionCrafterRecipeEntry[];
-}> {
-  const groups =
-    new Map<
-      string,
-      ProfessionCrafterRecipeEntry[]
-    >();
-
-  for (const entry of entries) {
-    const current =
-      groups.get(
-        entry.group
-      ) ?? [];
-
-    current.push(
-      entry
-    );
-
-    groups.set(
-      entry.group,
-      current
-    );
-  }
-
-  return Array.from(
-    groups.entries()
-  )
-    .map(
-      (
-        [
-          name,
-          groupedEntries
-        ]
-      ) => ({
-        name,
-        entries:
-          groupedEntries.sort(
-            (left, right) =>
-              left.recipe.name
-                .localeCompare(
-                  right.recipe.name,
-                  "en"
-                )
-          )
-      })
-    )
-    .sort(
-      (left, right) =>
-        left.name.localeCompare(
-          right.name,
-          "en"
-        )
-    );
-}
-
 export function ProfessionCrafterRecipeTable({
-  entries
+  entries,
+  specializationEquipment,
+  specializationMappingAvailable
 }: {
   entries:
     ProfessionCrafterRecipeEntry[];
+  specializationEquipment:
+    ProfessionSpecializationEquipmentClaim[];
+  specializationMappingAvailable: boolean;
 }) {
+  const [
+    expandedRecipeId,
+    setExpandedRecipeId
+  ] =
+    useState<string | null>(
+      null
+    );
+
   if (entries.length === 0) {
     return (
       <section className="panel">
@@ -155,126 +66,198 @@ export function ProfessionCrafterRecipeTable({
     );
   }
 
-  const groups =
-    groupEntries(
+  const sortedEntries =
+    sortEntries(
       entries
     );
 
   return (
-    <div className="profession-crafter-recipe-groups">
-      {groups.map(
-        (group) => (
-          <section
-            className="panel profession-crafter-recipe-group"
-            key={group.name}
-          >
-            <header className="profession-crafter-recipe-group-header">
-              <div>
-                <h3>
-                  {group.name}
-                </h3>
+    <section className="panel profession-crafter-recipe-panel">
+      <div className="profession-crafter-recipe-table-header">
+        <span>Recipe</span>
+        <span>Type</span>
+        <span>Specialization</span>
+        <span>Craft</span>
+      </div>
 
-                <span>
-                  {
-                    group.entries
-                      .length
+      <div className="profession-crafter-recipe-rows">
+        {sortedEntries.map(
+          (entry) => {
+            const alignment =
+              resolveRecipeSpecializationAlignment(
+                entry.recipe,
+                specializationEquipment,
+                specializationMappingAvailable
+              );
+
+            const isExpanded =
+              expandedRecipeId ===
+              entry.recipe.id;
+
+            const qualityColor =
+              getItemQualityColor(
+                entry.recipe
+                  .itemQuality
+              );
+
+            return (
+              <div
+                className="profession-crafter-recipe-row-group"
+                key={
+                  entry.recipe.id
+                }
+              >
+                <SynTrackTooltip
+                  className="profession-crafter-recipe-tooltip-anchor"
+                  content={
+                    <RecipeTooltipContent
+                      crafterEntry={
+                        entry
+                      }
+                      recipe={
+                        entry.recipe
+                      }
+                      specializationEquipment={
+                        specializationEquipment
+                      }
+                      specializationMappingAvailable={
+                        specializationMappingAvailable
+                      }
+                    />
                   }
-                  {
-                    group.entries
-                      .length === 1
-                      ? " recipe"
-                      : " recipes"
+                >
+                <button
+                  className="profession-crafter-recipe-row"
+                  onClick={
+                    () =>
+                      setExpandedRecipeId(
+                        isExpanded
+                          ? null
+                          : entry.recipe.id
+                      )
                   }
-                </span>
-              </div>
-            </header>
+                  type="button"
+                >
+                  <span className="profession-crafter-recipe-name">
+                    <EntityIcon
+                      iconUrl={
+                        entry.recipe
+                          .iconUrl
+                      }
+                      kind="recipe"
+                      name={
+                        entry.recipe
+                          .name
+                      }
+                      qualityColor={
+                        qualityColor
+                      }
+                    />
 
-            <div className="profession-crafter-recipe-table-header">
-              <span>
-                Recipe
-              </span>
+                    <span
+                      style={
+                        qualityColor
+                          ? {
+                              color:
+                                qualityColor
+                            }
+                          : undefined
+                      }
+                    >
+                      {
+                        entry.recipe
+                          .name
+                      }
+                    </span>
+                  </span>
 
-              <span>
-                Type
-              </span>
+                  <span className="profession-crafter-product-type">
+                    {
+                      getProfessionRecipeProductLabel(
+                        entry.recipe
+                      )
+                    }
+                  </span>
 
-              <span>
-                Status
-              </span>
-
-              <span>
-                Safe Materials
-              </span>
-
-              <span>
-                Result
-              </span>
-            </div>
-
-            <div className="profession-crafter-recipe-rows">
-              {group.entries.map(
-                (entry) => (
-                  <article
-                    className="profession-crafter-recipe-row"
-                    key={
-                      entry.recipe.id
+                  <span
+                    className={
+                      getSpecializationClassName(
+                        alignment.state
+                      )
                     }
                   >
-                    <div className="profession-crafter-recipe-name">
+                    {
+                      getRecipeSpecializationLabel(
+                        alignment
+                      )
+                    }
+                  </span>
+
+                  <span
+                    className={
+                      `profession-crafter-craft-cell ${entry.crafter.craftStatus.toLowerCase()}`
+                    }
+                  >
+                    {
+                      getCompactCraftLabel(
+                        entry
+                      )
+                    }
+                  </span>
+                </button>
+                </SynTrackTooltip>
+
+                {isExpanded && (
+                  <div className="profession-crafter-recipe-detail">
+                    <div>
+                      <span>
+                        Craft result
+                      </span>
+
                       <strong>
                         {
-                          entry.recipe
-                            .name
+                          getStatusLabel(
+                            entry
+                          )
                         }
                       </strong>
                     </div>
 
-                    <span className="profession-crafter-product-type">
-                      {
-                        getProfessionRecipeProductLabel(
-                          entry.recipe
-                        )
-                      }
-                    </span>
+                    <div>
+                      <span>
+                        Safe materials
+                      </span>
 
-                    <span
-                      className={
-                        getProfessionRecipeCraftStatusClassName(
-                          entry.crafter
-                            .craftStatus
-                        )
-                      }
-                    >
-                      {
-                        getStatusLabel(
-                          entry
-                        )
-                      }
-                    </span>
+                      <strong>
+                        {
+                          getProfessionRecipeMaterialRequirementLabel(
+                            entry.crafter
+                              .recommendation
+                          )
+                        }
+                      </strong>
+                    </div>
 
-                    <strong className="profession-crafter-materials">
-                      {
-                        getProfessionRecipeMaterialRequirementLabel(
-                          entry.crafter
-                            .recommendation
-                        )
-                      }
-                    </strong>
+                    <div>
+                      <span>
+                        Result
+                      </span>
 
-                    <span className="profession-crafter-result">
-                      {
-                        getResultLabel(
-                          entry
-                        )
-                      }
-                    </span>
-                  </article>
-                )
-              )}
-            </div>
-          </section>
-        )
-      )}
-    </div>
+                      <strong>
+                        {
+                          getResultLabel(
+                            entry
+                          )
+                        }
+                      </strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+        )}
+      </div>
+    </section>
   );
 }

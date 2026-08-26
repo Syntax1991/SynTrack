@@ -1,22 +1,20 @@
-import {
-  useState
-} from "react";
+import { useState } from "react";
 import { Tabs } from "../../../../../apps/web/src/shared/components/Tabs";
 import type {
   ProfessionDetail
 } from "../types/professionDetail.types";
+import type {
+  ProfessionFindCraftDeepLink
+} from "./ProfessionFindCraftWorkspace";
 import {
-  ProfessionCapabilityMatrix
-} from "./ProfessionCapabilityMatrix";
+  ProfessionFindCraftWorkspace
+} from "./ProfessionFindCraftWorkspace";
 import {
-  ProfessionCoverageMatrix
-} from "./ProfessionCoverageMatrix";
+  ProfessionOverviewResponsibilityTable
+} from "./ProfessionOverviewResponsibilityTable";
 import {
-  ProfessionCrafterWorkspace
-} from "./ProfessionCrafterWorkspace";
-import {
-  ProfessionRecipeFinder
-} from "./ProfessionRecipeFinder";
+  ProfessionSpecializationsWorkspace
+} from "./ProfessionSpecializationsWorkspace";
 
 type ProfessionDetailWorkspaceProps = {
   detail: ProfessionDetail;
@@ -25,9 +23,26 @@ type ProfessionDetailWorkspaceProps = {
 
 type ProfessionDetailTab =
   | "overview"
-  | "recipes"
-  | "crafters"
-  | "slots";
+  | "find-craft"
+  | "specializations";
+
+const tabs: Array<{
+  id: ProfessionDetailTab;
+  label: string;
+}> = [
+  {
+    id: "overview",
+    label: "Overview"
+  },
+  {
+    id: "find-craft",
+    label: "Find Craft"
+  },
+  {
+    id: "specializations",
+    label: "Specializations"
+  }
+];
 
 export function ProfessionDetailWorkspace({
   detail,
@@ -41,125 +56,51 @@ export function ProfessionDetailWorkspace({
       "overview"
     );
 
-  const tabs: Array<{
-    id: ProfessionDetailTab;
-    label: string;
-    count: number;
-  }> = [
-    {
-      id: "overview",
-      label: "Overview",
-      count:
-        detail.summary
-          .coveredCapabilityCount
-    },
-    {
-      id: "recipes",
-      label: "Recipes",
-      count:
-        detail.summary
-          .catalogRecipeCount
-    },
-    {
-      id: "crafters",
-      label: "Crafter",
-      count:
-        detail.summary
-          .characterCount
-    },
-    {
-      id: "slots",
-      label: "Slots",
-      count:
-        detail.summary
-          .slotCount
+  const [
+    findCraftDeepLink,
+    setFindCraftDeepLink
+  ] =
+    useState<ProfessionFindCraftDeepLink | null>(
+      null
+    );
+
+  function navigateToFindCraft(
+    familyName: string,
+    slotKey: string
+  ) {
+    if (!slotKey) {
+      return;
     }
-  ];
+
+    setFindCraftDeepLink(
+      (previous) => ({
+        familyName,
+        slotKey,
+        nonce:
+          (previous?.nonce ?? 0) +
+          1
+      })
+    );
+
+    setActiveTab("find-craft");
+  }
 
   return (
     <>
-      <section className="profession-detail-summary-grid">
-        <article className="panel profession-detail-summary-card">
-          <span>
-            Characters
-          </span>
-
-          <strong>
-            {
-              detail.summary
-                .characterCount
-            }
-          </strong>
-
-          <small>
-            {
-              detail.summary
-                .trackedCharacterCount
-            }
-            {" captured"}
-          </small>
-        </article>
-
-        <article className="panel profession-detail-summary-card">
-          <span>
-            Capabilities
-          </span>
-
-          <strong>
-            {
-              detail.summary
-                .coveredCapabilityCount
-            }
-            {"/"}
-            {
-              detail.summary
-                .catalogCapabilityCount
-            }
-          </strong>
-
-          <small>
-            account-wide
-          </small>
-        </article>
-
-        <article className="panel profession-detail-summary-card">
-          <span>
-            Recipes
-          </span>
-
-          <strong>
-            {
-              detail.summary
-                .learnedRecipeCount
-            }
-          </strong>
-
-          <small>
-            {
-              detail.summary
-                .catalogRecipeCount
-            }
-            {" in catalog"}
-          </small>
-        </article>
-
-        <article className="panel profession-detail-summary-card">
-          <span>
-            Slots
-          </span>
-
-          <strong>
-            {
-              detail.summary
-                .slotCount
-            }
-          </strong>
-
-          <small>
-            covered
-          </small>
-        </article>
-      </section>
+      <p className="profession-detail-metrics-line">
+        <strong>
+          {
+            detail.summary
+              .characterCount
+          }
+        </strong>
+        {
+          detail.summary
+            .characterCount === 1
+            ? " character"
+            : " characters"
+        }
+      </p>
 
       <Tabs
         activeTab={activeTab}
@@ -174,23 +115,20 @@ export function ProfessionDetailWorkspace({
       >
         {activeTab ===
           "overview" && (
-          <ProfessionCapabilityMatrix
+          <ProfessionOverviewResponsibilityTable
             detail={detail}
-          />
-        )}
-
-        {activeTab ===
-          "recipes" && (
-          <ProfessionRecipeFinder
-            professionId={
-              professionId
+            onNavigateToFindCraft={
+              navigateToFindCraft
             }
           />
         )}
 
         {activeTab ===
-          "crafters" && (
-          <ProfessionCrafterWorkspace
+          "find-craft" && (
+          <ProfessionFindCraftWorkspace
+            deepLink={
+              findCraftDeepLink
+            }
             detail={detail}
             professionId={
               professionId
@@ -199,8 +137,8 @@ export function ProfessionDetailWorkspace({
         )}
 
         {activeTab ===
-          "slots" && (
-          <ProfessionCoverageMatrix
+          "specializations" && (
+          <ProfessionSpecializationsWorkspace
             detail={detail}
           />
         )}

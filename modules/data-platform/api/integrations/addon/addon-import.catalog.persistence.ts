@@ -217,6 +217,9 @@ export class AddonCatalogPersistence {
               knowledgeMaxRank:
                 node.knowledgeMaxRank,
 
+              spellId:
+                node.spellId,
+
               sortOrder:
                 node.sortOrder
             },
@@ -236,6 +239,9 @@ export class AddonCatalogPersistence {
 
               knowledgeMaxRank:
                 node.knowledgeMaxRank,
+
+              spellId:
+                node.spellId,
 
               sortOrder:
                 node.sortOrder

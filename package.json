@@ -29,11 +29,16 @@
     "inspect:recipe-reagents": "node scripts/inspect-recipe-reagent-schematics.mjs",
     "inspect:recipe-quality-scenarios": "node scripts/inspect-recipe-quality-scenarios.mjs",
     "inspect:recipe-output-slots": "node scripts/inspect-recipe-output-slots.mjs",
+    "audit:unmapped-specialization-nodes": "npm run audit:unmapped-specialization-nodes --workspace syntrack-api",
+    "import:saved-variables": "npm run import:saved-variables --workspace syntrack-api --",
     "dev:restart": "node scripts/dev-manager.mjs restart",
     "dev:stop": "node scripts/dev-manager.mjs stop"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
     "concurrently": "^10.0.4",
+    "jsdom": "^30.0.1",
     "vitest": "^4.1.10"
   },
   "allowScripts": {

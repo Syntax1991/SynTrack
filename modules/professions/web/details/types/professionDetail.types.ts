@@ -19,13 +19,62 @@ export type ProfessionOverview = {
   items: ProfessionOverviewItem[];
 };
 
-export type ProfessionCoverageEntry = {
+export type ProfessionEquipmentCraftEntry = {
   id: string;
-  name: string;
-  skillPoints: number;
-  maxSkillPoints: number | null;
-  unlocked: boolean;
-  source: string;
+  familyName: string;
+  slotKey: string;
+  slotName: string;
+  recipeCount: number;
+};
+
+export type ProfessionSpecializationEquipmentClaim = {
+  id: string;
+  provenance: "CURATED_VERIFIED";
+  kind: string;
+  capabilityKey: string;
+  presentationGroup: string;
+  familyName: string;
+  slotKey: string;
+  slotName: string;
+  rank: number;
+  maxRank: number | null;
+  nodeName: string;
+  nodeKey: string;
+  nodeIconUrl: string | null;
+};
+
+export type ProfessionGeneralSpecializationEntry = {
+  nodeKey: string;
+  nodeName: string;
+  nodeIconUrl: string | null;
+  rank: number;
+  maxRank: number | null;
+};
+
+export type ProfessionExplicitSlotNodeRank = {
+  capabilityKey: string;
+  presentationGroup: string;
+  familyName: string;
+  slotKey: string;
+  slotName: string;
+  nodeKey: string;
+  nodeName: string;
+  nodeIconUrl: string | null;
+  rank: number;
+  maxRank: number | null;
+};
+
+export type ProfessionSlotSpecializationNode = {
+  capabilityKey: string;
+  presentationGroup: string;
+  familyName: string;
+  slotKey: string;
+  slotName: string;
+  nodeKey: string;
+  nodeName: string;
+  nodeIconUrl: string | null;
+  rank: number;
+  maxRank: number | null;
 };
 
 export type ProfessionRecipeCoverage = {
@@ -71,8 +120,20 @@ export type ProfessionCharacterCoverage = {
     | "UNTRACKED"
     | "NO_CATALOG";
 
-  slots:
-    ProfessionCoverageEntry[];
+  craftableEquipment:
+    ProfessionEquipmentCraftEntry[];
+
+  specializationEquipment:
+    ProfessionSpecializationEquipmentClaim[];
+
+  generalSpecialization:
+    ProfessionGeneralSpecializationEntry[];
+
+  explicitSlotNodeRanks:
+    ProfessionExplicitSlotNodeRank[];
+
+  slotSpecializationNodes:
+    ProfessionSlotSpecializationNode[];
 
   recipes:
     ProfessionRecipeCoverage[];
@@ -89,11 +150,13 @@ export type ProfessionDetail = {
     category: string;
   };
 
+  specializationMappingAvailable: boolean;
+
   summary: {
     characterCount: number;
     trackedCharacterCount: number;
     missingCharacterCount: number;
-    slotCount: number;
+    craftableEquipmentCount: number;
     catalogRecipeCount: number;
     learnedRecipeCount: number;
     catalogCapabilityCount: number;

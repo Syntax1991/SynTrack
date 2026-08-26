@@ -64,72 +64,27 @@
   font-size: 0.56rem;
 }
 
-.profession-crafter-header {
-  display: grid;
-  grid-template-columns:
-    minmax(220px, auto)
-    minmax(440px, 1fr)
-    auto;
-  gap: 18px;
-  align-items: center;
-  margin-top: 12px;
-  padding: 14px 16px;
-}
-
-.profession-crafter-identity {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.profession-crafter-identity h3 {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.profession-crafter-identity p {
-  margin: 4px 0 0;
-  color: var(--text-muted);
-  font-size: 0.6rem;
-}
-
-.profession-crafter-header-stats {
-  display: grid;
-  grid-template-columns:
-    repeat(4, minmax(85px, 1fr));
-  gap: 7px;
-}
-
-.profession-crafter-header-stats > div {
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-  background: var(--surface-elevated);
-}
-
-.profession-crafter-header-stats span,
-.profession-crafter-header-stats strong {
-  display: block;
-}
-
-.profession-crafter-header-stats span {
-  color: var(--text-muted);
-  font-size: 0.56rem;
-}
-
-.profession-crafter-header-stats strong {
-  margin-top: 3px;
-  font-size: 0.85rem;
-}
-
 .profession-crafter-toolbar {
-  display: grid;
-  grid-template-columns:
-    minmax(260px, 1fr)
-    minmax(160px, 220px);
-  gap: 12px;
-  margin-top: 12px;
-  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.profession-crafter-toolbar-summary {
+  flex: 1 1 220px;
+  margin: 0 0 9px;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.profession-crafter-toolbar-summary strong {
+  color: var(--text);
+}
+
+.profession-crafter-toolbar label {
+  display: block;
 }
 
 .profession-crafter-toolbar label > span {
@@ -137,13 +92,17 @@
   margin-bottom: 5px;
   color: var(--text-muted);
   font-size: 0.58rem;
+  text-transform: uppercase;
+}
+
+.profession-crafter-toolbar input {
+  width: 240px;
 }
 
 .profession-crafter-toolbar input,
 .profession-crafter-toolbar select {
-  width: 100%;
-  min-height: 36px;
-  padding: 8px 10px;
+  min-height: 34px;
+  padding: 7px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
   color: var(--text);
@@ -162,15 +121,15 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 30px;
+  padding: 5px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-secondary);
-  background: var(--surface-elevated);
+  background: none;
   cursor: pointer;
   font: inherit;
-  font-size: 0.61rem;
+  font-size: 0.63rem;
   white-space: nowrap;
 }
 
@@ -196,44 +155,19 @@
   text-align: center;
 }
 
-.profession-crafter-result-count {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin: 12px 2px 8px;
-  color: var(--text-secondary);
-  font-size: 0.66rem;
-}
-
-@media (max-width: 1100px) {
-  .profession-crafter-header {
-    grid-template-columns: 1fr;
-  }
-
-  .profession-crafter-header
-    > .text-button {
-    justify-self: start;
-  }
-}
-
 @media (max-width: 820px) {
   .profession-crafter-toolbar {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .profession-crafter-header-stats {
-    grid-template-columns:
-      repeat(2, 1fr);
+  .profession-crafter-toolbar input {
+    width: 100%;
   }
 }
 
 @media (max-width: 560px) {
   .profession-crafter-picker-button {
     min-width: 150px;
-  }
-
-  .profession-crafter-header-stats {
-    grid-template-columns:
-      1fr 1fr;
   }
 }

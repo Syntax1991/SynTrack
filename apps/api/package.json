@@ -13,6 +13,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "seed:demo-guild": "tsx prisma/seed-demo-guild.ts",
+    "audit:unmapped-specialization-nodes": "tsx scripts/audit-unmapped-specialization-nodes.ts",
+    "import:saved-variables": "tsx scripts/import-fresh-savedvariables.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -114,6 +114,12 @@ function mapRecipe(
     name: recipe.name,
     expansion: recipe.expansion,
     categoryId: recipe.categoryId,
+    craftedItemId:
+      recipe.craftedItemId,
+    iconUrl: recipe.iconUrl,
+    itemQuality:
+      recipe.itemQuality,
+    itemLevel: recipe.itemLevel,
     baseDifficulty:
       recipe.baseDifficulty,
     craftStatus,

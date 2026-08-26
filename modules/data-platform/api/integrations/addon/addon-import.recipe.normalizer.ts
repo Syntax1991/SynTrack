@@ -137,6 +137,26 @@ function normalizeRecipe(
         recipe.outputItemEquipLoc
       ),
 
+    outputItemClassId:
+      optionalNonNegativeNumber(
+        recipe.outputItemClassId
+      ),
+
+    outputItemSubclassId:
+      optionalNonNegativeNumber(
+        recipe.outputItemSubclassId
+      ),
+
+    outputItemArmorSubclassKey:
+      asString(
+        recipe.outputItemArmorSubclassKey
+      ),
+
+    outputItemWeaponSubclassKey:
+      asString(
+        recipe.outputItemWeaponSubclassKey
+      ),
+
     baseDifficulty:
       optionalNonNegativeNumber(
         recipe.baseDifficulty

@@ -57,7 +57,7 @@ export function ProfessionRecipeFinder({
     setOnlyCraftable
   ] =
     useState(
-      false
+      true
     );
 
   const [
@@ -204,7 +204,7 @@ export function ProfessionRecipeFinder({
 
               <div>
                 <span>
-                  Craftable
+                  Known
                 </span>
 
                 <strong>
@@ -271,7 +271,7 @@ export function ProfessionRecipeFinder({
                 />
 
                 <span>
-                  Craftable only
+                  Known only
                 </span>
               </label>
             </div>

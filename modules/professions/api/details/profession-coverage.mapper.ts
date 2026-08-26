@@ -3,8 +3,15 @@ import type { ProfessionDetailRepository } from "./profession-detail.repository.
 import type {
   ProfessionCharacterCoverage
 } from "./profession-detail.types.js";
+import { mapProfessionEquipmentCoverage } from "./profession-equipment-coverage.mapper.js";
+import { mapProfessionGeneralSpecialization } from "./profession-general-specialization.mapper.js";
+import type {
+  SpecializationNodeCatalogEntry
+} from "./profession-explicit-slot-node.mapper.js";
+import { mapProfessionExplicitSlotNodeRanks } from "./profession-explicit-slot-node.mapper.js";
+import { mapProfessionSlotSpecializationNodes } from "./profession-slot-specialization-nodes.mapper.js";
 import { mapProfessionRecipeCoverage } from "./profession-recipe-coverage.mapper.js";
-import { mapProfessionSlotCoverage } from "./profession-slot-coverage.mapper.js";
+import { mapProfessionSpecializationEquipment } from "./profession-specialization-equipment.mapper.js";
 
 type DetailRecord =
   NonNullable<
@@ -22,12 +29,52 @@ export function mapProfessionCharacterCoverage(
   assignment: DetailAssignment,
   hasSpecializationCatalog: boolean,
   hasRecipeCatalog: boolean,
-  hasCapabilityCatalog: boolean
+  hasCapabilityCatalog: boolean,
+  specializationMappingAvailable: boolean,
+  specializationNodeCatalog: Map<
+    string,
+    SpecializationNodeCatalogEntry
+  >,
+  professionKey: string
 ): ProfessionCharacterCoverage {
-  const slotCoverage =
-    mapProfessionSlotCoverage(
+  const craftableEquipment =
+    mapProfessionEquipmentCoverage(
       assignment
     );
+
+  const specializationEquipment =
+    mapProfessionSpecializationEquipment(
+      assignment,
+      professionKey
+    );
+
+  const generalSpecialization =
+    mapProfessionGeneralSpecialization(
+      assignment,
+      professionKey
+    );
+
+  const explicitSlotNodeRanks =
+    specializationMappingAvailable
+      ? mapProfessionExplicitSlotNodeRanks(
+          assignment,
+          specializationNodeCatalog,
+          professionKey
+        )
+      : [];
+
+  const slotSpecializationNodes =
+    specializationMappingAvailable
+      ? mapProfessionSlotSpecializationNodes(
+          assignment,
+          specializationNodeCatalog,
+          professionKey
+        )
+      : [];
+
+  const hasSpecializationProgress =
+    assignment.nodeProgress.length >
+    0;
 
   const recipes =
     mapProfessionRecipeCoverage(
@@ -71,14 +118,17 @@ export function mapProfessionCharacterCoverage(
         hasSpecializationCatalog,
         hasRecipeCatalog,
         hasCapabilityCatalog,
-        slotCoverage.hasNonSlotProgress,
-        slotCoverage.slots.length,
+        hasSpecializationProgress,
+        craftableEquipment.length,
         recipes.length,
         capabilities.length
       ),
 
-    slots:
-      slotCoverage.slots,
+    craftableEquipment,
+    specializationEquipment,
+    generalSpecialization,
+    explicitSlotNodeRanks,
+    slotSpecializationNodes,
 
     recipes,
     capabilities
@@ -89,13 +139,13 @@ function resolveDataStatus(
   hasSpecializationCatalog: boolean,
   hasRecipeCatalog: boolean,
   hasCapabilityCatalog: boolean,
-  hasNonSlotProgress: boolean,
-  slotCount: number,
+  hasSpecializationProgress: boolean,
+  craftableEquipmentCount: number,
   recipeCount: number,
   capabilityCount: number
 ): ProfessionCharacterCoverage["dataStatus"] {
   if (
-    slotCount > 0 ||
+    craftableEquipmentCount > 0 ||
     recipeCount > 0 ||
     capabilityCount > 0
   ) {
@@ -110,7 +160,7 @@ function resolveDataStatus(
     return "NO_CATALOG";
   }
 
-  if (hasNonSlotProgress) {
+  if (hasSpecializationProgress) {
     return "PARTIAL";
   }
 

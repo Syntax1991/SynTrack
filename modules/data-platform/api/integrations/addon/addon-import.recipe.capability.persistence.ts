@@ -3,7 +3,9 @@ import type {
 } from "./addon-import.persistence.types.js";
 import {
   resolveRecipeEquipmentFamily,
-  resolveRecipeOutputSlot
+  resolveRecipeEquipmentFamilyFromArmorSubclassKey,
+  resolveRecipeOutputSlot,
+  resolveRecipeWeaponTypeFromWeaponSubclassKey
 } from "./addon-import.recipe-output-capability.js";
 import type {
   AddonRecipe
@@ -70,7 +72,17 @@ function createFamilyCapability(
   skillLineId: number,
   recipe: AddonRecipe
 ): CapabilityDefinition | null {
+  /*
+   * Prefer the exact, non-localized armor-subclass-enum-backed source
+   * (VERIFIED) whenever the addon captured it. Only fall back to the
+   * category-name-derived source (DERIVED) for recipes captured before
+   * this field existed, or where the output item exposed no resolvable
+   * armor subclass (e.g. a non-armor crafted item).
+   */
   const family =
+    resolveRecipeEquipmentFamilyFromArmorSubclassKey(
+      recipe.outputItemArmorSubclassKey
+    ) ??
     resolveRecipeEquipmentFamily(
       recipe.categoryName
     );
@@ -86,6 +98,37 @@ function createFamilyCapability(
       family.name,
     type:
       "EQUIPMENT_FAMILY",
+    slotKey:
+      null,
+    description:
+      recipe.categoryName,
+    sortOrder:
+      10,
+    isPrimary:
+      true
+  };
+}
+
+function createWeaponTypeCapability(
+  skillLineId: number,
+  recipe: AddonRecipe
+): CapabilityDefinition | null {
+  const weaponType =
+    resolveRecipeWeaponTypeFromWeaponSubclassKey(
+      recipe.outputItemWeaponSubclassKey
+    );
+
+  if (!weaponType) {
+    return null;
+  }
+
+  return {
+    key:
+      `addon-weapon-type:${skillLineId}:${weaponType.key}`,
+    name:
+      weaponType.name,
+    type:
+      "WEAPON_TYPE",
     slotKey:
       null,
     description:
@@ -145,6 +188,10 @@ export class AddonRecipeCapabilityPersistence {
         recipe
       ),
       createFamilyCapability(
+        skillLineId,
+        recipe
+      ),
+      createWeaponTypeCapability(
         skillLineId,
         recipe
       ),

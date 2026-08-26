@@ -3,49 +3,18 @@ import type {
   ProfessionRecipeCatalogItem
 } from "../types/professionRecipe.types";
 import {
-  professionRecipeFamilyRules,
-  professionRecipeNameSlotRules,
   professionRecipeSlotNames
 } from "./professionRecipePresentation.rules";
 
-function normalizePresentationValue(
-  value: string
-): string {
-  return value
-    .normalize(
-      "NFKD"
-    )
-    .replace(
-      /[\u0300-\u036f]/gu,
-      ""
-    )
-    .toLocaleLowerCase(
-      "en"
-    )
-    .replace(
-      /[^a-z0-9]+/gu,
-      " "
-    )
-    .trim();
-}
-
-function matchesAlias(
-  value: string,
-  alias: string
-): boolean {
-  const normalized =
-    normalizePresentationValue(
-      value
-    );
-
-  return (
-    ` ${normalized} `
-      .includes(
-        ` ${alias} `
-      )
-  );
-}
-
+/*
+ * Equipment family and slot must come from the recipe's own, already-
+ * verified EQUIPMENT_FAMILY/EQUIPMENT_SLOT capability rows (backed by the
+ * item's real Blizzard equip-location enum and the recipe's own category).
+ * There is intentionally no free-text fallback here: guessing a family or
+ * slot from a recipe's display name reproduced the same class of false
+ * positive that "Wonderful Wristguards" caused for specialization coverage.
+ * Absent capability data means UNKNOWN, not a guess.
+ */
 function findFamily(
   capabilities:
     ProfessionRecipeCapability[]
@@ -57,32 +26,8 @@ function findFamily(
         "EQUIPMENT_FAMILY"
     );
 
-  if (explicit) {
-    return explicit.name;
-  }
-
-  for (
-    const capability of
-    capabilities
-  ) {
-    const rule =
-      professionRecipeFamilyRules.find(
-        (candidate) =>
-          candidate.aliases.some(
-            (alias) =>
-              matchesAlias(
-                capability.name,
-                alias
-              )
-          )
-      );
-
-    if (rule) {
-      return rule.label;
-    }
-  }
-
-  return null;
+  return explicit?.name ??
+    null;
 }
 
 function findExplicitSlot(
@@ -113,25 +58,6 @@ function findExplicitSlot(
   }
 
   return capability.name;
-}
-
-function inferSlotFromRecipeName(
-  name: string
-): string | null {
-  const rule =
-    professionRecipeNameSlotRules.find(
-      (candidate) =>
-        candidate.aliases.some(
-          (alias) =>
-            matchesAlias(
-              name,
-              alias
-            )
-        )
-    );
-
-  return rule?.label ??
-    null;
 }
 
 function getFallbackGroup(
@@ -178,13 +104,8 @@ export function getProfessionRecipeSlotName(
   recipe:
     ProfessionRecipeCatalogItem
 ): string | null {
-  return (
-    findExplicitSlot(
-      recipe.capabilities
-    ) ??
-    inferSlotFromRecipeName(
-      recipe.name
-    )
+  return findExplicitSlot(
+    recipe.capabilities
   );
 }
 

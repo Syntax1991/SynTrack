@@ -116,6 +116,11 @@ function normalizeNode(
       node.knowledgeMaxRank
     );
 
+  const directSpellId =
+    asNumber(
+      node.spellId
+    );
+
   /*
    * Storage scope 2 flattens the display and
    * Knowledge entry onto the node. Legacy
@@ -162,6 +167,9 @@ function normalizeNode(
       asNumber(
         knowledgeEntry?.maxRanks
       ),
+
+    spellId:
+      directSpellId,
 
     sortOrder,
 

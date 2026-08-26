@@ -22,7 +22,7 @@ import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTa
 import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
 import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
 import { ProfessionDetailPage } from "../../../../modules/professions/web/details/pages/ProfessionDetailPage";
-import { ProfessionCrafterFinderPage } from "../../../../modules/professions/web/pages/ProfessionCrafterFinderPage";
+import { ProfessionFindCraftPage } from "../../../../modules/professions/web/pages/ProfessionFindCraftPage";
 import { ProfessionKnowledgePage } from "../../../../modules/professions/web/pages/ProfessionKnowledgePage";
 import { ProfessionRecipeWorkspacePage } from "../../../../modules/professions/web/pages/ProfessionRecipeWorkspacePage";
 import { ProfessionSpecializationsPage } from "../../../../modules/professions/web/pages/ProfessionSpecializationsPage";
@@ -100,7 +100,7 @@ export function AppRouter() {
 
         <Route
           path="professions/crafters"
-          element={<ProfessionCrafterFinderPage />}
+          element={<ProfessionFindCraftPage />}
         />
 
         <Route

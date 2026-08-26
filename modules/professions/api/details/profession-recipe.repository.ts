@@ -38,6 +38,10 @@ export class ProfessionRecipeRepository {
             name: true,
             expansion: true,
             categoryId: true,
+            craftedItemId: true,
+            iconUrl: true,
+            itemQuality: true,
+            itemLevel: true,
             baseDifficulty: true,
 
             capabilities: {
