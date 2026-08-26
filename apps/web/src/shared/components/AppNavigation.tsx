@@ -231,7 +231,7 @@ export function AppNavigation() {
 
             <span className="sidebar-brand-copy">
               <strong>SynTrack</strong>
-              <small>Guild Platform</small>
+              <small>Personal Control Center</small>
             </span>
           </NavLink>
 

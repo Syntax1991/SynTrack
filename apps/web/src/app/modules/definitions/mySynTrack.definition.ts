@@ -20,11 +20,6 @@ export const mySynTrackModule: MainModuleDefinition =
         status: "available"
       },
       {
-        label: "Settings",
-        path: "/settings",
-        status: "available"
-      },
-      {
         label: "Weekly Checklist",
         path: "/weekly-checklist",
         status: "available"
@@ -35,13 +30,35 @@ export const mySynTrackModule: MainModuleDefinition =
         status: "available"
       },
       {
-        label: "Raid Tasks",
-        path: "/raid-tasks",
+        label: "Professions",
+        status: "available",
+        items: [
+          {
+            label: "Overview",
+            path: "/professions",
+            status: "available",
+            end: true
+          },
+          {
+            label: "Find Craft",
+            path: "/professions/crafters",
+            status: "available"
+          },
+          {
+            label: "Specializations",
+            path: "/professions/specializations",
+            status: "available"
+          }
+        ]
+      },
+      {
+        label: "Gear",
+        path: "/gear-readiness",
         status: "available"
       },
       {
-        label: "Gear / Enchants / Gems",
-        path: "/gear-readiness",
+        label: "Settings",
+        path: "/settings",
         status: "available"
       }
     ]

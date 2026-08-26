@@ -281,6 +281,27 @@ a.sidebar-subitem:hover {
   cursor: default;
 }
 
+.sidebar-subgroup {
+  display: grid;
+  gap: 1px;
+  padding-top: 2px;
+}
+
+.sidebar-subgroup-label {
+  padding: 4px 8px 2px;
+  color: #5b6472;
+  font-size: 0.6rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sidebar-subgroup-items {
+  display: grid;
+  gap: 1px;
+  padding-left: 10px;
+}
+
 .app-sidebar-footer {
   min-height: 58px;
   display: flex;

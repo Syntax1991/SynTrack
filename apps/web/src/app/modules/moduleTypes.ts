@@ -11,6 +11,13 @@ export type MainModuleItem = {
   path?: string;
   status: MainModuleItemStatus;
   end?: boolean;
+  /*
+   * Nested sub-items for a grouped concept within a module (e.g.
+   * Professions living inside My SynTrack) - rendered as an indented
+   * subgroup, never a second top-level module. A group item carries no
+   * path of its own.
+   */
+  items?: MainModuleItem[];
 };
 
 export type MainModuleDefinition = {

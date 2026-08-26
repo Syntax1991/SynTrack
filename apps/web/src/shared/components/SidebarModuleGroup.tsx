@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import type {
-  MainModuleDefinition
+  MainModuleDefinition,
+  MainModuleItem
 } from "../../app/modules/mainModules";
 import { ModuleIcon } from "./ModuleIcon";
 
@@ -11,6 +12,77 @@ type SidebarModuleGroupProps = {
   onNavigate: () => void;
   onToggle: () => void;
 };
+
+/*
+ * A nested item (item.items present, e.g. Professions inside My
+ * SynTrack) renders as a labeled, always-expanded subgroup rather than
+ * its own collapsible module - it is one concept nested one level
+ * deeper, not a second sidebar section.
+ */
+function renderSidebarItem(
+  item: MainModuleItem,
+  onNavigate: () => void
+) {
+  if (
+    item.items &&
+    item.items.length > 0
+  ) {
+    return (
+      <div
+        className="sidebar-subgroup"
+        key={item.label}
+      >
+        <span className="sidebar-subgroup-label">
+          {item.label}
+        </span>
+
+        <div className="sidebar-subgroup-items">
+          {item.items.map((child) =>
+            renderSidebarItem(
+              child,
+              onNavigate
+            )
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (
+    item.status === "available" &&
+    item.path
+  ) {
+    return (
+      <NavLink
+        className={({
+          isActive
+        }) =>
+          isActive
+            ? "sidebar-subitem active"
+            : "sidebar-subitem"
+        }
+        end={
+          item.end ?? false
+        }
+        key={item.label}
+        onClick={onNavigate}
+        to={item.path}
+      >
+        <span>{item.label}</span>
+      </NavLink>
+    );
+  }
+
+  return (
+    <span
+      aria-disabled="true"
+      className="sidebar-subitem planned"
+      key={item.label}
+    >
+      <span>{item.label}</span>
+    </span>
+  );
+}
 
 export function SidebarModuleGroup({
   module,
@@ -63,44 +135,11 @@ export function SidebarModuleGroup({
         id={panelId}
       >
         <div className="sidebar-module-items">
-          {module.items.map(
-            (item) => {
-              if (
-                item.status ===
-                  "available" &&
-                item.path
-              ) {
-                return (
-                  <NavLink
-                    className={({
-                      isActive
-                    }) =>
-                      isActive
-                        ? "sidebar-subitem active"
-                        : "sidebar-subitem"
-                    }
-                    end={
-                      item.end ?? false
-                    }
-                    key={item.label}
-                    onClick={onNavigate}
-                    to={item.path}
-                  >
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              }
-
-              return (
-                <span
-                  aria-disabled="true"
-                  className="sidebar-subitem planned"
-                  key={item.label}
-                >
-                  <span>{item.label}</span>
-                </span>
-              );
-            }
+          {module.items.map((item) =>
+            renderSidebarItem(
+              item,
+              onNavigate
+            )
           )}
         </div>
       </div>

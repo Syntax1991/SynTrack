@@ -1,10 +1,9 @@
 import { automationModule } from "./definitions/automation.definition";
-import { guildModule } from "./definitions/guild.definition";
-import { lootModule } from "./definitions/loot.definition";
 import { mySynTrackModule } from "./definitions/mySynTrack.definition";
-import { professionsModule } from "./definitions/professions.definition";
-import { recruitmentModule } from "./definitions/recruitment.definition";
-import type { MainModuleDefinition } from "./moduleTypes";
+import type {
+  MainModuleDefinition,
+  MainModuleItem
+} from "./moduleTypes";
 
 export type {
   MainModuleDefinition,
@@ -13,20 +12,36 @@ export type {
   MainModuleStatus
 } from "./moduleTypes";
 
+/*
+ * SynTrack's active product surface is the personal core (My SynTrack,
+ * which now also composes Professions) plus the Automation roadmap
+ * placeholder. Guild/Loot/Recruitment are intentionally not registered
+ * here - their backend/routes/models remain for now, but they are no
+ * longer part of the active navigation surface.
+ */
 export const mainModules:
   MainModuleDefinition[] = [
     mySynTrackModule,
-    guildModule,
-    lootModule,
-    professionsModule,
-    recruitmentModule,
     automationModule
   ];
+
+function flattenItems(
+  items: MainModuleItem[]
+): MainModuleItem[] {
+  return items.flatMap(
+    (item) =>
+      item.items
+        ? flattenItems(item.items)
+        : [item]
+  );
+}
 
 export function getAvailableModuleItems(
   module: MainModuleDefinition
 ) {
-  return module.items.filter(
+  return flattenItems(
+    module.items
+  ).filter(
     (item) =>
       item.status === "available" &&
       typeof item.path === "string"

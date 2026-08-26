@@ -82,7 +82,7 @@ export function GearReadinessPage() {
         }
         description="Track equipped items, item levels, enchants and socket coverage across every character."
         eyebrow="PERSONAL GEAR READINESS"
-        title="Gear / Enchants / Gems"
+        title="Gear"
       />
 
       {error && (
