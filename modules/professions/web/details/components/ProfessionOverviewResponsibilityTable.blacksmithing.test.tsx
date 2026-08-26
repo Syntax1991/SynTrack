@@ -10,7 +10,7 @@ import {
 } from "./professionOverviewResponsibilityTable.fixtures";
 
 describe("ProfessionOverviewResponsibilityTable - Blacksmithing Armor acceptance", () => {
-  it("renders Chest and Legs as two separate rows (never merged 'Chest / Legs'), even though both currently resolve to the same bundle node", () => {
+  it("renders Chest and Legs as two separate rows (never merged 'Chest / Legs'), each showing its OWN specific node - never the 'Large Plate Armor' bundle that happens to be invested", () => {
     const synbeam = createCoverage({
       character: {
         id: "character-4",
@@ -19,37 +19,46 @@ describe("ProfessionOverviewResponsibilityTable - Blacksmithing Armor acceptance
         className: "Death Knight",
         level: 80
       },
-      specializationEquipment: [
-        createClaim({
+      explicitSlotNodeRanks: [
+        {
+          capabilityKey: "Plate:CHEST",
           presentationGroup: "Armor",
           familyName: "Plate",
           slotKey: "CHEST",
           slotName: "Chest",
-          nodeName: "Large Plate Armor",
-          nodeKey: "addon:104575",
-          rank: 30,
-          maxRank: 30
-        }),
-        createClaim({
+          nodeName: "Chestplates",
+          nodeKey: "addon:104574",
+          nodeIconUrl: null,
+          rank: 0,
+          maxRank: 25,
+          hasProvenInvestment: true
+        },
+        {
+          capabilityKey: "Plate:LEGS",
           presentationGroup: "Armor",
           familyName: "Plate",
           slotKey: "LEGS",
           slotName: "Legs",
-          nodeName: "Large Plate Armor",
-          nodeKey: "addon:104575",
-          rank: 30,
-          maxRank: 30
-        }),
-        createClaim({
+          nodeName: "Greaves",
+          nodeKey: "addon:104573",
+          nodeIconUrl: null,
+          rank: 0,
+          maxRank: 25,
+          hasProvenInvestment: true
+        },
+        {
+          capabilityKey: "Shield:OFF_HAND",
           presentationGroup: "Armor",
           familyName: "Shield",
           slotKey: "OFF_HAND",
           slotName: "Shield",
           nodeName: "Shields",
           nodeKey: "addon:104572",
+          nodeIconUrl: null,
           rank: 16,
-          maxRank: 25
-        })
+          maxRank: 25,
+          hasProvenInvestment: true
+        }
       ]
     });
 
@@ -83,13 +92,20 @@ describe("ProfessionOverviewResponsibilityTable - Blacksmithing Armor acceptance
       screen.queryByText("Chest / Legs")
     ).not.toBeInTheDocument();
 
-    // Both Chest and Legs currently resolve to the same bundle node
-    // ("Large Plate Armor") since Synbeam has no more-specific
-    // Chestplates/Greaves investment - that's two separate, correct
-    // rows sharing a node name, not a merged row.
+    // P0 regression: Chest and Legs must show their OWN real specific
+    // node (Chestplates 0/25, Greaves 0/25) - never the "Large Plate
+    // Armor" bundle, even though the bundle is the one actually invested.
     expect(
-      screen.getAllByText("Large Plate Armor")
-    ).toHaveLength(2);
+      screen.queryByText("Large Plate Armor")
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText("Chestplates")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Greaves")
+    ).toBeInTheDocument();
 
     const rows =
       document.querySelectorAll(

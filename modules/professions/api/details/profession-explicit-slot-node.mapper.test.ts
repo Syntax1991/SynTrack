@@ -65,7 +65,7 @@ describe("mapProfessionExplicitSlotNodeRanks", () => {
     );
   });
 
-  it("credits a bundle-only investment to every slot it covers, rather than showing a false 0/max", () => {
+  it("P0 regression: a bundle-only investment must NOT be credited to the specific slot's row - the specific node's own 0/max stays honest even though the bundle is invested", () => {
     const assignment =
       createAssignment([
         {
@@ -93,21 +93,32 @@ describe("mapProfessionExplicitSlotNodeRanks", () => {
           entry.slotKey === "HEAD"
       );
 
+    // The resolved node is always the curated SPECIFIC node for this
+    // pair - "Wonderful Wristguards"/"Capable Caps" - never "Securely
+    // Shaped" (the bundle), no matter how invested the bundle is.
     expect(wrist).toEqual(
       expect.objectContaining({
-        nodeName: "Securely Shaped",
-        rank: 30,
-        maxRank: 30
+        nodeName: "Wonderful Wristguards",
+        rank: 0,
+        maxRank: 20
       })
     );
 
     expect(head).toEqual(
       expect.objectContaining({
-        nodeName: "Securely Shaped",
-        rank: 30,
-        maxRank: 30
+        nodeName: "Capable Caps",
+        rank: 0,
+        maxRank: 20
       })
     );
+
+    expect(
+      ranks.some(
+        (entry) =>
+          entry.nodeName ===
+          "Securely Shaped"
+      )
+    ).toBe(false);
   });
 
   it("prefers the specific node over the bundle node when both are invested", () => {

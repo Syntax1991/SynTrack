@@ -57,6 +57,15 @@ export type ProfessionExplicitSlotNodeRank = {
   nodeIconUrl: string | null;
   rank: number;
   maxRank: number | null;
+  /*
+   * True when this pair has been proven at all - the resolved (specific)
+   * node itself has rank, OR a bundle covering it does - independent of
+   * which node identity rank/nodeName above describe. Consumers that
+   * only want to show PROVEN responsibility (e.g. the Overview) filter
+   * on this; consumers that want the full 0/max tree regardless (e.g.
+   * the Specializations tab) ignore it.
+   */
+  hasProvenInvestment: boolean;
 };
 
 /*

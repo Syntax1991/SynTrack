@@ -62,6 +62,7 @@ export type ProfessionExplicitSlotNodeRank = {
   nodeIconUrl: string | null;
   rank: number;
   maxRank: number | null;
+  hasProvenInvestment: boolean;
 };
 
 export type ProfessionSlotSpecializationNode = {

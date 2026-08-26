@@ -64,7 +64,9 @@ export function createCoverage(
         nodeName: claim.nodeName,
         nodeIconUrl: claim.nodeIconUrl,
         rank: claim.rank,
-        maxRank: claim.maxRank
+        maxRank: claim.maxRank,
+        hasProvenInvestment:
+          claim.rank > 0
       })
     );
 

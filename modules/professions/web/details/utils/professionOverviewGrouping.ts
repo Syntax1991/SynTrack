@@ -33,19 +33,27 @@ export type OverviewFamilyGroup = {
  * single line just because the same node currently backs both. Sourced
  * directly from explicitSlotNodeRanks - the same always-one-row-per-
  * curated-(family,slot)-pair data the Specializations tab already uses -
- * filtered to real, proven investment (rank > 0) since Overview shows
- * proven responsibility only, never the full 0/max tree (that remains
- * the Specializations tab's job).
+ * filtered to entry.hasProvenInvestment (see profession-explicit-slot
+ * -node.mapper.ts) rather than a plain rank > 0 check - hasProvenInvestment
+ * is true whenever the PAIR has any real investment (the specific node
+ * itself, or a bundle covering it), independent of the resolved node's
+ * own rank. This is what lets "Chest -> Chestplates 0/25" appear when
+ * the character has real Chest-relevant investment via the "Large Plate
+ * Armor" bundle but never specifically trained Chestplates, while a
+ * character with NO engagement at all in that family (specific or
+ * bundle) still gets no row - Overview shows proven responsibility only,
+ * never the full 0/max tree (that remains the Specializations tab's
+ * job).
  *
- * The resolved nodeName for a row is whatever real node the existing
- * specific-over-bundle logic already determined earns that slot -
- * "Chestplates" if a character specifically invested there, or
- * "Large Plate Armor" if only the bundle covers it. Two rows may
- * legitimately show the same nodeName (e.g. Chest and Legs both showing
- * "Large Plate Armor" for a character who only has the bundle) - that is
- * not a bug, it is the same bundle genuinely covering two real,
- * separately-tracked slots, and each still needs its own row so a reader
- * can see both concrete responsibilities rather than one merged line.
+ * The resolved nodeName for a row is ALWAYS the curated SPECIFIC node
+ * for that pair, never a bundle - "Chestplates," never "Large Plate
+ * Armor," regardless of which one is actually invested. rank/maxRank are
+ * read from that specific node alone, so a real bundle-only investment
+ * never gets misreported as the specific node's own rank (a bundle's own
+ * investment surfaces separately, under General/Profession - see
+ * profession-general-specialization.mapper.ts). Node identity is
+ * resolved independently of rank; this function never chooses a
+ * different node because it happens to have a higher rank.
  *
  * presentationGroup defaults to familyName (so Leatherworking still
  * splits into Leather/Mail sections), but a profession can explicitly
@@ -87,7 +95,7 @@ export function buildOverviewFamilyGroups(
       const entry of
       coverage.explicitSlotNodeRanks
     ) {
-      if (entry.rank <= 0) {
+      if (!entry.hasProvenInvestment) {
         continue;
       }
 

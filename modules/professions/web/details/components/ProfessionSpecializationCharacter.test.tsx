@@ -52,6 +52,8 @@ function createSlotRank(
     nodeIconUrl: null,
     rank: 0,
     maxRank: 20,
+    hasProvenInvestment:
+      (overrides.rank ?? 0) > 0,
     ...overrides
   };
 }
