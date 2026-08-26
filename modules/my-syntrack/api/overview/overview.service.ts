@@ -4,8 +4,15 @@ import { VaultMythicPlusRepository } from "../vault-mythic-plus/vault-mythic-plu
 import { VaultMythicPlusService } from "../vault-mythic-plus/vault-mythic-plus.service.js";
 import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
 import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
+import { ACTIVE_TRACKER_SCOPE_KEY } from "../trackers/active-tracker-scope.js";
+import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
+import { TrackerDefinitionService } from "../trackers/tracker-definition.service.js";
+import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
+import { TrackerValueService } from "../trackers/tracker-value.service.js";
+import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
 import { loadProfessionIssuesByCharacter } from "./overview.profession-issues.js";
+import { filterPinnedTrackerColumns } from "./overview-tracker-columns.js";
 import type { OverviewResponse } from "./overview.types.js";
 
 /*
@@ -33,18 +40,85 @@ export class OverviewService {
       new GearReadinessRepository()
     );
 
+  private readonly trackerDefinitionService =
+    new TrackerDefinitionService(
+      new TrackerDefinitionRepository()
+    );
+
+  private readonly trackerValueService =
+    new TrackerValueService(
+      new TrackerValueRepository(),
+      new TrackerDefinitionRepository()
+    );
+
   async getOverview(): Promise<OverviewResponse> {
     const [
       weeklyChecklist,
       vaultOverview,
       gearOverview,
-      professionIssuesByCharacter
+      professionIssuesByCharacter,
+      trackerDefinitions
     ] = await Promise.all([
       this.weeklyChecklistService.getChecklist(),
       this.vaultMythicPlusService.getOverview(),
       this.gearReadinessService.getOverview(),
-      loadProfessionIssuesByCharacter()
+      loadProfessionIssuesByCharacter(),
+      this.trackerDefinitionService.listByScope(
+        ACTIVE_TRACKER_SCOPE_KEY
+      )
     ]);
+
+    const trackerColumns =
+      filterPinnedTrackerColumns(
+        trackerDefinitions
+      );
+
+    const characterIds =
+      weeklyChecklist.characters.map(
+        (character) => character.id
+      );
+
+    const trackerStates =
+      trackerColumns.length === 0
+        ? []
+        : await this.trackerValueService.getStatesForScope(
+            ACTIVE_TRACKER_SCOPE_KEY,
+            characterIds
+          );
+
+    const pinnedTrackerDefinitionIds =
+      new Set(
+        trackerColumns.map(
+          (definition) => definition.id
+        )
+      );
+
+    const trackerStatesByCharacterId =
+      new Map<
+        string,
+        CharacterTrackerState[]
+      >();
+
+    for (const state of trackerStates) {
+      if (
+        !pinnedTrackerDefinitionIds.has(
+          state.trackerDefinitionId
+        )
+      ) {
+        continue;
+      }
+
+      const existing =
+        trackerStatesByCharacterId.get(
+          state.characterId
+        ) ?? [];
+
+      existing.push(state);
+      trackerStatesByCharacterId.set(
+        state.characterId,
+        existing
+      );
+    }
 
     const weeklyByCharacterId =
       new Map(
@@ -128,13 +202,15 @@ export class OverviewService {
         weeklyByCharacterId,
         vaultByCharacterId,
         gearByCharacterId,
-        professionByCharacterId
+        professionByCharacterId,
+        trackerStatesByCharacterId
       });
 
     return {
       summary,
       attentionItems,
-      characters
+      characters,
+      trackerColumns
     };
   }
 }

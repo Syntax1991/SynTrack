@@ -16,6 +16,7 @@ import {
 } from "./overview.sorting.js";
 import type {
   AttentionItem,
+  CharacterTrackerState,
   CharacterWeeklyState,
   OverviewSummary
 } from "./overview.types.js";
@@ -50,6 +51,16 @@ export type OverviewAggregationInput = {
   professionByCharacterId: Map<
     string,
     OverviewProfessionCharacterInput
+  >;
+  /*
+   * Pre-fetched, already-batched pinned tracker states (see
+   * TrackerValueService.getStatesForScope) - the aggregator only
+   * distributes them per character, it never queries or computes
+   * tracker completion itself.
+   */
+  trackerStatesByCharacterId: Map<
+    string,
+    CharacterTrackerState[]
   >;
 };
 
@@ -158,6 +169,10 @@ function resolveCharacterState(
     tier: resolveTierOverviewState(),
     embellishments:
       resolveEmbellishmentOverviewState(),
+    trackers:
+      input.trackerStatesByCharacterId.get(
+        character.id
+      ) ?? [],
     attentionItems,
     readinessState,
     nextAction: pickNextAction(

@@ -86,6 +86,7 @@ const mockOverview: OverviewResponse =
         embellishments: {
           state: "NOT_TRACKED"
         },
+        trackers: [],
         attentionItems: [
           {
             id: "char-1:weekly",
@@ -113,7 +114,8 @@ const mockOverview: OverviewResponse =
           severity: "this-week"
         }
       }
-    ]
+    ],
+    trackerColumns: []
   };
 
 vi.mock(
@@ -122,7 +124,8 @@ vi.mock(
     useOverview: () => ({
       overview: mockOverview,
       isLoading: false,
-      error: null
+      error: null,
+      refetch: () => {}
     })
   })
 );
@@ -175,13 +178,13 @@ describe("OverviewPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders the new summary, attention queue and character matrix", () => {
+  it("renders the compact attention strip and character matrix, with the matrix as the primary surface (no large panel above it)", () => {
     renderPage();
 
     expect(
-      screen.getByText(
-        "Needs attention"
-      )
+      screen.getByRole("button", {
+        name: /need attention/i
+      })
     ).toBeInTheDocument();
 
     expect(
@@ -194,5 +197,25 @@ describe("OverviewPage", () => {
       screen.getAllByText("2/5")
         .length
     ).toBeGreaterThan(0);
+  });
+
+  it("never renders the old four KPI cards, replacing them with one compact summary line", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(
+      new Date("2026-08-26T23:00:00.000Z")
+    );
+
+    try {
+      renderPage();
+
+      expect(
+        screen.getByText(
+          "1 characters · 1 attention · 0 ready · Reset in 6d 8h"
+        )
+      ).toBeInTheDocument();
+    }
+    finally {
+      vi.useRealTimers();
+    }
   });
 });

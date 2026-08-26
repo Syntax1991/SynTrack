@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useState
 } from "react";
@@ -9,6 +10,7 @@ type OverviewState = {
   overview: OverviewResponse | null;
   isLoading: boolean;
   error: string | null;
+  refetch: () => void;
 };
 
 export function useOverview(): OverviewState {
@@ -23,31 +25,54 @@ export function useOverview(): OverviewState {
   const [error, setError] =
     useState<string | null>(null);
 
+  const [reloadToken, setReloadToken] =
+    useState(0);
+
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
-        setOverview(
-          await getOverview()
-        );
+        const result =
+          await getOverview();
+
+        if (!cancelled) {
+          setOverview(result);
+        }
       }
       catch (loadError) {
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Overview could not be loaded."
-        );
+        if (!cancelled) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Overview could not be loaded."
+          );
+        }
       }
       finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
 
     void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadToken]);
+
+  const refetch = useCallback(() => {
+    setReloadToken(
+      (previous) => previous + 1
+    );
   }, []);
 
   return {
     overview,
     isLoading,
-    error
+    error,
+    refetch
   };
 }

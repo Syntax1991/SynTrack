@@ -7,102 +7,182 @@ import type {
   WeeklyOverviewState
 } from "../types/overview.types";
 
-export function formatWeeklyCell(
+/*
+ * A compact matrix token: a short symbol/number (never a full pill
+ * label repeated in every row), a tone driving restrained color, and a
+ * title/tooltip carrying the full explanation for screen readers and
+ * hover. READY/UNKNOWN/NOT_TRACKED/ATTENTION are visually and
+ * semantically distinct tokens - never blurred into each other.
+ */
+export type CellToken = {
+  symbol: string;
+  tone:
+    | "ready"
+    | "attention"
+    | "progress"
+    | "unknown"
+    | "not-tracked";
+  title: string;
+};
+
+export function formatWeeklyToken(
   weekly: WeeklyOverviewState
-) {
+): CellToken {
+  if (weekly.total === 0) {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Weekly tasks not tracked"
+    };
+  }
+
+  if (weekly.state === "READY") {
+    return {
+      symbol: "✓",
+      tone: "ready",
+      title: `Weekly tasks complete (${weekly.completed}/${weekly.total})`
+    };
+  }
+
   return {
-    state: weekly.state,
-    detail:
-      weekly.total === 0
-        ? undefined
-        : `${weekly.completed}/${weekly.total}`
+    symbol: `${weekly.completed}/${weekly.total}`,
+    tone: "progress",
+    title: `${weekly.completed} of ${weekly.total} weekly tasks complete`
   };
 }
 
-export function formatVaultCell(
+export function formatVaultToken(
   vault: VaultOverviewState
-) {
+): CellToken {
   if (vault.state === "UNKNOWN") {
     return {
-      state: vault.state,
-      detail: "No runs logged"
+      symbol: "?",
+      tone: "unknown",
+      title:
+        "Vault state unknown - no runs logged this period yet, or this character doesn't use the feature"
     };
   }
 
   return {
-    state: vault.state,
-    detail: `${vault.unlockedSlots}/${vault.slotsTotal}`
+    symbol: `${vault.unlockedSlots}/${vault.slotsTotal}`,
+    tone:
+      vault.state === "READY"
+        ? "ready"
+        : "progress",
+    title: `${vault.unlockedSlots} of ${vault.slotsTotal} Vault slots unlocked`
   };
 }
 
-export function formatProfessionCell(
+export function formatProfessionToken(
   professions: ProfessionOverviewState
-) {
-  if (
-    professions.state ===
-    "ATTENTION"
-  ) {
+): CellToken {
+  if (professions.state === "NOT_TRACKED") {
     return {
-      state: professions.state,
-      detail: `${professions.issueCount} ${professions.issueCount === 1 ? "issue" : "issues"}`
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Professions not tracked"
+    };
+  }
+
+  if (professions.state === "ATTENTION") {
+    return {
+      symbol: "!",
+      tone: "attention",
+      title:
+        professions.issues[0] ??
+        "Profession data needs attention"
     };
   }
 
   return {
-    state: professions.state,
-    detail: undefined
+    symbol: "✓",
+    tone: "ready",
+    title: "Professions tracked, no known issues"
   };
 }
 
-export function formatGearCell(
+export function formatGearToken(
   gear: GearOverviewState
-) {
+): CellToken {
+  if (gear.state === "NOT_TRACKED") {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Gear not tracked"
+    };
+  }
+
   if (gear.state === "ATTENTION") {
-    const issueCount =
-      gear.missingEnchantCount +
-      gear.emptySocketCount;
+    const parts: string[] = [];
+
+    if (gear.missingEnchantCount > 0) {
+      parts.push(
+        `${gear.missingEnchantCount} missing ${gear.missingEnchantCount === 1 ? "enchant" : "enchants"}`
+      );
+    }
+
+    if (gear.emptySocketCount > 0) {
+      parts.push(
+        `${gear.emptySocketCount} empty ${gear.emptySocketCount === 1 ? "socket" : "sockets"}`
+      );
+    }
 
     return {
-      state: gear.state,
-      detail: `${issueCount} ${issueCount === 1 ? "issue" : "issues"}`
+      symbol: "!",
+      tone: "attention",
+      title:
+        parts.join(", ") ||
+        "Gear needs attention"
     };
   }
 
   return {
-    state: gear.state,
-    detail: undefined
+    symbol: "✓",
+    tone: "ready",
+    title: "Gear ready, no known issues"
   };
 }
 
-export function formatItemLevelCell(
+export function formatItemLevelToken(
   gear: GearOverviewState
-) {
+): CellToken {
+  if (gear.itemLevel === null) {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Item level not tracked"
+    };
+  }
+
   return {
-    state:
-      gear.itemLevel === null
-        ? ("NOT_TRACKED" as const)
-        : ("READY" as const),
-    detail:
-      gear.itemLevel === null
-        ? undefined
-        : String(gear.itemLevel)
+    symbol: String(gear.itemLevel),
+    tone: "ready",
+    title: `Average item level ${gear.itemLevel}`
   };
 }
 
-export function formatTierCell(
+export function formatTierToken(
   tier: TierOverviewState
-) {
+): CellToken {
+  void tier;
+
   return {
-    state: tier.state,
-    detail: undefined
+    symbol: "—",
+    tone: "not-tracked",
+    title:
+      "Set/Tier not tracked - no data source exists yet"
   };
 }
 
-export function formatEmbellishmentsCell(
+export function formatEmbellishmentToken(
   embellishments: EmbellishmentOverviewState
-) {
+): CellToken {
+  void embellishments;
+
   return {
-    state: embellishments.state,
-    detail: undefined
+    symbol: "—",
+    tone: "not-tracked",
+    title:
+      "Embellishments not tracked - no data source exists yet"
   };
 }

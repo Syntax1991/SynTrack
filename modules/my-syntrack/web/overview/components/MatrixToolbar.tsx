@@ -20,6 +20,7 @@ const readinessFilters: {
 ];
 
 type MatrixToolbarProps = {
+  summaryText: string;
   readinessFilter: MatrixReadinessFilter;
   onReadinessFilterChange: (
     value: MatrixReadinessFilter
@@ -32,18 +33,30 @@ type MatrixToolbarProps = {
   onSortByChange: (
     value: MatrixSortBy
   ) => void;
+  onOpenTrackerManager: () => void;
 };
 
+/*
+ * The compact toolbar replaces the old four-KPI-card row entirely - the
+ * account-level summary is a single text line here, not a dedicated
+ * row of the viewport.
+ */
 export function MatrixToolbar({
+  summaryText,
   readinessFilter,
   onReadinessFilterChange,
   searchTerm,
   onSearchTermChange,
   sortBy,
-  onSortByChange
+  onSortByChange,
+  onOpenTrackerManager
 }: MatrixToolbarProps) {
   return (
     <div className="overview-matrix-toolbar">
+      <span className="overview-matrix-summary">
+        {summaryText}
+      </span>
+
       <div
         className="overview-matrix-filter-group"
         role="group"
@@ -112,6 +125,14 @@ export function MatrixToolbar({
           </option>
         </select>
       </label>
+
+      <button
+        className="overview-matrix-columns-button"
+        onClick={onOpenTrackerManager}
+        type="button"
+      >
+        Trackers / Columns
+      </button>
     </div>
   );
 }

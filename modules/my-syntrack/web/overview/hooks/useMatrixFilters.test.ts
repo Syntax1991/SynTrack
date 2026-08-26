@@ -40,6 +40,7 @@ function buildCharacter(
     embellishments: {
       state: "NOT_TRACKED"
     },
+    trackers: [],
     attentionItems: [],
     readinessState: "unknown",
     nextAction: null,

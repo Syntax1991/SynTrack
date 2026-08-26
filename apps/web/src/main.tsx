@@ -16,6 +16,8 @@ import "./styles/raider-auth.css";
 import "./styles/character-detail-summary.css";
 import "./styles/character-detail-coverage.css";
 import "./styles/my-syntrack-overview.css";
+import "./styles/my-syntrack-tracker-cell.css";
+import "./styles/my-syntrack-tracker-manager.css";
 import "./styles/weekly-checklist.css";
 import "./styles/vault-mythic-plus.css";
 import "./styles/vault-mythic-plus-runs.css";

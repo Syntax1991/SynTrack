@@ -1,166 +1,31 @@
-import { Link } from "react-router-dom";
-import type { CharacterWeeklyState } from "../types/overview.types";
+import type {
+  CharacterWeeklyState,
+  TrackerDefinitionView
+} from "../types/overview.types";
 import { useMatrixFilters } from "../hooks/useMatrixFilters";
-import {
-  formatEmbellishmentsCell,
-  formatGearCell,
-  formatItemLevelCell,
-  formatProfessionCell,
-  formatTierCell,
-  formatVaultCell,
-  formatWeeklyCell
-} from "../utils/overviewCellFormatting";
+import { CharacterMatrixRow } from "./CharacterMatrixRow";
 import { MatrixToolbar } from "./MatrixToolbar";
-import { OverviewStatusBadge } from "./OverviewStatusBadge";
 
-function NextActionCell({
-  state
-}: {
-  state: CharacterWeeklyState;
-}) {
-  if (state.nextAction) {
-    return (
-      <Link
-        className="overview-next-action"
-        to={state.nextAction.path}
-      >
-        {state.nextAction.label}
-      </Link>
-    );
-  }
-
-  if (
-    state.readinessState ===
-    "unknown"
-  ) {
-    return (
-      <span className="overview-next-action muted">
-        Tracking incomplete
-      </span>
-    );
-  }
-
-  return (
-    <span className="overview-next-action ready">
-      Ready
-    </span>
-  );
-}
-
-function CharacterMatrixRow({
-  state
-}: {
-  state: CharacterWeeklyState;
-}) {
-  const weekly = formatWeeklyCell(
-    state.weekly
-  );
-
-  const vault = formatVaultCell(
-    state.vault
-  );
-
-  const professions =
-    formatProfessionCell(
-      state.professions
-    );
-
-  const gear = formatGearCell(
-    state.gear
-  );
-
-  const itemLevel =
-    formatItemLevelCell(state.gear);
-
-  const tier = formatTierCell(
-    state.tier
-  );
-
-  const embellishments =
-    formatEmbellishmentsCell(
-      state.embellishments
-    );
-
-  return (
-    <tr>
-      <td>
-        <div className="overview-character-identity">
-          <strong>
-            {state.character.name}
-          </strong>
-
-          <span>
-            {
-              state.character
-                .className
-            }
-          </span>
-        </div>
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          detail={itemLevel.detail}
-          state={itemLevel.state}
-        />
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          state={tier.state}
-        />
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          state={
-            embellishments.state
-          }
-        />
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          detail={weekly.detail}
-          state={weekly.state}
-        />
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          detail={vault.detail}
-          state={vault.state}
-        />
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          detail={professions.detail}
-          state={professions.state}
-        />
-      </td>
-
-      <td>
-        <OverviewStatusBadge
-          detail={gear.detail}
-          state={gear.state}
-        />
-      </td>
-
-      <td>
-        <NextActionCell
-          state={state}
-        />
-      </td>
-    </tr>
-  );
-}
-
-export function CharacterWeeklyMatrix({
-  characters
-}: {
+type CharacterWeeklyMatrixProps = {
   characters: CharacterWeeklyState[];
-}) {
+  trackerColumns: TrackerDefinitionView[];
+  summaryText: string;
+  onTrackerChanged: () => void;
+  onOpenTrackerManager: () => void;
+};
+
+/*
+ * The matrix is the primary SynTrack workspace, not a table beneath a
+ * dashboard - it starts immediately below the toolbar, with no KPI
+ * cards or large attention panel competing for the first screen.
+ */
+export function CharacterWeeklyMatrix({
+  characters,
+  trackerColumns,
+  summaryText,
+  onTrackerChanged,
+  onOpenTrackerManager
+}: CharacterWeeklyMatrixProps) {
   const {
     readinessFilter,
     setReadinessFilter,
@@ -171,37 +36,15 @@ export function CharacterWeeklyMatrix({
     visibleCharacters
   } = useMatrixFilters(characters);
 
-  if (characters.length === 0) {
-    return (
-      <section className="panel overview-matrix-panel">
-        <div className="empty-state">
-          Add a character to see
-          weekly state here.
-        </div>
-      </section>
-    );
-  }
+  const columnCount =
+    9 + trackerColumns.length;
 
   return (
-    <section className="panel overview-matrix-panel">
-      <div className="panel-header">
-        <div>
-          <p className="eyebrow">
-            EVERY TRACKED CHARACTER
-          </p>
-
-          <h2>Characters</h2>
-        </div>
-
-        <span className="overview-matrix-count">
-          {visibleCharacters.length}
-          {visibleCharacters.length !==
-            characters.length &&
-            ` / ${characters.length}`}
-        </span>
-      </div>
-
+    <section className="overview-matrix-panel">
       <MatrixToolbar
+        onOpenTrackerManager={
+          onOpenTrackerManager
+        }
         onReadinessFilterChange={
           setReadinessFilter
         }
@@ -214,51 +57,110 @@ export function CharacterWeeklyMatrix({
         }
         searchTerm={searchTerm}
         sortBy={sortBy}
+        summaryText={summaryText}
       />
 
-      <div className="table-scroll">
-        <table className="overview-matrix">
-          <thead>
-            <tr>
-              <th>Character</th>
-              <th>iLvl</th>
-              <th>Set</th>
-              <th>Embellish</th>
-              <th>Weeklies</th>
-              <th>Vault</th>
-              <th>Professions</th>
-              <th>Gear</th>
-              <th>Next action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {visibleCharacters.length ===
-            0 ? (
+      {characters.length === 0 ? (
+        <div className="empty-state">
+          Add a character to see
+          weekly state here.
+        </div>
+      ) : (
+        <div className="table-scroll overview-matrix-scroll">
+          <table className="overview-matrix">
+            <thead>
               <tr>
-                <td colSpan={9}>
-                  <div className="empty-state">
-                    No characters
-                    match this filter.
-                  </div>
-                </td>
+                <th>Character</th>
+                <th className="overview-col-narrow">
+                  iLvl
+                </th>
+                <th className="overview-col-narrow">
+                  Set
+                </th>
+                <th className="overview-col-narrow">
+                  Emb.
+                </th>
+                <th className="overview-col-narrow">
+                  Weeklies
+                </th>
+                <th className="overview-col-narrow">
+                  Vault
+                </th>
+
+                {trackerColumns.map(
+                  (definition) => (
+                    <th
+                      className={
+                        definition.valueType ===
+                        "TEXT"
+                          ? "overview-col-medium"
+                          : "overview-col-narrow"
+                      }
+                      key={
+                        definition.id
+                      }
+                      title={
+                        definition.category ??
+                        undefined
+                      }
+                    >
+                      {definition.name}
+                    </th>
+                  )
+                )}
+
+                <th className="overview-col-narrow">
+                  Prof.
+                </th>
+                <th className="overview-col-narrow">
+                  Gear
+                </th>
+                <th className="overview-col-action">
+                  Action
+                </th>
               </tr>
-            ) : (
-              visibleCharacters.map(
-                (state) => (
-                  <CharacterMatrixRow
-                    key={
-                      state.character
-                        .id
+            </thead>
+
+            <tbody>
+              {visibleCharacters.length ===
+              0 ? (
+                <tr>
+                  <td
+                    colSpan={
+                      columnCount
                     }
-                    state={state}
-                  />
+                  >
+                    <div className="empty-state">
+                      No characters
+                      match this
+                      filter.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                visibleCharacters.map(
+                  (state) => (
+                    <CharacterMatrixRow
+                      key={
+                        state
+                          .character
+                          .id
+                      }
+                      onTrackerChanged={
+                        onTrackerChanged
+                      }
+                      state={state}
+                      trackerColumns={
+                        trackerColumns
+                      }
+                    />
+                  )
                 )
-              )
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }

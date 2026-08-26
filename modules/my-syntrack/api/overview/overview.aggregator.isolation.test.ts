@@ -152,4 +152,67 @@ describe("aggregateCharacterWeeklyStates - cross-character isolation", () => {
       synbloom?.weekly.completed
     ).toBe(0);
   });
+
+  it("a tracker value recorded for one character never appears on another character", () => {
+    const { characters } =
+      aggregateCharacterWeeklyStates(
+        baseInput({
+          characters: [
+            baseCharacter({
+              id: "char-1",
+              name: "Synblast"
+            }),
+            baseCharacter({
+              id: "char-2",
+              name: "Synbloom"
+            })
+          ],
+          trackerStatesByCharacterId:
+            new Map([
+              [
+                "char-1",
+                [
+                  {
+                    trackerDefinitionId:
+                      "def-1",
+                    characterId:
+                      "char-1",
+                    periodKey:
+                      "ALWAYS",
+                    state: "RECORDED",
+                    source: "MANUAL",
+                    value: {
+                      valueType:
+                        "BOOLEAN",
+                      boolean: true
+                    }
+                  }
+                ]
+              ]
+            ])
+        })
+      );
+
+    const synblast =
+      characters.find(
+        (state) =>
+          state.character.id ===
+          "char-1"
+      );
+
+    const synbloom =
+      characters.find(
+        (state) =>
+          state.character.id ===
+          "char-2"
+      );
+
+    expect(
+      synblast?.trackers
+    ).toHaveLength(1);
+
+    expect(
+      synbloom?.trackers
+    ).toHaveLength(0);
+  });
 });

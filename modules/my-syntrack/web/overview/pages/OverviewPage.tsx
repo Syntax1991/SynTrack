@@ -1,15 +1,32 @@
+import { useState } from "react";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
-import { AttentionQueue } from "../components/AttentionQueue";
+import { TrackerManagerDrawer } from "../../trackers/components/TrackerManagerDrawer";
+import { AttentionStrip } from "../components/AttentionStrip";
 import { CharacterWeeklyMatrix } from "../components/CharacterWeeklyMatrix";
-import { OverviewSummaryCards } from "../components/OverviewSummaryCards";
 import { useOverview } from "../hooks/useOverview";
 import { formatResetCountdown } from "../utils/resetContext";
+import { formatOverviewSummaryText } from "../utils/summaryText";
 
+/*
+ * The Character Control Matrix is the primary product surface here -
+ * this page is a thin shell (header, a one-line summary/toolbar, a
+ * compact attention strip) around it, not a dashboard with a table
+ * underneath.
+ */
 export function OverviewPage() {
-  const { overview, isLoading, error } =
-    useOverview();
+  const {
+    overview,
+    isLoading,
+    error,
+    refetch
+  } = useOverview();
+
+  const [
+    isTrackerManagerOpen,
+    setIsTrackerManagerOpen
+  ] = useState(false);
 
   return (
     <>
@@ -37,13 +54,7 @@ export function OverviewPage() {
         <LoadingPanel />
       ) : (
         <>
-          <OverviewSummaryCards
-            summary={
-              overview.summary
-            }
-          />
-
-          <AttentionQueue
+          <AttentionStrip
             attentionItems={
               overview.attentionItems
             }
@@ -53,8 +64,35 @@ export function OverviewPage() {
             characters={
               overview.characters
             }
+            onOpenTrackerManager={() =>
+              setIsTrackerManagerOpen(
+                true
+              )
+            }
+            onTrackerChanged={
+              refetch
+            }
+            summaryText={formatOverviewSummaryText(
+              overview.summary
+            )}
+            trackerColumns={
+              overview.trackerColumns
+            }
           />
         </>
+      )}
+
+      {isTrackerManagerOpen && (
+        <TrackerManagerDrawer
+          onClose={() =>
+            setIsTrackerManagerOpen(
+              false
+            )
+          }
+          onDefinitionsChanged={
+            refetch
+          }
+        />
       )}
     </>
   );

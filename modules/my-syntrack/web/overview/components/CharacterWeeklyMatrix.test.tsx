@@ -1,70 +1,9 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { CharacterWeeklyState } from "../types/overview.types";
-import { CharacterWeeklyMatrix } from "./CharacterWeeklyMatrix";
-
-function buildCharacter(
-  overrides: Partial<CharacterWeeklyState> = {}
-): CharacterWeeklyState {
-  return {
-    character: {
-      id: "char-1",
-      name: "Synblast",
-      realm: "Antonidas",
-      region: "eu",
-      className: "Shaman",
-      level: 80
-    },
-    weekly: {
-      state: "IN_PROGRESS",
-      completed: 3,
-      total: 5,
-      source: "MANUAL_CHECKLIST"
-    },
-    vault: {
-      state: "UNKNOWN",
-      unlockedSlots: 0,
-      slotsTotal: 3,
-      highestKeyLevel: null,
-      source: "MANUAL_LOG"
-    },
-    professions: {
-      state: "NOT_TRACKED",
-      issueCount: 0,
-      issues: []
-    },
-    gear: {
-      state: "NOT_TRACKED",
-      readinessPercent: null,
-      trackedSlots: 0,
-      totalRelevantSlots: 16,
-      missingEnchantCount: 0,
-      emptySocketCount: 0,
-      itemLevel: null
-    },
-    tier: { state: "NOT_TRACKED" },
-    embellishments: {
-      state: "NOT_TRACKED"
-    },
-    attentionItems: [],
-    readinessState: "unknown",
-    nextAction: null,
-    ...overrides
-  };
-}
-
-function renderMatrix(
-  characters: CharacterWeeklyState[]
-) {
-  return render(
-    <MemoryRouter>
-      <CharacterWeeklyMatrix
-        characters={characters}
-      />
-    </MemoryRouter>
-  );
-}
+import {
+  buildCharacter,
+  renderMatrix
+} from "./characterWeeklyMatrixTestHelpers";
 
 describe("CharacterWeeklyMatrix", () => {
   it("renders exactly one row per character", () => {
@@ -104,7 +43,17 @@ describe("CharacterWeeklyMatrix", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps a character's Weekly/Vault/Professions/Gear statuses inside their own row, never bleeding into another character's row", () => {
+  it("renders the compact summary line instead of KPI cards", () => {
+    renderMatrix([buildCharacter()]);
+
+    expect(
+      screen.getByText(
+        "2 characters · 1 attention · 0 ready · Reset in 6d 8h"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a character's Gear status inside their own row, never bleeding into another character's row", () => {
     renderMatrix([
       buildCharacter({
         character: {
@@ -146,89 +95,67 @@ describe("CharacterWeeklyMatrix", () => {
       })
     ]);
 
-    const rows =
-      screen.getAllByRole("row");
-
-    const synblastRow = within(
-      rows[1]!
-    );
-
-    const synbloomRow = within(
-      rows[2]!
-    );
+    const rows = screen.getAllByRole("row");
+    const synblastRow = within(rows[1]!);
+    const synbloomRow = within(rows[2]!);
 
     expect(
-      synblastRow.getByText(
-        "2 issues"
-      )
+      synblastRow.getByTitle("2 missing enchants")
     ).toBeInTheDocument();
 
     expect(
-      synbloomRow.queryByText(
-        "2 issues"
-      )
+      synbloomRow.queryByTitle("2 missing enchants")
     ).not.toBeInTheDocument();
 
     expect(
-      synbloomRow.getByText(
-        "Ready"
-      )
+      synbloomRow.getByTitle("Gear ready, no known issues")
     ).toBeInTheDocument();
   });
 
-  it("renders Unknown and Not tracked states explicitly rather than omitting the cell", () => {
+  it("renders Unknown Vault state as a distinct token from Not-tracked Professions/Gear, never as 'Ready'", () => {
     renderMatrix([buildCharacter()]);
 
-    expect(
-      screen.getByText(
-        "No runs logged"
-      )
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getAllByText(
-        "Not tracked"
-      ).length
-    ).toBeGreaterThan(0);
-  });
-
-  it("never renders Ready for a domain that is actually NOT_TRACKED/UNKNOWN fixture data", () => {
-    renderMatrix([buildCharacter()]);
-
-    const rows =
-      screen.getAllByRole("row");
-
+    const rows = screen.getAllByRole("row");
     const dataRow = within(rows[1]!);
 
     expect(
-      dataRow.queryByText("Ready")
+      dataRow.getByTitle(
+        "Vault state unknown - no runs logged this period yet, or this character doesn't use the feature"
+      )
+    ).toHaveTextContent("?");
+
+    expect(
+      dataRow.getAllByTitle("Professions not tracked")[0]
+    ).toHaveTextContent("—");
+
+    expect(
+      dataRow.queryByTitle("Professions tracked, no known issues")
+    ).not.toBeInTheDocument();
+
+    expect(
+      dataRow.queryByTitle("Gear ready, no known issues")
     ).not.toBeInTheDocument();
   });
 
-  it("links the next action and domain status cells to the real existing domain routes", () => {
+  it("links the next action cell to the real existing domain route", () => {
     renderMatrix([
       buildCharacter({
         attentionItems: [
           {
             id: "char-1:gear",
             characterId: "char-1",
-            characterName:
-              "Synblast",
+            characterName: "Synblast",
             domain: "gear",
             severity: "this-week",
-            label:
-              "Gear needs attention",
-            detail:
-              "2 missing enchants",
+            label: "Gear needs attention",
+            detail: "2 missing enchants",
             path: "/gear-readiness"
           }
         ],
         nextAction: {
           domain: "gear",
-          label:
-            "Gear needs attention",
-          detail:
-            "2 missing enchants",
+          label: "Gear needs attention",
+          detail: "2 missing enchants",
           path: "/gear-readiness",
           severity: "this-week"
         },
@@ -240,13 +167,31 @@ describe("CharacterWeeklyMatrix", () => {
       screen.getByRole("link", {
         name: "Gear needs attention"
       })
-    ).toHaveAttribute(
-      "href",
-      "/gear-readiness"
-    );
+    ).toHaveAttribute("href", "/gear-readiness");
   });
 
-  it("renders the real item level once Gear has tracked slots, and Set/Embellish honestly as Not tracked (no data source exists yet)", () => {
+  it("mutes the generic 'weekly tasks remaining' next action instead of repeating it prominently on every row", () => {
+    renderMatrix([
+      buildCharacter({
+        nextAction: {
+          domain: "weekly",
+          label: "Weekly tasks remaining",
+          detail: "2 of 5 tasks left",
+          path: "/weekly-checklist",
+          severity: "this-week"
+        },
+        readinessState: "attention"
+      })
+    ]);
+
+    expect(
+      screen.getByRole("link", {
+        name: "Weekly tasks remaining"
+      })
+    ).toHaveClass("overview-next-action", "muted");
+  });
+
+  it("renders the real item level once Gear has tracked slots, and Set/Embellish honestly as not-tracked (no data source exists yet)", () => {
     renderMatrix([
       buildCharacter({
         gear: {
@@ -266,16 +211,20 @@ describe("CharacterWeeklyMatrix", () => {
       screen.getByText("723")
     ).toBeInTheDocument();
 
-    const rows =
-      screen.getAllByRole("row");
-
+    const rows = screen.getAllByRole("row");
     const dataRow = within(rows[1]!);
 
     expect(
-      dataRow.getAllByText(
-        "Not tracked"
+      dataRow.getAllByTitle(
+        "Set/Tier not tracked - no data source exists yet"
       ).length
-    ).toBeGreaterThanOrEqual(2);
+    ).toBeGreaterThanOrEqual(1);
+
+    expect(
+      dataRow.getAllByTitle(
+        "Embellishments not tracked - no data source exists yet"
+      ).length
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("filters out ready characters when the Attention filter is active, without hiding characters that actually need attention", () => {
@@ -294,12 +243,10 @@ describe("CharacterWeeklyMatrix", () => {
           {
             id: "char-1:gear",
             characterId: "char-1",
-            characterName:
-              "Synblast",
+            characterName: "Synblast",
             domain: "gear",
             severity: "this-week",
-            label:
-              "Gear needs attention",
+            label: "Gear needs attention",
             detail: null,
             path: "/gear-readiness"
           }
@@ -319,9 +266,7 @@ describe("CharacterWeeklyMatrix", () => {
     ]);
 
     fireEvent.click(
-      screen.getByRole("button", {
-        name: "Attention"
-      })
+      screen.getByRole("button", { name: "Attention" })
     );
 
     expect(

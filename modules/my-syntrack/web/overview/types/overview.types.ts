@@ -73,6 +73,58 @@ export type EmbellishmentOverviewState = {
   state: "NOT_TRACKED";
 };
 
+export type TrackerValueType =
+  | "BOOLEAN"
+  | "PROGRESS"
+  | "NUMBER"
+  | "TEXT";
+
+export type TrackerResetBehavior =
+  | "WEEKLY"
+  | "SEASONAL"
+  | "PERMANENT";
+
+export type TrackerDefinitionView = {
+  id: string;
+  scopeKey: string;
+  key: string;
+  name: string;
+  valueType: TrackerValueType;
+  resetBehavior: TrackerResetBehavior;
+  category: string | null;
+  sortOrder: number;
+  isPinned: boolean;
+  enabled: boolean;
+};
+
+export type TrackerNormalizedValue =
+  | {
+      valueType: "BOOLEAN";
+      boolean: boolean;
+    }
+  | {
+      valueType: "PROGRESS";
+      current: number;
+      total: number;
+    }
+  | {
+      valueType: "NUMBER";
+      number: number;
+    }
+  | {
+      valueType: "TEXT";
+      text: string;
+    };
+
+export type CharacterTrackerState = {
+  trackerDefinitionId: string;
+  characterId: string;
+  periodKey: string;
+  state: "RECORDED" | "UNKNOWN";
+  source: string | null;
+  value: TrackerNormalizedValue | null;
+};
+
 export type CharacterWeeklyState = {
   character: {
     id: string;
@@ -88,6 +140,7 @@ export type CharacterWeeklyState = {
   gear: GearOverviewState;
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
+  trackers: CharacterTrackerState[];
   attentionItems: AttentionItem[];
   readinessState: OverviewReadinessState;
   nextAction: {
@@ -122,4 +175,5 @@ export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
   characters: CharacterWeeklyState[];
+  trackerColumns: TrackerDefinitionView[];
 };

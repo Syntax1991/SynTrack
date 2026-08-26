@@ -16,6 +16,18 @@
  *                  indistinguishable from "hasn't looked yet")
  *   NOT_TRACKED  - the character has no data for this domain at all
  */
+import type {
+  CharacterTrackerState,
+  TrackerDefinitionView
+} from "../trackers/tracker.types.js";
+
+export type {
+  CharacterTrackerState,
+  TrackerDefinitionView,
+  TrackerNormalizedValue,
+  TrackerValueType
+} from "../trackers/tracker.types.js";
+
 export type OverviewDomainState =
   | "READY"
   | "IN_PROGRESS"
@@ -118,6 +130,13 @@ export type CharacterWeeklyState = {
   gear: GearOverviewState;
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
+  /*
+   * Pinned+enabled tracker states for the active scope, aligned by
+   * trackerDefinitionId to OverviewResponse.trackerColumns - Overview
+   * only reads these (via TrackerValueService's batched read); it does
+   * not own or duplicate tracker completion logic.
+   */
+  trackers: CharacterTrackerState[];
   attentionItems: AttentionItem[];
   readinessState: OverviewReadinessState;
   nextAction: {
@@ -152,4 +171,5 @@ export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
   characters: CharacterWeeklyState[];
+  trackerColumns: TrackerDefinitionView[];
 };

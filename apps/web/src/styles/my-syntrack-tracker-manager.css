@@ -1,0 +1,128 @@
+/*
+ * Tracker management: a compact drawer, not a separate admin product -
+ * add form + a plain reorderable list with pin/enable toggles.
+ */
+.tracker-manager-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  background: rgb(6 8 12 / 55%);
+}
+
+.tracker-manager-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 20px;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow);
+}
+
+.tracker-manager-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tracker-manager-header h2 {
+  font-size: 1rem;
+}
+
+.tracker-manager-add-form {
+  display: grid;
+  gap: 8px;
+}
+
+.tracker-manager-add-form input,
+.tracker-manager-add-form select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  color: var(--text);
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+
+.tracker-manager-add-form button {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--radius-small);
+  color: var(--text);
+  background: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tracker-manager-error {
+  color: var(--danger);
+  font-size: 0.76rem;
+}
+
+.tracker-manager-empty {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.tracker-manager-list {
+  display: grid;
+  gap: 2px;
+}
+
+.tracker-manager-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tracker-manager-row-reorder {
+  display: flex;
+  gap: 2px;
+}
+
+.tracker-manager-row-reorder button {
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  color: var(--text-secondary);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.tracker-manager-row-reorder button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tracker-manager-row-name {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.tracker-manager-row-name strong {
+  font-size: 0.82rem;
+}
+
+.tracker-manager-row-name small {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.tracker-manager-row-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
