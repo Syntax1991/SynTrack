@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 import type { CharacterWeeklyState } from "../types/overview.types";
+import { useMatrixFilters } from "../hooks/useMatrixFilters";
 import {
+  formatEmbellishmentsCell,
   formatGearCell,
+  formatItemLevelCell,
   formatProfessionCell,
+  formatTierCell,
   formatVaultCell,
   formatWeeklyCell
 } from "../utils/overviewCellFormatting";
+import { MatrixToolbar } from "./MatrixToolbar";
 import { OverviewStatusBadge } from "./OverviewStatusBadge";
 
 function NextActionCell({
@@ -42,11 +47,130 @@ function NextActionCell({
   );
 }
 
+function CharacterMatrixRow({
+  state
+}: {
+  state: CharacterWeeklyState;
+}) {
+  const weekly = formatWeeklyCell(
+    state.weekly
+  );
+
+  const vault = formatVaultCell(
+    state.vault
+  );
+
+  const professions =
+    formatProfessionCell(
+      state.professions
+    );
+
+  const gear = formatGearCell(
+    state.gear
+  );
+
+  const itemLevel =
+    formatItemLevelCell(state.gear);
+
+  const tier = formatTierCell(
+    state.tier
+  );
+
+  const embellishments =
+    formatEmbellishmentsCell(
+      state.embellishments
+    );
+
+  return (
+    <tr>
+      <td>
+        <div className="overview-character-identity">
+          <strong>
+            {state.character.name}
+          </strong>
+
+          <span>
+            {
+              state.character
+                .className
+            }
+          </span>
+        </div>
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          detail={itemLevel.detail}
+          state={itemLevel.state}
+        />
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          state={tier.state}
+        />
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          state={
+            embellishments.state
+          }
+        />
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          detail={weekly.detail}
+          state={weekly.state}
+        />
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          detail={vault.detail}
+          state={vault.state}
+        />
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          detail={professions.detail}
+          state={professions.state}
+        />
+      </td>
+
+      <td>
+        <OverviewStatusBadge
+          detail={gear.detail}
+          state={gear.state}
+        />
+      </td>
+
+      <td>
+        <NextActionCell
+          state={state}
+        />
+      </td>
+    </tr>
+  );
+}
+
 export function CharacterWeeklyMatrix({
   characters
 }: {
   characters: CharacterWeeklyState[];
 }) {
+  const {
+    readinessFilter,
+    setReadinessFilter,
+    searchTerm,
+    setSearchTerm,
+    sortBy,
+    setSortBy,
+    visibleCharacters
+  } = useMatrixFilters(characters);
+
   if (characters.length === 0) {
     return (
       <section className="panel overview-matrix-panel">
@@ -70,15 +194,36 @@ export function CharacterWeeklyMatrix({
         </div>
 
         <span className="overview-matrix-count">
-          {characters.length}
+          {visibleCharacters.length}
+          {visibleCharacters.length !==
+            characters.length &&
+            ` / ${characters.length}`}
         </span>
       </div>
+
+      <MatrixToolbar
+        onReadinessFilterChange={
+          setReadinessFilter
+        }
+        onSearchTermChange={
+          setSearchTerm
+        }
+        onSortByChange={setSortBy}
+        readinessFilter={
+          readinessFilter
+        }
+        searchTerm={searchTerm}
+        sortBy={sortBy}
+      />
 
       <div className="table-scroll">
         <table className="overview-matrix">
           <thead>
             <tr>
               <th>Character</th>
+              <th>iLvl</th>
+              <th>Set</th>
+              <th>Embellish</th>
               <th>Weeklies</th>
               <th>Vault</th>
               <th>Professions</th>
@@ -88,107 +233,28 @@ export function CharacterWeeklyMatrix({
           </thead>
 
           <tbody>
-            {characters.map(
-              (state) => {
-                const weekly =
-                  formatWeeklyCell(
-                    state.weekly
-                  );
-
-                const vault =
-                  formatVaultCell(
-                    state.vault
-                  );
-
-                const professions =
-                  formatProfessionCell(
-                    state.professions
-                  );
-
-                const gear =
-                  formatGearCell(
-                    state.gear
-                  );
-
-                return (
-                  <tr
+            {visibleCharacters.length ===
+            0 ? (
+              <tr>
+                <td colSpan={9}>
+                  <div className="empty-state">
+                    No characters
+                    match this filter.
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              visibleCharacters.map(
+                (state) => (
+                  <CharacterMatrixRow
                     key={
                       state.character
                         .id
                     }
-                  >
-                    <td>
-                      <div className="overview-character-identity">
-                        <strong>
-                          {
-                            state
-                              .character
-                              .name
-                          }
-                        </strong>
-
-                        <span>
-                          {
-                            state
-                              .character
-                              .className
-                          }
-                        </span>
-                      </div>
-                    </td>
-
-                    <td>
-                      <OverviewStatusBadge
-                        detail={
-                          weekly.detail
-                        }
-                        state={
-                          weekly.state
-                        }
-                      />
-                    </td>
-
-                    <td>
-                      <OverviewStatusBadge
-                        detail={
-                          vault.detail
-                        }
-                        state={
-                          vault.state
-                        }
-                      />
-                    </td>
-
-                    <td>
-                      <OverviewStatusBadge
-                        detail={
-                          professions.detail
-                        }
-                        state={
-                          professions.state
-                        }
-                      />
-                    </td>
-
-                    <td>
-                      <OverviewStatusBadge
-                        detail={
-                          gear.detail
-                        }
-                        state={
-                          gear.state
-                        }
-                      />
-                    </td>
-
-                    <td>
-                      <NextActionCell
-                        state={state}
-                      />
-                    </td>
-                  </tr>
-                );
-              }
+                    state={state}
+                  />
+                )
+              )
             )}
           </tbody>
         </table>

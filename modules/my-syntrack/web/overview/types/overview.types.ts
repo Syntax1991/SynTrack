@@ -62,6 +62,15 @@ export type GearOverviewState = {
   totalRelevantSlots: number;
   missingEnchantCount: number;
   emptySocketCount: number;
+  itemLevel: number | null;
+};
+
+export type TierOverviewState = {
+  state: "NOT_TRACKED";
+};
+
+export type EmbellishmentOverviewState = {
+  state: "NOT_TRACKED";
 };
 
 export type CharacterWeeklyState = {
@@ -77,6 +86,8 @@ export type CharacterWeeklyState = {
   vault: VaultOverviewState;
   professions: ProfessionOverviewState;
   gear: GearOverviewState;
+  tier: TierOverviewState;
+  embellishments: EmbellishmentOverviewState;
   attentionItems: AttentionItem[];
   readinessState: OverviewReadinessState;
   nextAction: {

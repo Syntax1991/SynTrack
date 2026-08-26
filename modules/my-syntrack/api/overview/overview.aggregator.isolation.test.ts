@@ -61,7 +61,8 @@ describe("aggregateCharacterWeeklyStates - cross-character isolation", () => {
                 ],
                 trackedSlotCount: 1,
                 issueCount: 1,
-                readinessPercent: 0
+                readinessPercent: 0,
+                averageItemLevel: null
               }
             ]
           ])

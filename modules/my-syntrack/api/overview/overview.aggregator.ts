@@ -7,6 +7,10 @@ import { resolveVaultOverviewState } from "./overview-vault-state.mapper.js";
 import type { OverviewWeeklyCharacterInput } from "./overview-weekly-state.mapper.js";
 import { resolveWeeklyOverviewState } from "./overview-weekly-state.mapper.js";
 import {
+  resolveEmbellishmentOverviewState,
+  resolveTierOverviewState
+} from "./overview-tier-embellishment-state.mapper.js";
+import {
   pickNextAction,
   sortCharacterWeeklyStates
 } from "./overview.sorting.js";
@@ -82,7 +86,8 @@ function resolveCharacterState(
       slots: [],
       trackedSlotCount: 0,
       issueCount: 0,
-      readinessPercent: 0
+      readinessPercent: 0,
+      averageItemLevel: null
     };
 
   const professionInput =
@@ -150,6 +155,9 @@ function resolveCharacterState(
     professions:
       professionResult.professions,
     gear: gearResult.gear,
+    tier: resolveTierOverviewState(),
+    embellishments:
+      resolveEmbellishmentOverviewState(),
     attentionItems,
     readinessState,
     nextAction: pickNextAction(

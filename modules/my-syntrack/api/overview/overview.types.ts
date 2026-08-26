@@ -80,6 +80,27 @@ export type GearOverviewState = {
   totalRelevantSlots: number;
   missingEnchantCount: number;
   emptySocketCount: number;
+  /*
+   * The same averageItemLevel GearReadinessService already computes and
+   * shows on the Gear page itself - null whenever trackedSlots is 0,
+   * never a fabricated number.
+   */
+  itemLevel: number | null;
+};
+
+/*
+ * Tier/Set and Embellishments have no data source anywhere in SynTrack
+ * today (CharacterGearSlot has no "is this a tier piece"/"embellishment
+ * identity" concept) - both are permanently NOT_TRACKED until a future
+ * Gear-capture phase. Modeled now, deliberately minimal, so the matrix's
+ * column contract does not need to change again once that data exists.
+ */
+export type TierOverviewState = {
+  state: "NOT_TRACKED";
+};
+
+export type EmbellishmentOverviewState = {
+  state: "NOT_TRACKED";
 };
 
 export type CharacterWeeklyState = {
@@ -95,6 +116,8 @@ export type CharacterWeeklyState = {
   vault: VaultOverviewState;
   professions: ProfessionOverviewState;
   gear: GearOverviewState;
+  tier: TierOverviewState;
+  embellishments: EmbellishmentOverviewState;
   attentionItems: AttentionItem[];
   readinessState: OverviewReadinessState;
   nextAction: {

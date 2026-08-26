@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { CharacterWeeklyState } from "../types/overview.types";
@@ -40,7 +40,12 @@ function buildCharacter(
       trackedSlots: 0,
       totalRelevantSlots: 16,
       missingEnchantCount: 0,
-      emptySocketCount: 0
+      emptySocketCount: 0,
+      itemLevel: null
+    },
+    tier: { state: "NOT_TRACKED" },
+    embellishments: {
+      state: "NOT_TRACKED"
     },
     attentionItems: [],
     readinessState: "unknown",
@@ -116,7 +121,8 @@ describe("CharacterWeeklyMatrix", () => {
           trackedSlots: 3,
           totalRelevantSlots: 16,
           missingEnchantCount: 2,
-          emptySocketCount: 0
+          emptySocketCount: 0,
+          itemLevel: 650
         }
       }),
       buildCharacter({
@@ -134,7 +140,8 @@ describe("CharacterWeeklyMatrix", () => {
           trackedSlots: 5,
           totalRelevantSlots: 16,
           missingEnchantCount: 0,
-          emptySocketCount: 0
+          emptySocketCount: 0,
+          itemLevel: 660
         }
       })
     ]);
@@ -237,5 +244,92 @@ describe("CharacterWeeklyMatrix", () => {
       "href",
       "/gear-readiness"
     );
+  });
+
+  it("renders the real item level once Gear has tracked slots, and Set/Embellish honestly as Not tracked (no data source exists yet)", () => {
+    renderMatrix([
+      buildCharacter({
+        gear: {
+          state: "READY",
+          readinessPercent: 100,
+          trackedSlots: 5,
+          totalRelevantSlots: 16,
+          missingEnchantCount: 0,
+          emptySocketCount: 0,
+          itemLevel: 723
+        },
+        readinessState: "ready"
+      })
+    ]);
+
+    expect(
+      screen.getByText("723")
+    ).toBeInTheDocument();
+
+    const rows =
+      screen.getAllByRole("row");
+
+    const dataRow = within(rows[1]!);
+
+    expect(
+      dataRow.getAllByText(
+        "Not tracked"
+      ).length
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("filters out ready characters when the Attention filter is active, without hiding characters that actually need attention", () => {
+    renderMatrix([
+      buildCharacter({
+        character: {
+          id: "char-1",
+          name: "Synblast",
+          realm: "Antonidas",
+          region: "eu",
+          className: "Shaman",
+          level: 80
+        },
+        readinessState: "attention",
+        attentionItems: [
+          {
+            id: "char-1:gear",
+            characterId: "char-1",
+            characterName:
+              "Synblast",
+            domain: "gear",
+            severity: "this-week",
+            label:
+              "Gear needs attention",
+            detail: null,
+            path: "/gear-readiness"
+          }
+        ]
+      }),
+      buildCharacter({
+        character: {
+          id: "char-2",
+          name: "Synbloom",
+          realm: "Antonidas",
+          region: "eu",
+          className: "Druid",
+          level: 80
+        },
+        readinessState: "ready"
+      })
+    ]);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Attention"
+      })
+    );
+
+    expect(
+      screen.getByText("Synblast")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Synbloom")
+    ).not.toBeInTheDocument();
   });
 });

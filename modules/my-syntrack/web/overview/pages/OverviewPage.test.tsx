@@ -79,7 +79,12 @@ const mockOverview: OverviewResponse =
           trackedSlots: 0,
           totalRelevantSlots: 16,
           missingEnchantCount: 0,
-          emptySocketCount: 0
+          emptySocketCount: 0,
+          itemLevel: null
+        },
+        tier: { state: "NOT_TRACKED" },
+        embellishments: {
+          state: "NOT_TRACKED"
         },
         attentionItems: [
           {

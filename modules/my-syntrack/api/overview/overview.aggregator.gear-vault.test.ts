@@ -17,6 +17,46 @@ describe("aggregateCharacterWeeklyStates - gear", () => {
       characters[0]!.gear
         .readinessPercent
     ).toBeNull();
+
+    expect(
+      characters[0]!.gear.itemLevel
+    ).toBeNull();
+  });
+
+  it("surfaces the real averageItemLevel Gear already computes once at least one slot is tracked", () => {
+    const { characters } =
+      aggregateCharacterWeeklyStates(
+        baseInput({
+          gearByCharacterId: new Map([
+            [
+              "char-1",
+              {
+                id: "char-1",
+                name: "Synblast",
+                slots: [
+                  {
+                    item: {
+                      itemLevel: 700
+                    },
+                    issues: {
+                      missingEnchant: false,
+                      missingGemCount: 0
+                    }
+                  }
+                ],
+                trackedSlotCount: 1,
+                issueCount: 0,
+                readinessPercent: 100,
+                averageItemLevel: 700
+              }
+            ]
+          ])
+        })
+      );
+
+    expect(
+      characters[0]!.gear.itemLevel
+    ).toBe(700);
   });
 
   it("tracked gear with a missing enchant produces an ATTENTION state and attention item", () => {
@@ -42,7 +82,8 @@ describe("aggregateCharacterWeeklyStates - gear", () => {
                 ],
                 trackedSlotCount: 1,
                 issueCount: 1,
-                readinessPercent: 0
+                readinessPercent: 0,
+                averageItemLevel: null
               }
             ]
           ])

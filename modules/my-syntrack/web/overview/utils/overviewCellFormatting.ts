@@ -1,6 +1,8 @@
 import type {
+  EmbellishmentOverviewState,
   GearOverviewState,
   ProfessionOverviewState,
+  TierOverviewState,
   VaultOverviewState,
   WeeklyOverviewState
 } from "../types/overview.types";
@@ -68,6 +70,39 @@ export function formatGearCell(
 
   return {
     state: gear.state,
+    detail: undefined
+  };
+}
+
+export function formatItemLevelCell(
+  gear: GearOverviewState
+) {
+  return {
+    state:
+      gear.itemLevel === null
+        ? ("NOT_TRACKED" as const)
+        : ("READY" as const),
+    detail:
+      gear.itemLevel === null
+        ? undefined
+        : String(gear.itemLevel)
+  };
+}
+
+export function formatTierCell(
+  tier: TierOverviewState
+) {
+  return {
+    state: tier.state,
+    detail: undefined
+  };
+}
+
+export function formatEmbellishmentsCell(
+  embellishments: EmbellishmentOverviewState
+) {
+  return {
+    state: embellishments.state,
     detail: undefined
   };
 }

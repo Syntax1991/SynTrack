@@ -16,6 +16,7 @@ export type OverviewGearCharacterInput = {
   trackedSlotCount: number;
   issueCount: number;
   readinessPercent: number;
+  averageItemLevel: number | null;
 };
 
 /*
@@ -69,7 +70,12 @@ export function resolveGearOverviewState(
     totalRelevantSlots:
       character.slots.length,
     missingEnchantCount,
-    emptySocketCount
+    emptySocketCount,
+    itemLevel:
+      character.trackedSlotCount ===
+      0
+        ? null
+        : character.averageItemLevel
   };
 
   if (gear.state !== "ATTENTION") {

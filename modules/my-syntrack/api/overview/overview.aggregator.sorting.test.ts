@@ -107,7 +107,8 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
                 ],
                 trackedSlotCount: 1,
                 issueCount: 1,
-                readinessPercent: 0
+                readinessPercent: 0,
+                averageItemLevel: null
               }
             ]
           ])
