@@ -10,18 +10,42 @@ growing into one large coupled application.
 
 ## Module map
 
+Since 2026-08-26 (the personal-control-center pivot), the **active navigation
+surface** is a flat set of personal domains, not a per-module nav tree:
+
+```text
+SynTrack (active navigation)
+|
++-- Overview        (read-model aggregation across the domains below)
++-- Characters
++-- Weeklies         (page-level tabs: Weekly Checklist, Vault / M+)
++-- Professions      (page-level tabs: Overview, Find Craft, Specializations)
++-- Gear
+|
++-- Settings
+```
+
+Guild, Loot, Recruitment and Automation are **no longer part of the active
+navigation surface** - their backend routes/services/Prisma models still
+exist (see their own sections below) pending a deliberate later cleanup, but
+they are not reachable from the sidebar. "Raid Tasks" is likewise no longer
+a primary navigation domain; `PersonalRaidTask` remains as a Character-based
+model, reusable later as generic personal Custom Tasks.
+
+The underlying module/business-ownership map (unchanged - navigation is a
+presentation concern, not a module-ownership one):
+
 ```text
 SynTrack
 |
 +-- My SynTrack
-|   +-- My Characters
-|   +-- Weekly Checklist
-|   +-- Vault / M+
-|   +-- Raid Tasks
-|   +-- Gear / Enchants / Gems
-|   +-- Professions
+|   +-- Overview
+|   +-- Characters
+|   +-- Weeklies (Weekly Checklist, Vault / M+)
+|   +-- Gear
+|   +-- Professions (composed, owned by the Professions module)
 |
-+-- Guild
++-- Guild                    (backend only - not in active navigation)
 |   +-- Dashboard
 |   +-- Roster
 |   +-- Teams
@@ -30,7 +54,7 @@ SynTrack
 |   +-- Requirements
 |   +-- Officer Notes
 |
-+-- Loot
++-- Loot                     (backend only - not in active navigation)
 |   +-- Wishlist
 |   +-- Droptimizer
 |   +-- Loot Council
@@ -47,7 +71,7 @@ SynTrack
 |   +-- Concentration
 |   +-- Craft Recommendations
 |
-+-- Recruitment
++-- Recruitment              (backend only - not in active navigation)
 |   +-- Applications
 |   +-- Raider.io
 |   +-- Warcraft Logs
@@ -55,7 +79,7 @@ SynTrack
 |   +-- Trial Tracking
 |   +-- Recruitment Board
 |
-+-- Automation
++-- Automation                (backend only - not in active navigation)
 |   +-- Discord Bot
 |   +-- Reminders
 |   +-- Missing Weeklies
@@ -83,15 +107,24 @@ owning their underlying business rules.
 - personal characters
 - weekly checklist
 - Great Vault and Mythic+ progress
-- personal raid tasks
 - missing enchants and gems
 - personal profession status
+- the Overview read-model aggregation (`overview.aggregator.ts`) that
+  composes the above into one "what still needs attention this week, per
+  character" view - it reads and normalizes; it does not own or duplicate
+  any domain's completion state (see `OverviewService`)
 
 ### Dependency rule
 
 My SynTrack may read projections from Guild, Loot and Professions.
 
 It must not implement duplicate profession or loot logic.
+
+The Overview aggregator specifically may call Professions' own
+`ProfessionDetailService` (an explicit application service, not raw
+Prisma/repository access) to read per-character `dataStatus` - this is
+"communicate through an explicit application service" (dependency
+principle 2), not a new cross-module coupling.
 
 ## 2. Guild
 
@@ -359,21 +392,28 @@ My SynTrack.
 
 Web:
 
+- `modules/my-syntrack/web/overview` (the personal weekly control center -
+  replaced the old KPI-card `dashboard` folder on 2026-08-26)
 - `modules/my-syntrack/web/characters`
-- `modules/my-syntrack/web/dashboard`
 - `modules/my-syntrack/web/weekly-checklist`
 - `modules/my-syntrack/web/vault-mythic-plus`
-- `modules/my-syntrack/web/raid-tasks`
 - `modules/my-syntrack/web/gear-readiness`
+- `modules/my-syntrack/web/raid-tasks` (backend/route retained; no longer
+  linked from navigation)
+- `modules/my-syntrack/web/shared` (e.g. `WeekliesTabNav`, the page-level
+  tab strip shared by Weekly Checklist and Vault/M+)
 
 API:
 
+- `modules/my-syntrack/api/overview` (`OverviewService` - reads Weekly
+  Checklist, Vault/M+, Gear and Professions through their own services and
+  normalizes the result; owns no completion state of its own)
 - `modules/my-syntrack/api/characters`
-- `modules/my-syntrack/api/dashboard`
 - `modules/my-syntrack/api/weekly-checklist`
 - `modules/my-syntrack/api/vault-mythic-plus`
-- `modules/my-syntrack/api/raid-tasks`
 - `modules/my-syntrack/api/gear-readiness`
+- `modules/my-syntrack/api/raid-tasks` (backend/route retained; no longer
+  linked from navigation)
 
 ## Web structure
 

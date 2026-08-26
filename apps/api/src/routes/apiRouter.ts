@@ -10,7 +10,7 @@ import { guildWeeklyProgressRouter } from "../../../../modules/guild/api/weekly-
 import { lootWishlistRouter } from "../../../../modules/loot/api/wishlist/wishlist.routes.js";
 import { lootDroptimizerRouter } from "../../../../modules/loot/api/droptimizer/droptimizer.routes.js";
 import { characterRouter } from "../../../../modules/my-syntrack/api/characters/character.routes.js";
-import { dashboardRouter } from "../../../../modules/my-syntrack/api/dashboard/dashboard.routes.js";
+import { overviewRouter } from "../../../../modules/my-syntrack/api/overview/overview.routes.js";
 import { gearReadinessRouter } from "../../../../modules/my-syntrack/api/gear-readiness/gear-readiness.routes.js";
 import { raidTaskRouter } from "../../../../modules/my-syntrack/api/raid-tasks/raid-task.routes.js";
 import { weeklyChecklistRouter } from "../../../../modules/my-syntrack/api/weekly-checklist/weekly-checklist.routes.js";
@@ -44,8 +44,8 @@ apiRouter.get(
 );
 
 apiRouter.use(
-  "/dashboard",
-  dashboardRouter
+  "/overview",
+  overviewRouter
 );
 
 apiRouter.use(

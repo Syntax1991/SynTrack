@@ -2,19 +2,18 @@ import {
   useEffect,
   useState
 } from "react";
-import { getDashboardSummary } from "../api/dashboardApi";
-import type { DashboardSummary } from "../types/dashboard.types";
+import { getOverview } from "../api/overviewApi";
+import type { OverviewResponse } from "../types/overview.types";
 
-type DashboardState = {
-  summary: DashboardSummary | null;
+type OverviewState = {
+  overview: OverviewResponse | null;
   isLoading: boolean;
   error: string | null;
 };
 
-export function useDashboard():
-  DashboardState {
-  const [summary, setSummary] =
-    useState<DashboardSummary | null>(
+export function useOverview(): OverviewState {
+  const [overview, setOverview] =
+    useState<OverviewResponse | null>(
       null
     );
 
@@ -25,17 +24,17 @@ export function useDashboard():
     useState<string | null>(null);
 
   useEffect(() => {
-    async function loadSummary() {
+    async function load() {
       try {
-        setSummary(
-          await getDashboardSummary()
+        setOverview(
+          await getOverview()
         );
       }
       catch (loadError) {
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "Dashboard could not be loaded."
+            : "Overview could not be loaded."
         );
       }
       finally {
@@ -43,11 +42,11 @@ export function useDashboard():
       }
     }
 
-    void loadSummary();
+    void load();
   }, []);
 
   return {
-    summary,
+    overview,
     isLoading,
     error
   };

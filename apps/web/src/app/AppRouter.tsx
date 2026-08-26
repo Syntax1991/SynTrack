@@ -12,7 +12,7 @@ import { GuildSettingsPage } from "../../../../modules/guild/web/settings/pages/
 import { TeamsPage } from "../../../../modules/guild/web/teams/pages/TeamsPage";
 import { WeeklyProgressPage } from "../../../../modules/guild/web/weekly-progress/pages/WeeklyProgressPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
-import { DashboardPage } from "../../../../modules/my-syntrack/web/dashboard/pages/DashboardPage";
+import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages/OverviewPage";
 import { GearReadinessPage } from "../../../../modules/my-syntrack/web/gear-readiness/pages/GearReadinessPage";
 import { RaidTasksPage } from "../../../../modules/my-syntrack/web/raid-tasks/pages/RaidTasksPage";
 import { WeeklyChecklistPage } from "../../../../modules/my-syntrack/web/weekly-checklist/pages/WeeklyChecklistPage";
@@ -36,7 +36,7 @@ export function AppRouter() {
       <Route element={<AppLayout />}>
         <Route
           index
-          element={<DashboardPage />}
+          element={<OverviewPage />}
         />
 
         <Route
