@@ -11,13 +11,20 @@
   background: rgb(17 21 29 / 98%);
 }
 
+/*
+ * Column, not a row: at 210px, the account chip's natural width
+ * (~160px, it never shrinks - see .raider-auth-top-action) plus the
+ * brand icon+text left no room to sit side by side (that math only
+ * worked at the former 248px sidebar width). Stacking them removes the
+ * width contention entirely rather than fighting over ~180px of
+ * content width with shrink/ellipsis rules.
+ */
 .sidebar-header {
-  min-height: 72px;
   display: flex;
   flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
   padding: 14px 15px;
   border-bottom: 1px solid #232a35;
 }
