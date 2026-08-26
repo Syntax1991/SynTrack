@@ -26,6 +26,7 @@ model Character {
   weeklyMythicRuns  WeeklyMythicPlusRun[]
   personalRaidTasks PersonalRaidTask[]
   gearSlots         CharacterGearSlot[]
+  trackerValues     CharacterTrackerValue[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
@@ -117,6 +118,64 @@ model CharacterGearSlot {
   @@unique([characterId, slotKey])
   @@index([slotKey])
   @@index([source])
+}
+
+enum TrackerValueType {
+  BOOLEAN
+  PROGRESS
+  NUMBER
+  TEXT
+}
+
+enum TrackerResetBehavior {
+  WEEKLY
+  SEASONAL
+  PERMANENT
+}
+
+model CharacterTrackerDefinition {
+  id            String               @id @default(cuid())
+  scopeKey      String
+  key           String
+  name          String
+  valueType     TrackerValueType
+  resetBehavior TrackerResetBehavior
+  category      String?
+  sortOrder     Int                  @default(0)
+  isPinned      Boolean              @default(true)
+  enabled       Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  values CharacterTrackerValue[]
+
+  @@unique([scopeKey, key])
+  @@index([scopeKey])
+  @@index([enabled, isPinned])
+}
+
+model CharacterTrackerValue {
+  id                  String   @id @default(cuid())
+  trackerDefinitionId String
+  characterId         String
+  periodKey           String
+
+  booleanValue    Boolean?
+  progressCurrent Int?
+  progressTotal   Int?
+  numberValue     Int?
+  textValue       String?
+
+  source    String   @default("MANUAL")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trackerDefinition CharacterTrackerDefinition @relation(fields: [trackerDefinitionId], references: [id], onDelete: Cascade)
+  character         Character                  @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([trackerDefinitionId, characterId, periodKey])
+  @@index([characterId])
+  @@index([periodKey])
 }
 
 model Profession {
