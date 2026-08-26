@@ -3,8 +3,10 @@ import { LoadingPanel } from "../../../../../apps/web/src/shared/components/Load
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { useProfessions } from "../../../../professions/web/hooks/useProfessions";
-import { CharacterForm } from "../components/CharacterForm";
+import { CharacterDrawer } from "../components/CharacterDrawer";
+import { CharacterRosterToolbar } from "../components/CharacterRosterToolbar";
 import { CharacterTable } from "../components/CharacterTable";
+import { useCharacterFilters } from "../hooks/useCharacterFilters";
 import { useCharacters } from "../hooks/useCharacters";
 import type {
   Character,
@@ -13,7 +15,15 @@ import type {
 
 const minimumCraftingLevel = 80;
 
+/*
+ * The roster is the primary workflow here - adding a character is
+ * occasional administration, so it lives behind a deliberate "Add
+ * character" action (a drawer) instead of a permanent half-page form.
+ */
 export function CharactersPage() {
+  const [isAddOpen, setIsAddOpen] =
+    useState(false);
+
   const [
     editingCharacter,
     setEditingCharacter
@@ -34,6 +44,26 @@ export function CharactersPage() {
     error: professionsError
   } = useProfessions();
 
+  const {
+    searchTerm,
+    setSearchTerm,
+    classFilter,
+    setClassFilter,
+    professionFilter,
+    setProfessionFilter,
+    classOptions,
+    professionOptions,
+    visibleCharacters
+  } = useCharacterFilters(characters);
+
+  const isDrawerOpen =
+    isAddOpen || editingCharacter !== null;
+
+  function closeDrawer() {
+    setIsAddOpen(false);
+    setEditingCharacter(null);
+  }
+
   const handleSubmit = async (
     input: CharacterInput
   ) => {
@@ -42,12 +72,12 @@ export function CharactersPage() {
         editingCharacter.id,
         input
       );
-
-      setEditingCharacter(null);
-      return;
+    }
+    else {
+      await createCharacter(input);
     }
 
-    await createCharacter(input);
+    closeDrawer();
   };
 
   const handleDelete = async (
@@ -62,18 +92,22 @@ export function CharactersPage() {
     }
 
     await deleteCharacter(character.id);
-
-    if (
-      editingCharacter?.id ===
-      character.id
-    ) {
-      setEditingCharacter(null);
-    }
   };
 
   return (
     <>
       <PageHeader
+        actions={
+          <button
+            className="button button-primary"
+            onClick={() =>
+              setIsAddOpen(true)
+            }
+            type="button"
+          >
+            Add character
+          </button>
+        }
         description="Manage your crafters and their two primary professions."
         eyebrow="CRAFTER ROSTER"
         title="Characters"
@@ -87,71 +121,60 @@ export function CharactersPage() {
         </StatusMessage>
       )}
 
-      <div className="characters-layout">
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">
-                {editingCharacter
-                  ? "EDIT"
-                  : "NEW CRAFTER"}
-              </p>
+      <section className="panel matrix-panel">
+        <CharacterRosterToolbar
+          classFilter={classFilter}
+          classOptions={classOptions}
+          onClassFilterChange={
+            setClassFilter
+          }
+          onProfessionFilterChange={
+            setProfessionFilter
+          }
+          onSearchTermChange={
+            setSearchTerm
+          }
+          professionFilter={
+            professionFilter
+          }
+          professionOptions={
+            professionOptions
+          }
+          searchTerm={searchTerm}
+          summaryText={`${characters.length} characters`}
+        />
 
-              <h2>
-                {editingCharacter
-                  ? editingCharacter.name
-                  : "Add Character"}
-              </h2>
-            </div>
-          </div>
+        {isLoading ? (
+          <LoadingPanel />
+        ) : (
+          <CharacterTable
+            characters={
+              visibleCharacters
+            }
+            minimumCraftingLevel={
+              minimumCraftingLevel
+            }
+            onDelete={(character) => {
+              void handleDelete(
+                character
+              );
+            }}
+            onEdit={setEditingCharacter}
+          />
+        )}
+      </section>
 
-          {professionsLoading ? (
-            <LoadingPanel />
-          ) : (
-            <CharacterForm
-              character={editingCharacter}
-              key={
-                editingCharacter?.id ??
-                "new-character"
-              }
-              onCancel={() =>
-                setEditingCharacter(null)
-              }
-              onSubmit={handleSubmit}
-              professions={professions}
-            />
-          )}
-        </section>
-
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">
-                OVERVIEW
-              </p>
-
-              <h2>
-                {characters.length} Characters
-              </h2>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <LoadingPanel />
-          ) : (
-            <CharacterTable
-              characters={characters}
-              minimumCraftingLevel={
-                minimumCraftingLevel
-              }
-              onDelete={(character) => {
-                void handleDelete(character);
-              }}
-              onEdit={setEditingCharacter}
-            />
-          )}
-        </section>
-      </div>
+      {isDrawerOpen && (
+        <CharacterDrawer
+          character={editingCharacter}
+          onClose={closeDrawer}
+          onSubmit={handleSubmit}
+          professions={professions}
+          professionsLoading={
+            professionsLoading
+          }
+        />
+      )}
     </>
   );
 }

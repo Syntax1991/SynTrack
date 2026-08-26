@@ -39,16 +39,6 @@
   margin-top: 30px;
 }
 
-.characters-layout {
-  display: grid;
-  grid-template-columns:
-    minmax(320px, 0.7fr)
-    minmax(580px, 1.3fr);
-  gap: 20px;
-  align-items: start;
-  margin-top: 26px;
-}
-
 .profession-grid {
   display: grid;
   grid-template-columns:
@@ -61,10 +51,6 @@
   .stats-grid {
     grid-template-columns:
       repeat(2, minmax(0, 1fr));
-  }
-
-  .characters-layout {
-    grid-template-columns: 1fr;
   }
 }
 

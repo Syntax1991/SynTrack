@@ -1,0 +1,44 @@
+/*
+ * Generic right-side drawer - used to move occasional/administrative
+ * interactions (add/edit character, log a Vault run) behind a
+ * deliberate action instead of permanently occupying page space.
+ */
+.app-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-end;
+  background: rgb(6 8 12 / 55%);
+}
+
+.app-drawer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(480px, 100%);
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow);
+}
+
+.app-drawer-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
+.app-drawer-header h2 {
+  font-size: 1rem;
+}
+
+.app-drawer-body {
+  padding: 4px 4px 20px;
+}

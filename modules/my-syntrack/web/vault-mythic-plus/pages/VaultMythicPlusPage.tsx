@@ -1,21 +1,25 @@
-import {
-  useEffect,
-  useState
-} from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
-import { MythicPlusRunWorkspace } from "../components/MythicPlusRunWorkspace";
-import { VaultCharacterRoster } from "../components/VaultCharacterRoster";
-import { VaultSlotGrid } from "../components/VaultSlotGrid";
-import { VaultSummaryStats } from "../components/VaultSummaryStats";
+import { VaultMatrix } from "../components/VaultMatrix";
+import { VaultRunLogDrawer } from "../components/VaultRunLogDrawer";
 import { useVaultMythicPlus } from "../hooks/useVaultMythicPlus";
+import { formatVaultSummaryText } from "../utils/summaryText";
 import { WeekliesTabNav } from "../../shared/components/WeekliesTabNav";
 
+/*
+ * Vault/M+ is account-wide first - one character = one row, with
+ * manual run logging as a secondary drawer interaction rather than a
+ * permanent half-page workspace.
+ */
 export function VaultMythicPlusPage() {
-  const [selectedCharacterId, setSelectedCharacterId] =
-    useState("");
+  const [
+    runLogCharacterId,
+    setRunLogCharacterId
+  ] = useState<string | null>(null);
+
   const {
     overview,
     isLoading,
@@ -25,29 +29,12 @@ export function VaultMythicPlusPage() {
     deleteRun
   } = useVaultMythicPlus();
 
-  useEffect(() => {
-    if (!overview) {
-      return;
-    }
-
-    if (
-      !overview.characters.some(
-        (character) =>
-          character.id ===
-          selectedCharacterId
-      )
-    ) {
-      setSelectedCharacterId(
-        overview.characters[0]?.id ?? ""
-      );
-    }
-  }, [overview, selectedCharacterId]);
-
-  const selectedCharacter =
+  const runLogCharacter =
     overview?.characters.find(
       (character) =>
-        character.id === selectedCharacterId
-    );
+        character.id ===
+        runLogCharacterId
+    ) ?? null;
 
   return (
     <>
@@ -75,7 +62,8 @@ export function VaultMythicPlusPage() {
 
       {isLoading || !overview ? (
         <LoadingPanel />
-      ) : overview.characters.length === 0 ? (
+      ) : overview.characters.length ===
+        0 ? (
         <section className="panel vault-empty-state">
           <p className="eyebrow">
             ROSTER REQUIRED
@@ -96,41 +84,43 @@ export function VaultMythicPlusPage() {
           </Link>
         </section>
       ) : (
-        <>
-          <VaultSummaryStats overview={overview} />
-
-          <div className="vault-overview-layout">
-            <VaultCharacterRoster
-              characters={overview.characters}
-              onSelect={setSelectedCharacterId}
-              selectedCharacterId={
-                selectedCharacterId
-              }
-            />
-
-            {selectedCharacter && (
-              <div className="vault-character-workspace">
-                <VaultSlotGrid
-                  character={selectedCharacter}
-                />
-
-                <MythicPlusRunWorkspace
-                  character={selectedCharacter}
-                  onAddRun={(input) =>
-                    addRun(
-                      selectedCharacter.id,
-                      input
-                    )
-                  }
-                  onDeleteRun={(runId) => {
-                    void deleteRun(runId);
-                  }}
-                  pendingAction={pendingAction}
-                />
-              </div>
-            )}
+        <section className="panel matrix-panel">
+          <div className="matrix-toolbar">
+            <span className="matrix-summary">
+              {formatVaultSummaryText(
+                overview
+              )}
+            </span>
           </div>
-        </>
+
+          <VaultMatrix
+            characters={
+              overview.characters
+            }
+            onOpenRunLog={
+              setRunLogCharacterId
+            }
+          />
+        </section>
+      )}
+
+      {runLogCharacter && (
+        <VaultRunLogDrawer
+          character={runLogCharacter}
+          onAddRun={(input) =>
+            addRun(
+              runLogCharacter.id,
+              input
+            )
+          }
+          onClose={() =>
+            setRunLogCharacterId(null)
+          }
+          onDeleteRun={(runId) => {
+            void deleteRun(runId);
+          }}
+          pendingAction={pendingAction}
+        />
       )}
     </>
   );

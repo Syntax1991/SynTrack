@@ -1,15 +1,8 @@
-.vault-runs-panel {
-  margin-top: 18px;
-}
-
-.vault-runs-header {
-  align-items: flex-end;
-}
-
-.vault-runs-header > div > p:not(.eyebrow) {
-  margin-top: 6px;
+.vault-drawer-hint {
+  margin: 4px 16px 16px;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .vault-run-form {
@@ -18,6 +11,7 @@
     minmax(150px, 1fr) 80px auto;
   gap: 9px;
   align-items: end;
+  margin: 0 16px 18px;
 }
 
 .vault-run-form label {
@@ -48,34 +42,36 @@
 }
 
 .vault-runs-empty {
-  min-height: 220px;
+  min-height: 160px;
   display: flex;
   align-items: center;
   flex-direction: column;
   justify-content: center;
   gap: 8px;
-  padding: 32px;
+  padding: 24px 16px;
   text-align: center;
 }
 
 .vault-runs-empty p {
-  max-width: 420px;
+  max-width: 380px;
   color: var(--text-secondary);
   line-height: 1.55;
 }
 
 .vault-run-list {
   display: grid;
+  margin: 0 16px;
+  border-top: 1px solid var(--border);
 }
 
 .vault-run-row {
-  min-height: 72px;
+  min-height: 60px;
   display: grid;
   grid-template-columns:
     28px 48px minmax(0, 1fr) 32px;
   gap: 12px;
   align-items: center;
-  padding: 13px 20px;
+  padding: 11px 4px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -138,4 +134,14 @@
 
 .vault-empty-state > p:not(.eyebrow) {
   color: var(--text-secondary);
+}
+
+@media (max-width: 460px) {
+  .vault-run-form {
+    grid-template-columns: 1fr 80px;
+  }
+
+  .vault-run-form .button {
+    grid-column: 1 / -1;
+  }
 }

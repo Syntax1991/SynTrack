@@ -1,20 +1,18 @@
-import {
-  useEffect,
-  useState
-} from "react";
 import { Link } from "react-router-dom";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
-import { WeeklyCharacterRoster } from "../components/WeeklyCharacterRoster";
-import { WeeklySummaryStats } from "../components/WeeklySummaryStats";
-import { WeeklyTaskList } from "../components/WeeklyTaskList";
+import { WeeklyChecklistMatrix } from "../components/WeeklyChecklistMatrix";
 import { useWeeklyChecklist } from "../hooks/useWeeklyChecklist";
+import { formatWeeklySummaryText } from "../utils/summaryText";
 import { WeekliesTabNav } from "../../shared/components/WeekliesTabNav";
 
+/*
+ * The checklist matrix IS the character roster for this page - one
+ * row per character, every task directly clickable, so account-wide
+ * weekly status no longer requires selecting characters one by one.
+ */
 export function WeeklyChecklistPage() {
-  const [selectedCharacterId, setSelectedCharacterId] =
-    useState("");
   const {
     checklist,
     isLoading,
@@ -23,31 +21,6 @@ export function WeeklyChecklistPage() {
     setTaskCompleted,
     setAllTasksCompleted
   } = useWeeklyChecklist();
-
-  useEffect(() => {
-    if (!checklist) {
-      return;
-    }
-
-    const selectedExists =
-      checklist.characters.some(
-        (character) =>
-          character.id ===
-          selectedCharacterId
-      );
-
-    if (!selectedExists) {
-      setSelectedCharacterId(
-        checklist.characters[0]?.id ?? ""
-      );
-    }
-  }, [checklist, selectedCharacterId]);
-
-  const selectedCharacter =
-    checklist?.characters.find(
-      (character) =>
-        character.id === selectedCharacterId
-    );
 
   return (
     <>
@@ -97,65 +70,43 @@ export function WeeklyChecklistPage() {
           </Link>
         </section>
       ) : (
-        <>
-          <WeeklySummaryStats
-            checklist={checklist}
-          />
-
-          <div className="weekly-checklist-layout">
-            <WeeklyCharacterRoster
-              characters={checklist.characters}
-              onSelect={setSelectedCharacterId}
-              selectedCharacterId={
-                selectedCharacterId
-              }
-              taskCount={checklist.tasks.length}
-            />
-
-            {selectedCharacter && (
-              <WeeklyTaskList
-                character={selectedCharacter}
-                onToggleAll={(completed) => {
-                  void setAllTasksCompleted(
-                    selectedCharacter.id,
-                    completed
-                  );
-                }}
-                onToggleTask={(
-                  taskKey,
-                  completed
-                ) => {
-                  void setTaskCompleted(
-                    selectedCharacter.id,
-                    taskKey,
-                    completed
-                  );
-                }}
-                pendingAction={pendingAction}
-                tasks={checklist.tasks}
-              />
-            )}
+        <section className="panel matrix-panel">
+          <div className="matrix-toolbar">
+            <span className="matrix-summary">
+              {formatWeeklySummaryText(
+                checklist
+              )}
+            </span>
           </div>
 
-          <p className="weekly-period-note">
-            Progress belongs to the tracking
-            period starting{" "}
-            {new Intl.DateTimeFormat(
-              "en",
-              {
-                day: "2-digit",
-                month: "long",
-                year: "numeric"
-              }
-            ).format(
-              new Date(
-                checklist.period.startsAt
-              )
-            )}
-            . Previous periods remain stored
-            separately.
-          </p>
-        </>
+          <WeeklyChecklistMatrix
+            characters={
+              checklist.characters
+            }
+            onToggleAll={(
+              characterId,
+              completed
+            ) => {
+              void setAllTasksCompleted(
+                characterId,
+                completed
+              );
+            }}
+            onToggleTask={(
+              characterId,
+              taskKey,
+              completed
+            ) => {
+              void setTaskCompleted(
+                characterId,
+                taskKey,
+                completed
+              );
+            }}
+            pendingAction={pendingAction}
+            tasks={checklist.tasks}
+          />
+        </section>
       )}
     </>
   );

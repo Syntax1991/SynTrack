@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
+import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
+import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { Character } from "../types/character.types";
+import { CharacterRowActions } from "./CharacterRowActions";
 
 type CharacterTableProps = {
   characters: Character[];
@@ -21,21 +24,28 @@ export function CharacterTable({
   if (characters.length === 0) {
     return (
       <div className="empty-state">
-        No characters yet.
+        No characters match this filter.
       </div>
     );
   }
 
   return (
-    <div className="table-scroll">
-      <table>
+    <div className="table-scroll matrix-scroll">
+      <table className="dense-matrix">
         <thead>
           <tr>
             <th>Character</th>
-            <th>Level</th>
+            <th className="matrix-col-narrow">
+              Level
+            </th>
             <th>Professions</th>
-            <th>Source</th>
-            <th aria-label="Aktionen" />
+            <th className="matrix-col-narrow">
+              Source
+            </th>
+            <th
+              aria-label="Actions"
+              className="matrix-col-action"
+            />
           </tr>
         </thead>
 
@@ -44,71 +54,89 @@ export function CharacterTable({
             (character) => (
               <tr key={character.id}>
                 <td>
-                  <div className="character-identity">
-                    <div className="character-avatar">
-                      {character.name
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </div>
+                  <div className="matrix-identity">
+                    <strong
+                      style={{
+                        color:
+                          getClassColor(
+                            character.className
+                          )
+                      }}
+                    >
+                      {character.name}
+                    </strong>
 
-                    <div>
-                      <strong>
-                        {character.name}
-                      </strong>
-
-                      <span>
-                        {character.className}
-                        {" · "}
-                        {character.realm}
-                      </span>
-                    </div>
+                    <span>
+                      {character.className}
+                      {" · "}
+                      {character.realm}
+                    </span>
                   </div>
                 </td>
 
-                <td>
-                  <span
-                    className={
+                <td className="matrix-col-narrow">
+                  <StatusToken
+                    token={
                       character.level >=
                       minimumCraftingLevel
-                        ? "level-badge ready"
-                        : "level-badge pending"
+                        ? {
+                            symbol: String(
+                              character.level
+                            ),
+                            tone: "ready",
+                            title: `Level ${character.level} - meets the level ${minimumCraftingLevel} crafting minimum`
+                          }
+                        : {
+                            symbol: String(
+                              character.level
+                            ),
+                            tone: "progress",
+                            title: `Level ${character.level} - below the level ${minimumCraftingLevel} crafting minimum`
+                          }
                     }
-                  >
-                    {character.level}
-                  </span>
+                  />
                 </td>
 
                 <td>
-                  <div className="tag-list">
-                    {character.professions.length ===
-                      0 && (
-                      <span className="muted-text">
-                        No Professions
-                      </span>
-                    )}
-
-                    {character.professions.map(
-                      (assignment) => (
-                        <span
-                          className="profession-tag"
-                          key={assignment.id}
-                        >
-                          {
+                  {character.professions
+                    .length === 0 ? (
+                    <span className="matrix-token matrix-token-not-tracked">
+                      No professions
+                    </span>
+                  ) : (
+                    <span
+                      className="matrix-professions"
+                      title={character.professions
+                        .map(
+                          (assignment) =>
                             assignment
                               .profession
                               .name
-                          }
-                        </span>
-                      )
-                    )}
-                  </div>
+                        )
+                        .join(", ")}
+                    >
+                      {character.professions
+                        .map(
+                          (assignment) =>
+                            assignment
+                              .profession
+                              .name
+                        )
+                        .join(" · ")}
+                    </span>
+                  )}
                 </td>
 
-                <td>
-                  {character.source}
+                <td className="matrix-col-narrow">
+                  <span
+                    className="matrix-source"
+                    title={`Source: ${character.source}`}
+                  >
+                    {character.source}
+                  </span>
                 </td>
 
-                <td>
+                <td className="matrix-col-action">
                   <div className="table-actions character-table-actions">
                     <Link
                       className="text-button"
@@ -119,29 +147,19 @@ export function CharacterTable({
                       Specializations
                     </Link>
 
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        onEdit(
-                          character
-                        )
+                    <CharacterRowActions
+                      characterName={
+                        character.name
                       }
-                      type="button"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      className="text-button danger"
-                      onClick={() =>
+                      onDelete={() =>
                         onDelete(
                           character
                         )
                       }
-                      type="button"
-                    >
-                      Delete
-                    </button>
+                      onEdit={() =>
+                        onEdit(character)
+                      }
+                    />
                   </div>
                 </td>
               </tr>
