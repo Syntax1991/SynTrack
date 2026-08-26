@@ -4,15 +4,14 @@ import { describe, expect, it } from "vitest";
 import { AppNavigation } from "./AppNavigation";
 
 /*
- * Phase 1 rendered navigation verification. The real app gates
- * AppNavigation behind RequireRaiderSession (Battle.net OAuth), which
- * cannot be driven in an automated/headless check - this test renders
- * AppNavigation directly, the same real component and real
- * mainModules/moduleTypes data the authenticated app uses, so it is a
- * genuine DOM-level proof of the sidebar shape rather than a data-only
- * assertion. RaiderAuthTopAction reads no session token in this
- * environment and safely renders its signed-out state without any
- * network call.
+ * Navigation-architecture verification. The real app gates AppNavigation
+ * behind RequireRaiderSession (Battle.net OAuth), which cannot be
+ * driven in an automated/headless check - this renders the real
+ * AppNavigation component directly (same real navDomains data the
+ * authenticated app uses), which is a genuine DOM-level proof rather
+ * than a data-only assertion. RaiderAuthTopAction reads no session
+ * token in this environment and safely renders its signed-out state
+ * without any network call.
  */
 function renderNavigation(
   initialPath = "/"
@@ -26,135 +25,121 @@ function renderNavigation(
   );
 }
 
-describe("AppNavigation - Phase 1 personal control center sidebar", () => {
-  it("shows My SynTrack with Professions nested inside it, never as its own top-level module", () => {
-    renderNavigation();
-
-    expect(
-      screen.getByRole("button", {
-        name: /My SynTrack/i
-      })
-    ).toBeInTheDocument();
-
-    const professionsLabels =
-      screen.getAllByText(
-        "Professions"
-      );
-
-    expect(
-      professionsLabels
-    ).toHaveLength(1);
-
-    expect(
-      screen.getByText("Find Craft")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(
-        "Specializations"
-      )
-    ).toBeInTheDocument();
-  });
-
-  it("never shows Guild, Loot, Recruitment or Raid Tasks in the sidebar", () => {
-    renderNavigation();
-
-    expect(
-      screen.queryByText("Guild")
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText("Loot")
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        "Recruitment"
-      )
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        "Raid Tasks"
-      )
-    ).not.toBeInTheDocument();
-  });
-
-  it("labels the gear entry 'Gear' and shows exactly one Settings entry", () => {
-    renderNavigation();
-
-    expect(
-      screen.getByText("Gear")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        "Gear / Enchants / Gems"
-      )
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.getAllByText("Settings")
-    ).toHaveLength(1);
-  });
-
-  it("highlights the nested Find Craft link as active when the current route is a profession sub-route, and keeps My SynTrack expanded", () => {
-    renderNavigation(
-      "/professions/crafters"
-    );
-
-    const findCraftLink =
-      screen.getByRole("link", {
-        name: "Find Craft"
-      });
-
-    expect(
-      findCraftLink
-    ).toHaveClass("active");
-
-    const mySynTrackToggle =
-      screen.getByRole("button", {
-        name: /My SynTrack/i
-      });
-
-    expect(
-      mySynTrackToggle
-    ).toHaveAttribute(
-      "aria-expanded",
-      "true"
-    );
-  });
-
-  it("renders Overview, Characters, Weekly Checklist and Vault / M+ as direct My SynTrack items alongside the nested Professions group", () => {
-    renderNavigation();
-
-    const sidebar = screen.getByRole(
+function sidebar() {
+  return within(
+    screen.getByRole(
       "complementary",
       {
         name: "SynTrack navigation"
       }
+    )
+  );
+}
+
+describe("AppNavigation - flat product-domain sidebar", () => {
+  it("renders exactly the six domains: Overview, Characters, Weeklies, Professions, Gear and Settings", () => {
+    renderNavigation();
+
+    const labels = [
+      "Overview",
+      "Characters",
+      "Weeklies",
+      "Professions",
+      "Gear",
+      "Settings"
+    ];
+
+    for (const label of labels) {
+      expect(
+        sidebar().getByText(label)
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("never renders My Characters, Weekly Checklist, Vault / M+, profession child links, a My SynTrack wrapper, Roadmap, Automation, Guild, Loot, Recruitment or Raid Tasks", () => {
+    renderNavigation();
+
+    const removedLabels = [
+      "My Characters",
+      "Weekly Checklist",
+      "Vault / M+",
+      "Find Craft",
+      "Specializations",
+      "My SynTrack",
+      "Roadmap",
+      "Automation",
+      "Guild",
+      "Loot",
+      "Recruitment",
+      "Raid Tasks",
+      "Workspace"
+    ];
+
+    for (const label of removedLabels) {
+      expect(
+        sidebar().queryByText(label)
+      ).not.toBeInTheDocument();
+    }
+  });
+
+  it("keeps Professions highlighted while on a profession sub-route, with no sidebar child link required", () => {
+    renderNavigation(
+      "/professions/crafters"
     );
 
-    const withinSidebar = within(
-      sidebar
+    const professionsLink =
+      sidebar().getByRole("link", {
+        name: /Professions/i
+      });
+
+    expect(
+      professionsLink
+    ).toHaveClass("active");
+  });
+
+  it("keeps Weeklies highlighted while on the Vault/M+ route, which is not its own sidebar entry", () => {
+    renderNavigation(
+      "/vault-mythic-plus"
     );
 
-    expect(
-      withinSidebar.getByText(
-        "My Characters"
-      )
-    ).toBeInTheDocument();
+    const weekliesLink =
+      sidebar().getByRole("link", {
+        name: /Weeklies/i
+      });
 
     expect(
-      withinSidebar.getByText(
-        "Weekly Checklist"
-      )
-    ).toBeInTheDocument();
+      weekliesLink
+    ).toHaveClass("active");
+  });
+
+  it("does not highlight Weeklies or Professions when viewing an unrelated domain", () => {
+    renderNavigation("/gear-readiness");
+
+    const weekliesLink =
+      sidebar().getByRole("link", {
+        name: /Weeklies/i
+      });
+
+    const professionsLink =
+      sidebar().getByRole("link", {
+        name: /Professions/i
+      });
+
+    const gearLink =
+      sidebar().getByRole("link", {
+        name: /Gear/i
+      });
 
     expect(
-      withinSidebar.getByText(
-        "Vault / M+"
-      )
-    ).toBeInTheDocument();
+      weekliesLink
+    ).not.toHaveClass("active");
+
+    expect(
+      professionsLink
+    ).not.toHaveClass("active");
+
+    expect(gearLink).toHaveClass(
+      "active"
+    );
   });
 });

@@ -3,45 +3,22 @@ import {
   useState
 } from "react";
 import {
-  NavLink,
+  Link,
   useLocation
 } from "react-router-dom";
 import {
-  mainModules
-} from "../../app/modules/mainModules";
+  primaryNavDomains,
+  settingsNavDomain
+} from "../../app/modules/navDomains";
 import type {
-  MainModuleDefinition
-} from "../../app/modules/mainModules";
+  NavDomain
+} from "../../app/modules/navDomains";
 import { RaiderAuthTopAction } from "../../../../../modules/data-platform/web/raider-auth/components/RaiderAuthTopAction";
-import { isModuleCurrent } from "./appNavigation.helpers";
-import { SidebarModuleGroup } from "./SidebarModuleGroup";
-
-type ModuleId =
-  MainModuleDefinition["id"];
+import { NavIcon } from "./NavIcon";
 
 export function AppNavigation() {
   const { pathname } =
     useLocation();
-
-  const currentModule =
-    mainModules.find(
-      (module) =>
-        module.status === "active" &&
-        isModuleCurrent(
-          module,
-          pathname
-        )
-    ) ?? mainModules[0];
-
-  const [
-    expandedModuleIds,
-    setExpandedModuleIds
-  ] = useState<Set<ModuleId>>(
-    () =>
-      new Set<ModuleId>([
-        currentModule.id
-      ])
-  );
 
   const [
     mobileOpen,
@@ -50,33 +27,9 @@ export function AppNavigation() {
 
   useEffect(
     () => {
-      setExpandedModuleIds(
-        (previous) => {
-          if (
-            previous.has(
-              currentModule.id
-            )
-          ) {
-            return previous;
-          }
-
-          const next =
-            new Set(previous);
-
-          next.add(
-            currentModule.id
-          );
-
-          return next;
-        }
-      );
-
       setMobileOpen(false);
     },
-    [
-      currentModule.id,
-      pathname
-    ]
+    [pathname]
   );
 
   useEffect(
@@ -104,61 +57,35 @@ export function AppNavigation() {
     []
   );
 
-  const activeModules =
-    mainModules.filter(
-      (module) =>
-        module.status === "active"
-    );
-
-  const plannedModules =
-    mainModules.filter(
-      (module) =>
-        module.status === "planned"
-    );
-
-  function toggleModule(
-    moduleId: ModuleId
+  function renderNavItem(
+    domain: NavDomain
   ) {
-    setExpandedModuleIds(
-      (previous) => {
-        const next =
-          new Set(previous);
+    const active =
+      domain.isActive(pathname);
 
-        if (next.has(moduleId)) {
-          next.delete(moduleId);
-        }
-        else {
-          next.add(moduleId);
-        }
-
-        return next;
-      }
-    );
-  }
-
-  function renderModuleGroup(
-    module: MainModuleDefinition
-  ) {
     return (
-      <SidebarModuleGroup
-        current={
-          currentModule.id ===
-          module.id
+      <Link
+        className={
+          active
+            ? "sidebar-nav-item active"
+            : "sidebar-nav-item"
         }
-        expanded={
-          expandedModuleIds.has(
-            module.id
-          )
-        }
-        key={module.id}
-        module={module}
-        onNavigate={() =>
+        key={domain.id}
+        onClick={() =>
           setMobileOpen(false)
         }
-        onToggle={() =>
-          toggleModule(module.id)
-        }
-      />
+        to={domain.path}
+      >
+        <span className="sidebar-nav-icon">
+          <NavIcon
+            domainId={domain.id}
+          />
+        </span>
+
+        <span className="sidebar-nav-label">
+          {domain.label}
+        </span>
+      </Link>
     );
   }
 
@@ -180,7 +107,7 @@ export function AppNavigation() {
           <span />
         </button>
 
-        <NavLink
+        <Link
           className="mobile-brand"
           to="/"
         >
@@ -189,7 +116,7 @@ export function AppNavigation() {
           </span>
 
           <strong>SynTrack</strong>
-        </NavLink>
+        </Link>
 
         <RaiderAuthTopAction />
       </header>
@@ -217,7 +144,7 @@ export function AppNavigation() {
         id="app-sidebar"
       >
         <div className="sidebar-header">
-          <NavLink
+          <Link
             aria-label="SynTrack home"
             className="sidebar-brand"
             onClick={() =>
@@ -233,7 +160,7 @@ export function AppNavigation() {
               <strong>SynTrack</strong>
               <small>Personal Control Center</small>
             </span>
-          </NavLink>
+          </Link>
 
           <div className="sidebar-header-actions">
             <RaiderAuthTopAction />
@@ -253,35 +180,19 @@ export function AppNavigation() {
         </div>
 
         <nav className="sidebar-navigation">
-          <section className="sidebar-section">
-            <div className="sidebar-section-heading">
-              <span>Workspace</span>
-              <small>
-                {activeModules.length} live
-              </small>
-            </div>
+          <div className="sidebar-nav-list">
+            {primaryNavDomains.map(
+              renderNavItem
+            )}
+          </div>
 
-            <div className="sidebar-module-list">
-              {activeModules.map(
-                renderModuleGroup
-              )}
-            </div>
-          </section>
+          <div className="sidebar-nav-divider" />
 
-          <section className="sidebar-section">
-            <div className="sidebar-section-heading">
-              <span>Roadmap</span>
-              <small>
-                {plannedModules.length} planned
-              </small>
-            </div>
-
-            <div className="sidebar-module-list">
-              {plannedModules.map(
-                renderModuleGroup
-              )}
-            </div>
-          </section>
+          <div className="sidebar-nav-list">
+            {renderNavItem(
+              settingsNavDomain
+            )}
+          </div>
         </nav>
 
         <footer className="app-sidebar-footer">

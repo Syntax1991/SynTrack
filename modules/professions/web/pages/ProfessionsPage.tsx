@@ -4,6 +4,7 @@ import { StatusMessage } from "../../../../apps/web/src/shared/components/Status
 import { ProfessionOverviewRow } from "../details/components/ProfessionOverviewRow";
 import { useProfessionOverview } from "../details/hooks/useProfessionOverview";
 import { groupProfessionOverviewByCategory } from "../details/utils/professionOverviewPresentation";
+import { ProfessionsTabNav } from "../shared/components/ProfessionsTabNav";
 
 export function ProfessionsPage() {
   const {
@@ -19,6 +20,8 @@ export function ProfessionsPage() {
 
   return (
     <>
+      <ProfessionsTabNav />
+
       <PageHeader
         description="Open a profession to review its crafters, recipes and slot coverage."
         eyebrow="CRAFTING COVERAGE"

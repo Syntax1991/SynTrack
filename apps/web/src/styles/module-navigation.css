@@ -74,103 +74,84 @@
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 23px;
+  gap: 2px;
   overflow-y: auto;
-  padding: 20px 11px 24px;
+  padding: 16px 9px 24px;
   scrollbar-color: #343c4a transparent;
   scrollbar-width: thin;
 }
 
-.sidebar-section {
+/*
+ * Flat product-domain navigation: the sidebar represents domains
+ * (Overview/Characters/Weeklies/Professions/Gear, then Settings set
+ * apart below a divider), never every page - sub-pages live as
+ * page-level tabs inside their domain (see RouteTabs/ProfessionsTabNav/
+ * WeekliesTabNav) rather than nested sidebar entries.
+ */
+.sidebar-nav-list {
   display: grid;
-  gap: 8px;
+  gap: 2px;
 }
 
-.sidebar-section-heading {
+.sidebar-nav-item {
+  min-height: 34px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
-  padding: 0 9px;
-  color: #687284;
-  font-size: 0.57rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.sidebar-section-heading small {
-  color: #515968;
-  font-size: 0.53rem;
-  font-weight: 650;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.sidebar-module-list {
-  display: grid;
-  gap: 3px;
-}
-
-.sidebar-module-group {
-  min-width: 0;
-}
-
-.sidebar-module-toggle {
-  width: 100%;
-  min-height: 39px;
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) 12px;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 9px;
-  border: 1px solid transparent;
+  padding: 8px 10px;
   border-radius: 8px;
   color: #8d97a7;
-  background: transparent;
-  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 620;
+  text-decoration: none;
   transition:
     color 140ms ease,
-    border-color 140ms ease,
     background 140ms ease;
 }
 
-.sidebar-module-toggle:hover {
+.sidebar-nav-item:hover {
   color: #d6dbe4;
   background: rgb(255 255 255 / 3%);
 }
 
-.sidebar-module-group.current
-  > .sidebar-module-toggle {
+.sidebar-nav-item.active {
+  position: relative;
   color: #f2f4f8;
-  border-color: #3c4656;
-  background: #252c38;
+  background: rgb(128 88 221 / 14%);
 }
 
-.sidebar-module-toggle[aria-expanded="true"] {
-  color: #dce1e9;
+.sidebar-nav-item.active::before {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: -1px;
+  width: 2px;
+  border-radius: 999px;
+  background: #9670df;
+  content: "";
 }
 
-.sidebar-module-toggle:focus-visible {
+.sidebar-nav-item:focus-visible {
   outline: 2px solid #596575;
   outline-offset: 1px;
 }
 
-.sidebar-module-icon {
+.sidebar-nav-icon {
   width: 20px;
   height: 20px;
   display: grid;
+  flex: 0 0 auto;
   place-items: center;
   color: #788394;
 }
 
-.current .sidebar-module-icon {
+.sidebar-nav-item.active .sidebar-nav-icon {
   color: #bfa5ee;
 }
 
-.module-icon {
-  width: 16px;
-  height: 16px;
+.nav-icon {
+  width: 17px;
+  height: 17px;
   flex: 0 0 auto;
   stroke: currentColor;
   stroke-linecap: round;
@@ -178,128 +159,16 @@
   stroke-width: 1.65;
 }
 
-.sidebar-module-label {
+.sidebar-nav-label {
   overflow: hidden;
-  font-size: 0.72rem;
-  font-weight: 680;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.sidebar-module-chevron {
-  width: 6px;
-  height: 6px;
-  justify-self: center;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  opacity: 0.55;
-  transform: rotate(45deg) translate(-1px, -1px);
-  transition: transform 170ms ease;
-}
-
-.sidebar-module-toggle[aria-expanded="true"]
-  .sidebar-module-chevron {
-  transform: rotate(225deg) translate(-1px, -1px);
-}
-
-.sidebar-module-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  visibility: hidden;
-  transition:
-    grid-template-rows 170ms ease,
-    visibility 170ms ease;
-}
-
-.sidebar-module-panel.expanded {
-  grid-template-rows: 1fr;
-  visibility: visible;
-}
-
-.sidebar-module-items {
-  position: relative;
-  min-height: 0;
-  display: grid;
-  gap: 1px;
-  overflow: hidden;
-  padding: 3px 5px 0 35px;
-}
-
-.sidebar-module-items::before {
-  position: absolute;
-  top: 4px;
-  bottom: 5px;
-  left: 19px;
-  width: 1px;
-  background: #2d3542;
-  content: "";
-}
-
-.expanded .sidebar-module-items {
-  padding-bottom: 6px;
-}
-
-.sidebar-subitem {
-  position: relative;
-  min-height: 29px;
-  display: flex;
-  align-items: center;
-  padding: 6px 8px;
-  border-radius: 6px;
-  color: #7c8696;
-  font-size: 0.68rem;
-  font-weight: 560;
-  line-height: 1.25;
-  transition:
-    color 130ms ease,
-    background 130ms ease;
-}
-
-a.sidebar-subitem:hover {
-  color: #c3cad5;
-  background: rgb(255 255 255 / 2.5%);
-}
-
-.sidebar-subitem.active {
-  color: #ece7f7;
-  background: rgb(128 88 221 / 12%);
-}
-
-.sidebar-subitem.active::before {
-  position: absolute;
-  top: 7px;
-  bottom: 7px;
-  left: -16px;
-  width: 2px;
-  border-radius: 999px;
-  background: #9670df;
-  content: "";
-}
-
-.sidebar-subitem.planned {
-  color: #626b79;
-  cursor: default;
-}
-
-.sidebar-subgroup {
-  display: grid;
-  gap: 1px;
-  padding-top: 2px;
-}
-
-.sidebar-subgroup-label {
-  padding: 4px 8px 2px;
-  color: #5b6472;
-  font-size: 0.6rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.sidebar-subgroup-items {
-  display: grid;
-  gap: 1px;
-  padding-left: 10px;
+.sidebar-nav-divider {
+  height: 1px;
+  margin: 10px 9px;
+  background: #232a35;
 }
 
 .app-sidebar-footer {

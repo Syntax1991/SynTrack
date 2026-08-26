@@ -11,6 +11,7 @@ import { VaultCharacterRoster } from "../components/VaultCharacterRoster";
 import { VaultSlotGrid } from "../components/VaultSlotGrid";
 import { VaultSummaryStats } from "../components/VaultSummaryStats";
 import { useVaultMythicPlus } from "../hooks/useVaultMythicPlus";
+import { WeekliesTabNav } from "../../shared/components/WeekliesTabNav";
 
 export function VaultMythicPlusPage() {
   const [selectedCharacterId, setSelectedCharacterId] =
@@ -50,6 +51,8 @@ export function VaultMythicPlusPage() {
 
   return (
     <>
+      <WeekliesTabNav />
+
       <PageHeader
         actions={
           <Link

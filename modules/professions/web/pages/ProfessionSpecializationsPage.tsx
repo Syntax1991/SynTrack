@@ -19,6 +19,9 @@ import {
 import {
   useCharacterSpecializations
 } from "../specializations/hooks/useCharacterSpecializations";
+import {
+  ProfessionsTabNav
+} from "../shared/components/ProfessionsTabNav";
 
 export function ProfessionSpecializationsPage() {
   const {
@@ -90,6 +93,8 @@ export function ProfessionSpecializationsPage() {
 
   return (
     <>
+      <ProfessionsTabNav />
+
       <PageHeader
         description="Review and maintain the captured profession trees for every guild crafter."
         eyebrow="PROFESSION PROGRESSION"

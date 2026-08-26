@@ -10,6 +10,7 @@ import { WeeklyCharacterRoster } from "../components/WeeklyCharacterRoster";
 import { WeeklySummaryStats } from "../components/WeeklySummaryStats";
 import { WeeklyTaskList } from "../components/WeeklyTaskList";
 import { useWeeklyChecklist } from "../hooks/useWeeklyChecklist";
+import { WeekliesTabNav } from "../../shared/components/WeekliesTabNav";
 
 export function WeeklyChecklistPage() {
   const [selectedCharacterId, setSelectedCharacterId] =
@@ -50,6 +51,8 @@ export function WeeklyChecklistPage() {
 
   return (
     <>
+      <WeekliesTabNav />
+
       <PageHeader
         actions={
           <Link
