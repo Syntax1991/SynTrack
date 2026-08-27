@@ -27,10 +27,35 @@ model Character {
   personalRaidTasks PersonalRaidTask[]
   gearSlots         CharacterGearSlot[]
   trackerValues     CharacterTrackerValue[]
+  tagAssignments    CharacterTagAssignment[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
   @@index([source])
+}
+
+model CharacterTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments CharacterTagAssignment[]
+}
+
+model CharacterTagAssignment {
+  id          String   @id @default(cuid())
+  characterId String
+  tagId       String
+  createdAt   DateTime @default(now())
+
+  character Character    @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  tag       CharacterTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, tagId])
+  @@index([tagId])
 }
 
 model WeeklyChecklistTask {
@@ -118,6 +143,16 @@ model CharacterGearSlot {
   @@unique([characterId, slotKey])
   @@index([slotKey])
   @@index([source])
+}
+
+model TrackerScopeProfile {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  isActive  Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum TrackerValueType {

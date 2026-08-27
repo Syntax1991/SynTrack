@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { CharacterWeeklyState } from "../../overview/types/overview.types";
+import type { TagView } from "../../tags/types/tag.types";
 
 type CharacterDetailHeaderProps = {
   character: CharacterWeeklyState["character"];
+  tags: TagView[];
 };
 
 /*
@@ -13,7 +15,8 @@ type CharacterDetailHeaderProps = {
  * them, and they weren't proven genuinely useful here).
  */
 export function CharacterDetailHeader({
-  character
+  character,
+  tags
 }: CharacterDetailHeaderProps) {
   return (
     <header className="character-detail-header">
@@ -41,6 +44,14 @@ export function CharacterDetailHeader({
         {" · Level "}
         {character.level}
       </p>
+
+      {tags.length > 0 && (
+        <p className="character-detail-tags">
+          {tags
+            .map((tag) => tag.name)
+            .join(", ")}
+        </p>
+      )}
     </header>
   );
 }

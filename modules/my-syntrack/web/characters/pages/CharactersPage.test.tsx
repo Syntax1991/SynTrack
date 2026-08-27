@@ -24,6 +24,25 @@ const deleteCharacter = vi
   .fn()
   .mockResolvedValue(undefined);
 
+const assignTag = vi
+  .fn()
+  .mockResolvedValue(undefined);
+
+const unassignTag = vi
+  .fn()
+  .mockResolvedValue(undefined);
+
+const raidTag = {
+  id: "tag-raid",
+  name: "Raid",
+  color: null,
+  sortOrder: 0,
+  createdAt:
+    "2026-08-01T00:00:00.000Z",
+  updatedAt:
+    "2026-08-01T00:00:00.000Z"
+};
+
 function buildCharacter(
   overrides: Partial<Character> = {}
 ): Character {
@@ -51,6 +70,10 @@ vi.mock(
         buildCharacter({
           id: "char-1",
           name: "Synblast"
+        }),
+        buildCharacter({
+          id: "char-2",
+          name: "Synbloom"
         })
       ],
       isLoading: false,
@@ -69,6 +92,47 @@ vi.mock(
       professions: [],
       isLoading: false,
       error: null
+    })
+  })
+);
+
+vi.mock(
+  "../../tags/hooks/useTags",
+  () => ({
+    useTags: () => ({
+      tags: [raidTag],
+      assignments: [
+        {
+          characterId: "char-1",
+          tagId: "tag-raid"
+        }
+      ],
+      tagIdsByCharacterId: new Map([
+        [
+          "char-1",
+          new Set(["tag-raid"])
+        ]
+      ]),
+      isLoading: false,
+      error: null,
+      reload: () => {},
+      create: vi
+        .fn()
+        .mockResolvedValue(
+          undefined
+        ),
+      update: vi
+        .fn()
+        .mockResolvedValue(
+          undefined
+        ),
+      remove: vi
+        .fn()
+        .mockResolvedValue(
+          undefined
+        ),
+      assign: assignTag,
+      unassign: unassignTag
     })
   })
 );
@@ -215,5 +279,69 @@ describe("CharactersPage", () => {
     ).toHaveBeenCalledWith("char-1");
 
     confirmSpy.mockRestore();
+  });
+
+  it("shows each character's tags and filters the roster by tag", () => {
+    renderPage();
+
+    expect(
+      screen.getByText(
+        "Shaman · Antonidas · Raid"
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByLabelText(
+        "Filter by tag"
+      ),
+      {
+        target: { value: "tag-raid" }
+      }
+    );
+
+    expect(
+      screen.getByText("Synblast")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Synbloom")
+    ).not.toBeInTheDocument();
+  });
+
+  it("assigns a tag to the correct character from the row's Tags popover", () => {
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "More actions for Synbloom"
+      })
+    );
+
+    fireEvent.click(
+      screen.getByRole("menuitem", {
+        name: "Tags"
+      })
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Tags · Synbloom"
+      })
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Raid"
+      })
+    );
+
+    expect(assignTag).toHaveBeenCalledWith(
+      "tag-raid",
+      "char-2"
+    );
+
+    expect(
+      unassignTag
+    ).not.toHaveBeenCalled();
   });
 });

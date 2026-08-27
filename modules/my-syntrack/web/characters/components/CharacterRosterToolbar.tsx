@@ -1,3 +1,5 @@
+import type { TagView } from "../../tags/types/tag.types";
+
 type CharacterRosterToolbarProps = {
   summaryText: string;
   searchTerm: string;
@@ -12,6 +14,11 @@ type CharacterRosterToolbarProps = {
   professionFilter: string;
   professionOptions: string[];
   onProfessionFilterChange: (
+    value: string
+  ) => void;
+  tagFilter: string;
+  tagOptions: TagView[];
+  onTagFilterChange: (
     value: string
   ) => void;
 };
@@ -29,7 +36,10 @@ export function CharacterRosterToolbar({
   onClassFilterChange,
   professionFilter,
   professionOptions,
-  onProfessionFilterChange
+  onProfessionFilterChange,
+  tagFilter,
+  tagOptions,
+  onTagFilterChange
 }: CharacterRosterToolbarProps) {
   return (
     <div className="matrix-toolbar">
@@ -101,6 +111,32 @@ export function CharacterRosterToolbar({
           )
         )}
       </select>
+
+      {tagOptions.length > 0 && (
+        <select
+          aria-label="Filter by tag"
+          className="matrix-select"
+          onChange={(event) =>
+            onTagFilterChange(
+              event.target.value
+            )
+          }
+          value={tagFilter}
+        >
+          <option value="">
+            All tags
+          </option>
+
+          {tagOptions.map((tag) => (
+            <option
+              key={tag.id}
+              value={tag.id}
+            >
+              {tag.name}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }

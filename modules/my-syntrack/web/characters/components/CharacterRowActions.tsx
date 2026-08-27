@@ -8,6 +8,7 @@ type CharacterRowActionsProps = {
   characterName: string;
   onEdit: () => void;
   onDelete: () => void;
+  onManageTags: () => void;
 };
 
 /*
@@ -18,7 +19,8 @@ type CharacterRowActionsProps = {
 export function CharacterRowActions({
   characterName,
   onEdit,
-  onDelete
+  onDelete,
+  onManageTags
 }: CharacterRowActionsProps) {
   const [isOpen, setIsOpen] =
     useState(false);
@@ -80,6 +82,17 @@ export function CharacterRowActions({
           className="matrix-row-menu-list"
           role="menu"
         >
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              onManageTags();
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Tags
+          </button>
+
           <button
             onClick={() => {
               setIsOpen(false);

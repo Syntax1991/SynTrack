@@ -30,7 +30,8 @@ function buildCharacter(
 function renderTable(
   characters: Character[],
   onEdit = vi.fn(),
-  onDelete = vi.fn()
+  onDelete = vi.fn(),
+  onManageTags = vi.fn()
 ) {
   render(
     <MemoryRouter>
@@ -39,11 +40,16 @@ function renderTable(
         minimumCraftingLevel={80}
         onDelete={onDelete}
         onEdit={onEdit}
+        onManageTags={onManageTags}
+        tagIdsByCharacterId={
+          new Map()
+        }
+        tags={[]}
       />
     </MemoryRouter>
   );
 
-  return { onEdit, onDelete };
+  return { onEdit, onDelete, onManageTags };
 }
 
 describe("CharacterTable", () => {

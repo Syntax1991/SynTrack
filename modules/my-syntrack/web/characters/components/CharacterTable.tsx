@@ -1,16 +1,25 @@
 import { Link } from "react-router-dom";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
+import type { TagView } from "../../tags/types/tag.types";
 import type { Character } from "../types/character.types";
 import { CharacterRowActions } from "./CharacterRowActions";
 
 type CharacterTableProps = {
   characters: Character[];
   minimumCraftingLevel: number;
+  tags: TagView[];
+  tagIdsByCharacterId: Map<
+    string,
+    Set<string>
+  >;
   onDelete: (
     character: Character
   ) => void;
   onEdit: (
+    character: Character
+  ) => void;
+  onManageTags: (
     character: Character
   ) => void;
 };
@@ -18,8 +27,11 @@ type CharacterTableProps = {
 export function CharacterTable({
   characters,
   minimumCraftingLevel,
+  tags,
+  tagIdsByCharacterId,
   onDelete,
-  onEdit
+  onEdit,
+  onManageTags
 }: CharacterTableProps) {
   if (characters.length === 0) {
     return (
@@ -51,7 +63,23 @@ export function CharacterTable({
 
         <tbody>
           {characters.map(
-            (character) => (
+            (character) => {
+              const characterTagIds =
+                tagIdsByCharacterId.get(
+                  character.id
+                );
+
+              const characterTags =
+                characterTagIds
+                  ? tags.filter(
+                      (tag) =>
+                        characterTagIds.has(
+                          tag.id
+                        )
+                    )
+                  : [];
+
+              return (
               <tr key={character.id}>
                 <td>
                   <div className="matrix-identity">
@@ -73,6 +101,14 @@ export function CharacterTable({
                       {character.className}
                       {" · "}
                       {character.realm}
+                      {characterTags.length >
+                        0 &&
+                        ` · ${characterTags
+                          .map(
+                            (tag) =>
+                              tag.name
+                          )
+                          .join(", ")}`}
                     </span>
                   </div>
                 </td>
@@ -162,11 +198,17 @@ export function CharacterTable({
                       onEdit={() =>
                         onEdit(character)
                       }
+                      onManageTags={() =>
+                        onManageTags(
+                          character
+                        )
+                      }
                     />
                   </div>
                 </td>
               </tr>
-            )
+              );
+            }
           )}
         </tbody>
       </table>

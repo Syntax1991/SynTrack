@@ -8,13 +8,19 @@ export type CharacterFilters = {
   setClassFilter: (value: string) => void;
   professionFilter: string;
   setProfessionFilter: (value: string) => void;
+  tagFilter: string;
+  setTagFilter: (value: string) => void;
   classOptions: string[];
   professionOptions: string[];
   visibleCharacters: Character[];
 };
 
 export function useCharacterFilters(
-  characters: Character[]
+  characters: Character[],
+  tagIdsByCharacterId: Map<
+    string,
+    Set<string>
+  > = new Map()
 ): CharacterFilters {
   const [searchTerm, setSearchTerm] =
     useState("");
@@ -26,6 +32,9 @@ export function useCharacterFilters(
     professionFilter,
     setProfessionFilter
   ] = useState("");
+
+  const [tagFilter, setTagFilter] =
+    useState("");
 
   const classOptions = useMemo(
     () =>
@@ -89,6 +98,15 @@ export function useCharacterFilters(
           }
 
           if (
+            tagFilter &&
+            !tagIdsByCharacterId
+              .get(character.id)
+              ?.has(tagFilter)
+          ) {
+            return false;
+          }
+
+          if (
             normalizedSearch &&
             !character.name
               .toLowerCase()
@@ -107,7 +125,9 @@ export function useCharacterFilters(
       characters,
       searchTerm,
       classFilter,
-      professionFilter
+      professionFilter,
+      tagFilter,
+      tagIdsByCharacterId
     ]
   );
 
@@ -118,6 +138,8 @@ export function useCharacterFilters(
     setClassFilter,
     professionFilter,
     setProfessionFilter,
+    tagFilter,
+    setTagFilter,
     classOptions,
     professionOptions,
     visibleCharacters

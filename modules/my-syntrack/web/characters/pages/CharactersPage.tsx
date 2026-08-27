@@ -3,9 +3,11 @@ import { LoadingPanel } from "../../../../../apps/web/src/shared/components/Load
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { useProfessions } from "../../../../professions/web/hooks/useProfessions";
+import { useTags } from "../../tags/hooks/useTags";
 import { CharacterDrawer } from "../components/CharacterDrawer";
 import { CharacterRosterToolbar } from "../components/CharacterRosterToolbar";
 import { CharacterTable } from "../components/CharacterTable";
+import { CharacterTagsPopover } from "../components/CharacterTagsPopover";
 import { useCharacterFilters } from "../hooks/useCharacterFilters";
 import { useCharacters } from "../hooks/useCharacters";
 import type {
@@ -29,6 +31,11 @@ export function CharactersPage() {
     setEditingCharacter
   ] = useState<Character | null>(null);
 
+  const [
+    tagManagementCharacter,
+    setTagManagementCharacter
+  ] = useState<Character | null>(null);
+
   const {
     characters,
     isLoading,
@@ -45,16 +52,28 @@ export function CharactersPage() {
   } = useProfessions();
 
   const {
+    tags,
+    tagIdsByCharacterId,
+    assign: assignTag,
+    unassign: unassignTag
+  } = useTags();
+
+  const {
     searchTerm,
     setSearchTerm,
     classFilter,
     setClassFilter,
     professionFilter,
     setProfessionFilter,
+    tagFilter,
+    setTagFilter,
     classOptions,
     professionOptions,
     visibleCharacters
-  } = useCharacterFilters(characters);
+  } = useCharacterFilters(
+    characters,
+    tagIdsByCharacterId
+  );
 
   const isDrawerOpen =
     isAddOpen || editingCharacter !== null;
@@ -142,6 +161,11 @@ export function CharactersPage() {
           }
           searchTerm={searchTerm}
           summaryText={`${characters.length} characters`}
+          onTagFilterChange={
+            setTagFilter
+          }
+          tagFilter={tagFilter}
+          tagOptions={tags}
         />
 
         {isLoading ? (
@@ -160,6 +184,13 @@ export function CharactersPage() {
               );
             }}
             onEdit={setEditingCharacter}
+            onManageTags={
+              setTagManagementCharacter
+            }
+            tagIdsByCharacterId={
+              tagIdsByCharacterId
+            }
+            tags={tags}
           />
         )}
       </section>
@@ -173,6 +204,42 @@ export function CharactersPage() {
           professionsLoading={
             professionsLoading
           }
+        />
+      )}
+
+      {tagManagementCharacter && (
+        <CharacterTagsPopover
+          assignedTagIds={
+            tagIdsByCharacterId.get(
+              tagManagementCharacter.id
+            ) ?? new Set()
+          }
+          characterName={
+            tagManagementCharacter.name
+          }
+          onClose={() =>
+            setTagManagementCharacter(
+              null
+            )
+          }
+          onToggle={(
+            tagId,
+            isAssigned
+          ) => {
+            const characterId =
+              tagManagementCharacter.id;
+
+            void (isAssigned
+              ? unassignTag(
+                  tagId,
+                  characterId
+                )
+              : assignTag(
+                  tagId,
+                  characterId
+                ));
+          }}
+          tags={tags}
         />
       )}
     </>

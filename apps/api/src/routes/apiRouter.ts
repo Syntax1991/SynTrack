@@ -11,12 +11,14 @@ import { lootWishlistRouter } from "../../../../modules/loot/api/wishlist/wishli
 import { lootDroptimizerRouter } from "../../../../modules/loot/api/droptimizer/droptimizer.routes.js";
 import { characterRouter } from "../../../../modules/my-syntrack/api/characters/character.routes.js";
 import { overviewRouter } from "../../../../modules/my-syntrack/api/overview/overview.routes.js";
+import { tagRouter } from "../../../../modules/my-syntrack/api/tags/tag.routes.js";
 import { gearReadinessRouter } from "../../../../modules/my-syntrack/api/gear-readiness/gear-readiness.routes.js";
 import { raidTaskRouter } from "../../../../modules/my-syntrack/api/raid-tasks/raid-task.routes.js";
 import { weeklyChecklistRouter } from "../../../../modules/my-syntrack/api/weekly-checklist/weekly-checklist.routes.js";
 import { vaultMythicPlusRouter } from "../../../../modules/my-syntrack/api/vault-mythic-plus/vault-mythic-plus.routes.js";
 import { trackerDefinitionRouter } from "../../../../modules/my-syntrack/api/trackers/tracker-definition.routes.js";
 import { trackerValueRouter } from "../../../../modules/my-syntrack/api/trackers/tracker-value.routes.js";
+import { trackerScopeProfileRouter } from "../../../../modules/my-syntrack/api/trackers/tracker-scope-profile.routes.js";
 import { addonImportRouter } from "../../../../modules/data-platform/api/integrations/addon/addon-import.routes.js";
 import { battleNetIntegrationRouter } from "../../../../modules/data-platform/api/integrations/battlenet/battlenet.routes.js";
 import { raiderAuthRouter } from "../../../../modules/data-platform/api/raider-auth/raider-auth.routes.js";
@@ -81,6 +83,11 @@ apiRouter.use(
 );
 
 apiRouter.use(
+  "/tracker-scopes",
+  trackerScopeProfileRouter
+);
+
+apiRouter.use(
   "/characters",
   specializationRouter
 );
@@ -88,6 +95,11 @@ apiRouter.use(
 apiRouter.use(
   "/characters",
   characterRouter
+);
+
+apiRouter.use(
+  "/tags",
+  tagRouter
 );
 
 apiRouter.use(
