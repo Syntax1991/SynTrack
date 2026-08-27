@@ -29,7 +29,8 @@ const fakeImportResult: AddonImportResult =
       characters: 1,
       professionAssignments: 0,
       progressEntries: 0,
-      gearSlots: 0
+      gearSlots: 0,
+      resourceSnapshots: 0
     }
   };
 

@@ -28,6 +28,7 @@ model Character {
   gearSlots         CharacterGearSlot[]
   trackerValues     CharacterTrackerValue[]
   tagAssignments    CharacterTagAssignment[]
+  resourceSnapshots CharacterResourceSnapshot[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
@@ -148,6 +149,95 @@ model CharacterGearSlot {
   @@unique([characterId, slotKey])
   @@index([slotKey])
   @@index([source])
+}
+
+enum ResourceCategory {
+  UPGRADE
+  CRAFTING_GATE
+  CONVERSION
+  OTHER
+}
+
+enum ResourceOwnershipScope {
+  CHARACTER
+  ACCOUNT_WIDE
+  UNKNOWN
+}
+
+/*
+ * A tracked resource's stable identity/config - season-scoped via scopeKey
+ * (a TrackerScopeProfile.key, or the reserved GLOBAL sentinel), never a
+ * second independent "active season" mechanism. externalCurrencyId and
+ * externalItemId are both nullable because a definition is backed by
+ * exactly one of the two capture strategies (a plain WoW currency, or an
+ * item-count-based resource like Spark of Tides) - at least one must be
+ * set for any definition that is meant to be captured automatically.
+ * Each unique index only actually constrains rows where that particular
+ * external id is non-null (SQLite treats NULL as distinct per row), so
+ * currency-backed and item-backed definitions never collide with each
+ * other through the "wrong" index.
+ */
+model ResourceDefinition {
+  id                 String                 @id @default(cuid())
+  key                String                 @unique
+  scopeKey           String
+  externalCurrencyId Int?
+  externalItemId     Int?
+  name               String
+  category           ResourceCategory
+  resetBehavior      TrackerResetBehavior
+  ownershipScope     ResourceOwnershipScope @default(UNKNOWN)
+  enabled            Boolean                @default(true)
+  sortOrder          Int                    @default(0)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  snapshots CharacterResourceSnapshot[]
+
+  @@unique([scopeKey, externalCurrencyId])
+  @@unique([scopeKey, externalItemId])
+  @@index([scopeKey])
+  @@index([enabled])
+}
+
+/*
+ * Latest-state-only (V1 has no historical ledger - see the Currency &
+ * Weekly Resource Tracking audit). Every authoritative numeric field is
+ * nullable because the WoW API can legitimately provide no evidence for
+ * it (an undiscovered currency, a cap concept that doesn't apply, a
+ * failed Catalyst read) - a null here must never be read as zero.
+ * accountWide is the raw per-capture ownership evidence Blizzard
+ * reported for this specific snapshot, kept separate from
+ * ResourceDefinition.ownershipScope (the configured product scope) so a
+ * conflict between the two can be detected conservatively instead of one
+ * silently overriding the other (see resource-readiness's account-wide
+ * aggregation).
+ */
+model CharacterResourceSnapshot {
+  id                   String   @id @default(cuid())
+  characterId          String
+  resourceDefinitionId String
+
+  quantity          Int?
+  maxQuantity       Int?
+  weeklyQuantity    Int?
+  maxWeeklyQuantity Int?
+  isCapped          Boolean?
+  isWeeklyCapped    Boolean?
+  discovered        Boolean?
+  accountWide       Boolean?
+
+  source     String   @default("ADDON")
+  capturedAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  character          Character          @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  resourceDefinition ResourceDefinition @relation(fields: [resourceDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, resourceDefinitionId])
+  @@index([resourceDefinitionId])
 }
 
 model TrackerScopeProfile {

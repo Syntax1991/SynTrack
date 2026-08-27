@@ -122,7 +122,10 @@ export class AddonImportPersistence {
                 .progressEntries,
             gearSlots:
               characterResult
-                .gearSlots
+                .gearSlots,
+            resourceSnapshots:
+              characterResult
+                .resourceSnapshots
           }
         };
       }
