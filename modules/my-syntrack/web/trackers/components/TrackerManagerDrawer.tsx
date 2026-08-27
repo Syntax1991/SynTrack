@@ -1,4 +1,4 @@
-import { ACTIVE_TRACKER_SCOPE_KEY } from "../activeTrackerScope";
+import { useActiveTrackerScope } from "../../season/hooks/useActiveTrackerScope";
 import { useTrackerDefinitions } from "../hooks/useTrackerDefinitions";
 import { AddTrackerForm } from "./AddTrackerForm";
 import { TrackerDefinitionRow } from "./TrackerDefinitionRow";
@@ -11,14 +11,17 @@ type TrackerManagerDrawerProps = {
 /*
  * A compact management surface, not a separate admin product - list +
  * add form + pin/enable/reorder, all backed by the existing tracker
- * definition API. Scope is fixed to the one active application-level
- * scope (see activeTrackerScope.ts) rather than user-selectable, since
- * SynTrack has no formal Season model yet.
+ * definition API. Scope is fixed to the currently active season
+ * (see modules/my-syntrack/web/season) rather than user-selectable
+ * here - switching the active season itself happens in Settings.
  */
 export function TrackerManagerDrawer({
   onClose,
   onDefinitionsChanged
 }: TrackerManagerDrawerProps) {
+  const { activeScope } =
+    useActiveTrackerScope();
+
   const {
     definitions,
     isLoading,
@@ -26,7 +29,7 @@ export function TrackerManagerDrawer({
     create,
     updateMetadata
   } = useTrackerDefinitions(
-    ACTIVE_TRACKER_SCOPE_KEY
+    activeScope?.key ?? ""
   );
 
   async function handleCreate(
@@ -98,9 +101,9 @@ export function TrackerManagerDrawer({
         <div className="tracker-manager-header">
           <h2>
             Trackers ·{" "}
-            {
-              ACTIVE_TRACKER_SCOPE_KEY
-            }
+            {activeScope?.name ??
+              activeScope?.key ??
+              "…"}
           </h2>
 
           <button
