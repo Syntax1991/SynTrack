@@ -6,6 +6,7 @@ import { CharacterAttentionSection } from "../components/CharacterAttentionSecti
 import { CharacterDataHealthSection } from "../components/CharacterDataHealthSection";
 import { CharacterDetailHeader } from "../components/CharacterDetailHeader";
 import { CharacterProfessionsSection } from "../components/CharacterProfessionsSection";
+import { CharacterResourcesSection } from "../components/CharacterResourcesSection";
 import { CharacterStatusStrip } from "../components/CharacterStatusStrip";
 import { CharacterThisWeekSection } from "../components/CharacterThisWeekSection";
 import { CharacterTrackersSection } from "../components/CharacterTrackersSection";
@@ -131,6 +132,12 @@ export function CharacterDetailPage() {
         characterId={characterId}
         professions={
           detail.character.professions
+        }
+      />
+
+      <CharacterResourcesSection
+        resources={
+          detail.character.resources
         }
       />
 

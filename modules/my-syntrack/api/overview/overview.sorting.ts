@@ -26,7 +26,8 @@ const domainRank: Record<
   weekly: 0,
   profession: 1,
   gear: 2,
-  vault: 3
+  resources: 3,
+  vault: 4
 };
 
 function bestSeverityRank(

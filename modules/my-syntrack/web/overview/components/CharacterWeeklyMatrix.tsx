@@ -40,7 +40,7 @@ export function CharacterWeeklyMatrix({
   } = useMatrixFilters(characters);
 
   const columnCount =
-    9 + trackerColumns.length;
+    10 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -122,6 +122,9 @@ export function CharacterWeeklyMatrix({
                 </th>
                 <th className="overview-col-narrow">
                   Gear
+                </th>
+                <th className="overview-col-narrow">
+                  Res.
                 </th>
                 <th className="overview-col-action">
                   Action

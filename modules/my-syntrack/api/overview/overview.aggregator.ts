@@ -2,6 +2,8 @@ import type { OverviewGearCharacterInput } from "./overview-gear-state.mapper.js
 import { resolveGearOverviewState } from "./overview-gear-state.mapper.js";
 import type { OverviewProfessionCharacterInput } from "./overview-profession-state.mapper.js";
 import { resolveProfessionOverviewState } from "./overview-profession-state.mapper.js";
+import type { OverviewResourceCharacterInput } from "./overview-resource-state.mapper.js";
+import { resolveResourceOverviewState } from "./overview-resource-state.mapper.js";
 import type { OverviewVaultCharacterInput } from "./overview-vault-state.mapper.js";
 import { resolveVaultOverviewState } from "./overview-vault-state.mapper.js";
 import type { OverviewWeeklyCharacterInput } from "./overview-weekly-state.mapper.js";
@@ -51,6 +53,10 @@ export type OverviewAggregationInput = {
   professionByCharacterId: Map<
     string,
     OverviewProfessionCharacterInput
+  >;
+  resourceByCharacterId: Map<
+    string,
+    OverviewResourceCharacterInput
   >;
   /*
    * Pre-fetched, already-batched pinned tracker states (see
@@ -112,6 +118,15 @@ function resolveCharacterState(
       professions: []
     };
 
+  const resourceInput =
+    input.resourceByCharacterId.get(
+      character.id
+    ) ?? {
+      id: character.id,
+      name: character.name,
+      resources: []
+    };
+
   const weeklyResult =
     resolveWeeklyOverviewState(
       weeklyInput,
@@ -133,10 +148,16 @@ function resolveCharacterState(
       professionInput
     );
 
+  const resourceResult =
+    resolveResourceOverviewState(
+      resourceInput
+    );
+
   const attentionItems = [
     weeklyResult.attentionItem,
     professionResult.attentionItem,
     gearResult.attentionItem,
+    resourceResult.attentionItem,
     vaultResult.attentionItem
   ].filter(
     (item): item is AttentionItem =>
@@ -151,6 +172,8 @@ function resolveCharacterState(
     professionResult.professions
       .state === "READY" ||
     gearResult.gear.state ===
+      "READY" ||
+    resourceResult.resources.state ===
       "READY";
 
   const readinessState =
@@ -167,6 +190,7 @@ function resolveCharacterState(
     professions:
       professionResult.professions,
     gear: gearResult.gear,
+    resources: resourceResult.resources,
     tier: resolveTierOverviewState(),
     embellishments:
       resolveEmbellishmentOverviewState(),

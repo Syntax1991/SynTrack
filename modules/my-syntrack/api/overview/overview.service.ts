@@ -5,6 +5,8 @@ import { VaultMythicPlusRepository } from "../vault-mythic-plus/vault-mythic-plu
 import { VaultMythicPlusService } from "../vault-mythic-plus/vault-mythic-plus.service.js";
 import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
 import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
+import { ResourceReadinessRepository } from "../resources/resource-readiness.repository.js";
+import { ResourceReadinessService } from "../resources/resource-readiness.service.js";
 import { GLOBAL_TRACKER_SCOPE_KEY } from "../trackers/global-tracker-scope.js";
 import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
 import { TrackerDefinitionService } from "../trackers/tracker-definition.service.js";
@@ -12,10 +14,7 @@ import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile
 import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
 import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
 import { TrackerValueService } from "../trackers/tracker-value.service.js";
-import type {
-  CharacterTrackerState,
-  TrackerDefinitionView
-} from "../trackers/tracker.types.js";
+import type { TrackerDefinitionView } from "../trackers/tracker.types.js";
 import { TagRepository } from "../tags/tag.repository.js";
 import { TagService } from "../tags/tag.service.js";
 import { DataHealthRepository } from "../data-health/data-health.repository.js";
@@ -28,6 +27,7 @@ import { findCharacterControlDetail } from "./overview-character-state.js";
 import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
 import { loadProfessionIssuesByCharacter } from "./overview.profession-issues.js";
 import { combinePinnedTrackerColumns } from "./overview-tracker-scopes.js";
+import { buildTrackerStatesByCharacterId } from "./overview-tracker-state-map.js";
 import type {
   CharacterControlDetailResponse,
   OverviewResponse
@@ -56,6 +56,11 @@ export class OverviewService {
   private readonly gearReadinessService =
     new GearReadinessService(
       new GearReadinessRepository()
+    );
+
+  private readonly resourceReadinessService =
+    new ResourceReadinessService(
+      new ResourceReadinessRepository()
     );
 
   private readonly trackerDefinitionService =
@@ -93,6 +98,7 @@ export class OverviewService {
       weeklyChecklist,
       vaultOverview,
       gearOverview,
+      resourceOverview,
       professionIssuesByCharacter,
       seasonalTrackerDefinitions,
       globalTrackerDefinitions,
@@ -102,6 +108,7 @@ export class OverviewService {
       this.weeklyChecklistService.getChecklist(),
       this.vaultMythicPlusService.getOverview(),
       this.gearReadinessService.getOverview(),
+      this.resourceReadinessService.getOverview(),
       loadProfessionIssuesByCharacter(),
       seasonalScopeKey
         ? this.trackerDefinitionService.listByScope(
@@ -134,64 +141,12 @@ export class OverviewService {
         (character) => character.id
       );
 
-    const pinnedScopeKeys = [
-      ...new Set(
-        trackerColumns.map(
-          (definition) =>
-            definition.scopeKey
-        )
-      )
-    ];
-
-    const trackerStateGroups =
-      pinnedScopeKeys.length === 0
-        ? []
-        : await Promise.all(
-            pinnedScopeKeys.map(
-              (scopeKey) =>
-                this.trackerValueService.getStatesForScope(
-                  scopeKey,
-                  characterIds
-                )
-            )
-          );
-
-    const trackerStates =
-      trackerStateGroups.flat();
-
-    const pinnedTrackerDefinitionIds =
-      new Set(
-        trackerColumns.map(
-          (definition) => definition.id
-        )
-      );
-
     const trackerStatesByCharacterId =
-      new Map<
-        string,
-        CharacterTrackerState[]
-      >();
-
-    for (const state of trackerStates) {
-      if (
-        !pinnedTrackerDefinitionIds.has(
-          state.trackerDefinitionId
-        )
-      ) {
-        continue;
-      }
-
-      const existing =
-        trackerStatesByCharacterId.get(
-          state.characterId
-        ) ?? [];
-
-      existing.push(state);
-      trackerStatesByCharacterId.set(
-        state.characterId,
-        existing
+      await buildTrackerStatesByCharacterId(
+        this.trackerValueService,
+        trackerColumns,
+        characterIds
       );
-    }
 
     const weeklyByCharacterId =
       new Map(
@@ -219,6 +174,20 @@ export class OverviewService {
           (character) => [
             character.id,
             character
+          ]
+        )
+      );
+
+    const resourceByCharacterId =
+      new Map(
+        resourceOverview.characters.map(
+          (character) => [
+            character.id,
+            {
+              id: character.id,
+              name: character.name,
+              resources: character.resources
+            }
           ]
         )
       );
@@ -278,6 +247,7 @@ export class OverviewService {
         vaultByCharacterId,
         gearByCharacterId,
         professionByCharacterId,
+        resourceByCharacterId,
         trackerStatesByCharacterId
       });
 
@@ -315,7 +285,9 @@ export class OverviewService {
       attentionItems,
       characters: charactersWithExtras,
       trackerColumns,
-      activeScope
+      activeScope,
+      accountResources:
+        resourceOverview.accountResources
     };
   }
 

@@ -23,6 +23,10 @@ import type {
 import type { TrackerScopeProfileView } from "../trackers/tracker-scope-profile.types.js";
 import type { TagView } from "../tags/tag.types.js";
 import type { CharacterDataHealth } from "../data-health/data-health.types.js";
+import type {
+  AccountResourceView,
+  ResourceItemView
+} from "../resources/resource-readiness.types.js";
 
 export type {
   CharacterTrackerState,
@@ -60,7 +64,8 @@ export type AttentionDomain =
   | "weekly"
   | "vault"
   | "profession"
-  | "gear";
+  | "gear"
+  | "resources";
 
 export type AttentionSeverity =
   | "blocking"
@@ -130,6 +135,20 @@ export type GearOverviewState = {
   itemLevel: number | null;
 };
 
+export type ResourceOverviewState = {
+  state: OverviewDomainState;
+  trackedResourceCount: number;
+  totalRelevantResourceCount: number;
+  attentionCount: number;
+  items: ResourceItemView[];
+};
+
+export type {
+  AccountResourceView,
+  ResourceItemView
+} from "../resources/resource-readiness.types.js";
+export type { ResourceCategory } from "../resources/resource-definition.types.js";
+
 /*
  * Tier/Set and Embellishments have no data source anywhere in SynTrack
  * today (CharacterGearSlot has no "is this a tier piece"/"embellishment
@@ -158,6 +177,7 @@ export type CharacterWeeklyState = {
   vault: VaultOverviewState;
   professions: ProfessionOverviewState;
   gear: GearOverviewState;
+  resources: ResourceOverviewState;
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
   /*
@@ -234,6 +254,7 @@ export type OverviewResponse = {
   characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
   activeScope: TrackerScopeProfileView | null;
+  accountResources: AccountResourceView[];
 };
 
 /*

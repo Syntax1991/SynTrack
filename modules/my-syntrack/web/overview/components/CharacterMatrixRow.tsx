@@ -9,6 +9,7 @@ import {
   formatGearToken,
   formatItemLevelToken,
   formatProfessionToken,
+  formatResourceToken,
   formatTierToken,
   formatVaultToken,
   formatWeeklyToken
@@ -196,6 +197,14 @@ export function CharacterMatrixRow({
         <StatusToken
           token={formatGearToken(
             state.gear
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatResourceToken(
+            state.resources
           )}
         />
       </td>

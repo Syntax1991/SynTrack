@@ -91,6 +91,10 @@ describe("attachCharacterExtras", () => {
         gear: {
           state: "NOT_TRACKED",
           lastSyncedAt: null
+        },
+        resources: {
+          state: "NOT_TRACKED",
+          lastSyncedAt: null
         }
       };
 
@@ -106,6 +110,10 @@ describe("attachCharacterExtras", () => {
           items: []
         },
         gear: {
+          state: "NOT_TRACKED",
+          lastSyncedAt: null
+        },
+        resources: {
           state: "NOT_TRACKED",
           lastSyncedAt: null
         }
@@ -194,6 +202,10 @@ describe("attachCharacterExtras", () => {
             gear: {
               state: "NOT_TRACKED",
               lastSyncedAt: null
+            },
+            resources: {
+              state: "NOT_TRACKED",
+              lastSyncedAt: null
             }
           }
         ],
@@ -212,6 +224,10 @@ describe("attachCharacterExtras", () => {
             gear: {
               state: "NOT_TRACKED",
               lastSyncedAt: null
+            },
+            resources: {
+              state: "NOT_TRACKED",
+              lastSyncedAt: null
             }
           }
         ],
@@ -228,6 +244,10 @@ describe("attachCharacterExtras", () => {
               items: []
             },
             gear: {
+              state: "NOT_TRACKED",
+              lastSyncedAt: null
+            },
+            resources: {
               state: "NOT_TRACKED",
               lastSyncedAt: null
             }

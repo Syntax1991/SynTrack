@@ -25,6 +25,10 @@ function defaultHealth(
     gear: {
       state: "NOT_TRACKED",
       lastSyncedAt: null
+    },
+    resources: {
+      state: "NOT_TRACKED",
+      lastSyncedAt: null
     }
   };
 }

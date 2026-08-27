@@ -46,6 +46,13 @@ export function buildCharacter(
       emptySocketCount: 0,
       itemLevel: null
     },
+    resources: {
+      state: "NOT_TRACKED",
+      trackedResourceCount: 0,
+      totalRelevantResourceCount: 0,
+      attentionCount: 0,
+      items: []
+    },
     tier: { state: "NOT_TRACKED" },
     embellishments: {
       state: "NOT_TRACKED"
@@ -66,6 +73,10 @@ export function buildCharacter(
         items: []
       },
       gear: {
+        state: "NOT_TRACKED",
+        lastSyncedAt: null
+      },
+      resources: {
         state: "NOT_TRACKED",
         lastSyncedAt: null
       }

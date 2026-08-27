@@ -2,6 +2,7 @@ import type {
   EmbellishmentOverviewState,
   GearOverviewState,
   ProfessionOverviewState,
+  ResourceOverviewState,
   TierOverviewState,
   VaultOverviewState,
   WeeklyOverviewState
@@ -140,6 +141,34 @@ export function formatGearToken(
     symbol: "✓",
     tone: "ready",
     title: "Gear ready, no known issues"
+  };
+}
+
+export function formatResourceToken(
+  resources: ResourceOverviewState
+): CellToken {
+  if (resources.state === "NOT_TRACKED") {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Resources not tracked"
+    };
+  }
+
+  if (resources.state === "ATTENTION") {
+    return {
+      symbol: String(
+        resources.attentionCount
+      ),
+      tone: "attention",
+      title: `${resources.attentionCount} ${resources.attentionCount === 1 ? "resource" : "resources"} not complete this week`
+    };
+  }
+
+  return {
+    symbol: "✓",
+    tone: "ready",
+    title: "Resources complete this week"
   };
 }
 
