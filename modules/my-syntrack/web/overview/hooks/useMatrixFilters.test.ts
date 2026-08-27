@@ -1,13 +1,13 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { CharacterWeeklyState } from "../types/overview.types";
+import type { CharacterOverviewRow } from "../types/overview.types";
 import { useMatrixFilters } from "./useMatrixFilters";
 
 function buildCharacter(
-  overrides: Partial<CharacterWeeklyState> & {
-    character: CharacterWeeklyState["character"];
+  overrides: Partial<CharacterOverviewRow> & {
+    character: CharacterOverviewRow["character"];
   }
-): CharacterWeeklyState {
+): CharacterOverviewRow {
   return {
     weekly: {
       state: "IN_PROGRESS",
@@ -45,9 +45,36 @@ function buildCharacter(
     attentionItems: [],
     readinessState: "unknown",
     nextAction: null,
+    tags: [],
+    health: {
+      characterId: "char-1",
+      character: {
+        state: "MANUAL",
+        lastSyncedAt: null
+      },
+      professions: {
+        state: "NOT_TRACKED",
+        items: []
+      },
+      gear: {
+        state: "NOT_TRACKED",
+        lastSyncedAt: null
+      }
+    },
     ...overrides
   };
 }
+
+const raidTag = {
+  id: "tag-raid",
+  name: "Raid",
+  color: null,
+  sortOrder: 0,
+  createdAt:
+    "2026-08-01T00:00:00.000Z",
+  updatedAt:
+    "2026-08-01T00:00:00.000Z"
+};
 
 const synblast = buildCharacter({
   character: {
@@ -67,7 +94,8 @@ const synblast = buildCharacter({
     missingEnchantCount: 1,
     emptySocketCount: 0,
     itemLevel: 650
-  }
+  },
+  tags: [raidTag]
 });
 
 const synbloom = buildCharacter({
@@ -251,5 +279,46 @@ describe("useMatrixFilters", () => {
       "char-1",
       "char-3"
     ]);
+  });
+
+  it("derives tag filter options from every character's tags, deduplicated", () => {
+    const { result } = renderHook(
+      () =>
+        useMatrixFilters(
+          allCharacters
+        )
+    );
+
+    expect(
+      result.current.tagOptions.map(
+        (tag) => tag.name
+      )
+    ).toEqual(["Raid"]);
+  });
+
+  it("filters to only characters holding the selected tag", () => {
+    const { result } = renderHook(
+      () =>
+        useMatrixFilters(
+          allCharacters
+        )
+    );
+
+    act(() => {
+      result.current.setTagFilter(
+        "tag-raid"
+      );
+    });
+
+    expect(
+      result.current
+        .visibleCharacters
+    ).toHaveLength(1);
+
+    expect(
+      result.current
+        .visibleCharacters[0]
+        ?.character.id
+    ).toBe("char-1");
   });
 });

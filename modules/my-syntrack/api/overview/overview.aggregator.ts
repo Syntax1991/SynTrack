@@ -18,7 +18,7 @@ import type {
   AttentionItem,
   CharacterTrackerState,
   CharacterWeeklyState,
-  OverviewSummary
+  OverviewSummaryBase
 } from "./overview.types.js";
 
 export type OverviewAggregationInput = {
@@ -193,7 +193,7 @@ export function aggregateCharacterWeeklyStates(
 ): {
   characters: CharacterWeeklyState[];
   attentionItems: AttentionItem[];
-  summary: OverviewSummary;
+  summary: OverviewSummaryBase;
 } {
   const characters =
     input.characters.map(

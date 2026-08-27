@@ -81,10 +81,35 @@ function buildOverview(): OverviewResponse {
     );
 
   return {
-    summary,
+    summary: {
+      ...summary,
+      refreshNeededCount: 0
+    },
     attentionItems,
-    characters,
-    trackerColumns: []
+    characters: characters.map(
+      (state) => ({
+        ...state,
+        tags: [],
+        health: {
+          characterId:
+            state.character.id,
+          character: {
+            state: "MANUAL",
+            lastSyncedAt: null
+          },
+          professions: {
+            state: "NOT_TRACKED",
+            items: []
+          },
+          gear: {
+            state: "NOT_TRACKED",
+            lastSyncedAt: null
+          }
+        }
+      })
+    ),
+    trackerColumns: [],
+    activeScope: null
   };
 }
 

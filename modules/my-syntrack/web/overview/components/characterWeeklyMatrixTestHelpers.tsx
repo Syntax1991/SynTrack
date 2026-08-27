@@ -1,14 +1,14 @@
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type {
-  CharacterWeeklyState,
+  CharacterOverviewRow,
   TrackerDefinitionView
 } from "../types/overview.types";
 import { CharacterWeeklyMatrix } from "./CharacterWeeklyMatrix";
 
 export function buildCharacter(
-  overrides: Partial<CharacterWeeklyState> = {}
-): CharacterWeeklyState {
+  overrides: Partial<CharacterOverviewRow> = {}
+): CharacterOverviewRow {
   return {
     character: {
       id: "char-1",
@@ -54,12 +54,28 @@ export function buildCharacter(
     attentionItems: [],
     readinessState: "unknown",
     nextAction: null,
+    tags: [],
+    health: {
+      characterId: "char-1",
+      character: {
+        state: "MANUAL",
+        lastSyncedAt: null
+      },
+      professions: {
+        state: "NOT_TRACKED",
+        items: []
+      },
+      gear: {
+        state: "NOT_TRACKED",
+        lastSyncedAt: null
+      }
+    },
     ...overrides
   };
 }
 
 export function renderMatrix(
-  characters: CharacterWeeklyState[],
+  characters: CharacterOverviewRow[],
   trackerColumns: TrackerDefinitionView[] = []
 ) {
   return render(

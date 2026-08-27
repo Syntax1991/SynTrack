@@ -2,6 +2,7 @@ import type {
   MatrixReadinessFilter,
   MatrixSortBy
 } from "../hooks/useMatrixFilters";
+import type { TagView } from "../types/overview.types";
 
 const readinessFilters: {
   value: MatrixReadinessFilter;
@@ -33,6 +34,11 @@ type MatrixToolbarProps = {
   onSortByChange: (
     value: MatrixSortBy
   ) => void;
+  tagFilter: string;
+  tagOptions: TagView[];
+  onTagFilterChange: (
+    value: string
+  ) => void;
   onOpenTrackerManager: () => void;
 };
 
@@ -49,6 +55,9 @@ export function MatrixToolbar({
   onSearchTermChange,
   sortBy,
   onSortByChange,
+  tagFilter,
+  tagOptions,
+  onTagFilterChange,
   onOpenTrackerManager
 }: MatrixToolbarProps) {
   return (
@@ -101,6 +110,32 @@ export function MatrixToolbar({
         type="text"
         value={searchTerm}
       />
+
+      {tagOptions.length > 0 && (
+        <select
+          aria-label="Filter by tag"
+          className="matrix-select"
+          onChange={(event) =>
+            onTagFilterChange(
+              event.target.value
+            )
+          }
+          value={tagFilter}
+        >
+          <option value="">
+            All tags
+          </option>
+
+          {tagOptions.map((tag) => (
+            <option
+              key={tag.id}
+              value={tag.id}
+            >
+              {tag.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       <label className="overview-matrix-sort">
         <span>Sort</span>

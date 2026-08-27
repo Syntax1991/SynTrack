@@ -27,6 +27,34 @@
   font-size: 0.82rem;
 }
 
+.character-detail-tags {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.character-health-list {
+  display: grid;
+  gap: 2px;
+}
+
+.character-health-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.character-health-list li:last-child {
+  border-bottom: 0;
+}
+
+.character-health-value {
+  color: var(--text-muted);
+}
+
 .character-detail-not-found {
   display: grid;
   gap: 10px;

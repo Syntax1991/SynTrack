@@ -4,13 +4,16 @@ import { StatusMessage } from "../../../../../apps/web/src/shared/components/Sta
 import { Tabs } from "../../../../../apps/web/src/shared/components/Tabs";
 import { AddonSyncTab } from "../../../../data-platform/web/integrations/components/AddonSyncTab";
 import { BattleNetSyncTab } from "../../../../data-platform/web/integrations/components/BattleNetSyncTab";
+import { TagManagerPanel } from "../../../../my-syntrack/web/tags/components/TagManagerPanel";
+import { SeasonSwitchPanel } from "../../../../my-syntrack/web/season/components/SeasonSwitchPanel";
 import { RaiderLinkPanel } from "../components/RaiderLinkPanel";
 import { useRaiderLink } from "../hooks/useRaiderLink";
 
 type SettingsPageTab =
   | "account"
   | "addon"
-  | "battlenet";
+  | "battlenet"
+  | "tags-season";
 
 const tabs: Array<{
   id: SettingsPageTab;
@@ -27,6 +30,10 @@ const tabs: Array<{
   {
     id: "battlenet",
     label: "Battle.net"
+  },
+  {
+    id: "tags-season",
+    label: "Tags & Season"
   }
 ];
 
@@ -92,6 +99,14 @@ export function SettingsPage() {
 
         {activeTab === "battlenet" && (
           <BattleNetSyncTab />
+        )}
+
+        {activeTab ===
+          "tags-season" && (
+          <>
+            <TagManagerPanel />
+            <SeasonSwitchPanel />
+          </>
         )}
       </div>
     </div>

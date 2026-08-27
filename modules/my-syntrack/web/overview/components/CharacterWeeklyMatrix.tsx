@@ -1,5 +1,5 @@
 import type {
-  CharacterWeeklyState,
+  CharacterOverviewRow,
   TrackerDefinitionView
 } from "../types/overview.types";
 import { useMatrixFilters } from "../hooks/useMatrixFilters";
@@ -7,7 +7,7 @@ import { CharacterMatrixRow } from "./CharacterMatrixRow";
 import { MatrixToolbar } from "./MatrixToolbar";
 
 type CharacterWeeklyMatrixProps = {
-  characters: CharacterWeeklyState[];
+  characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
   summaryText: string;
   onTrackerChanged: () => void;
@@ -31,6 +31,9 @@ export function CharacterWeeklyMatrix({
     setReadinessFilter,
     searchTerm,
     setSearchTerm,
+    tagFilter,
+    setTagFilter,
+    tagOptions,
     sortBy,
     setSortBy,
     visibleCharacters
@@ -58,6 +61,11 @@ export function CharacterWeeklyMatrix({
         searchTerm={searchTerm}
         sortBy={sortBy}
         summaryText={summaryText}
+        tagFilter={tagFilter}
+        tagOptions={tagOptions}
+        onTagFilterChange={
+          setTagFilter
+        }
       />
 
       {characters.length === 0 ? (

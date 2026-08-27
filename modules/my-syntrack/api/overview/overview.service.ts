@@ -5,16 +5,29 @@ import { VaultMythicPlusRepository } from "../vault-mythic-plus/vault-mythic-plu
 import { VaultMythicPlusService } from "../vault-mythic-plus/vault-mythic-plus.service.js";
 import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
 import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
-import { ACTIVE_TRACKER_SCOPE_KEY } from "../trackers/active-tracker-scope.js";
+import { GLOBAL_TRACKER_SCOPE_KEY } from "../trackers/global-tracker-scope.js";
 import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
 import { TrackerDefinitionService } from "../trackers/tracker-definition.service.js";
+import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile.repository.js";
+import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
 import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
 import { TrackerValueService } from "../trackers/tracker-value.service.js";
-import type { CharacterTrackerState } from "../trackers/tracker.types.js";
+import type {
+  CharacterTrackerState,
+  TrackerDefinitionView
+} from "../trackers/tracker.types.js";
+import { TagRepository } from "../tags/tag.repository.js";
+import { TagService } from "../tags/tag.service.js";
+import { DataHealthRepository } from "../data-health/data-health.repository.js";
+import { DataHealthService } from "../data-health/data-health.service.js";
+import {
+  attachCharacterExtras,
+  buildTagsByCharacterId
+} from "./overview-character-extras.js";
 import { findCharacterControlDetail } from "./overview-character-state.js";
 import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
 import { loadProfessionIssuesByCharacter } from "./overview.profession-issues.js";
-import { filterPinnedTrackerColumns } from "./overview-tracker-columns.js";
+import { combinePinnedTrackerColumns } from "./overview-tracker-scopes.js";
 import type {
   CharacterControlDetailResponse,
   OverviewResponse
@@ -56,26 +69,64 @@ export class OverviewService {
       new TrackerDefinitionRepository()
     );
 
+  private readonly trackerScopeProfileService =
+    new TrackerScopeProfileService(
+      new TrackerScopeProfileRepository()
+    );
+
+  private readonly tagService =
+    new TagService(new TagRepository());
+
+  private readonly dataHealthService =
+    new DataHealthService(
+      new DataHealthRepository()
+    );
+
   async getOverview(): Promise<OverviewResponse> {
+    const activeScope =
+      await this.trackerScopeProfileService.getActive();
+
+    const seasonalScopeKey =
+      activeScope?.key ?? null;
+
     const [
       weeklyChecklist,
       vaultOverview,
       gearOverview,
       professionIssuesByCharacter,
-      trackerDefinitions
+      seasonalTrackerDefinitions,
+      globalTrackerDefinitions,
+      tags,
+      tagAssignments
     ] = await Promise.all([
       this.weeklyChecklistService.getChecklist(),
       this.vaultMythicPlusService.getOverview(),
       this.gearReadinessService.getOverview(),
       loadProfessionIssuesByCharacter(),
+      seasonalScopeKey
+        ? this.trackerDefinitionService.listByScope(
+            seasonalScopeKey
+          )
+        : Promise.resolve<
+            TrackerDefinitionView[]
+          >([]),
       this.trackerDefinitionService.listByScope(
-        ACTIVE_TRACKER_SCOPE_KEY
-      )
+        GLOBAL_TRACKER_SCOPE_KEY
+      ),
+      this.tagService.list(),
+      this.tagService.listAllAssignments()
     ]);
 
+    /*
+     * Every matrix tracker column combines the active season's pinned
+     * trackers with GLOBAL's pinned trackers - GLOBAL survives season
+     * switches by definition, so it is always included regardless of
+     * which season is currently active.
+     */
     const trackerColumns =
-      filterPinnedTrackerColumns(
-        trackerDefinitions
+      combinePinnedTrackerColumns(
+        seasonalTrackerDefinitions,
+        globalTrackerDefinitions
       );
 
     const characterIds =
@@ -83,13 +134,30 @@ export class OverviewService {
         (character) => character.id
       );
 
-    const trackerStates =
-      trackerColumns.length === 0
+    const pinnedScopeKeys = [
+      ...new Set(
+        trackerColumns.map(
+          (definition) =>
+            definition.scopeKey
+        )
+      )
+    ];
+
+    const trackerStateGroups =
+      pinnedScopeKeys.length === 0
         ? []
-        : await this.trackerValueService.getStatesForScope(
-            ACTIVE_TRACKER_SCOPE_KEY,
-            characterIds
+        : await Promise.all(
+            pinnedScopeKeys.map(
+              (scopeKey) =>
+                this.trackerValueService.getStatesForScope(
+                  scopeKey,
+                  characterIds
+                )
+            )
           );
+
+    const trackerStates =
+      trackerStateGroups.flat();
 
     const pinnedTrackerDefinitionIds =
       new Set(
@@ -213,11 +281,41 @@ export class OverviewService {
         trackerStatesByCharacterId
       });
 
-    return {
-      summary,
-      attentionItems,
+    /*
+     * Tags and Data Health are attached AFTER the core aggregation
+     * runs - neither participates in readinessState/attentionItems/
+     * nextAction, so overview.aggregator.ts's tested pure-function
+     * chain never needs to know about either concept.
+     */
+    const tagsByCharacterId =
+      buildTagsByCharacterId(
+        tags,
+        tagAssignments
+      );
+
+    const healthByCharacterId =
+      await this.dataHealthService.getHealthByCharacterIds(
+        characterIds
+      );
+
+    const {
+      characters: charactersWithExtras,
+      refreshNeededCount
+    } = attachCharacterExtras(
       characters,
-      trackerColumns
+      tagsByCharacterId,
+      healthByCharacterId
+    );
+
+    return {
+      summary: {
+        ...summary,
+        refreshNeededCount
+      },
+      attentionItems,
+      characters: charactersWithExtras,
+      trackerColumns,
+      activeScope
     };
   }
 

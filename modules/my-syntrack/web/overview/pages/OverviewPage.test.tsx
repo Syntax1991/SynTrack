@@ -28,7 +28,8 @@ const mockOverview: OverviewResponse =
       vault: {
         trackedCount: 0,
         fullyUnlockedCount: 0
-      }
+      },
+      refreshNeededCount: 0
     },
     attentionItems: [
       {
@@ -113,10 +114,27 @@ const mockOverview: OverviewResponse =
             "3 of 5 tasks left",
           path: "/weekly-checklist",
           severity: "this-week"
+        },
+        tags: [],
+        health: {
+          characterId: "char-1",
+          character: {
+            state: "MANUAL",
+            lastSyncedAt: null
+          },
+          professions: {
+            state: "NOT_TRACKED",
+            items: []
+          },
+          gear: {
+            state: "NOT_TRACKED",
+            lastSyncedAt: null
+          }
         }
       }
     ],
-    trackerColumns: []
+    trackerColumns: [],
+    activeScope: null
   };
 
 vi.mock(

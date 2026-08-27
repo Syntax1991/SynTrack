@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
-import type { CharacterWeeklyState } from "../types/overview.types";
+import type {
+  CharacterOverviewRow,
+  TagView
+} from "../types/overview.types";
 
 export type MatrixReadinessFilter =
   | "all"
@@ -13,7 +16,7 @@ export type MatrixSortBy =
   | "item-level";
 
 function matchesReadinessFilter(
-  state: CharacterWeeklyState,
+  state: CharacterOverviewRow,
   filter: MatrixReadinessFilter
 ) {
   if (filter === "all") {
@@ -36,7 +39,7 @@ function matchesReadinessFilter(
 }
 
 export function useMatrixFilters(
-  characters: CharacterWeeklyState[]
+  characters: CharacterOverviewRow[]
 ) {
   const [
     readinessFilter,
@@ -49,8 +52,32 @@ export function useMatrixFilters(
   const [searchTerm, setSearchTerm] =
     useState("");
 
+  const [tagFilter, setTagFilter] =
+    useState("");
+
   const [sortBy, setSortBy] =
     useState<MatrixSortBy>("default");
+
+  const tagOptions = useMemo(() => {
+    const byId = new Map<
+      string,
+      TagView
+    >();
+
+    for (const state of characters) {
+      for (const tag of state.tags) {
+        byId.set(tag.id, tag);
+      }
+    }
+
+    return [...byId.values()].sort(
+      (left, right) =>
+        left.name.localeCompare(
+          right.name,
+          "en"
+        )
+    );
+  }, [characters]);
 
   const visibleCharacters = useMemo(
     () => {
@@ -64,6 +91,12 @@ export function useMatrixFilters(
               state,
               readinessFilter
             ) &&
+            (tagFilter === ""
+              ? true
+              : state.tags.some(
+                  (tag) =>
+                    tag.id === tagFilter
+                )) &&
             (normalizedSearch === ""
               ? true
               : state.character.name
@@ -119,6 +152,7 @@ export function useMatrixFilters(
       characters,
       readinessFilter,
       searchTerm,
+      tagFilter,
       sortBy
     ]
   );
@@ -128,6 +162,9 @@ export function useMatrixFilters(
     setReadinessFilter,
     searchTerm,
     setSearchTerm,
+    tagFilter,
+    setTagFilter,
+    tagOptions,
     sortBy,
     setSortBy,
     visibleCharacters

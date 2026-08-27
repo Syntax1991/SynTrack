@@ -184,11 +184,72 @@ export type OverviewSummary = {
     trackedCount: number;
     fullyUnlockedCount: number;
   };
+  refreshNeededCount: number;
 };
+
+export type TagView = {
+  id: string;
+  name: string;
+  color: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TrackerScopeProfileView = {
+  id: string;
+  key: string;
+  name: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DomainHealthState =
+  | "FRESH"
+  | "STALE"
+  | "PARTIAL"
+  | "NEVER_CAPTURED"
+  | "NOT_TRACKED"
+  | "MANUAL";
+
+export type ProfessionHealthEntry = {
+  professionId: string;
+  name: string;
+  state:
+    | "FRESH"
+    | "STALE"
+    | "NEVER_CAPTURED";
+  lastSyncedAt: string | null;
+};
+
+export type CharacterDataHealth = {
+  characterId: string;
+  character: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
+  professions: {
+    state: DomainHealthState;
+    items: ProfessionHealthEntry[];
+  };
+  gear: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
+};
+
+export type CharacterOverviewRow =
+  CharacterWeeklyState & {
+    tags: TagView[];
+    health: CharacterDataHealth;
+  };
 
 export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
-  characters: CharacterWeeklyState[];
+  characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
+  activeScope: TrackerScopeProfileView | null;
 };

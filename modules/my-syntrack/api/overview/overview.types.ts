@@ -20,6 +20,9 @@ import type {
   CharacterTrackerState,
   TrackerDefinitionView
 } from "../trackers/tracker.types.js";
+import type { TrackerScopeProfileView } from "../trackers/tracker-scope-profile.types.js";
+import type { TagView } from "../tags/tag.types.js";
+import type { CharacterDataHealth } from "../data-health/data-health.types.js";
 
 export type {
   CharacterTrackerState,
@@ -27,6 +30,18 @@ export type {
   TrackerNormalizedValue,
   TrackerValueType
 } from "../trackers/tracker.types.js";
+
+export type {
+  TrackerScopeProfileView
+} from "../trackers/tracker-scope-profile.types.js";
+
+export type { TagView } from "../tags/tag.types.js";
+
+export type {
+  CharacterDataHealth,
+  DomainHealthState,
+  ProfessionHealthEntry
+} from "../data-health/data-health.types.js";
 
 export type OverviewDomainState =
   | "READY"
@@ -163,7 +178,13 @@ export type CharacterWeeklyState = {
   } | null;
 };
 
-export type OverviewSummary = {
+/*
+ * The aggregator (overview.aggregator.ts) only ever produces this base
+ * shape - refreshNeededCount is computed by OverviewService afterward
+ * from Data Health, which the core aggregator does not need to know
+ * about (see CharacterOverviewRow below).
+ */
+export type OverviewSummaryBase = {
   period: {
     key: string;
     startsAt: string;
@@ -182,21 +203,47 @@ export type OverviewSummary = {
   };
 };
 
+export type OverviewSummary =
+  OverviewSummaryBase & {
+    /*
+     * Count of characters whose OWN addon-sync is stale/never
+     * captured (see data-health.mapper.ts's characterNeedsRefresh) - a
+     * MANUAL character that was never meant to be addon-tracked is
+     * never counted here.
+     */
+    refreshNeededCount: number;
+  };
+
+/*
+ * Additive, presentation-only facts attached to a CharacterWeeklyState
+ * row after Overview's own weekly/vault/gear/profession aggregation
+ * has already run (see overview.service.ts) - tags and data-health
+ * never participate in readinessState/attentionItems/nextAction, so
+ * the core aggregator (overview.aggregator.ts) does not need to know
+ * about either concept.
+ */
+export type CharacterOverviewRow =
+  CharacterWeeklyState & {
+    tags: TagView[];
+    health: CharacterDataHealth;
+  };
+
 export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
-  characters: CharacterWeeklyState[];
+  characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
+  activeScope: TrackerScopeProfileView | null;
 };
 
 /*
  * The Character Detail Hub's read model - reuses the exact same
- * CharacterWeeklyState one Overview row already carries, scoped to a
+ * CharacterOverviewRow one Overview row already carries, scoped to a
  * single character. No new aggregation logic: OverviewService derives
  * this by reusing getOverview() and finding the one character.
  */
 export type CharacterControlDetailResponse = {
   period: OverviewSummary["period"];
-  character: CharacterWeeklyState;
+  character: CharacterOverviewRow;
   trackerColumns: TrackerDefinitionView[];
 };

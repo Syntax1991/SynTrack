@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type {
-  CharacterWeeklyState,
+  CharacterOverviewRow,
   TrackerDefinitionView
 } from "../types/overview.types";
 import { getClassColor } from "../utils/classColors";
@@ -25,7 +25,7 @@ import { TrackerCell } from "./TrackerCell";
 function NextActionCell({
   state
 }: {
-  state: CharacterWeeklyState;
+  state: CharacterOverviewRow;
 }) {
   if (state.nextAction) {
     const isGenericWeekly =
@@ -73,7 +73,7 @@ export function CharacterMatrixRow({
   trackerColumns,
   onTrackerChanged
 }: {
-  state: CharacterWeeklyState;
+  state: CharacterOverviewRow;
   trackerColumns: TrackerDefinitionView[];
   onTrackerChanged: () => void;
 }) {
@@ -106,6 +106,13 @@ export function CharacterMatrixRow({
               state.character
                 .className
             }
+            {state.tags.length >
+              0 &&
+              ` · ${state.tags
+                .map(
+                  (tag) => tag.name
+                )
+                .join(", ")}`}
           </span>
         </div>
       </td>

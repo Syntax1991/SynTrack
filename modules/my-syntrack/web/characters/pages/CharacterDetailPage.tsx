@@ -3,6 +3,7 @@ import { LoadingPanel } from "../../../../../apps/web/src/shared/components/Load
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { CharacterAttentionSection } from "../components/CharacterAttentionSection";
+import { CharacterDataHealthSection } from "../components/CharacterDataHealthSection";
 import { CharacterDetailHeader } from "../components/CharacterDetailHeader";
 import { CharacterProfessionsSection } from "../components/CharacterProfessionsSection";
 import { CharacterStatusStrip } from "../components/CharacterStatusStrip";
@@ -98,6 +99,7 @@ export function CharacterDetailPage() {
         character={
           detail.character.character
         }
+        tags={detail.character.tags}
       />
 
       {error && (
@@ -112,6 +114,12 @@ export function CharacterDetailPage() {
 
       <CharacterAttentionSection
         character={detail.character}
+      />
+
+      <CharacterDataHealthSection
+        health={
+          detail.character.health
+        }
       />
 
       <CharacterThisWeekSection
