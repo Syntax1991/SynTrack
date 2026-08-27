@@ -15,7 +15,8 @@ export type AttentionDomain =
   | "weekly"
   | "vault"
   | "profession"
-  | "gear";
+  | "gear"
+  | "resources";
 
 export type AttentionSeverity =
   | "blocking"
@@ -78,6 +79,54 @@ export type GearOverviewState = {
   missingEnchantCount: number;
   emptySocketCount: number;
   itemLevel: number | null;
+};
+
+export type ResourceSnapshotView = {
+  quantity: number | null;
+  maxQuantity: number | null;
+  weeklyQuantity: number | null;
+  maxWeeklyQuantity: number | null;
+  isCapped: boolean | null;
+  weeklyRemaining: number | null;
+  weeklyComplete: boolean | null;
+  capturedAt: string;
+};
+
+export type ResourceItemView = {
+  resourceDefinitionId: string;
+  key: string;
+  name: string;
+  category: string;
+  snapshot: ResourceSnapshotView | null;
+  attentionNeeded: boolean;
+};
+
+export type ResourceOverviewState = {
+  state: OverviewDomainState;
+  trackedResourceCount: number;
+  totalRelevantResourceCount: number;
+  attentionCount: number;
+  items: ResourceItemView[];
+};
+
+export type AccountResourceView = {
+  resourceDefinitionId: string;
+  key: string;
+  name: string;
+  category: string;
+  capturedByCharacterId: string | null;
+  ownershipMismatch: boolean;
+  snapshot: {
+    quantity: number | null;
+    maxQuantity: number | null;
+    weeklyQuantity: number | null;
+    maxWeeklyQuantity: number | null;
+    isCapped: boolean | null;
+    weeklyRemaining: number | null;
+    weeklyComplete: boolean | null;
+    capturedAt: string;
+  } | null;
+  attentionNeeded: boolean;
 };
 
 export type TierOverviewState = {
@@ -153,6 +202,7 @@ export type CharacterWeeklyState = {
   vault: VaultOverviewState;
   professions: ProfessionOverviewState;
   gear: GearOverviewState;
+  resources: ResourceOverviewState;
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
   trackers: CharacterTrackerState[];
@@ -238,6 +288,10 @@ export type CharacterDataHealth = {
     state: DomainHealthState;
     lastSyncedAt: string | null;
   };
+  resources: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
 };
 
 export type CharacterOverviewRow =
@@ -252,4 +306,5 @@ export type OverviewResponse = {
   characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
   activeScope: TrackerScopeProfileView | null;
+  accountResources: AccountResourceView[];
 };

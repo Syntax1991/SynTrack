@@ -104,12 +104,17 @@ function buildOverview(): OverviewResponse {
           gear: {
             state: "NOT_TRACKED",
             lastSyncedAt: null
+          },
+          resources: {
+            state: "NOT_TRACKED",
+            lastSyncedAt: null
           }
         }
       })
     ),
     trackerColumns: [],
-    activeScope: null
+    activeScope: null,
+    accountResources: []
   };
 }
 

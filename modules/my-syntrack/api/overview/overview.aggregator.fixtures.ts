@@ -34,6 +34,8 @@ export function baseInput(
     gearByCharacterId: new Map(),
     professionByCharacterId:
       new Map(),
+    resourceByCharacterId:
+      new Map(),
     trackerStatesByCharacterId:
       new Map(),
     ...overrides
