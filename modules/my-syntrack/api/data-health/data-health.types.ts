@@ -38,4 +38,8 @@ export type CharacterDataHealth = {
     state: DomainHealthState;
     lastSyncedAt: string | null;
   };
+  resources: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
 };

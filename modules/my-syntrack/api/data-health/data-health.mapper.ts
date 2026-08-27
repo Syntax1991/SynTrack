@@ -99,6 +99,32 @@ export function resolveGearHealth(
 }
 
 /*
+ * Same generic shape as resolveGearHealth, evaluated against the
+ * Resources module's own capturedAt evidence - never Gear's, the
+ * character's, or a profession's timestamp. Resources has no
+ * manual-entry path today, so a tracked-but-timestamp-less row is not
+ * expected, but MANUAL is still the conservative answer if one exists.
+ */
+export function resolveResourceHealth(
+  trackedResourceCount: number,
+  maxCapturedAt: Date | null,
+  periodStartsAt: Date
+): DomainHealthState {
+  if (trackedResourceCount === 0) {
+    return "NOT_TRACKED";
+  }
+
+  if (maxCapturedAt === null) {
+    return "MANUAL";
+  }
+
+  return resolveTimestampFreshness(
+    maxCapturedAt,
+    periodStartsAt
+  );
+}
+
+/*
  * The character's OWN addon-sync state is the honest "needs another
  * login" signal - a MANUAL-only character (never meant to be
  * addon-tracked) is deliberately excluded, never flagged forever.

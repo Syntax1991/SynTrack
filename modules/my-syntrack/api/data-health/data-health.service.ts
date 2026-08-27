@@ -4,6 +4,7 @@ import {
   aggregateProfessionHealth,
   resolveCharacterHealth,
   resolveGearHealth,
+  resolveResourceHealth,
   resolveTimestampFreshness
 } from "./data-health.mapper.js";
 import type { CharacterDataHealth } from "./data-health.types.js";
@@ -37,7 +38,8 @@ export class DataHealthService {
     const [
       characterSyncRows,
       professionAssignments,
-      gearSlotSummaries
+      gearSlotSummaries,
+      resourceSnapshotSummaries
     ] = await Promise.all([
       this.repository.findCharacterSync(
         characterIds
@@ -46,6 +48,9 @@ export class DataHealthService {
         characterIds
       ),
       this.repository.findGearSlotSummary(
+        characterIds
+      ),
+      this.repository.findResourceSnapshotSummary(
         characterIds
       )
     ]);
@@ -67,6 +72,13 @@ export class DataHealthService {
 
     const gearSummaryById = new Map(
       gearSlotSummaries.map((row) => [
+        row.characterId,
+        row
+      ])
+    );
+
+    const resourceSummaryById = new Map(
+      resourceSnapshotSummaries.map((row) => [
         row.characterId,
         row
       ])
@@ -145,6 +157,11 @@ export class DataHealthService {
           characterId
         );
 
+      const resourceSummary =
+        resourceSummaryById.get(
+          characterId
+        );
+
       healthByCharacterId.set(
         characterId,
         {
@@ -172,6 +189,18 @@ export class DataHealthService {
             ),
             lastSyncedAt:
               gearSummary?.maxLastSyncedAt?.toISOString() ??
+              null
+          },
+          resources: {
+            state: resolveResourceHealth(
+              resourceSummary?.trackedResourceCount ??
+                0,
+              resourceSummary?.maxCapturedAt ??
+                null,
+              periodStartsAt
+            ),
+            lastSyncedAt:
+              resourceSummary?.maxCapturedAt?.toISOString() ??
               null
           }
         }
