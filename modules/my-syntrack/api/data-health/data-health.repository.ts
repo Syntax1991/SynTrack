@@ -3,7 +3,8 @@ import type {
   CharacterSyncRow,
   DataHealthRepositoryContract,
   GearSlotSummaryRow,
-  ProfessionAssignmentRow
+  ProfessionAssignmentRow,
+  ResourceSnapshotSummaryRow
 } from "./data-health-repository.types.js";
 
 /*
@@ -147,6 +148,40 @@ export class DataHealthRepository
         group._count._all,
       maxLastSyncedAt:
         group._max.lastSyncedAt
+    }));
+  }
+
+  async findResourceSnapshotSummary(
+    characterIds: string[]
+  ): Promise<ResourceSnapshotSummaryRow[]> {
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    const groups =
+      await prisma.characterResourceSnapshot.groupBy(
+        {
+          by: ["characterId"],
+          where: {
+            characterId: {
+              in: characterIds
+            }
+          },
+          _count: {
+            _all: true
+          },
+          _max: {
+            capturedAt: true
+          }
+        }
+      );
+
+    return groups.map((group) => ({
+      characterId: group.characterId,
+      trackedResourceCount:
+        group._count._all,
+      maxCapturedAt:
+        group._max.capturedAt
     }));
   }
 }

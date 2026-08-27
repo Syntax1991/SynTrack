@@ -2,7 +2,8 @@ import type {
   CharacterSyncRow,
   DataHealthRepositoryContract,
   GearSlotSummaryRow,
-  ProfessionAssignmentRow
+  ProfessionAssignmentRow,
+  ResourceSnapshotSummaryRow
 } from "./data-health-repository.types.js";
 
 export class FakeDataHealthRepository
@@ -20,6 +21,9 @@ export class FakeDataHealthRepository
   >();
 
   private gearSlotSummaryRows: GearSlotSummaryRow[] =
+    [];
+
+  private resourceSnapshotSummaryRows: ResourceSnapshotSummaryRow[] =
     [];
 
   seedCharacterSync(
@@ -46,6 +50,12 @@ export class FakeDataHealthRepository
     row: GearSlotSummaryRow
   ) {
     this.gearSlotSummaryRows.push(row);
+  }
+
+  seedResourceSnapshotSummary(
+    row: ResourceSnapshotSummaryRow
+  ) {
+    this.resourceSnapshotSummaryRows.push(row);
   }
 
   async findCharacterSync(
@@ -94,6 +104,17 @@ export class FakeDataHealthRepository
     characterIds: string[]
   ) {
     return this.gearSlotSummaryRows.filter(
+      (row) =>
+        characterIds.includes(
+          row.characterId
+        )
+    );
+  }
+
+  async findResourceSnapshotSummary(
+    characterIds: string[]
+  ) {
+    return this.resourceSnapshotSummaryRows.filter(
       (row) =>
         characterIds.includes(
           row.characterId

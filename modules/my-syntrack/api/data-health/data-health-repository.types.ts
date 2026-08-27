@@ -17,6 +17,12 @@ export type GearSlotSummaryRow = {
   maxLastSyncedAt: Date | null;
 };
 
+export type ResourceSnapshotSummaryRow = {
+  characterId: string;
+  trackedResourceCount: number;
+  maxCapturedAt: Date | null;
+};
+
 export interface DataHealthRepositoryContract {
   findCharacterSync(
     characterIds: string[]
@@ -34,4 +40,7 @@ export interface DataHealthRepositoryContract {
   findGearSlotSummary(
     characterIds: string[]
   ): Promise<GearSlotSummaryRow[]>;
+  findResourceSnapshotSummary(
+    characterIds: string[]
+  ): Promise<ResourceSnapshotSummaryRow[]>;
 }

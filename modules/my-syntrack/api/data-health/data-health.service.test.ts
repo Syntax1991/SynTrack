@@ -242,4 +242,5 @@ describe("DataHealthService", () => {
         .state
     ).toBe("MANUAL");
   });
+
 });

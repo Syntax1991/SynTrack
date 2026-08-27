@@ -237,6 +237,10 @@ describe("characterNeedsRefresh", () => {
         gear: {
           state: "NOT_TRACKED",
           lastSyncedAt: null
+        },
+        resources: {
+          state: "NOT_TRACKED",
+          lastSyncedAt: null
         }
       })
     ).toBe(false);
@@ -255,6 +259,10 @@ describe("characterNeedsRefresh", () => {
           items: []
         },
         gear: {
+          state: "NOT_TRACKED",
+          lastSyncedAt: null
+        },
+        resources: {
           state: "NOT_TRACKED",
           lastSyncedAt: null
         }
