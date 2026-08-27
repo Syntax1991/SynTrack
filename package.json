@@ -32,7 +32,10 @@
     "audit:unmapped-specialization-nodes": "npm run audit:unmapped-specialization-nodes --workspace syntrack-api",
     "import:saved-variables": "npm run import:saved-variables --workspace syntrack-api --",
     "dev:restart": "node scripts/dev-manager.mjs restart",
-    "dev:stop": "node scripts/dev-manager.mjs stop"
+    "dev:stop": "node scripts/dev-manager.mjs stop",
+    "client:restore": "dotnet restore apps/client/SynTrack.Client.sln",
+    "client:build": "dotnet build apps/client/SynTrack.Client.sln",
+    "client:test": "dotnet test apps/client/SynTrack.Client.sln"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
