@@ -1,5 +1,4 @@
 import {
-  asBoolean,
   asNumber,
   asTable,
   numericValues,
@@ -8,9 +7,9 @@ import {
 import type {
   AddonCurrencyEntry,
   AddonItemResourceEntry,
-  AddonResourceSnapshot,
-  LuaValue
-} from "./addon-import.types.js";
+  AddonResourceSnapshot
+} from "./addon-import.resource.types.js";
+import type { LuaValue } from "./addon-import.types.js";
 
 /*
  * The current supported Resources module contract version - mirrors the

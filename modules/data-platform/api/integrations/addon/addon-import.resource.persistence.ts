@@ -7,7 +7,7 @@ import type {
 } from "./addon-import.persistence.types.js";
 import type {
   AddonResourceSnapshot
-} from "./addon-import.types.js";
+} from "./addon-import.resource.types.js";
 
 type SnapshotValues = {
   quantity: number | null;

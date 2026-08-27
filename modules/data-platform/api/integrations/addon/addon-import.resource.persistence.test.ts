@@ -1,99 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { AddonResourcePersistence } from "./addon-import.resource.persistence.js";
-import type { CharacterPersistenceResult } from "./addon-import.persistence.types.js";
-import type { AddonResourceSnapshot } from "./addon-import.types.js";
-
-type SnapshotRow = {
-  characterId: string;
-  resourceDefinitionId: string;
-  quantity: number | null;
-  maxQuantity: number | null;
-  weeklyQuantity: number | null;
-  maxWeeklyQuantity: number | null;
-  isCapped: boolean | null;
-  isWeeklyCapped: boolean | null;
-  discovered: boolean | null;
-  accountWide: boolean | null;
-  source: string;
-  capturedAt: Date;
-};
-
-function createTransaction() {
-  const rows = new Map<string, SnapshotRow>();
-
-  const transaction = {
-    characterResourceSnapshot: {
-      upsert: async (args: {
-        where: {
-          characterId_resourceDefinitionId: {
-            characterId: string;
-            resourceDefinitionId: string;
-          };
-        };
-        create: SnapshotRow;
-        update: Omit<
-          SnapshotRow,
-          "characterId" | "resourceDefinitionId"
-        >;
-      }) => {
-        const { characterId, resourceDefinitionId } =
-          args.where.characterId_resourceDefinitionId;
-        const key = `${characterId}:${resourceDefinitionId}`;
-        const existing = rows.get(key);
-
-        const row: SnapshotRow = existing
-          ? { ...existing, ...args.update }
-          : { ...args.create };
-
-        rows.set(key, row);
-        return row;
-      }
-    }
-  };
-
-  return { transaction, rows };
-}
-
-function result(): CharacterPersistenceResult {
-  return {
-    characters: 0,
-    professionAssignments: 0,
-    progressEntries: 0,
-    gearSlots: 0,
-    resourceSnapshots: 0
-  };
-}
-
-function snapshot(
-  overrides: Partial<AddonResourceSnapshot> = {}
-): AddonResourceSnapshot {
-  return {
-    schemaVersion: 1,
-    capturedAt: "2026-08-27T21:12:46.000Z",
-    currencies: [],
-    items: [],
-    ...overrides
-  };
-}
+import {
+  createTransaction,
+  heroDawncrestDefinition,
+  result,
+  snapshot,
+  sparkOfTidesDefinition
+} from "./addon-import.resource.persistence.test-helpers.js";
 
 describe("AddonResourcePersistence", () => {
   it("persists a captured currency matching an enabled definition", async () => {
     const { transaction, rows } = createTransaction();
     const persistence = new AddonResourcePersistence({
       listEnabledForActiveSeason: async () => [
-        {
-          id: "def-hero-dawncrest",
-          key: "hero-dawncrest",
-          scopeKey: "MIDNIGHT-S1",
-          externalCurrencyId: 3345,
-          externalItemId: null,
-          name: "Hero Dawncrest",
-          category: "UPGRADE",
-          resetBehavior: "WEEKLY",
-          ownershipScope: "CHARACTER",
-          enabled: true,
-          sortOrder: 0
-        }
+        heroDawncrestDefinition()
       ]
     });
 
@@ -144,7 +64,17 @@ describe("AddonResourcePersistence", () => {
       "char-1",
       snapshot({
         currencies: [
-          { currencyId: 9999999, quantity: 5 }
+          {
+            currencyId: 9999999,
+            quantity: 5,
+            maxQuantity: null,
+            weeklyQuantity: null,
+            maxWeeklyQuantity: null,
+            isCapped: null,
+            isWeeklyCapped: null,
+            discovered: null,
+            accountWide: null
+          }
         ]
       }),
       trackResult
@@ -158,19 +88,7 @@ describe("AddonResourcePersistence", () => {
     const { transaction, rows } = createTransaction();
     const persistence = new AddonResourcePersistence({
       listEnabledForActiveSeason: async () => [
-        {
-          id: "def-spark-of-tides",
-          key: "spark-of-tides",
-          scopeKey: "MIDNIGHT-S1",
-          externalCurrencyId: null,
-          externalItemId: 274476,
-          name: "Spark of Tides",
-          category: "CRAFTING_GATE",
-          resetBehavior: "WEEKLY",
-          ownershipScope: "CHARACTER",
-          enabled: true,
-          sortOrder: 0
-        }
+        sparkOfTidesDefinition()
       ]
     });
 
@@ -223,19 +141,7 @@ describe("AddonResourcePersistence", () => {
     const { transaction, rows } = createTransaction();
     const persistence = new AddonResourcePersistence({
       listEnabledForActiveSeason: async () => [
-        {
-          id: "def-spark-of-tides",
-          key: "spark-of-tides",
-          scopeKey: "MIDNIGHT-S1",
-          externalCurrencyId: null,
-          externalItemId: 274476,
-          name: "Spark of Tides",
-          category: "CRAFTING_GATE",
-          resetBehavior: "WEEKLY",
-          ownershipScope: "CHARACTER",
-          enabled: true,
-          sortOrder: 0
-        }
+        sparkOfTidesDefinition()
       ]
     });
 
