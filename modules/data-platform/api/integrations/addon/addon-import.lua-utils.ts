@@ -51,6 +51,13 @@ export function asNumber(
     : null;
 }
 
+export function asBoolean(
+  value:
+    LuaValue | undefined
+): boolean {
+  return value === true;
+}
+
 export function numericValues(
   table:
     LuaTable | null

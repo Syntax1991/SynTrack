@@ -119,7 +119,10 @@ export class AddonImportPersistence {
                 .professionAssignments,
             progressEntries:
               characterResult
-                .progressEntries
+                .progressEntries,
+            gearSlots:
+              characterResult
+                .gearSlots
           }
         };
       }

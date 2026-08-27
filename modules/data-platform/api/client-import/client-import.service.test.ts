@@ -28,7 +28,8 @@ const fakeImportResult: AddonImportResult =
       specializationNodes: 0,
       characters: 1,
       professionAssignments: 0,
-      progressEntries: 0
+      progressEntries: 0,
+      gearSlots: 0
     }
   };
 
