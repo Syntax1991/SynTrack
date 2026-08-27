@@ -23,11 +23,11 @@ export type EnchantStatus =
 
 export type GearSlotItem = {
   id: string;
-  itemName: string;
+  itemName: string | null;
   itemLevel: number | null;
   enchantStatus: EnchantStatus;
   enchantName: string | null;
-  socketCount: number;
+  socketCount: number | null;
   gemCount: number;
   notes: string | null;
   source: string;

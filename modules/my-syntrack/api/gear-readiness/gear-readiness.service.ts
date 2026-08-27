@@ -69,13 +69,22 @@ export class GearReadinessService {
               definition.supportsEnchant &&
               item.enchantStatus !== "READY"
             );
-            const missingGemCount = item
-              ? Math.max(
-                  item.socketCount -
-                    item.gemCount,
-                  0
-                )
-              : 0;
+            /*
+             * An addon-captured slot can have socketCount = null when
+             * the socket-count API wasn't ready at capture time -
+             * UNKNOWN socket count is deliberately excluded from the
+             * missing-gem tally rather than treated as zero, since
+             * either a real 0 or a real "missing gems" answer would be
+             * a guess in that case.
+             */
+            const missingGemCount =
+              item && item.socketCount !== null
+                ? Math.max(
+                    item.socketCount -
+                      item.gemCount,
+                    0
+                  )
+                : 0;
 
             return {
               ...definition,
