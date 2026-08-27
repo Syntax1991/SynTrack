@@ -589,3 +589,40 @@ model RaiderSession {
 
   @@index([raiderAccountId])
 }
+
+enum DeviceLinkStatus {
+  PENDING
+  APPROVED
+  CONSUMED
+  EXPIRED
+}
+
+model DeviceLinkRequest {
+  id             String           @id @default(cuid())
+  userCode       String           @unique
+  deviceCodeHash String           @unique
+  status         DeviceLinkStatus @default(PENDING)
+  clientName     String?
+  expiresAt      DateTime
+  approvedAt     DateTime?
+  consumedAt     DateTime?
+  createdAt      DateTime         @default(now())
+
+  device DeviceCredential?
+
+  @@index([status, expiresAt])
+}
+
+model DeviceCredential {
+  id            String    @id @default(cuid())
+  name          String
+  tokenHash     String    @unique
+  linkRequestId String?   @unique
+  createdAt     DateTime  @default(now())
+  lastSeenAt    DateTime?
+  revokedAt     DateTime?
+
+  linkRequest DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+
+  @@index([revokedAt])
+}
