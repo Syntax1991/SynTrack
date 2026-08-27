@@ -23,6 +23,7 @@ import { addonImportRouter } from "../../../../modules/data-platform/api/integra
 import { battleNetIntegrationRouter } from "../../../../modules/data-platform/api/integrations/battlenet/battlenet.routes.js";
 import { raiderAuthRouter } from "../../../../modules/data-platform/api/raider-auth/raider-auth.routes.js";
 import { deviceLinkRouter } from "../../../../modules/data-platform/api/device-auth/device-link.routes.js";
+import { clientImportRouter } from "../../../../modules/data-platform/api/client-import/client-import.routes.js";
 import { guildRaiderLinkRouter } from "../../../../modules/guild/api/raider-link/raider-link.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
 import { professionRouter } from "../../../../modules/professions/api/profession.routes.js";
@@ -186,4 +187,9 @@ apiRouter.use(
 apiRouter.use(
   "/client",
   deviceLinkRouter
+);
+
+apiRouter.use(
+  "/client",
+  clientImportRouter
 );
