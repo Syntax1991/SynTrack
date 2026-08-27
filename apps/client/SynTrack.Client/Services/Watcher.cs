@@ -95,6 +95,7 @@ public sealed class SavedVariablesWatcherService : IDisposable
 
         _watcher.Changed += OnFileSystemEvent;
         _watcher.Created += OnFileSystemEvent;
+        _watcher.Renamed += OnFileSystemEvent;
         _watcher.EnableRaisingEvents = true;
 
         _debounceTimer = new System.Threading.Timer(CheckStable, null, Timeout.Infinite, Timeout.Infinite);
@@ -140,6 +141,7 @@ public sealed class SavedVariablesWatcherService : IDisposable
         {
             _watcher.Changed -= OnFileSystemEvent;
             _watcher.Created -= OnFileSystemEvent;
+            _watcher.Renamed -= OnFileSystemEvent;
             _watcher.Dispose();
             _watcher = null;
         }
