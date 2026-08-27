@@ -117,6 +117,65 @@ describe("DataHealthService", () => {
     ).toBe("NEVER_CAPTURED");
   });
 
+  it("becomes FRESH once real addon Gear rows with a current-period capture timestamp exist", async () => {
+    const repository =
+      new FakeDataHealthRepository();
+
+    repository.seedGearSlotSummary({
+      characterId: "char-1",
+      trackedSlotCount: 3,
+      maxLastSyncedAt: new Date(
+        "2026-08-27T19:34:31.000Z"
+      )
+    });
+
+    const service =
+      new DataHealthService(repository);
+
+    const health =
+      await service.getHealthByCharacterIds(
+        ["char-1"],
+        now
+      );
+
+    expect(
+      health.get("char-1")?.gear.state
+    ).toBe("FRESH");
+
+    expect(
+      health.get("char-1")?.gear
+        .lastSyncedAt
+    ).toBe(
+      "2026-08-27T19:34:31.000Z"
+    );
+  });
+
+  it("becomes STALE once real addon Gear rows exist but the capture predates the current reset period", async () => {
+    const repository =
+      new FakeDataHealthRepository();
+
+    repository.seedGearSlotSummary({
+      characterId: "char-1",
+      trackedSlotCount: 3,
+      maxLastSyncedAt: new Date(
+        "2026-08-01T00:00:00.000Z"
+      )
+    });
+
+    const service =
+      new DataHealthService(repository);
+
+    const health =
+      await service.getHealthByCharacterIds(
+        ["char-1"],
+        now
+      );
+
+    expect(
+      health.get("char-1")?.gear.state
+    ).toBe("STALE");
+  });
+
   it("returns NOT_TRACKED professions for a character with no assignments, not a false NEVER_CAPTURED", async () => {
     const repository =
       new FakeDataHealthRepository();

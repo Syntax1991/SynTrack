@@ -1,4 +1,5 @@
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
+import { AddonGearPersistence } from "./addon-import.gear.persistence.js";
 import {
   createNodeMapKey,
   getSyncDate,
@@ -18,6 +19,9 @@ import type {
 } from "./addon-import.types.js";
 
 export class AddonCharacterPersistence {
+  private readonly gearPersistence =
+    new AddonGearPersistence();
+
   async persist(
     transaction: AddonImportTransaction,
     snapshot: AddonSnapshot,
@@ -27,7 +31,8 @@ export class AddonCharacterPersistence {
     const result: CharacterPersistenceResult = {
       characters: 0,
       professionAssignments: 0,
-      progressEntries: 0
+      progressEntries: 0,
+      gearSlots: 0
     };
 
     for (
@@ -117,6 +122,13 @@ export class AddonCharacterPersistence {
       result.professionAssignments +=
         1;
     }
+
+    await this.gearPersistence.persist(
+      transaction,
+      storedCharacter.id,
+      character.gear,
+      result
+    );
   }
 
   private async persistProfession(

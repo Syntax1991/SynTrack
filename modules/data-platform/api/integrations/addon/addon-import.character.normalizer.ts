@@ -1,4 +1,5 @@
 import { normalizeExpansion } from "./addon-import.expansion.normalizer.js";
+import { normalizeGearSnapshot } from "./addon-import.gear.normalizer.js";
 import type {
   AddonCharacter,
   AddonExpansion,
@@ -173,6 +174,16 @@ export function normalizeCharacter(
           profession !== null
       );
 
+  const modules =
+    asTable(
+      character.modules
+    );
+
+  const gear =
+    normalizeGearSnapshot(
+      modules?.gear
+    );
+
   return {
     key,
 
@@ -218,6 +229,7 @@ export function normalizeCharacter(
         character.lastUpdatedAt
       ),
 
-    professions
+    professions,
+    gear
   };
 }
