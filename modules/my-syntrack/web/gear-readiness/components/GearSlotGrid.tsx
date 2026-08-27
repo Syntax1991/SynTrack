@@ -184,8 +184,10 @@ export function GearSlotGrid({
                         <span className="gear-slot-copy">
                           <small>{slot.label}</small>
                           <strong>
-                            {slot.item?.itemName ??
-                              "Not tracked"}
+                            {slot.item
+                              ? (slot.item.itemName ??
+                                "Unknown item")
+                              : "Not tracked"}
                           </strong>
 
                           <span className="gear-slot-badges">
@@ -209,7 +211,7 @@ export function GearSlotGrid({
                             )}
 
                             {slot.item &&
-                              slot.item.socketCount > 0 && (
+                              (slot.item.socketCount ?? 0) > 0 && (
                                 <span
                                   className={
                                     slot.issues

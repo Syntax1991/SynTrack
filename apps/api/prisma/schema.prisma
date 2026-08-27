@@ -126,12 +126,17 @@ model CharacterGearSlot {
   id            String    @id @default(cuid())
   characterId   String
   slotKey       String
-  itemName      String
+  itemId        Int?
+  itemLink      String?
+  itemName      String?
   itemLevel     Int?
+  quality       Int?
   enchantStatus String    @default("NOT_APPLICABLE")
   enchantName   String?
-  socketCount   Int       @default(0)
+  enchantId     Int?
+  socketCount   Int?
   gemCount      Int       @default(0)
+  gemIds        String?
   notes         String?
   source        String    @default("MANUAL")
   lastSyncedAt  DateTime?

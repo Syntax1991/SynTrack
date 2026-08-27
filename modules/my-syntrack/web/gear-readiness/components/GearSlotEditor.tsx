@@ -42,7 +42,7 @@ export function GearSlotEditor({
     useState(slot.item?.enchantName ?? "");
   const [socketCount, setSocketCount] =
     useState(
-      slot.item?.socketCount.toString() ?? "0"
+      slot.item?.socketCount?.toString() ?? "0"
     );
   const [gemCount, setGemCount] = useState(
     slot.item?.gemCount.toString() ?? "0"
