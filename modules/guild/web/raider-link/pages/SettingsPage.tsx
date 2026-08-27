@@ -4,6 +4,8 @@ import { StatusMessage } from "../../../../../apps/web/src/shared/components/Sta
 import { Tabs } from "../../../../../apps/web/src/shared/components/Tabs";
 import { AddonSyncTab } from "../../../../data-platform/web/integrations/components/AddonSyncTab";
 import { BattleNetSyncTab } from "../../../../data-platform/web/integrations/components/BattleNetSyncTab";
+import { ConnectedDevicesPanel } from "../../../../data-platform/web/device-auth/components/ConnectedDevicesPanel";
+import { DeviceApprovalPanel } from "../../../../data-platform/web/device-auth/components/DeviceApprovalPanel";
 import { TagManagerPanel } from "../../../../my-syntrack/web/tags/components/TagManagerPanel";
 import { SeasonSwitchPanel } from "../../../../my-syntrack/web/season/components/SeasonSwitchPanel";
 import { RaiderLinkPanel } from "../components/RaiderLinkPanel";
@@ -13,6 +15,7 @@ type SettingsPageTab =
   | "account"
   | "addon"
   | "battlenet"
+  | "devices"
   | "tags-season";
 
 const tabs: Array<{
@@ -30,6 +33,10 @@ const tabs: Array<{
   {
     id: "battlenet",
     label: "Battle.net"
+  },
+  {
+    id: "devices",
+    label: "Devices"
   },
   {
     id: "tags-season",
@@ -99,6 +106,13 @@ export function SettingsPage() {
 
         {activeTab === "battlenet" && (
           <BattleNetSyncTab />
+        )}
+
+        {activeTab === "devices" && (
+          <>
+            <DeviceApprovalPanel />
+            <ConnectedDevicesPanel />
+          </>
         )}
 
         {activeTab ===
