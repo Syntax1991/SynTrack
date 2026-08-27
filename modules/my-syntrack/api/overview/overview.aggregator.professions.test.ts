@@ -36,7 +36,23 @@ describe("aggregateCharacterWeeklyStates - professions", () => {
                   partialProfessionIssues:
                     [
                       "Blacksmithing: specialization progress captured, but no recipes or capabilities imported yet"
-                    ]
+                    ],
+                  professions: [
+                    {
+                      professionId:
+                        "profession-1",
+                      key:
+                        "blacksmithing",
+                      name:
+                        "Blacksmithing",
+                      category:
+                        "CRAFTING",
+                      skill: 100,
+                      knowledgePoints: 0,
+                      dataStatus:
+                        "PARTIAL"
+                    }
+                  ]
                 }
               ]
             ])
@@ -52,5 +68,10 @@ describe("aggregateCharacterWeeklyStates - professions", () => {
       characters[0]!.professions
         .issueCount
     ).toBe(1);
+
+    expect(
+      characters[0]!.professions
+        .items[0]?.professionId
+    ).toBe("profession-1");
   });
 });

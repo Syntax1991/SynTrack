@@ -238,6 +238,12 @@ export function ProfessionFindCraftByRecipe({
                 </div>
               ) : (
                 <div className="profession-find-craft-candidates">
+                  <div className="profession-find-craft-candidate-header">
+                    <span>Crafter</span>
+                    <span>Specialization</span>
+                    <span>Capability</span>
+                  </div>
+
                   {candidates.map(
                     (crafter) => (
                       <ProfessionFindCraftCandidateRow

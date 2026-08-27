@@ -21,11 +21,11 @@ export function CharacterProfessionSpecializations({
   onSave
 }: CharacterProfessionSpecializationsProps) {
   return (
-    <section className="panel profession-specialization-panel">
-      <div className="panel-header">
+    <section className="profession-specialization-editor">
+      <div className="profession-specialization-editor-header">
         <div>
           <p className="eyebrow">
-            PROFESSION
+            PROFESSION · {profession.skill} SKILL
           </p>
 
           <h2>
@@ -38,16 +38,6 @@ export function CharacterProfessionSpecializations({
         </div>
 
         <div className="profession-specialization-actions">
-          <div className="profession-skill-summary">
-            <span>
-              Skill
-            </span>
-
-            <strong>
-              {profession.skill}
-            </strong>
-          </div>
-
           <button
             className="button button-primary"
             disabled={
@@ -61,7 +51,7 @@ export function CharacterProfessionSpecializations({
           >
             {isSaving
               ? "Saving…"
-              : "Save specialization"}
+              : "Save ranks"}
           </button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { ProfessionCharacterCoverage } from "../types/professionDetail.types";
 import { EntityIcon } from "../../shared/components/ProfessionIcons";
 import { SynTrackTooltip } from "../../shared/components/SynTrackTooltip";
@@ -24,9 +25,12 @@ export function ProfessionSpecializationCharacter({
   return (
     <article className="profession-specialization-character">
       <header>
-        <strong>
+        <Link
+          className="profession-specialization-character-link"
+          to={`/characters/${coverage.character.id}`}
+        >
           {coverage.character.name}
-        </strong>
+        </Link>
 
         <span>
           {coverage.character.className}

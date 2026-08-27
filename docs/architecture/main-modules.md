@@ -40,7 +40,7 @@ SynTrack
 |
 +-- My SynTrack
 |   +-- Overview
-|   +-- Characters
+|   +-- Characters (roster plus `/characters/:characterId` control hub)
 |   +-- Weeklies (Weekly Checklist, Vault / M+)
 |   +-- Gear
 |   +-- Professions (composed, owned by the Professions module)
@@ -109,6 +109,9 @@ owning their underlying business rules.
 - Great Vault and Mythic+ progress
 - missing enchants and gems
 - personal profession status
+- the canonical character control hub at `/characters/:characterId`, which
+  narrows the existing Overview aggregation to one stable Character ID and
+  deep-links into the domain workspaces without duplicating their logic
 - the Overview read-model aggregation (`overview.aggregator.ts`) that
   composes the above into one "what still needs attention this week, per
   character" view - it reads and normalizes; it does not own or duplicate
@@ -125,6 +128,12 @@ The Overview aggregator specifically may call Professions' own
 Prisma/repository access) to read per-character `dataStatus` - this is
 "communicate through an explicit application service" (dependency
 principle 2), not a new cross-module coupling.
+
+`OverviewService.getCharacterState(characterId)` reuses that same bounded,
+profession-count-based read and returns one character's weekly, Vault, Gear,
+Profession, tracker, attention and next-action projection. The Character
+Detail frontend consumes this through one request; it does not issue one
+request per domain or card.
 
 ## 2. Guild
 
@@ -394,7 +403,8 @@ Web:
 
 - `modules/my-syntrack/web/overview` (the personal weekly control center -
   replaced the old KPI-card `dashboard` folder on 2026-08-26)
-- `modules/my-syntrack/web/characters`
+- `modules/my-syntrack/web/characters` (roster and the canonical
+  `/characters/:characterId` control hub)
 - `modules/my-syntrack/web/weekly-checklist`
 - `modules/my-syntrack/web/vault-mythic-plus`
 - `modules/my-syntrack/web/gear-readiness`

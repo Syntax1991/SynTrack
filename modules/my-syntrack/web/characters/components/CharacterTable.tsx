@@ -55,16 +55,19 @@ export function CharacterTable({
               <tr key={character.id}>
                 <td>
                   <div className="matrix-identity">
-                    <strong
+                    <Link
                       style={{
                         color:
                           getClassColor(
                             character.className
                           )
                       }}
+                      to={`/characters/${character.id}`}
                     >
-                      {character.name}
-                    </strong>
+                      <strong>
+                        {character.name}
+                      </strong>
+                    </Link>
 
                     <span>
                       {character.className}

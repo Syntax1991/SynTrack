@@ -168,6 +168,17 @@
   font-weight: 700;
 }
 
+.matrix-character-link {
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.matrix-character-link:hover {
+  text-decoration: underline;
+}
+
 .matrix-identity span {
   color: var(--text-muted);
   font-size: 0.66rem;

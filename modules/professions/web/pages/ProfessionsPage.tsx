@@ -18,12 +18,27 @@ export function ProfessionsPage() {
       items
     );
 
+  const craftingItems =
+    items.filter(
+      (item) =>
+        item.category ===
+        "CRAFTING"
+    );
+
+  const coveredCraftingCount =
+    craftingItems.filter(
+      (item) =>
+        item.characterCount > 0 &&
+        item.captureStatus ===
+          "CAPTURED"
+    ).length;
+
   return (
     <>
       <ProfessionsTabNav />
 
       <PageHeader
-        description="Open a profession to review its crafters, recipes and slot coverage."
+        description={`${coveredCraftingCount}/${craftingItems.length} crafting professions covered · Open a row for crafters, recipes and exact responsibility.`}
         eyebrow="CRAFTING COVERAGE"
         title="Professions"
       />
@@ -37,24 +52,7 @@ export function ProfessionsPage() {
       {isLoading ? (
         <LoadingPanel />
       ) : (
-        <section className="panel profession-overview-panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">
-                MIDNIGHT
-              </p>
-
-              <h2>
-                Profession Coverage
-              </h2>
-            </div>
-
-            <span className="profession-overview-total">
-              {items.length}
-              {" Professions"}
-            </span>
-          </div>
-
+        <section className="profession-overview-panel">
           {items.length === 0 ? (
             <div className="empty-state">
               No professions yet.
@@ -73,7 +71,19 @@ export function ProfessionsPage() {
                       {
                         categoryGroup.categoryLabel
                       }
+
+                      <span>
+                        {categoryGroup.items.length}
+                      </span>
                     </p>
+
+                    <div className="profession-overview-header">
+                      <span>Profession</span>
+                      <span>Crafters</span>
+                      <span>Specialized</span>
+                      <span>Status</span>
+                      <span aria-hidden="true" />
+                    </div>
 
                     {categoryGroup.items.map(
                       (profession) => (

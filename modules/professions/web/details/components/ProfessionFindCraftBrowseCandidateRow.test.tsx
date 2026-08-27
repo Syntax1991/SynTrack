@@ -1,4 +1,6 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { ProfessionCharacterCoverage } from "../types/professionDetail.types";
 import { ProfessionFindCraftBrowseCandidateRow } from "./ProfessionFindCraftBrowseCandidateRow";
@@ -79,6 +81,14 @@ function createCandidate() {
   };
 }
 
+function renderWithRouter(
+  node: ReactNode
+) {
+  return render(
+    <MemoryRouter>{node}</MemoryRouter>
+  );
+}
+
 describe("ProfessionFindCraftBrowseCandidateRow", () => {
   it("Mail + Wrist + Synfel acceptance case: renders the concrete node name with its rank, never a naked rank", () => {
     const coverage = createCoverage([
@@ -89,7 +99,7 @@ describe("ProfessionFindCraftBrowseCandidateRow", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionFindCraftBrowseCandidateRow
         candidate={createCandidate()}
         coverage={coverage}
@@ -130,7 +140,7 @@ describe("ProfessionFindCraftBrowseCandidateRow", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionFindCraftBrowseCandidateRow
         candidate={createCandidate()}
         coverage={coverage}
@@ -174,7 +184,7 @@ describe("ProfessionFindCraftBrowseCandidateRow", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionFindCraftBrowseCandidateRow
         candidate={createCandidate()}
         coverage={coverage}
@@ -211,7 +221,7 @@ describe("ProfessionFindCraftBrowseCandidateRow", () => {
       []
     );
 
-    render(
+    renderWithRouter(
       <ProfessionFindCraftBrowseCandidateRow
         candidate={createCandidate()}
         coverage={coverage}

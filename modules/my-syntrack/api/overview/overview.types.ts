@@ -83,6 +83,21 @@ export type ProfessionOverviewState = {
   state: OverviewDomainState;
   issueCount: number;
   issues: string[];
+  items: CharacterProfessionSummary[];
+};
+
+export type CharacterProfessionSummary = {
+  professionId: string;
+  key: string;
+  name: string;
+  category: string;
+  skill: number;
+  knowledgePoints: number;
+  dataStatus:
+    | "TRACKED"
+    | "PARTIAL"
+    | "UNTRACKED"
+    | "NO_CATALOG";
 };
 
 export type GearOverviewState = {
@@ -171,5 +186,17 @@ export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
   characters: CharacterWeeklyState[];
+  trackerColumns: TrackerDefinitionView[];
+};
+
+/*
+ * The Character Detail Hub's read model - reuses the exact same
+ * CharacterWeeklyState one Overview row already carries, scoped to a
+ * single character. No new aggregation logic: OverviewService derives
+ * this by reusing getOverview() and finding the one character.
+ */
+export type CharacterControlDetailResponse = {
+  period: OverviewSummary["period"];
+  character: CharacterWeeklyState;
   trackerColumns: TrackerDefinitionView[];
 };

@@ -1,5 +1,6 @@
 import type {
   AttentionItem,
+  CharacterProfessionSummary,
   ProfessionOverviewState
 } from "./overview.types.js";
 
@@ -9,6 +10,7 @@ export type OverviewProfessionCharacterInput =
     name: string;
     hasTrackedProfession: boolean;
     partialProfessionIssues: string[];
+    professions: CharacterProfessionSummary[];
   };
 
 /*
@@ -33,6 +35,13 @@ export function resolveProfessionOverviewState(
       .partialProfessionIssues
       .length;
 
+  const partialProfessionId =
+    character.professions.find(
+      (profession) =>
+        profession.dataStatus ===
+        "PARTIAL"
+    )?.professionId ?? null;
+
   const professions: ProfessionOverviewState =
     {
       state:
@@ -43,7 +52,8 @@ export function resolveProfessionOverviewState(
             : "NOT_TRACKED",
       issueCount,
       issues:
-        character.partialProfessionIssues
+        character.partialProfessionIssues,
+      items: character.professions
     };
 
   if (professions.state !== "ATTENTION") {
@@ -72,7 +82,11 @@ export function resolveProfessionOverviewState(
        * deep link (useSearchParams -> requestedCharacterId) - reuse it
        * rather than inventing a new selection mechanism.
        */
-      path: `/professions/specializations?character=${character.id}`
+      path:
+        `/professions/specializations?character=${encodeURIComponent(character.id)}` +
+        (partialProfessionId
+          ? `&profession=${encodeURIComponent(partialProfessionId)}`
+          : "")
     }
   };
 }

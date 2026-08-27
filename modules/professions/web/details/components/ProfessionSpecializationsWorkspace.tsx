@@ -7,6 +7,7 @@ import { ProfessionSpecializationCharacter } from "./ProfessionSpecializationCha
 
 type ProfessionSpecializationsWorkspaceProps = {
   detail: ProfessionDetail;
+  initialCharacterId?: string | null;
 };
 
 /*
@@ -24,7 +25,8 @@ type ProfessionSpecializationsWorkspaceProps = {
  * "not specialized".
  */
 export function ProfessionSpecializationsWorkspace({
-  detail
+  detail,
+  initialCharacterId = null
 }: ProfessionSpecializationsWorkspaceProps) {
   const characters =
     [
@@ -43,7 +45,8 @@ export function ProfessionSpecializationsWorkspace({
     setSelectedCharacterId
   } =
     useSelectedCharacter(
-      characters
+      characters,
+      initialCharacterId
     );
 
   return (

@@ -58,55 +58,57 @@ export function ProfessionFindCraftWorkspace({
           : "default"
       }
     >
-      <div className="profession-find-craft-mode-toggle">
-        <button
-          className={
-            mode === "browse"
-              ? "active"
-              : ""
-          }
-          onClick={
-            () => setMode("browse")
-          }
-          type="button"
-        >
-          Browse
-        </button>
+      <div className="profession-find-craft-toolbar">
+        <div className="profession-find-craft-mode-toggle">
+          <button
+            className={
+              mode === "browse"
+                ? "active"
+                : ""
+            }
+            onClick={
+              () => setMode("browse")
+            }
+            type="button"
+          >
+            Browse
+          </button>
 
-        <button
-          className={
-            mode === "search"
-              ? "active"
-              : ""
-          }
-          onClick={
-            () => setMode("search")
-          }
-          type="button"
-        >
-          Search
-        </button>
+          <button
+            className={
+              mode === "search"
+                ? "active"
+                : ""
+            }
+            onClick={
+              () => setMode("search")
+            }
+            type="button"
+          >
+            Search
+          </button>
 
-        <button
-          className={
-            mode === "character"
-              ? "active"
-              : ""
-          }
-          onClick={
-            () =>
-              setMode("character")
-          }
-          type="button"
-        >
-          By Character
-        </button>
+          <button
+            className={
+              mode === "character"
+                ? "active"
+                : ""
+            }
+            onClick={
+              () =>
+                setMode("character")
+            }
+            type="button"
+          >
+            By Character
+          </button>
+        </div>
+
+        <ProfessionItemQualityFilterControl
+          onChange={setQualityFilter}
+          value={qualityFilter}
+        />
       </div>
-
-      <ProfessionItemQualityFilterControl
-        onChange={setQualityFilter}
-        value={qualityFilter}
-      />
 
       {mode === "browse" && (
         <ProfessionFindCraftBrowse

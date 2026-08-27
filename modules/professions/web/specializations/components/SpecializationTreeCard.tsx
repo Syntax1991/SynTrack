@@ -18,24 +18,19 @@ export function SpecializationTreeCard({
   return (
     <article className="specialization-tree-card">
       <header>
-        <div>
-          <span className="category-badge">
-            {tree.expansion}
-          </span>
+        <h3 title={tree.description ?? undefined}>
+          {tree.name}
+        </h3>
 
-          <h3>
-            {tree.name}
-          </h3>
-        </div>
+        <span>{tree.expansion}</span>
       </header>
 
-      {tree.description && (
-        <p className="specialization-tree-description">
-          {tree.description}
-        </p>
-      )}
-
       <div className="specialization-node-list">
+        <div className="specialization-node-column-header">
+          <span>Node</span>
+          <span>State / rank</span>
+        </div>
+
         {tree.nodes.map(
           (node) => (
             <SpecializationNodeEditor

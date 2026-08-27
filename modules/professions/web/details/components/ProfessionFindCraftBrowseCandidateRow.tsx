@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { ProfessionSpecializationEquipmentClaim } from "../types/professionDetail.types";
 import { ClassIcon } from "../../shared/components/ProfessionIcons";
 import { SynTrackTooltip } from "../../shared/components/SynTrackTooltip";
@@ -86,7 +87,10 @@ export function ProfessionFindCraftBrowseCandidateRow({
             />
           }
         >
-          <span className="profession-find-craft-browse-candidate-identity">
+          <Link
+            className="profession-find-craft-browse-candidate-identity"
+            to={`/characters/${coverage.character.id}`}
+          >
             <ClassIcon
               className={
                 candidate
@@ -96,7 +100,7 @@ export function ProfessionFindCraftBrowseCandidateRow({
             />
 
             {candidate.characterName}
-          </span>
+          </Link>
         </SynTrackTooltip>
       ) : (
         <span className="profession-find-craft-browse-candidate-identity">

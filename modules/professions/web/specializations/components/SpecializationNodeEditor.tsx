@@ -33,7 +33,10 @@ export function SpecializationNodeEditor({
   };
 
   return (
-    <div className="specialization-node-group">
+    <div
+      className="specialization-node-group"
+      title={node.description ?? undefined}
+    >
       <div
         className={
           selected
@@ -93,18 +96,6 @@ export function SpecializationNodeEditor({
           </label>
         </div>
       </div>
-
-      {node.description && (
-        <p
-          className="specialization-node-description"
-          style={{
-            marginLeft:
-              `${depth * 24 + 34}px`
-          }}
-        >
-          {node.description}
-        </p>
-      )}
 
       {node.children.map(
         (child) => (

@@ -1,6 +1,7 @@
 import type {
   RequestHandler
 } from "express";
+import { characterIdSchema } from "../characters/character.validation.js";
 import { OverviewService } from "./overview.service.js";
 
 export class OverviewController {
@@ -15,6 +16,22 @@ export class OverviewController {
   ) => {
     response.json(
       await this.service.getOverview()
+    );
+  };
+
+  getCharacterState: RequestHandler = async (
+    request,
+    response
+  ) => {
+    const characterId =
+      characterIdSchema.parse(
+        request.params.characterId
+      );
+
+    response.json(
+      await this.service.getCharacterState(
+        characterId
+      )
     );
   };
 }

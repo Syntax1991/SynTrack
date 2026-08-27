@@ -88,16 +88,18 @@ export function CharacterMatrixRow({
     <tr>
       <td>
         <div className="overview-character-identity">
-          <strong
+          <Link
+            className="matrix-character-link"
             style={{
               color: getClassColor(
                 state.character
                   .className
               )
             }}
+            to={`/characters/${state.character.id}`}
           >
             {state.character.name}
-          </strong>
+          </Link>
 
           <span>
             {

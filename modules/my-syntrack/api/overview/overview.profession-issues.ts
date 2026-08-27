@@ -1,6 +1,7 @@
 import { ProfessionDetailRepository } from "../../../professions/api/details/profession-detail.repository.js";
 import { ProfessionDetailService } from "../../../professions/api/details/profession-detail.service.js";
 import { ProfessionRecipeRepository } from "../../../professions/api/details/profession-recipe.repository.js";
+import type { CharacterProfessionSummary } from "./overview.types.js";
 
 export type ProfessionIssuesByCharacter =
   Map<
@@ -8,6 +9,7 @@ export type ProfessionIssuesByCharacter =
     {
       hasTrackedProfession: boolean;
       partialIssues: string[];
+      professions: CharacterProfessionSummary[];
     }
   >;
 
@@ -43,7 +45,8 @@ export async function loadProfessionIssuesByCharacter(): Promise<ProfessionIssue
 
     const created = {
       hasTrackedProfession: false,
-      partialIssues: [] as string[]
+      partialIssues: [] as string[],
+      professions: [] as CharacterProfessionSummary[]
     };
 
     result.set(
@@ -82,10 +85,34 @@ export async function loadProfessionIssuesByCharacter(): Promise<ProfessionIssue
               `${profession.name}: specialization progress captured, but no recipes or capabilities imported yet`
             );
           }
+
+          entry.professions.push({
+            professionId:
+              profession.id,
+            key: profession.key,
+            name: profession.name,
+            category:
+              profession.category,
+            skill: character.skill,
+            knowledgePoints:
+              character.knowledgePoints,
+            dataStatus:
+              character.dataStatus
+          });
         }
       }
     )
   );
+
+  for (const entry of result.values()) {
+    entry.professions.sort(
+      (left, right) =>
+        left.name.localeCompare(
+          right.name,
+          "en"
+        )
+    );
+  }
 
   return result;
 }

@@ -192,7 +192,7 @@ function KnowledgeContent({
 
                   <Link
                     className="profession-module-row-link"
-                    to={`/professions/specializations?character=${character.character.id}`}
+                    to={`/professions/specializations?profession=${professionId}&character=${character.character.id}`}
                   >
                     Open tree
                   </Link>

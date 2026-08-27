@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { ProfessionCharacterCoverage } from "../types/professionDetail.types";
 
 export function useSelectedCharacter(
-  characters: ProfessionCharacterCoverage[]
+  characters: ProfessionCharacterCoverage[],
+  initialCharacterId: string | null = null
 ): {
   selectedCharacterId: string;
   selectedCoverage: ProfessionCharacterCoverage | null;
@@ -15,7 +16,12 @@ export function useSelectedCharacter(
     setSelectedCharacterId
   ] =
     useState(
-      characters[0]?.character.id ??
+      characters.find(
+        (coverage) =>
+          coverage.character.id ===
+          initialCharacterId
+      )?.character.id ??
+        characters[0]?.character.id ??
         ""
     );
 

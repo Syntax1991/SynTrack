@@ -53,6 +53,21 @@ export type ProfessionOverviewState = {
   state: OverviewDomainState;
   issueCount: number;
   issues: string[];
+  items: CharacterProfessionSummary[];
+};
+
+export type CharacterProfessionSummary = {
+  professionId: string;
+  key: string;
+  name: string;
+  category: string;
+  skill: number;
+  knowledgePoints: number;
+  dataStatus:
+    | "TRACKED"
+    | "PARTIAL"
+    | "UNTRACKED"
+    | "NO_CATALOG";
 };
 
 export type GearOverviewState = {

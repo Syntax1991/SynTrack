@@ -1,4 +1,6 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { ProfessionCharacterCoverage } from "../types/professionDetail.types";
 import { ProfessionSpecializationCharacter } from "./ProfessionSpecializationCharacter";
@@ -71,6 +73,14 @@ function expectRankVisible(
   ).toBeGreaterThan(0);
 }
 
+function renderWithRouter(
+  node: ReactNode
+) {
+  return render(
+    <MemoryRouter>{node}</MemoryRouter>
+  );
+}
+
 describe("ProfessionSpecializationCharacter", () => {
   it("shows 0/20 explicitly for an uninvested slot, never silently omitting it", () => {
     const coverage = createCoverage([
@@ -83,7 +93,7 @@ describe("ProfessionSpecializationCharacter", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionSpecializationCharacter
         coverage={coverage}
         specializationMappingAvailable
@@ -115,7 +125,7 @@ describe("ProfessionSpecializationCharacter", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionSpecializationCharacter
         coverage={coverage}
         specializationMappingAvailable
@@ -149,7 +159,7 @@ describe("ProfessionSpecializationCharacter", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionSpecializationCharacter
         coverage={coverage}
         specializationMappingAvailable
@@ -190,7 +200,7 @@ describe("ProfessionSpecializationCharacter", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionSpecializationCharacter
         coverage={coverage}
         specializationMappingAvailable
@@ -247,7 +257,7 @@ describe("ProfessionSpecializationCharacter", () => {
       })
     ]);
 
-    render(
+    renderWithRouter(
       <ProfessionSpecializationCharacter
         coverage={coverage}
         specializationMappingAvailable
@@ -275,7 +285,7 @@ describe("ProfessionSpecializationCharacter", () => {
       []
     );
 
-    render(
+    renderWithRouter(
       <ProfessionSpecializationCharacter
         coverage={coverage}
         specializationMappingAvailable={

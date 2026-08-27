@@ -1,7 +1,19 @@
+.profession-find-craft-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
+}
+
 .profession-find-craft-mode-toggle {
   display: inline-flex;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .profession-find-craft-mode-toggle button {
@@ -28,7 +40,7 @@
 .profession-find-craft-quality-filter {
   display: inline-flex;
   gap: 6px;
-  margin-bottom: 16px;
+  margin: 0 0 0 auto;
 }
 
 .profession-find-craft-quality-filter button {
@@ -190,6 +202,26 @@
   border-top: 1px solid var(--border);
 }
 
+.profession-find-craft-candidate-header,
+.profession-find-craft-candidate-row {
+  display: grid;
+  grid-template-columns:
+    minmax(140px, 1fr)
+    minmax(160px, 1.2fr)
+    140px;
+  gap: 14px;
+}
+
+.profession-find-craft-candidate-header {
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /*
  * Browse's recipe-click detail: additional facts only (item quality/
  * level/family-slot, per-crafter material+result numbers) - the
@@ -234,12 +266,6 @@
 
 .profession-find-craft-candidate-row {
   width: 100%;
-  display: grid;
-  grid-template-columns:
-    minmax(140px, 1fr)
-    minmax(160px, 1.2fr)
-    140px;
-  gap: 14px;
   align-items: center;
   padding: 10px 4px;
   border: 0;
@@ -274,5 +300,9 @@
     grid-template-columns:
       minmax(0, 1fr);
     gap: 4px;
+  }
+
+  .profession-find-craft-candidate-header {
+    display: none;
   }
 }

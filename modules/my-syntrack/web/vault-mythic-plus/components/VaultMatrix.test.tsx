@@ -4,6 +4,8 @@ import {
   screen,
   within
 } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { VaultCharacter } from "../types/vaultMythicPlus.types";
 import { VaultMatrix } from "./VaultMatrix";
@@ -41,9 +43,17 @@ function buildCharacter(
   };
 }
 
+function renderWithRouter(
+  node: ReactNode
+) {
+  return render(
+    <MemoryRouter>{node}</MemoryRouter>
+  );
+}
+
 describe("VaultMatrix", () => {
   it("renders exactly one row per character", () => {
-    render(
+    renderWithRouter(
       <VaultMatrix
         characters={[
           buildCharacter({
@@ -64,8 +74,36 @@ describe("VaultMatrix", () => {
     ).toHaveLength(3);
   });
 
+  it("links the character name while keeping Log run as a separate action", () => {
+    renderWithRouter(
+      <VaultMatrix
+        characters={[
+          buildCharacter({
+            id: "char-7"
+          })
+        ]}
+        onOpenRunLog={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole("link", {
+        name: "Synblast"
+      })
+    ).toHaveAttribute(
+      "href",
+      "/characters/char-7"
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: "Log run"
+      })
+    ).toBeInTheDocument();
+  });
+
   it("renders zero-runs Vault state as UNKNOWN ('?'), never a fake 0/N, and keeps it distinguishable from real progress", () => {
-    render(
+    renderWithRouter(
       <VaultMatrix
         characters={[
           buildCharacter({
@@ -133,7 +171,7 @@ describe("VaultMatrix", () => {
   });
 
   it("keeps the 1/4/8 slot-unlock math correct and each character's slot state in its own row", () => {
-    render(
+    renderWithRouter(
       <VaultMatrix
         characters={[
           buildCharacter({
@@ -198,7 +236,7 @@ describe("VaultMatrix", () => {
   it("opens the run log for the correct character when its row action is clicked", () => {
     const onOpenRunLog = vi.fn();
 
-    render(
+    renderWithRouter(
       <VaultMatrix
         characters={[
           buildCharacter({

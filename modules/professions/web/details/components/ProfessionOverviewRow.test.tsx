@@ -76,7 +76,7 @@ describe("ProfessionOverviewRow", () => {
     ).toHaveLength(2);
   });
 
-  it("keeps the profession name, counts, and the navigation arrow all inside the same row", () => {
+  it("keeps the profession name, aligned counts, status, and navigation arrow inside the same row", () => {
     renderRows([
       createProfession({
         id: "1",
@@ -100,10 +100,14 @@ describe("ProfessionOverviewRow", () => {
     ).toBeInTheDocument();
 
     expect(
-      within(row).getByText(
-        "6 characters · 6 specialized"
+      within(row).getAllByText("6")
+    ).toHaveLength(2);
+
+    expect(
+      within(row).getByTitle(
+        /Tracked with no known issues/
       )
-    ).toBeInTheDocument();
+    ).toHaveTextContent("✓");
 
     expect(
       within(row).getByText("→")
@@ -171,7 +175,7 @@ describe("ProfessionOverviewRow", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("a Gathering profession with no tracked characters stays compact - a single 'Not tracked' line, not a multi-line block", () => {
+  it("a Gathering profession with no tracked characters stays compact and explicitly not tracked", () => {
     renderRows([
       createProfession({
         id: "1",
@@ -188,21 +192,13 @@ describe("ProfessionOverviewRow", () => {
     );
 
     expect(
-      within(row).getByText(
+      within(row).getByTitle(
         "Not tracked"
       )
-    ).toBeInTheDocument();
+    ).toHaveTextContent("—");
 
     expect(
-      within(row).queryByText(
-        /characters ·/
-      )
-    ).not.toBeInTheDocument();
-
-    expect(
-      within(row).queryByText(
-        /updated/i
-      )
+      within(row).queryByText(/Updated/i)
     ).not.toBeInTheDocument();
   });
 
@@ -229,26 +225,26 @@ describe("ProfessionOverviewRow", () => {
     );
 
     expect(
-      within(rows[0]).getByText(
-        "6 characters · 6 specialized"
-      )
+      within(rows[0]).getAllByText("6")
+    ).toHaveLength(2);
+
+    expect(
+      within(rows[1]).getByText("4")
     ).toBeInTheDocument();
 
     expect(
-      within(rows[1]).getByText(
-        "4 characters · 3 specialized"
-      )
+      within(rows[1]).getByText("3")
     ).toBeInTheDocument();
 
     expect(
-      within(rows[1]).getByText(
-        "1 needs specialization"
+      within(rows[1]).getByTitle(
+        "1 character needs specialization data."
       )
-    ).toBeInTheDocument();
+    ).toHaveTextContent("!");
 
     expect(
-      within(rows[0]).queryByText(
-        "1 needs specialization"
+      within(rows[0]).queryByTitle(
+        /needs specialization data/
       )
     ).not.toBeInTheDocument();
   });

@@ -34,7 +34,8 @@ export function buildCharacter(
     professions: {
       state: "NOT_TRACKED",
       issueCount: 0,
-      issues: []
+      issues: [],
+      items: []
     },
     gear: {
       state: "NOT_TRACKED",

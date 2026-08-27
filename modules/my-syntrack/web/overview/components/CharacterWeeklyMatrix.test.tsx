@@ -43,6 +43,30 @@ describe("CharacterWeeklyMatrix", () => {
     ).toBeInTheDocument();
   });
 
+  it("links each character name to the canonical Character Detail route", () => {
+    renderMatrix([
+      buildCharacter({
+        character: {
+          id: "char-7",
+          name: "Synblast",
+          realm: "Antonidas",
+          region: "eu",
+          className: "Shaman",
+          level: 80
+        }
+      })
+    ]);
+
+    expect(
+      screen.getByRole("link", {
+        name: "Synblast"
+      })
+    ).toHaveAttribute(
+      "href",
+      "/characters/char-7"
+    );
+  });
+
   it("renders the compact summary line instead of KPI cards", () => {
     renderMatrix([buildCharacter()]);
 

@@ -32,6 +32,13 @@ export function ProfessionFindCraftBrowseCandidateList({
 
   return (
     <div className="profession-find-craft-browse-candidates">
+      <div className="profession-find-craft-browse-candidate-header">
+        <span>Crafter</span>
+        <span>Specific node</span>
+        <span>Recipes</span>
+        <span>Capability</span>
+      </div>
+
       {candidates.map(
         (candidate) => (
           <ProfessionFindCraftBrowseCandidateRow

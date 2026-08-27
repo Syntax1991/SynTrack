@@ -108,7 +108,8 @@ function resolveCharacterState(
       id: character.id,
       name: character.name,
       hasTrackedProfession: false,
-      partialProfessionIssues: []
+      partialProfessionIssues: [],
+      professions: []
     };
 
   const weeklyResult =

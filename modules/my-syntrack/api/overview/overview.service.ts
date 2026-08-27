@@ -1,3 +1,4 @@
+import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { WeeklyChecklistRepository } from "../weekly-checklist/weekly-checklist.repository.js";
 import { WeeklyChecklistService } from "../weekly-checklist/weekly-checklist.service.js";
 import { VaultMythicPlusRepository } from "../vault-mythic-plus/vault-mythic-plus.repository.js";
@@ -10,10 +11,14 @@ import { TrackerDefinitionService } from "../trackers/tracker-definition.service
 import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
 import { TrackerValueService } from "../trackers/tracker-value.service.js";
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
+import { findCharacterControlDetail } from "./overview-character-state.js";
 import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
 import { loadProfessionIssuesByCharacter } from "./overview.profession-issues.js";
 import { filterPinnedTrackerColumns } from "./overview-tracker-columns.js";
-import type { OverviewResponse } from "./overview.types.js";
+import type {
+  CharacterControlDetailResponse,
+  OverviewResponse
+} from "./overview.types.js";
 
 /*
  * Read-model orchestrator for the "My SynTrack" Overview. It owns no
@@ -169,7 +174,9 @@ export class OverviewService {
               hasTrackedProfession:
                 entry.hasTrackedProfession,
               partialProfessionIssues:
-                entry.partialIssues
+                entry.partialIssues,
+              professions:
+                entry.professions
             }
           ]
         )
@@ -212,5 +219,33 @@ export class OverviewService {
       characters,
       trackerColumns
     };
+  }
+
+  /*
+   * The Character Detail Hub's read path - reuses getOverview() (the
+   * exact same aggregation every domain already goes through) and
+   * narrows to one character. This is not a second aggregator: no
+   * completion/attention logic is reimplemented here.
+   */
+  async getCharacterState(
+    characterId: string
+  ): Promise<CharacterControlDetailResponse> {
+    const overview =
+      await this.getOverview();
+
+    const detail =
+      findCharacterControlDetail(
+        overview,
+        characterId
+      );
+
+    if (!detail) {
+      throw new AppError(
+        404,
+        "Character not found."
+      );
+    }
+
+    return detail;
   }
 }

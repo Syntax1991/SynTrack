@@ -113,7 +113,7 @@ export function ProfessionModuleWorkspace({
         <LoadingPanel />
       ) : selectedProfession ? (
         <>
-          <section className="panel profession-module-scope">
+          <section className="profession-module-scope">
             <label className="profession-module-select">
               <span>Profession</span>
 

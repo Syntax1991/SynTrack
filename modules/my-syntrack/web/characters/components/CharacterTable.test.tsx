@@ -87,6 +87,21 @@ describe("CharacterTable", () => {
     );
   });
 
+  it("links the character name to the canonical Character Detail route", () => {
+    renderTable([
+      buildCharacter({ id: "char-7" })
+    ]);
+
+    expect(
+      screen.getByRole("link", {
+        name: "Synblast"
+      })
+    ).toHaveAttribute(
+      "href",
+      "/characters/char-7"
+    );
+  });
+
   it("joins professions compactly instead of one badge per profession competing with the character name", () => {
     renderTable([
       buildCharacter({

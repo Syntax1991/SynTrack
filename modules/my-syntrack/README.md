@@ -5,6 +5,7 @@ Personal workspace and projections for the logged-in player.
 ## Capabilities
 
 - My Characters
+- Character Detail control hub
 - Weekly Checklist
 - Vault / M+
 - Raid Tasks
@@ -20,6 +21,8 @@ Personal workspace and projections for the logged-in player.
 
 - personal dashboard and character overview
 - character roster management
+- one-request Character Detail aggregation with stable-ID deep links into
+  Weeklies, Vault/M+, Professions and Gear
 - reset-aware weekly checklist with per-character progress
 - Mythic+ run log and derived Great Vault dungeon slots
 - personal raid preparation tasks with priorities and deadlines

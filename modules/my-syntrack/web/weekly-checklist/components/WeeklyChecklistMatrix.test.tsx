@@ -4,6 +4,8 @@ import {
   screen,
   within
 } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type {
   WeeklyChecklistCharacter,
@@ -64,9 +66,17 @@ function buildCharacter(
   };
 }
 
+function renderWithRouter(
+  node: ReactNode
+) {
+  return render(
+    <MemoryRouter>{node}</MemoryRouter>
+  );
+}
+
 describe("WeeklyChecklistMatrix", () => {
   it("renders exactly one row per character", () => {
-    render(
+    renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
@@ -90,8 +100,38 @@ describe("WeeklyChecklistMatrix", () => {
     ).toHaveLength(3);
   });
 
+  it("links the character name without turning task cells into navigation", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            id: "char-7"
+          })
+        ]}
+        onToggleAll={vi.fn()}
+        onToggleTask={vi.fn()}
+        pendingAction={null}
+        tasks={tasks}
+      />
+    );
+
+    expect(
+      screen.getByRole("link", {
+        name: "Synblast"
+      })
+    ).toHaveAttribute(
+      "href",
+      "/characters/char-7"
+    );
+
+    expect(
+      screen.getAllByRole("button")
+        .length
+    ).toBeGreaterThan(0);
+  });
+
   it("keeps each character's task states in their own row only, never bleeding into another character's row", () => {
-    render(
+    renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
@@ -141,7 +181,7 @@ describe("WeeklyChecklistMatrix", () => {
   });
 
   it("distinguishes explicit complete from incomplete with different tokens", () => {
-    render(
+    renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
@@ -173,7 +213,7 @@ describe("WeeklyChecklistMatrix", () => {
   it("toggles a single task for the correct character when its cell is clicked", () => {
     const onToggleTask = vi.fn();
 
-    render(
+    renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
@@ -211,7 +251,7 @@ describe("WeeklyChecklistMatrix", () => {
   it("still supports Complete all per row", () => {
     const onToggleAll = vi.fn();
 
-    render(
+    renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({ id: "char-1" })

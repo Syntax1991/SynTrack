@@ -12,7 +12,8 @@ describe("overviewCellFormatting", () => {
     const profession = formatProfessionToken({
       state: "NOT_TRACKED",
       issueCount: 0,
-      issues: []
+      issues: [],
+      items: []
     });
 
     const gear = formatGearToken({

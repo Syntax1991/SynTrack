@@ -71,9 +71,9 @@ export function CharacterSpecializationsPage() {
         actions={
           <Link
             className="button button-secondary"
-            to="/characters"
+            to={`/characters/${characterId}`}
           >
-            Back to characters
+            Back to character
           </Link>
         }
         description={

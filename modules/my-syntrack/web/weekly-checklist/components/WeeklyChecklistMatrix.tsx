@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type {
@@ -98,18 +99,20 @@ export function WeeklyChecklistMatrix({
                 >
                   <td>
                     <div className="matrix-identity">
-                      <strong
+                      <Link
+                        className="matrix-character-link"
                         style={{
                           color:
                             getClassColor(
                               character.className
                             )
                         }}
+                        to={`/characters/${character.id}`}
                       >
                         {
                           character.name
                         }
-                      </strong>
+                      </Link>
 
                       <span>
                         {

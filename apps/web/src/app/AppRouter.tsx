@@ -11,6 +11,7 @@ import { RosterPage } from "../../../../modules/guild/web/roster/pages/RosterPag
 import { GuildSettingsPage } from "../../../../modules/guild/web/settings/pages/GuildSettingsPage";
 import { TeamsPage } from "../../../../modules/guild/web/teams/pages/TeamsPage";
 import { WeeklyProgressPage } from "../../../../modules/guild/web/weekly-progress/pages/WeeklyProgressPage";
+import { CharacterDetailPage } from "../../../../modules/my-syntrack/web/characters/pages/CharacterDetailPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
 import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages/OverviewPage";
 import { GearReadinessPage } from "../../../../modules/my-syntrack/web/gear-readiness/pages/GearReadinessPage";
@@ -47,7 +48,7 @@ export function AppRouter() {
         <Route
           path="characters/:characterId"
           element={
-            <CharacterSpecializationsPage />
+            <CharacterDetailPage />
           }
         />
 

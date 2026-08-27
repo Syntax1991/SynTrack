@@ -59,6 +59,7 @@
   border-top: 1px solid var(--border);
 }
 
+.profession-find-craft-browse-candidate-header,
 .profession-find-craft-browse-candidate-row {
   display: grid;
   grid-template-columns:
@@ -68,6 +69,19 @@
     100px;
   gap: 14px;
   align-items: center;
+}
+
+.profession-find-craft-browse-candidate-header {
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profession-find-craft-browse-candidate-row {
   padding: 9px 4px;
   border-bottom: 1px solid var(--border);
   font-size: 0.76rem;
@@ -84,6 +98,12 @@
   align-items: center;
   gap: 8px;
   font-weight: 650;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.profession-find-craft-browse-candidate-identity:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {
@@ -91,5 +111,9 @@
     grid-template-columns:
       minmax(0, 1fr);
     gap: 4px;
+  }
+
+  .profession-find-craft-browse-candidate-header {
+    display: none;
   }
 }

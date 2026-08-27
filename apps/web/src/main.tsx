@@ -20,6 +20,7 @@ import "./styles/my-syntrack-tracker-cell.css";
 import "./styles/my-syntrack-tracker-manager.css";
 import "./styles/dense-matrix.css";
 import "./styles/drawer.css";
+import "./styles/character-detail.css";
 import "./styles/weekly-checklist.css";
 import "./styles/vault-mythic-plus-runs.css";
 import "./styles/raid-tasks.css";

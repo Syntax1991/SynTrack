@@ -76,8 +76,19 @@
 
 .profession-specialization-character
   > header
-  strong {
+  strong,
+.profession-specialization-character-link {
   font-size: 0.9rem;
+}
+
+.profession-specialization-character-link {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.profession-specialization-character-link:hover {
+  text-decoration: underline;
 }
 
 .profession-specialization-character

@@ -15,3 +15,10 @@ overviewRouter.get(
     controller.getOverview
   )
 );
+
+overviewRouter.get(
+  "/characters/:characterId",
+  asyncHandler(
+    controller.getCharacterState
+  )
+);

@@ -7,12 +7,9 @@
  */
 
 .profession-overview-panel {
-  overflow: hidden;
-}
-
-.profession-overview-total {
-  color: var(--text-secondary);
-  font-size: 0.76rem;
+  display: grid;
+  gap: 18px;
+  margin-top: 8px;
 }
 
 .profession-overview-list {
@@ -22,12 +19,15 @@
 
 .profession-overview-category-group
   + .profession-overview-category-group {
-  margin-top: 18px;
+  margin-top: 4px;
 }
 
 .profession-overview-category-heading {
-  margin: 0 0 4px;
-  padding: 0 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 0 4px;
   color: var(--text-muted);
   font-size: 0.64rem;
   font-weight: 750;
@@ -35,13 +35,44 @@
   letter-spacing: 0.06em;
 }
 
+.profession-overview-category-heading span {
+  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 600;
+}
+
+.profession-overview-header,
 .profession-overview-row {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1fr)
+    90px
+    100px
+    70px
+    24px;
   gap: 14px;
-  min-height: 48px;
-  padding: 6px 16px;
-  border-top: 1px solid var(--border);
+  align-items: center;
+}
+
+.profession-overview-header {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--radius-small)
+    var(--radius-small) 0 0;
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+  font-size: 0.61rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profession-overview-row {
+  min-height: 42px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-top: 0;
   color: var(--text);
   text-decoration: none;
   transition: background 120ms ease;
@@ -73,31 +104,11 @@
   white-space: nowrap;
 }
 
-.profession-overview-row-meta {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  min-width: 160px;
+.profession-overview-count,
+.profession-overview-status {
   color: var(--text-secondary);
-  font-size: 0.7rem;
-  text-align: right;
-  line-height: 1.45;
-}
-
-.profession-overview-row-meta-attention {
-  color: var(--warning-text, #ffc670);
-  font-weight: 650;
-}
-
-.profession-overview-row-meta-updated {
-  color: var(--text-muted);
-  font-size: 0.64rem;
-}
-
-.profession-overview-row-not-tracked {
-  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .profession-overview-row-arrow {
@@ -116,13 +127,18 @@
 }
 
 @media (max-width: 640px) {
-  .profession-overview-row {
-    flex-wrap: wrap;
+  .profession-overview-header {
+    display: none;
   }
 
-  .profession-overview-row-meta {
-    align-items: flex-start;
-    min-width: 0;
-    text-align: left;
+  .profession-overview-row {
+    grid-template-columns:
+      minmax(0, 1fr)
+      36px
+      36px
+      28px
+      18px;
+    gap: 8px;
+    border-top: 1px solid var(--border);
   }
 }
