@@ -1,5 +1,6 @@
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
 import { AddonGearPersistence } from "./addon-import.gear.persistence.js";
+import { AddonResourcePersistence } from "./addon-import.resource.persistence.js";
 import {
   createNodeMapKey,
   getSyncDate,
@@ -22,6 +23,9 @@ export class AddonCharacterPersistence {
   private readonly gearPersistence =
     new AddonGearPersistence();
 
+  private readonly resourcePersistence =
+    new AddonResourcePersistence();
+
   async persist(
     transaction: AddonImportTransaction,
     snapshot: AddonSnapshot,
@@ -32,7 +36,8 @@ export class AddonCharacterPersistence {
       characters: 0,
       professionAssignments: 0,
       progressEntries: 0,
-      gearSlots: 0
+      gearSlots: 0,
+      resourceSnapshots: 0
     };
 
     for (
@@ -127,6 +132,13 @@ export class AddonCharacterPersistence {
       transaction,
       storedCharacter.id,
       character.gear,
+      result
+    );
+
+    await this.resourcePersistence.persist(
+      transaction,
+      storedCharacter.id,
+      character.resources,
       result
     );
   }

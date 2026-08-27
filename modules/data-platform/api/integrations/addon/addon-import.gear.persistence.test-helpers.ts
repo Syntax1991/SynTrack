@@ -140,6 +140,7 @@ export function character(
     lastUpdatedAt: "2026-08-27T19:34:31.000Z",
     professions: [],
     gear,
+    resources: null,
     ...overrides
   };
 }
