@@ -98,6 +98,13 @@ public sealed partial class MainViewModel : ObservableObject
         _syncEngine.SyncStatusChanged += HandleSyncEngineStatusChanged;
         _syncEngine.SyncCompleted += OnSyncCompleted;
 
+        // A restored AccountName is already usable by RestartWatcherIfReady
+        // below regardless of this call - but the "WoW Account" ComboBox is
+        // bound via SelectedValue against AccountCandidates, so without
+        // populating that collection here too, a persisted account shows as
+        // an empty dropdown on every launch until the user clicks Detect,
+        // even though the watcher was already targeting the right account.
+        RefreshAccountCandidates();
         RestartWatcherIfReady();
     }
 
