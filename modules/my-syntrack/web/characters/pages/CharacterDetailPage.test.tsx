@@ -139,4 +139,104 @@ describe("CharacterDetailPage", () => {
         )
     ).toBe(true);
   });
+
+  it("shows the empty state when no profession weekly sources are tracked yet", () => {
+    renderPage();
+
+    expect(
+      screen.getByText(
+        "No profession weekly sources tracked yet."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("renders per-profession Weekly Quest/Treatise/Drops status once captured", () => {
+    const detail = buildDetail();
+
+    mocks.useCharacterControlDetail.mockReturnValue({
+      detail: {
+        ...detail,
+        character: {
+          ...detail.character,
+          professionWeekly: {
+            state: "ATTENTION",
+            profKp: {
+              completeCount: 1,
+              incompleteCount: 1,
+              unknownCount: 0,
+              applicableTotal: 2
+            },
+            drops: {
+              completeCount: 0,
+              incompleteCount: 1,
+              unknownCount: 0,
+              applicableTotal: 1
+            },
+            professions: [
+              {
+                professionKey: "alchemy",
+                name: "Alchemy",
+                profKp: {
+                  completeCount: 1,
+                  incompleteCount: 1,
+                  unknownCount: 0,
+                  applicableTotal: 2
+                },
+                sources: [
+                  {
+                    sourceKey: "weekly-quest",
+                    name: "Weekly Quest",
+                    sourceType: "WEEKLY_QUEST",
+                    state: "COMPLETE",
+                    currentValue: null,
+                    maxValue: null,
+                    capturedAt: null
+                  },
+                  {
+                    sourceKey: "treatise",
+                    name: "Treatise",
+                    sourceType: "TREATISE",
+                    state: "INCOMPLETE",
+                    currentValue: null,
+                    maxValue: null,
+                    capturedAt: null
+                  }
+                ],
+                drops: {
+                  sourceKey: "knowledge-drops",
+                  name: "Knowledge Drops",
+                  sourceType: "KNOWLEDGE_DROPS",
+                  state: "INCOMPLETE",
+                  currentValue: 1,
+                  maxValue: 2,
+                  capturedAt: null
+                }
+              }
+            ]
+          }
+        }
+      },
+      isLoading: false,
+      error: null,
+      notFound: false
+    });
+
+    renderPage();
+
+    expect(
+      screen.getByRole("heading", { name: "Alchemy" })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByTitle("Complete this week")
+    ).toHaveTextContent("✓");
+
+    expect(
+      screen.getAllByTitle(
+        "Not complete this week"
+      ).length
+    ).toBeGreaterThan(0);
+
+    expect(screen.getByText("1/2")).toBeInTheDocument();
+  });
 });
