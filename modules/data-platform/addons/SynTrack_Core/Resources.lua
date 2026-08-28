@@ -82,6 +82,15 @@ local function captureCurrency(currencyId)
         return nil
     end
 
+    --[[
+        PlayerHasMaxWeeklyQuantity still returns a real boolean (usually
+        false) for a currency with no weekly-earning component at all -
+        that answer is vacuous, not evidence of an incomplete week.
+        isWeeklyCapped is only ever reported when canEarnPerWeek is true,
+        matching weeklyQuantity/maxWeeklyQuantity below (confirmed live:
+        without this, every non-weekly currency was misread downstream
+        as "proven not complete this week").
+    ]]
     local hasWeeklyTracking = info.canEarnPerWeek == true
 
     return {
@@ -98,7 +107,11 @@ local function captureCurrency(currencyId)
             or nil,
 
         isCapped = getCappedFlag(currencyId, false),
-        isWeeklyCapped = getCappedFlag(currencyId, true),
+
+        isWeeklyCapped = hasWeeklyTracking
+            and getCappedFlag(currencyId, true)
+            or nil,
+
         discovered = info.discovered,
         accountWide = getAccountWideFlag(currencyId)
     }
