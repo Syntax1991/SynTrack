@@ -47,4 +47,12 @@ export interface TagRepositoryContract {
   findCharacterExists(
     characterId: string
   ): Promise<boolean>;
+  findExistingCharacterIds(
+    characterIds: string[]
+  ): Promise<string[]>;
+  bulkAssign(
+    characterIds: string[],
+    addTagIds: string[],
+    removeTagIds: string[]
+  ): Promise<void>;
 }

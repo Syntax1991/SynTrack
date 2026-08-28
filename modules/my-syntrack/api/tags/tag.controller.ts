@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { TagService } from "./tag.service.js";
 import {
   characterIdParamSchema,
+  tagBulkAssignSchema,
   tagCreateSchema,
   tagIdParamSchema,
   tagUpdateSchema
@@ -117,5 +118,18 @@ export class TagController {
       items:
         await this.service.listAllAssignments()
     });
+  };
+
+  bulkAssign: RequestHandler = async (
+    request,
+    response
+  ) => {
+    const input = tagBulkAssignSchema.parse(
+      request.body
+    );
+
+    await this.service.bulkAssign(input);
+
+    response.status(204).send();
   };
 }

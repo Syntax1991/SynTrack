@@ -39,3 +39,17 @@ export const tagIdParamSchema =
 
 export const characterIdParamSchema =
   z.string().trim().min(1);
+
+export const tagBulkAssignSchema = z
+  .object({
+    characterIds: z
+      .array(z.string().trim().min(1))
+      .min(1),
+    addTagIds: z
+      .array(z.string().trim().min(1))
+      .default([]),
+    removeTagIds: z
+      .array(z.string().trim().min(1))
+      .default([])
+  })
+  .strict();

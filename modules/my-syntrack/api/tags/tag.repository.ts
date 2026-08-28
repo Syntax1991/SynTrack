@@ -136,4 +136,74 @@ export class TagRepository
 
     return character !== null;
   }
+
+  async findExistingCharacterIds(
+    characterIds: string[]
+  ): Promise<string[]> {
+    const characters =
+      await prisma.character.findMany({
+        where: {
+          id: { in: characterIds }
+        },
+        select: { id: true }
+      });
+
+    return characters.map(
+      (character) => character.id
+    );
+  }
+
+  /*
+   * SQLite's Prisma client has no createMany skipDuplicates support
+   * (that's a MySQL/Postgres-only feature), so re-adding an already-
+   * assigned tag is made harmless the same way the existing single
+   * assign() already does it - per-combination upsert. deleteMany on
+   * the remove side is already a no-op for a missing assignment by
+   * construction. Everything runs in one transaction so a bulk request
+   * with both adds and removes never applies only half.
+   */
+  async bulkAssign(
+    characterIds: string[],
+    addTagIds: string[],
+    removeTagIds: string[]
+  ): Promise<void> {
+    await prisma.$transaction([
+      ...characterIds.flatMap(
+        (characterId) =>
+          addTagIds.map((tagId) =>
+            prisma.characterTagAssignment.upsert(
+              {
+                where: {
+                  characterId_tagId: {
+                    characterId,
+                    tagId
+                  }
+                },
+                create: {
+                  characterId,
+                  tagId
+                },
+                update: {}
+              }
+            )
+          )
+      ),
+      ...(removeTagIds.length > 0
+        ? [
+            prisma.characterTagAssignment.deleteMany(
+              {
+                where: {
+                  characterId: {
+                    in: characterIds
+                  },
+                  tagId: {
+                    in: removeTagIds
+                  }
+                }
+              }
+            )
+          ]
+        : [])
+    ]);
+  }
 }
