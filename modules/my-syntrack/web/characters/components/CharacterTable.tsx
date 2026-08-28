@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { IndeterminateCheckbox } from "../../../../../apps/web/src/shared/components/IndeterminateCheckbox";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { TagView } from "../../tags/types/tag.types";
@@ -13,6 +14,11 @@ type CharacterTableProps = {
     string,
     Set<string>
   >;
+  selectedCharacterIds: Set<string>;
+  onToggleSelect: (
+    characterId: string
+  ) => void;
+  onToggleSelectAllVisible: () => void;
   onDelete: (
     character: Character
   ) => void;
@@ -29,6 +35,9 @@ export function CharacterTable({
   minimumCraftingLevel,
   tags,
   tagIdsByCharacterId,
+  selectedCharacterIds,
+  onToggleSelect,
+  onToggleSelectAllVisible,
   onDelete,
   onEdit,
   onManageTags
@@ -41,11 +50,40 @@ export function CharacterTable({
     );
   }
 
+  const allVisibleSelected =
+    characters.every((character) =>
+      selectedCharacterIds.has(
+        character.id
+      )
+    );
+
+  const someVisibleSelected =
+    !allVisibleSelected &&
+    characters.some((character) =>
+      selectedCharacterIds.has(
+        character.id
+      )
+    );
+
   return (
     <div className="table-scroll matrix-scroll">
       <table className="dense-matrix">
         <thead>
           <tr>
+            <th className="matrix-col-checkbox">
+              <IndeterminateCheckbox
+                aria-label="Select all visible characters"
+                checked={
+                  allVisibleSelected
+                }
+                indeterminate={
+                  someVisibleSelected
+                }
+                onChange={
+                  onToggleSelectAllVisible
+                }
+              />
+            </th>
             <th>Character</th>
             <th className="matrix-col-narrow">
               Level
@@ -81,6 +119,21 @@ export function CharacterTable({
 
               return (
               <tr key={character.id}>
+                <td className="matrix-col-checkbox">
+                  <input
+                    aria-label={`Select ${character.name}`}
+                    checked={selectedCharacterIds.has(
+                      character.id
+                    )}
+                    onChange={() =>
+                      onToggleSelect(
+                        character.id
+                      )
+                    }
+                    type="checkbox"
+                  />
+                </td>
+
                 <td>
                   <div className="matrix-identity">
                     <Link

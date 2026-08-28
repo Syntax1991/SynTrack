@@ -6,6 +6,7 @@ import {
 } from "react";
 import {
   assignTag,
+  bulkAssignTags,
   createTag,
   deleteTag,
   listTagAssignments,
@@ -15,6 +16,7 @@ import {
 } from "../api/tagApi";
 import type {
   TagAssignment,
+  TagBulkAssignInput,
   TagCreateInput,
   TagUpdateInput,
   TagView
@@ -45,6 +47,9 @@ export type TagsState = {
   unassign: (
     tagId: string,
     characterId: string
+  ) => Promise<void>;
+  bulkAssign: (
+    input: TagBulkAssignInput
   ) => Promise<void>;
 };
 
@@ -182,6 +187,13 @@ export function useTags(): TagsState {
     reload();
   };
 
+  const bulkAssign = async (
+    input: TagBulkAssignInput
+  ) => {
+    await bulkAssignTags(input);
+    reload();
+  };
+
   return {
     tags,
     assignments,
@@ -193,6 +205,7 @@ export function useTags(): TagsState {
     update,
     remove,
     assign,
-    unassign
+    unassign,
+    bulkAssign
   };
 }

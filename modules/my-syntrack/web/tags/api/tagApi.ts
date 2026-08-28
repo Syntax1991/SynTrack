@@ -1,6 +1,7 @@
 import { apiRequest } from "../../../../../apps/web/src/shared/api/httpClient";
 import type {
   TagAssignment,
+  TagBulkAssignInput,
   TagCreateInput,
   TagUpdateInput,
   TagView
@@ -70,5 +71,17 @@ export function unassignTag(
   return apiRequest<void>(
     `/tags/${encodeURIComponent(tagId)}/characters/${encodeURIComponent(characterId)}`,
     { method: "DELETE" }
+  );
+}
+
+export function bulkAssignTags(
+  input: TagBulkAssignInput
+): Promise<void> {
+  return apiRequest<void>(
+    "/tags/assignments/bulk",
+    {
+      method: "POST",
+      body: JSON.stringify(input)
+    }
   );
 }
