@@ -3,19 +3,16 @@ local API = private.API
 
 --[[
     Gear Capture V1 - a full current-equipment snapshot of the 16
-    standard equipment slots. Tier and embellishment detection are
-    explicitly out of scope (no reliable current API was confirmed for
-    either) - this module never reports them.
+    standard slots. Tier/embellishment detection is out of scope (no
+    reliable API confirmed) - never reported here.
 
-    UNKNOWN > WRONG: a slot with equipped = false is confirmed-empty
-    evidence. A slot with equipped = true always carries itemId and
-    itemLink (both come from synchronous, cache-independent APIs), but
-    itemLevel/quality/socketCount may legitimately be nil if the WoW
-    item cache had not resolved that item yet at capture time - nil
-    here always means "not known yet", never "zero"/"none". The item
-    stays in the snapshot regardless; only the enrichment fields are
-    missing, and a later capture (see the item-load and
-    PLAYER_EQUIPMENT_CHANGED handling below) fills them in once ready.
+    UNKNOWN > WRONG: equipped = false is confirmed-empty evidence.
+    equipped = true always carries itemId/itemLink (synchronous,
+    cache-independent APIs), but itemLevel/quality/socketCount may be
+    nil if the item cache hadn't resolved yet - nil means "not known
+    yet", never "zero". The item stays in the snapshot; only enrichment
+    fields are missing, filled in later (see item-load/
+    PLAYER_EQUIPMENT_CHANGED handling below).
 ]]
 
 local slotDefinitions = {
@@ -38,12 +35,9 @@ local slotDefinitions = {
 }
 
 --[[
-    C_Item.GetItemNumSockets's existence as the "total sockets on this
-    item" API could not be independently confirmed against current
-    documentation at the time this was written. It is called through
-    pcall specifically so that if the name is wrong or unavailable, the
-    result is socketCount = nil (unknown) rather than a Lua error that
-    would abort the whole capture.
+    C_Item.GetItemNumSockets's existence as the "total sockets" API
+    couldn't be confirmed against docs when written - pcall-wrapped so
+    a wrong/missing name yields nil (unknown), not a capture-aborting error.
 ]]
 local function getSocketCount(itemLink)
     if not itemLink or not C_Item
@@ -142,11 +136,10 @@ local function captureSlot(unit, invSlot)
 end
 
 --[[
-    Every one of the 16 slots resolving unequipped is far more likely
-    to mean equipment data hasn't synced yet (see the timing note
-    below) than a genuinely naked max-level character. Returning nil
-    here tells ModuleRegistry to leave prior good data untouched
-    instead of wiping it on unreliable evidence. UNKNOWN > WRONG.
+    All 16 slots unequipped is far more likely to mean equipment data
+    hasn't synced yet (see timing note below) than a genuinely naked
+    max-level character. nil tells ModuleRegistry to leave prior good
+    data untouched instead of wiping it. UNKNOWN > WRONG.
 ]]
 local function captureGear()
     local slots = {}
@@ -198,16 +191,37 @@ registerGearModule()
 
 --[[
     Without this, a session where gear never changes and the player
-    never logs out would leave Gear uncaptured (logout's capture-all
-    is the only other trigger). Deliberately NOT SYNTRACK_CORE_READY
-    (fired from ADDON_LOADED): unlike a /reload, where equipment is
-    already resolved locally, a fresh character-select login can hit
-    ADDON_LOADED before the server replicates equipped-item data,
-    making GetInventoryItemID nil for every slot. PLAYER_ENTERING_WORLD
-    is the reliable point equipped items are queryable on both login
-    and reload. Only the first firing matters - gear doesn't change
-    from a later zone transition.
+    never logs out would leave Gear uncaptured. Deliberately NOT
+    SYNTRACK_CORE_READY (ADDON_LOADED): unlike /reload, where equipment
+    is already resolved locally, a fresh login can hit ADDON_LOADED
+    before the server replicates equipped-item data, reading nil for
+    every slot. PLAYER_ENTERING_WORLD is reliable on login and reload -
+    but not always instant on a character not logged into in a while,
+    so a bounded retry follows a bare abstention. captureGear() already
+    refuses to report a false empty snapshot, so retrying only ever
+    turns "no snapshot yet" into a real one, never fabricates data, and
+    stops for good once a capture succeeds or the delays run out.
 ]]
+local initialCaptureRetryDelays = { 0.5, 1, 2 }
+
+local function attemptInitialGearCapture(retryIndex)
+    local succeeded = API.CaptureModule("gear", "world-entered")
+
+    if succeeded then
+        return
+    end
+
+    local delay = initialCaptureRetryDelays[retryIndex]
+
+    if not delay then
+        return
+    end
+
+    C_Timer.NewTimer(delay, function()
+        attemptInitialGearCapture(retryIndex + 1)
+    end)
+end
+
 local hasCapturedInitialGear = false
 local entryFrame = CreateFrame("Frame")
 
@@ -228,18 +242,12 @@ entryFrame:SetScript(
             "PLAYER_ENTERING_WORLD"
         )
 
-        API.CaptureModule(
-            "gear",
-            "world-entered"
-        )
+        attemptInitialGearCapture(1)
     end
 )
 
---[[
-    Core's own event handling deliberately does not recapture every
-    module on every gear change (that would be wasteful for
-    professions). Gear owns its own trigger and debounce instead.
-]]
+-- Core doesn't recapture every module on every gear change (wasteful
+-- for professions) - Gear owns its own trigger and debounce instead.
 local recaptureTimer = nil
 
 local function scheduleRecapture(reason)
@@ -260,12 +268,8 @@ local function scheduleRecapture(reason)
     )
 end
 
---[[
-    PLAYER_EQUIPMENT_CHANGED's second argument (documented elsewhere as
-    "hasCurrent") has historically ambiguous/possibly-flipped meaning -
-    it is intentionally never read here. Any equipment-changed event
-    simply triggers a fresh, debounced re-read of the real slot state.
-]]
+-- PLAYER_EQUIPMENT_CHANGED's 2nd arg ("hasCurrent") is historically
+-- ambiguous - intentionally never read; any event just re-reads slots.
 local equipmentFrame = CreateFrame("Frame")
 
 equipmentFrame:RegisterEvent(
@@ -281,13 +285,8 @@ equipmentFrame:SetScript(
     end
 )
 
---[[
-    Converges an initially-partial snapshot (captured right after
-    login, before the WoW item cache resolved everything) toward a
-    fully-enriched one, without ever guessing in the meantime. Pending
-    loads are deduplicated by itemId so a stack of items loading around
-    the same moment only triggers one debounced recapture.
-]]
+-- Converges a partial snapshot toward fully-enriched without guessing.
+-- Pending loads dedupe by itemId so a load burst triggers one recapture.
 local pendingItemLoads = {}
 
 local function scheduleEnrichmentRecapture(
