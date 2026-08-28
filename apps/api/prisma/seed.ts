@@ -390,6 +390,14 @@ async function seedMidnightSeason2Resources() {
     });
   }
 
+  /*
+   * The character panel's "All Characters: 18" tooltip breakdown looked
+   * like a warband-pooled wallet, but a real live capture on
+   * 2026-08-28 showed C_CurrencyInfo.IsAccountWideCurrency(3465)
+   * authoritatively returning false - that per-character summary view
+   * is informational only, not evidence of a shared pool. The API
+   * result is trusted over the UI inference.
+   */
   await resourceDefinitionService.ensureDefinition({
     key: "venomblight-manaflux",
     scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
@@ -397,7 +405,7 @@ async function seedMidnightSeason2Resources() {
     name: "Venomblight Manaflux",
     category: "CONVERSION",
     resetBehavior: "SEASONAL",
-    ownershipScope: "ACCOUNT_WIDE",
+    ownershipScope: "CHARACTER",
     sortOrder: 80
   });
 }
