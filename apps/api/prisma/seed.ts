@@ -5,6 +5,8 @@ import { ResourceDefinitionRepository } from "../../../modules/my-syntrack/api/r
 import { ResourceDefinitionService } from "../../../modules/my-syntrack/api/resources/resource-definition.service.js";
 import { TrackerScopeProfileRepository } from "../../../modules/my-syntrack/api/trackers/tracker-scope-profile.repository.js";
 import { TrackerScopeProfileService } from "../../../modules/my-syntrack/api/trackers/tracker-scope-profile.service.js";
+import { ProfessionWeeklyDefinitionRepository } from "../../../modules/my-syntrack/api/profession-weekly/profession-weekly-definition.repository.js";
+import { ProfessionWeeklyDefinitionService } from "../../../modules/my-syntrack/api/profession-weekly/profession-weekly-definition.service.js";
 
 const adapter = new PrismaBetterSqlite3({
   url:
@@ -410,11 +412,77 @@ async function seedMidnightSeason2Resources() {
   });
 }
 
+/*
+ * weeklyQuest ids were corrected 2026-08-28 from a sequential,
+ * internally-consistent reference table the user supplied
+ * (93690-93714, one contiguous block covering all 11 professions) -
+ * see ProfessionWeeklyCatalog.lua. Treatise ids remain community-
+ * sourced/unverified. Neither list is Blizzard-documented, and neither
+ * has been confirmed against a real live character yet - see the
+ * Automatic Profession Weekly audit. `enabled: false` on every single
+ * one is deliberate: a definition only ever affects what a user sees
+ * once its id has been live-verified via
+ * C_QuestLog.IsQuestFlaggedCompleted against known real completion
+ * state (Slice A's live acceptance step), matching the "leave disabled
+ * rather than inventing an id" rule. Flip individual entries to
+ * enabled: true only after that verification, never as a batch.
+ */
+async function seedProfessionWeeklySources() {
+  const professionWeeklyDefinitionService =
+    new ProfessionWeeklyDefinitionService(
+      new ProfessionWeeklyDefinitionRepository()
+    );
+
+  const professionQuestIds: Record<
+    string,
+    { weeklyQuest: number; treatise: number }
+  > = {
+    alchemy: { weeklyQuest: 93690, treatise: 95127 },
+    blacksmithing: { weeklyQuest: 93691, treatise: 95128 },
+    enchanting: { weeklyQuest: 93697, treatise: 95129 },
+    engineering: { weeklyQuest: 93692, treatise: 95138 },
+    herbalism: { weeklyQuest: 93700, treatise: 95130 },
+    inscription: { weeklyQuest: 93693, treatise: 95131 },
+    jewelcrafting: { weeklyQuest: 93694, treatise: 95133 },
+    leatherworking: { weeklyQuest: 93695, treatise: 95134 },
+    mining: { weeklyQuest: 93705, treatise: 95135 },
+    skinning: { weeklyQuest: 93710, treatise: 95136 },
+    tailoring: { weeklyQuest: 93696, treatise: 95137 }
+  };
+
+  for (const [professionKey, ids] of Object.entries(
+    professionQuestIds
+  )) {
+    await professionWeeklyDefinitionService.ensureDefinition({
+      scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+      professionKey,
+      sourceKey: "weekly-quest",
+      name: "Weekly Quest",
+      sourceType: "WEEKLY_QUEST",
+      externalQuestId: ids.weeklyQuest,
+      enabled: false,
+      sortOrder: 0
+    });
+
+    await professionWeeklyDefinitionService.ensureDefinition({
+      scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+      professionKey,
+      sourceKey: "treatise",
+      name: "Treatise",
+      sourceType: "TREATISE",
+      externalQuestId: ids.treatise,
+      enabled: false,
+      sortOrder: 1
+    });
+  }
+}
+
 async function seed() {
   await seedProfessions();
   await seedBlacksmithingArmorTree();
   await seedMidnightSeason2Profile();
   await seedMidnightSeason2Resources();
+  await seedProfessionWeeklySources();
 }
 
 seed()

@@ -29,6 +29,7 @@ model Character {
   trackerValues     CharacterTrackerValue[]
   tagAssignments    CharacterTagAssignment[]
   resourceSnapshots CharacterResourceSnapshot[]
+  professionWeeklySnapshots CharacterProfessionWeeklySnapshot[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
@@ -238,6 +239,88 @@ model CharacterResourceSnapshot {
 
   @@unique([characterId, resourceDefinitionId])
   @@index([resourceDefinitionId])
+}
+
+enum ProfessionWeeklySourceType {
+  WEEKLY_QUEST
+  TREATISE
+  KNOWLEDGE_DROPS
+}
+
+enum ProfessionWeeklyState {
+  COMPLETE
+  INCOMPLETE
+  UNKNOWN
+}
+
+/*
+ * A profession's weekly-completion source identity, season-scoped via
+ * scopeKey exactly like ResourceDefinition (a TrackerScopeProfile.key,
+ * or the reserved GLOBAL sentinel) - never a second "active season"
+ * mechanism. enabled defaults to false: per the Automatic Profession
+ * Weekly audit, exact quest IDs are community-sourced, not Blizzard-
+ * documented, so a definition must be deliberately verified live
+ * before it can affect what a user sees - inventing an id and
+ * defaulting it to enabled would be exactly the "guessed truth" this
+ * product forbids. PROF KP is derived only from WEEKLY_QUEST/TREATISE
+ * sources; KNOWLEDGE_DROPS is tracked but never folds into that
+ * aggregate (see ProfessionWeeklyStatusService).
+ */
+model ProfessionWeeklySourceDefinition {
+  id                 String                     @id @default(cuid())
+  scopeKey           String
+  professionKey      String
+  sourceKey          String
+  name               String
+  sourceType         ProfessionWeeklySourceType
+  externalQuestId    Int?
+  externalCurrencyId Int?
+  enabled            Boolean                    @default(false)
+  sortOrder          Int                        @default(0)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  snapshots CharacterProfessionWeeklySnapshot[]
+
+  @@unique([scopeKey, professionKey, sourceKey])
+  @@index([scopeKey])
+  @@index([enabled])
+}
+
+/*
+ * One row per character/source/weekly-period - never overwritten across
+ * a reset (unlike CharacterResourceSnapshot's latest-state-only shape),
+ * so a stale prior week can never be misread as current (see Section 23
+ * of the audit). Raw evidence (flaggedCompleted/externalQuestId for
+ * quest-flag sources, current/maxValue for the Knowledge Drops
+ * aggregate) is stored alongside the derived `state` so the backend
+ * read model never has to re-derive UI status from Lua-computed labels.
+ */
+model CharacterProfessionWeeklySnapshot {
+  id                 String @id @default(cuid())
+  characterId        String
+  sourceDefinitionId String
+  periodKey          String
+
+  state ProfessionWeeklyState
+
+  flaggedCompleted Boolean?
+  externalQuestId  Int?
+  currentValue     Int?
+  maxValue         Int?
+
+  source     String   @default("ADDON")
+  capturedAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  character        Character                        @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  sourceDefinition ProfessionWeeklySourceDefinition @relation(fields: [sourceDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, sourceDefinitionId, periodKey])
+  @@index([sourceDefinitionId])
+  @@index([periodKey])
 }
 
 model TrackerScopeProfile {
