@@ -1,4 +1,5 @@
 import type { AddonResourceSnapshot } from "./addon-import.resource.types.js";
+import type { AddonProfessionWeeklySnapshot } from "./addon-import.profession-weekly.types.js";
 
 export type LuaValue =
   | string
@@ -260,6 +261,7 @@ export type AddonCharacter = {
   professions: AddonProfession[];
   gear: AddonGearSnapshot | null;
   resources: AddonResourceSnapshot | null;
+  professionWeekly: AddonProfessionWeeklySnapshot | null;
 };
 
 export type AddonSnapshot = {
@@ -334,5 +336,6 @@ export type AddonImportResult = {
     progressEntries: number;
     gearSlots: number;
     resourceSnapshots: number;
+    professionWeeklySnapshots: number;
   };
 };

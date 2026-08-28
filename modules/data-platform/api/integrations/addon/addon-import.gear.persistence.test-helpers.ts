@@ -141,6 +141,7 @@ export function character(
     professions: [],
     gear,
     resources: null,
+    professionWeekly: null,
     ...overrides
   };
 }

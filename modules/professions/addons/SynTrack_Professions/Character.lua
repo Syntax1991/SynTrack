@@ -103,6 +103,13 @@ function PT.RefreshCharacter(
         )
         or {}
 
+    existingCharacter.professionWeekly =
+        PT.CaptureProfessionWeekly
+        and PT.CaptureProfessionWeekly(
+            existingCharacter.professions
+        )
+        or nil
+
     existingCharacter.lastUpdatedAt =
         time()
 

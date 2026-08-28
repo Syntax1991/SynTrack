@@ -125,7 +125,10 @@ export class AddonImportPersistence {
                 .gearSlots,
             resourceSnapshots:
               characterResult
-                .resourceSnapshots
+                .resourceSnapshots,
+            professionWeeklySnapshots:
+              characterResult
+                .professionWeeklySnapshots
           }
         };
       }
