@@ -241,6 +241,10 @@ describe("characterNeedsRefresh", () => {
         resources: {
           state: "NOT_TRACKED",
           lastSyncedAt: null
+        },
+        professionWeekly: {
+          state: "NOT_TRACKED",
+          items: []
         }
       })
     ).toBe(false);
@@ -265,6 +269,10 @@ describe("characterNeedsRefresh", () => {
         resources: {
           state: "NOT_TRACKED",
           lastSyncedAt: null
+        },
+        professionWeekly: {
+          state: "NOT_TRACKED",
+          items: []
         }
       })
     ).toBe(true);

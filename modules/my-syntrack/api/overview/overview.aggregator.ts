@@ -2,6 +2,8 @@ import type { OverviewGearCharacterInput } from "./overview-gear-state.mapper.js
 import { resolveGearOverviewState } from "./overview-gear-state.mapper.js";
 import type { OverviewProfessionCharacterInput } from "./overview-profession-state.mapper.js";
 import { resolveProfessionOverviewState } from "./overview-profession-state.mapper.js";
+import type { OverviewProfessionWeeklyCharacterInput } from "./overview-profession-weekly-state.mapper.js";
+import { resolveProfessionWeeklyOverviewState } from "./overview-profession-weekly-state.mapper.js";
 import type { OverviewResourceCharacterInput } from "./overview-resource-state.mapper.js";
 import { resolveResourceOverviewState } from "./overview-resource-state.mapper.js";
 import type { OverviewVaultCharacterInput } from "./overview-vault-state.mapper.js";
@@ -57,6 +59,10 @@ export type OverviewAggregationInput = {
   resourceByCharacterId: Map<
     string,
     OverviewResourceCharacterInput
+  >;
+  professionWeeklyByCharacterId: Map<
+    string,
+    OverviewProfessionWeeklyCharacterInput
   >;
   /*
    * Pre-fetched, already-batched pinned tracker states (see
@@ -127,6 +133,27 @@ function resolveCharacterState(
       resources: []
     };
 
+  const professionWeeklyInput =
+    input.professionWeeklyByCharacterId.get(
+      character.id
+    ) ?? {
+      id: character.id,
+      name: character.name,
+      profKp: {
+        completeCount: 0,
+        incompleteCount: 0,
+        unknownCount: 0,
+        applicableTotal: 0
+      },
+      drops: {
+        completeCount: 0,
+        incompleteCount: 0,
+        unknownCount: 0,
+        applicableTotal: 0
+      },
+      professions: []
+    };
+
   const weeklyResult =
     resolveWeeklyOverviewState(
       weeklyInput,
@@ -153,9 +180,15 @@ function resolveCharacterState(
       resourceInput
     );
 
+  const professionWeeklyResult =
+    resolveProfessionWeeklyOverviewState(
+      professionWeeklyInput
+    );
+
   const attentionItems = [
     weeklyResult.attentionItem,
     professionResult.attentionItem,
+    professionWeeklyResult.attentionItem,
     gearResult.attentionItem,
     resourceResult.attentionItem,
     vaultResult.attentionItem
@@ -174,6 +207,9 @@ function resolveCharacterState(
     gearResult.gear.state ===
       "READY" ||
     resourceResult.resources.state ===
+      "READY" ||
+    professionWeeklyResult
+      .professionWeekly.state ===
       "READY";
 
   const readinessState =
@@ -194,6 +230,9 @@ function resolveCharacterState(
     tier: resolveTierOverviewState(),
     embellishments:
       resolveEmbellishmentOverviewState(),
+    professionWeekly:
+      professionWeeklyResult
+        .professionWeekly,
     trackers:
       input.trackerStatesByCharacterId.get(
         character.id

@@ -7,6 +7,8 @@ import { GearReadinessRepository } from "../gear-readiness/gear-readiness.reposi
 import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
 import { ResourceReadinessRepository } from "../resources/resource-readiness.repository.js";
 import { ResourceReadinessService } from "../resources/resource-readiness.service.js";
+import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
+import { ProfessionWeeklyStatusService } from "../profession-weekly/profession-weekly-status.service.js";
 import { GLOBAL_TRACKER_SCOPE_KEY } from "../trackers/global-tracker-scope.js";
 import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
 import { TrackerDefinitionService } from "../trackers/tracker-definition.service.js";
@@ -63,6 +65,11 @@ export class OverviewService {
       new ResourceReadinessRepository()
     );
 
+  private readonly professionWeeklyStatusService =
+    new ProfessionWeeklyStatusService(
+      new ProfessionWeeklyStatusRepository()
+    );
+
   private readonly trackerDefinitionService =
     new TrackerDefinitionService(
       new TrackerDefinitionRepository()
@@ -99,6 +106,7 @@ export class OverviewService {
       vaultOverview,
       gearOverview,
       resourceOverview,
+      professionWeeklyOverview,
       professionIssuesByCharacter,
       seasonalTrackerDefinitions,
       globalTrackerDefinitions,
@@ -109,6 +117,7 @@ export class OverviewService {
       this.vaultMythicPlusService.getOverview(),
       this.gearReadinessService.getOverview(),
       this.resourceReadinessService.getOverview(),
+      this.professionWeeklyStatusService.getOverview(),
       loadProfessionIssuesByCharacter(),
       seasonalScopeKey
         ? this.trackerDefinitionService.listByScope(
@@ -192,6 +201,16 @@ export class OverviewService {
         )
       );
 
+    const professionWeeklyByCharacterId =
+      new Map(
+        professionWeeklyOverview.characters.map(
+          (character) => [
+            character.id,
+            character
+          ]
+        )
+      );
+
     const professionByCharacterId =
       new Map(
         [
@@ -248,6 +267,7 @@ export class OverviewService {
         gearByCharacterId,
         professionByCharacterId,
         resourceByCharacterId,
+        professionWeeklyByCharacterId,
         trackerStatesByCharacterId
       });
 

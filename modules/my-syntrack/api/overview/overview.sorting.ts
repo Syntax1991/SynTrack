@@ -25,9 +25,10 @@ const domainRank: Record<
 > = {
   weekly: 0,
   profession: 1,
-  gear: 2,
-  resources: 3,
-  vault: 4
+  "profession-weekly": 2,
+  gear: 3,
+  resources: 4,
+  vault: 5
 };
 
 function bestSeverityRank(

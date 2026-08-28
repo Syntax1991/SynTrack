@@ -3,6 +3,7 @@ import type {
   DataHealthRepositoryContract,
   GearSlotSummaryRow,
   ProfessionAssignmentRow,
+  ProfessionWeeklySnapshotHealthRow,
   ResourceSnapshotSummaryRow
 } from "./data-health-repository.types.js";
 
@@ -25,6 +26,15 @@ export class FakeDataHealthRepository
 
   private resourceSnapshotSummaryRows: ResourceSnapshotSummaryRow[] =
     [];
+
+  private professionWeeklySnapshotRows: ProfessionWeeklySnapshotHealthRow[] =
+    [];
+
+  seedProfessionWeeklySnapshot(
+    row: ProfessionWeeklySnapshotHealthRow
+  ) {
+    this.professionWeeklySnapshotRows.push(row);
+  }
 
   seedCharacterSync(
     row: CharacterSyncRow
@@ -115,6 +125,18 @@ export class FakeDataHealthRepository
     characterIds: string[]
   ) {
     return this.resourceSnapshotSummaryRows.filter(
+      (row) =>
+        characterIds.includes(
+          row.characterId
+        )
+    );
+  }
+
+  async findProfessionWeeklySnapshots(
+    characterIds: string[],
+    _periodKey: string
+  ) {
+    return this.professionWeeklySnapshotRows.filter(
       (row) =>
         characterIds.includes(
           row.characterId

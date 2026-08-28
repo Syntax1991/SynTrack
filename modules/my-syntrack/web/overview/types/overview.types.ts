@@ -1,3 +1,5 @@
+import type { ProfessionWeeklyOverviewState } from "./professionWeekly.types";
+
 export type OverviewDomainState =
   | "READY"
   | "IN_PROGRESS"
@@ -15,6 +17,7 @@ export type AttentionDomain =
   | "weekly"
   | "vault"
   | "profession"
+  | "profession-weekly"
   | "gear"
   | "resources";
 
@@ -137,6 +140,13 @@ export type EmbellishmentOverviewState = {
   state: "NOT_TRACKED";
 };
 
+export type {
+  ProfessionWeeklyAggregate,
+  ProfessionWeeklyOverviewState,
+  ProfessionWeeklyProfessionSummary,
+  ProfessionWeeklySourceStatus
+} from "./professionWeekly.types";
+
 export type TrackerValueType =
   | "BOOLEAN"
   | "PROGRESS"
@@ -205,6 +215,7 @@ export type CharacterWeeklyState = {
   resources: ResourceOverviewState;
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
+  professionWeekly: ProfessionWeeklyOverviewState;
   trackers: CharacterTrackerState[];
   attentionItems: AttentionItem[];
   readinessState: OverviewReadinessState;
@@ -291,6 +302,10 @@ export type CharacterDataHealth = {
   resources: {
     state: DomainHealthState;
     lastSyncedAt: string | null;
+  };
+  professionWeekly: {
+    state: DomainHealthState;
+    items: ProfessionHealthEntry[];
   };
 };
 

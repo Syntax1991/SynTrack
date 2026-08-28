@@ -3,6 +3,13 @@ import { describe, expect, it } from "vitest";
 import type { CharacterOverviewRow } from "../types/overview.types";
 import { useMatrixFilters } from "./useMatrixFilters";
 
+const zeroAggregate = {
+  completeCount: 0,
+  incompleteCount: 0,
+  unknownCount: 0,
+  applicableTotal: 0
+};
+
 function buildCharacter(
   overrides: Partial<CharacterOverviewRow> & {
     character: CharacterOverviewRow["character"];
@@ -45,8 +52,12 @@ function buildCharacter(
       items: []
     },
     tier: { state: "NOT_TRACKED" },
-    embellishments: {
-      state: "NOT_TRACKED"
+    embellishments: { state: "NOT_TRACKED" },
+    professionWeekly: {
+      state: "NOT_TRACKED",
+      profKp: zeroAggregate,
+      drops: zeroAggregate,
+      professions: []
     },
     trackers: [],
     attentionItems: [],
@@ -59,18 +70,10 @@ function buildCharacter(
         state: "MANUAL",
         lastSyncedAt: null
       },
-      professions: {
-        state: "NOT_TRACKED",
-        items: []
-      },
-      gear: {
-        state: "NOT_TRACKED",
-        lastSyncedAt: null
-      },
-      resources: {
-        state: "NOT_TRACKED",
-        lastSyncedAt: null
-      }
+      professions: { state: "NOT_TRACKED", items: [] },
+      gear: { state: "NOT_TRACKED", lastSyncedAt: null },
+      resources: { state: "NOT_TRACKED", lastSyncedAt: null },
+      professionWeekly: { state: "NOT_TRACKED", items: [] }
     },
     ...overrides
   };
