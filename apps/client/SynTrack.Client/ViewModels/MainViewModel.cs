@@ -193,6 +193,7 @@ public sealed partial class MainViewModel : ObservableObject
         _watcher.StableChangeDetected -= OnStableChangeDetected;
         _watcher.StableChangeDetected += OnStableChangeDetected;
         _watcher.Watch(savedVariablesDir);
+        _logger.Info($"Watcher active for account {AccountName} at {savedVariablesDir}");
     }
 
     // SynTrack_Core.lua is an account-wide file: a second character

@@ -1,5 +1,6 @@
 namespace SynTrack.Client;
 
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Net.Http;
@@ -17,6 +18,7 @@ public partial class App : Application
     private TrayService? _trayService;
     private MainWindow? _mainWindow;
     private SavedVariablesWatcherService? _watcher;
+    private SingleInstanceGuard? _instanceGuard;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -28,7 +30,30 @@ public partial class App : Application
             "Client");
 
         var logger = new ClientLogger(appDataDir);
-        logger.Info("SynTrack Client starting.");
+
+        var hostModule = Process.GetCurrentProcess().MainModule?.FileName ?? "unknown";
+
+        var hostType = hostModule.EndsWith("dotnet.exe", StringComparison.OrdinalIgnoreCase)
+            ? "dotnet-hosted"
+            : "exe";
+
+        logger.Info(
+            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType}");
+
+        // A raw SynTrack.Client.exe double-click landing as a second,
+        // uncoordinated process while a dotnet.exe-hosted instance was
+        // already running (two watchers, ambiguous logging, unclear import
+        // ownership) was observed live - the mutex identity is fixed
+        // regardless of which of the two hosting styles launched it.
+        _instanceGuard = new SingleInstanceGuard();
+
+        if (!_instanceGuard.IsFirstInstance)
+        {
+            logger.Info("Another SynTrack Client instance is already running; exiting.");
+            _instanceGuard.Dispose();
+            Shutdown();
+            return;
+        }
 
         var settingsService = new ClientSettingsService(appDataDir);
         var credentialService = new DpapiCredentialService(appDataDir);
@@ -104,6 +129,7 @@ public partial class App : Application
         _watcher?.Dispose();
         _trayService?.Dispose();
         _httpClient?.Dispose();
+        _instanceGuard?.Dispose();
         Shutdown();
     }
 }
