@@ -169,9 +169,22 @@ function API.CaptureModule(
                 tostring(captureResult)
         end
 
-        payload =
-            captureResult
-            or {}
+        --[[
+            A module's capture function returning nil is a deliberate
+            abstention (e.g. Gear declining to report when equipment
+            data hasn't synced yet), not "capture an empty snapshot".
+            Leaving the previously-stored module entry untouched here
+            is what makes that abstention actually protect prior data
+            during a CaptureAllModules sweep (e.g. on PLAYER_LOGOUT) -
+            defaulting to {} would silently overwrite known-good data
+            with a false empty one. UNKNOWN > WRONG.
+        ]]
+        if captureResult == nil then
+            return false,
+                "module declined to capture"
+        end
+
+        payload = captureResult
     end
 
     target[moduleId] = {

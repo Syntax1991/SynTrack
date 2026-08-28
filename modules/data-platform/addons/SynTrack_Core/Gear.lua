@@ -141,17 +141,35 @@ local function captureSlot(unit, invSlot)
     }
 end
 
+--[[
+    Every one of the 16 slots resolving unequipped is far more likely
+    to mean equipment data hasn't synced yet (see the timing note
+    below) than a genuinely naked max-level character. Returning nil
+    here tells ModuleRegistry to leave prior good data untouched
+    instead of wiping it on unreliable evidence. UNKNOWN > WRONG.
+]]
 local function captureGear()
     local slots = {}
+    local anySlotResolved = false
 
     for _, definition in ipairs(
         slotDefinitions
     ) do
-        slots[definition.key] =
+        local slot =
             captureSlot(
                 "player",
                 definition.invSlot
             )
+
+        if slot.equipped then
+            anySlotResolved = true
+        end
+
+        slots[definition.key] = slot
+    end
+
+    if not anySlotResolved then
+        return nil
     end
 
     return { slots = slots }
@@ -179,18 +197,40 @@ end
 registerGearModule()
 
 --[[
-    Without this, a session where the player never changes gear and
-    never logs out would leave Gear entirely uncaptured (Core's own
-    logout-wide capture-all-modules is the only other trigger). Hooking
-    the existing post-login-ready event gives Gear an initial snapshot
-    every session without waiting on either of those.
+    Without this, a session where gear never changes and the player
+    never logs out would leave Gear uncaptured (logout's capture-all
+    is the only other trigger). Deliberately NOT SYNTRACK_CORE_READY
+    (fired from ADDON_LOADED): unlike a /reload, where equipment is
+    already resolved locally, a fresh character-select login can hit
+    ADDON_LOADED before the server replicates equipped-item data,
+    making GetInventoryItemID nil for every slot. PLAYER_ENTERING_WORLD
+    is the reliable point equipped items are queryable on both login
+    and reload. Only the first firing matters - gear doesn't change
+    from a later zone transition.
 ]]
-API.Subscribe(
-    "SYNTRACK_CORE_READY",
+local hasCapturedInitialGear = false
+local entryFrame = CreateFrame("Frame")
+
+entryFrame:RegisterEvent(
+    "PLAYER_ENTERING_WORLD"
+)
+
+entryFrame:SetScript(
+    "OnEvent",
     function()
+        if hasCapturedInitialGear then
+            return
+        end
+
+        hasCapturedInitialGear = true
+
+        entryFrame:UnregisterEvent(
+            "PLAYER_ENTERING_WORLD"
+        )
+
         API.CaptureModule(
             "gear",
-            "addon-loaded"
+            "world-entered"
         )
     end
 )
