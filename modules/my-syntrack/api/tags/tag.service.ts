@@ -9,6 +9,7 @@ import type {
 } from "./tag-repository.types.js";
 import type {
   TagAssignment,
+  TagBulkAssignInput,
   TagCreateInput,
   TagUpdateInput,
   TagView
@@ -164,6 +165,114 @@ export class TagService {
     TagAssignment[]
   > {
     return this.repository.findAllAssignments();
+  }
+
+  /*
+   * A snapshot-style bulk edit, not an event stream: addTagIds and
+   * removeTagIds are applied to every selected character in one
+   * transaction (see the repository). Re-adding an already-assigned
+   * tag or removing one that was never assigned is harmless by design
+   * (matches the existing single assign/unassign semantics) - only a
+   * genuinely ambiguous request (the same tag in both lists, or no
+   * characters/no tags at all) is rejected.
+   */
+  async bulkAssign(
+    input: TagBulkAssignInput
+  ): Promise<void> {
+    const characterIds = [
+      ...new Set(input.characterIds)
+    ];
+
+    const addTagIds = [
+      ...new Set(input.addTagIds)
+    ];
+
+    const removeTagIds = [
+      ...new Set(input.removeTagIds)
+    ];
+
+    if (characterIds.length === 0) {
+      throw new AppError(
+        400,
+        "At least one character must be selected."
+      );
+    }
+
+    if (
+      addTagIds.length === 0 &&
+      removeTagIds.length === 0
+    ) {
+      throw new AppError(
+        400,
+        "At least one tag to add or remove must be provided."
+      );
+    }
+
+    const conflictingTagIds =
+      addTagIds.filter((tagId) =>
+        removeTagIds.includes(tagId)
+      );
+
+    if (conflictingTagIds.length > 0) {
+      throw new AppError(
+        400,
+        `A tag cannot be both added and removed in the same request: ${conflictingTagIds.join(", ")}.`
+      );
+    }
+
+    const existingCharacterIds =
+      new Set(
+        await this.repository.findExistingCharacterIds(
+          characterIds
+        )
+      );
+
+    const missingCharacterIds =
+      characterIds.filter(
+        (characterId) =>
+          !existingCharacterIds.has(
+            characterId
+          )
+      );
+
+    if (missingCharacterIds.length > 0) {
+      throw new AppError(
+        404,
+        `Characters not found: ${missingCharacterIds.join(", ")}.`
+      );
+    }
+
+    const allTagIds = [
+      ...new Set([
+        ...addTagIds,
+        ...removeTagIds
+      ])
+    ];
+
+    const existingTags =
+      await this.repository.findAll();
+
+    const existingTagIds = new Set(
+      existingTags.map((tag) => tag.id)
+    );
+
+    const missingTagIds = allTagIds.filter(
+      (tagId) =>
+        !existingTagIds.has(tagId)
+    );
+
+    if (missingTagIds.length > 0) {
+      throw new AppError(
+        404,
+        `Tags not found: ${missingTagIds.join(", ")}.`
+      );
+    }
+
+    await this.repository.bulkAssign(
+      characterIds,
+      addTagIds,
+      removeTagIds
+    );
   }
 
   private async assertNameAvailable(

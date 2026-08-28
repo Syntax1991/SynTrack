@@ -167,4 +167,38 @@ export class FakeTagRepository
       characterId
     );
   }
+
+  async findExistingCharacterIds(
+    characterIds: string[]
+  ) {
+    return characterIds.filter((id) =>
+      this.existingCharacterIds.has(id)
+    );
+  }
+
+  async bulkAssign(
+    characterIds: string[],
+    addTagIds: string[],
+    removeTagIds: string[]
+  ) {
+    for (const characterId of characterIds) {
+      for (const tagId of addTagIds) {
+        this.assignments.add(
+          this.assignmentKey(
+            characterId,
+            tagId
+          )
+        );
+      }
+
+      for (const tagId of removeTagIds) {
+        this.assignments.delete(
+          this.assignmentKey(
+            characterId,
+            tagId
+          )
+        );
+      }
+    }
+  }
 }

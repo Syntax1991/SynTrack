@@ -22,3 +22,9 @@ export type TagAssignment = {
   characterId: string;
   tagId: string;
 };
+
+export type TagBulkAssignInput = {
+  characterIds: string[];
+  addTagIds: string[];
+  removeTagIds: string[];
+};

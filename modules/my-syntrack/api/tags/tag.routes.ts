@@ -39,6 +39,11 @@ tagRouter.get(
   )
 );
 
+tagRouter.post(
+  "/assignments/bulk",
+  asyncHandler(controller.bulkAssign)
+);
+
 tagRouter.put(
   "/:tagId/characters/:characterId",
   asyncHandler(controller.assign)
