@@ -4,11 +4,14 @@ import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHe
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { useProfessions } from "../../../../professions/web/hooks/useProfessions";
 import { useTags } from "../../tags/hooks/useTags";
+import { BulkTagActionBar } from "../components/BulkTagActionBar";
+import { BulkTagsPopover } from "../components/BulkTagsPopover";
 import { CharacterDrawer } from "../components/CharacterDrawer";
 import { CharacterRosterToolbar } from "../components/CharacterRosterToolbar";
 import { CharacterTable } from "../components/CharacterTable";
 import { CharacterTagsPopover } from "../components/CharacterTagsPopover";
 import { useCharacterFilters } from "../hooks/useCharacterFilters";
+import { useCharacterSelection } from "../hooks/useCharacterSelection";
 import { useCharacters } from "../hooks/useCharacters";
 import type {
   Character,
@@ -36,6 +39,11 @@ export function CharactersPage() {
     setTagManagementCharacter
   ] = useState<Character | null>(null);
 
+  const [
+    isBulkTagsOpen,
+    setIsBulkTagsOpen
+  ] = useState(false);
+
   const {
     characters,
     isLoading,
@@ -55,7 +63,8 @@ export function CharactersPage() {
     tags,
     tagIdsByCharacterId,
     assign: assignTag,
-    unassign: unassignTag
+    unassign: unassignTag,
+    bulkAssign
   } = useTags();
 
   const {
@@ -73,6 +82,16 @@ export function CharactersPage() {
   } = useCharacterFilters(
     characters,
     tagIdsByCharacterId
+  );
+
+  const {
+    selectedCharacterIds,
+    toggleSelectCharacter,
+    toggleSelectAllVisible,
+    clearSelection,
+    removeFromSelection
+  } = useCharacterSelection(
+    visibleCharacters
   );
 
   const isDrawerOpen =
@@ -111,6 +130,7 @@ export function CharactersPage() {
     }
 
     await deleteCharacter(character.id);
+    removeFromSelection(character.id);
   };
 
   return (
@@ -168,6 +188,19 @@ export function CharactersPage() {
           tagOptions={tags}
         />
 
+        {selectedCharacterIds.size >
+          0 && (
+          <BulkTagActionBar
+            onClear={clearSelection}
+            onOpenTags={() =>
+              setIsBulkTagsOpen(true)
+            }
+            selectedCount={
+              selectedCharacterIds.size
+            }
+          />
+        )}
+
         {isLoading ? (
           <LoadingPanel />
         ) : (
@@ -186,6 +219,15 @@ export function CharactersPage() {
             onEdit={setEditingCharacter}
             onManageTags={
               setTagManagementCharacter
+            }
+            onToggleSelect={
+              toggleSelectCharacter
+            }
+            onToggleSelectAllVisible={
+              toggleSelectAllVisible
+            }
+            selectedCharacterIds={
+              selectedCharacterIds
             }
             tagIdsByCharacterId={
               tagIdsByCharacterId
@@ -239,6 +281,42 @@ export function CharactersPage() {
                   characterId
                 ));
           }}
+          tags={tags}
+        />
+      )}
+
+      {isBulkTagsOpen && (
+        <BulkTagsPopover
+          onAddToAll={(tagId) => {
+            void bulkAssign({
+              characterIds: [
+                ...selectedCharacterIds
+              ],
+              addTagIds: [tagId],
+              removeTagIds: []
+            });
+          }}
+          onClose={() =>
+            setIsBulkTagsOpen(false)
+          }
+          onRemoveFromAll={(tagId) => {
+            void bulkAssign({
+              characterIds: [
+                ...selectedCharacterIds
+              ],
+              addTagIds: [],
+              removeTagIds: [tagId]
+            });
+          }}
+          selectedCharacterIds={
+            selectedCharacterIds
+          }
+          selectedCount={
+            selectedCharacterIds.size
+          }
+          tagIdsByCharacterId={
+            tagIdsByCharacterId
+          }
           tags={tags}
         />
       )}

@@ -156,6 +156,29 @@
   white-space: nowrap;
 }
 
+.matrix-col-checkbox {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+  padding-right: 0;
+}
+
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-hover);
+}
+
+.bulk-action-count {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .matrix-identity {
   display: flex;
   align-items: baseline;

@@ -1,56 +1,12 @@
 import {
   fireEvent,
-  render,
   screen
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
-import type { Character } from "../types/character.types";
-import { CharacterTable } from "./CharacterTable";
-
-function buildCharacter(
-  overrides: Partial<Character> = {}
-): Character {
-  return {
-    id: "char-1",
-    name: "Synblast",
-    realm: "Antonidas",
-    region: "eu",
-    className: "Shaman",
-    level: 80,
-    source: "MANUAL",
-    lastSyncedAt: null,
-    createdAt: "2026-08-01T00:00:00.000Z",
-    updatedAt: "2026-08-01T00:00:00.000Z",
-    professions: [],
-    ...overrides
-  };
-}
-
-function renderTable(
-  characters: Character[],
-  onEdit = vi.fn(),
-  onDelete = vi.fn(),
-  onManageTags = vi.fn()
-) {
-  render(
-    <MemoryRouter>
-      <CharacterTable
-        characters={characters}
-        minimumCraftingLevel={80}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onManageTags={onManageTags}
-        tagIdsByCharacterId={
-          new Map()
-        }
-        tags={[]}
-      />
-    </MemoryRouter>
-  );
-
-  return { onEdit, onDelete, onManageTags };
-}
+import { describe, expect, it } from "vitest";
+import {
+  buildCharacter,
+  renderTable
+} from "./characterTableTestHelpers";
 
 describe("CharacterTable", () => {
   it("renders exactly one row per character (roster remains rendered)", () => {

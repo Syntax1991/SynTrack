@@ -1,151 +1,23 @@
 import {
   fireEvent,
-  render,
   screen
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { describe, expect, it, vi } from "vitest";
 import {
-  describe,
-  expect,
-  it,
-  vi
-} from "vitest";
-import type { Character } from "../types/character.types";
-
-const createCharacter = vi
-  .fn()
-  .mockResolvedValue(undefined);
-
-const updateCharacter = vi
-  .fn()
-  .mockResolvedValue(undefined);
-
-const deleteCharacter = vi
-  .fn()
-  .mockResolvedValue(undefined);
-
-const assignTag = vi
-  .fn()
-  .mockResolvedValue(undefined);
-
-const unassignTag = vi
-  .fn()
-  .mockResolvedValue(undefined);
-
-const raidTag = {
-  id: "tag-raid",
-  name: "Raid",
-  color: null,
-  sortOrder: 0,
-  createdAt:
-    "2026-08-01T00:00:00.000Z",
-  updatedAt:
-    "2026-08-01T00:00:00.000Z"
-};
-
-function buildCharacter(
-  overrides: Partial<Character> = {}
-): Character {
-  return {
-    id: "char-1",
-    name: "Synblast",
-    realm: "Antonidas",
-    region: "eu",
-    className: "Shaman",
-    level: 80,
-    source: "MANUAL",
-    lastSyncedAt: null,
-    createdAt: "2026-08-01T00:00:00.000Z",
-    updatedAt: "2026-08-01T00:00:00.000Z",
-    professions: [],
-    ...overrides
-  };
-}
-
-vi.mock(
-  "../hooks/useCharacters",
-  () => ({
-    useCharacters: () => ({
-      characters: [
-        buildCharacter({
-          id: "char-1",
-          name: "Synblast"
-        }),
-        buildCharacter({
-          id: "char-2",
-          name: "Synbloom"
-        })
-      ],
-      isLoading: false,
-      error: null,
-      createCharacter,
-      updateCharacter,
-      deleteCharacter
-    })
-  })
-);
-
-vi.mock(
-  "../../../../professions/web/hooks/useProfessions",
-  () => ({
-    useProfessions: () => ({
-      professions: [],
-      isLoading: false,
-      error: null
-    })
-  })
-);
-
-vi.mock(
-  "../../tags/hooks/useTags",
-  () => ({
-    useTags: () => ({
-      tags: [raidTag],
-      assignments: [
-        {
-          characterId: "char-1",
-          tagId: "tag-raid"
-        }
-      ],
-      tagIdsByCharacterId: new Map([
-        [
-          "char-1",
-          new Set(["tag-raid"])
-        ]
-      ]),
-      isLoading: false,
-      error: null,
-      reload: () => {},
-      create: vi
-        .fn()
-        .mockResolvedValue(
-          undefined
-        ),
-      update: vi
-        .fn()
-        .mockResolvedValue(
-          undefined
-        ),
-      remove: vi
-        .fn()
-        .mockResolvedValue(
-          undefined
-        ),
-      assign: assignTag,
-      unassign: unassignTag
-    })
-  })
-);
+  assignTag,
+  createCharacter,
+  deleteCharacter,
+  renderCharactersPage,
+  unassignTag
+} from "./charactersPageTestHelpers";
 
 const { CharactersPage } = await import(
   "./CharactersPage"
 );
 
 function renderPage() {
-  return render(
-    <MemoryRouter>
-      <CharactersPage />
-    </MemoryRouter>
+  return renderCharactersPage(
+    CharactersPage
   );
 }
 
