@@ -25,6 +25,49 @@ public sealed class DebounceGate
 }
 
 /// <summary>
+/// Coalesces a sync trigger that arrives while a previous sync is still
+/// running into exactly one extra pass immediately after the current one
+/// finishes, instead of silently dropping it. SynTrack_Core.lua is an
+/// account-wide file - a second character's write landing mid-upload must
+/// not be lost until some unrelated later event happens to trigger a sync
+/// again. Never reports more than one pass as "running" at a time, so two
+/// uploads never race each other.
+/// </summary>
+public sealed class DirtyWhileRunningGate
+{
+    private bool _isRunning;
+    private bool _resyncRequested;
+
+    public bool TryEnter()
+    {
+        if (_isRunning)
+        {
+            _resyncRequested = true;
+            return false;
+        }
+
+        _isRunning = true;
+        return true;
+    }
+
+    public bool ShouldRunAgain()
+    {
+        if (!_resyncRequested)
+        {
+            return false;
+        }
+
+        _resyncRequested = false;
+        return true;
+    }
+
+    public void Exit()
+    {
+        _isRunning = false;
+    }
+}
+
+/// <summary>
 /// WoW briefly holds a lock on SavedVariables while writing. Retries a
 /// bounded number of times with a short delay rather than failing the
 /// sync outright on the first transient lock error. Never writes to the

@@ -188,12 +188,19 @@ public sealed partial class MainViewModel : ObservableObject
         _watcher.Watch(savedVariablesDir);
     }
 
+    // SynTrack_Core.lua is an account-wide file: a second character
+    // logging out and writing while the first character's sync is
+    // still uploading must not be silently dropped, or that second
+    // character's data never reaches the backend until some unrelated
+    // later event happens to trigger a sync again. See DirtyWhileRunningGate.
+    private readonly DirtyWhileRunningGate _syncGate = new();
+
     private void OnStableChangeDetected() => _ = SyncNowAsync();
 
     [RelayCommand]
     private async Task SyncNowAsync()
     {
-        if (IsSyncing)
+        if (!_syncGate.TryEnter())
         {
             return;
         }
@@ -202,12 +209,17 @@ public sealed partial class MainViewModel : ObservableObject
 
         try
         {
-            _logger.Info("Sync starting.");
-            await _syncEngine.PerformSyncAsync(_settings, CancellationToken.None);
+            do
+            {
+                _logger.Info("Sync starting.");
+                await _syncEngine.PerformSyncAsync(_settings, CancellationToken.None);
+            }
+            while (_syncGate.ShouldRunAgain());
         }
         finally
         {
             IsSyncing = false;
+            _syncGate.Exit();
         }
     }
 

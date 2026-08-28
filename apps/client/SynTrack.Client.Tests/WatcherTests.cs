@@ -72,4 +72,54 @@ public class WatcherTests
         Assert.ThrowsAny<IOException>(() =>
             StableFileReader.ReadWithRetry(missing, 2, TimeSpan.FromMilliseconds(1)));
     }
+
+    [Fact]
+    public void AnIdleGateCanBeEntered()
+    {
+        var gate = new DirtyWhileRunningGate();
+
+        Assert.True(gate.TryEnter());
+    }
+
+    [Fact]
+    public void EnteringATwiceRunningGateMarksItDirtyInsteadOfEnteringAgain()
+    {
+        var gate = new DirtyWhileRunningGate();
+        gate.TryEnter();
+
+        Assert.False(gate.TryEnter());
+    }
+
+    [Fact]
+    public void ARunThatWasNeverMarkedDirtyDoesNotRunAgain()
+    {
+        var gate = new DirtyWhileRunningGate();
+        gate.TryEnter();
+
+        Assert.False(gate.ShouldRunAgain());
+    }
+
+    [Fact]
+    public void ATriggerThatArrivesWhileRunningCausesExactlyOneExtraPass()
+    {
+        var gate = new DirtyWhileRunningGate();
+        gate.TryEnter();
+
+        // Simulates a second character's SavedVariables write landing
+        // while the first character's sync is still uploading.
+        gate.TryEnter();
+
+        Assert.True(gate.ShouldRunAgain());
+        Assert.False(gate.ShouldRunAgain());
+    }
+
+    [Fact]
+    public void AfterExitingTheGateCanBeEnteredFreshForTheNextSync()
+    {
+        var gate = new DirtyWhileRunningGate();
+        gate.TryEnter();
+        gate.Exit();
+
+        Assert.True(gate.TryEnter());
+    }
 }
