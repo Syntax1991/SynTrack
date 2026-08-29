@@ -1,25 +1,12 @@
 import type { OverviewGearCharacterInput } from "./overview-gear-state.mapper.js";
-import { resolveGearOverviewState } from "./overview-gear-state.mapper.js";
 import type { OverviewProfessionCharacterInput } from "./overview-profession-state.mapper.js";
-import { resolveProfessionOverviewState } from "./overview-profession-state.mapper.js";
 import type { OverviewProfessionKnowledgeTreasureCharacterInput } from "./overview-profession-knowledge-treasure-state.mapper.js";
-import { resolveProfessionKnowledgeTreasureOverviewState } from "./overview-profession-knowledge-treasure-state.mapper.js";
 import type { OverviewProfessionWeeklyCharacterInput } from "./overview-profession-weekly-state.mapper.js";
-import { resolveProfessionWeeklyOverviewState } from "./overview-profession-weekly-state.mapper.js";
 import type { OverviewResourceCharacterInput } from "./overview-resource-state.mapper.js";
-import { resolveResourceOverviewState } from "./overview-resource-state.mapper.js";
 import type { OverviewVaultCharacterInput } from "./overview-vault-state.mapper.js";
-import { resolveVaultOverviewState } from "./overview-vault-state.mapper.js";
 import type { OverviewWeeklyCharacterInput } from "./overview-weekly-state.mapper.js";
-import { resolveWeeklyOverviewState } from "./overview-weekly-state.mapper.js";
-import {
-  resolveEmbellishmentOverviewState,
-  resolveTierOverviewState
-} from "./overview-tier-embellishment-state.mapper.js";
-import {
-  pickNextAction,
-  sortCharacterWeeklyStates
-} from "./overview.sorting.js";
+import { resolveCharacterState } from "./overview.aggregator.character.js";
+import { sortCharacterWeeklyStates } from "./overview.sorting.js";
 import type {
   AttentionItem,
   CharacterTrackerState,
@@ -42,26 +29,14 @@ export type OverviewAggregationInput = {
     className: string;
     level: number;
   }[];
-  weeklyByCharacterId: Map<
-    string,
-    OverviewWeeklyCharacterInput
-  >;
-  vaultByCharacterId: Map<
-    string,
-    OverviewVaultCharacterInput
-  >;
-  gearByCharacterId: Map<
-    string,
-    OverviewGearCharacterInput
-  >;
+  weeklyByCharacterId: Map<string, OverviewWeeklyCharacterInput>;
+  vaultByCharacterId: Map<string, OverviewVaultCharacterInput>;
+  gearByCharacterId: Map<string, OverviewGearCharacterInput>;
   professionByCharacterId: Map<
     string,
     OverviewProfessionCharacterInput
   >;
-  resourceByCharacterId: Map<
-    string,
-    OverviewResourceCharacterInput
-  >;
+  resourceByCharacterId: Map<string, OverviewResourceCharacterInput>;
   professionWeeklyByCharacterId: Map<
     string,
     OverviewProfessionWeeklyCharacterInput
@@ -76,210 +51,8 @@ export type OverviewAggregationInput = {
    * distributes them per character, it never queries or computes
    * tracker completion itself.
    */
-  trackerStatesByCharacterId: Map<
-    string,
-    CharacterTrackerState[]
-  >;
+  trackerStatesByCharacterId: Map<string, CharacterTrackerState[]>;
 };
-
-function resolveCharacterState(
-  character: OverviewAggregationInput["characters"][number],
-  input: OverviewAggregationInput
-): CharacterWeeklyState {
-  const weeklyInput =
-    input.weeklyByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      completedTaskKeys: []
-    };
-
-  const vaultInput =
-    input.vaultByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      runs: [],
-      vaultSlots: [],
-      highestKeyLevel: null
-    };
-
-  const gearInput =
-    input.gearByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      slots: [],
-      trackedSlotCount: 0,
-      issueCount: 0,
-      readinessPercent: 0,
-      averageItemLevel: null
-    };
-
-  const professionInput =
-    input.professionByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      hasTrackedProfession: false,
-      partialProfessionIssues: [],
-      professions: []
-    };
-
-  const resourceInput =
-    input.resourceByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      resources: []
-    };
-
-  const professionWeeklyInput =
-    input.professionWeeklyByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      quest: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      treatise: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      drops: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      professions: []
-    };
-
-  const professionKnowledgeTreasureInput =
-    input.professionKnowledgeTreasureByCharacterId.get(
-      character.id
-    ) ?? {
-      id: character.id,
-      name: character.name,
-      treasures: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      professions: []
-    };
-
-  const weeklyResult =
-    resolveWeeklyOverviewState(
-      weeklyInput,
-      input.weeklyTaskCount
-    );
-
-  const vaultResult =
-    resolveVaultOverviewState(
-      vaultInput
-    );
-
-  const gearResult =
-    resolveGearOverviewState(
-      gearInput
-    );
-
-  const professionResult =
-    resolveProfessionOverviewState(
-      professionInput
-    );
-
-  const resourceResult =
-    resolveResourceOverviewState(
-      resourceInput
-    );
-
-  const professionWeeklyResult =
-    resolveProfessionWeeklyOverviewState(
-      professionWeeklyInput
-    );
-
-  const professionKnowledgeTreasureResult =
-    resolveProfessionKnowledgeTreasureOverviewState(
-      professionKnowledgeTreasureInput
-    );
-
-  const attentionItems = [
-    weeklyResult.attentionItem,
-    professionResult.attentionItem,
-    professionWeeklyResult.attentionItem,
-    professionKnowledgeTreasureResult.attentionItem,
-    gearResult.attentionItem,
-    resourceResult.attentionItem,
-    vaultResult.attentionItem
-  ].filter(
-    (item): item is AttentionItem =>
-      item !== null
-  );
-
-  const anyDomainReady =
-    weeklyResult.weekly.state ===
-      "READY" ||
-    vaultResult.vault.state ===
-      "READY" ||
-    professionResult.professions
-      .state === "READY" ||
-    gearResult.gear.state ===
-      "READY" ||
-    resourceResult.resources.state ===
-      "READY" ||
-    professionWeeklyResult
-      .professionWeekly.state ===
-      "READY";
-
-  const readinessState =
-    attentionItems.length > 0
-      ? "attention"
-      : anyDomainReady
-        ? "ready"
-        : "unknown";
-
-  return {
-    character,
-    weekly: weeklyResult.weekly,
-    vault: vaultResult.vault,
-    professions:
-      professionResult.professions,
-    gear: gearResult.gear,
-    resources: resourceResult.resources,
-    tier: resolveTierOverviewState(),
-    embellishments:
-      resolveEmbellishmentOverviewState(),
-    professionWeekly:
-      professionWeeklyResult
-        .professionWeekly,
-    professionKnowledgeTreasures:
-      professionKnowledgeTreasureResult
-        .professionKnowledgeTreasures,
-    trackers:
-      input.trackerStatesByCharacterId.get(
-        character.id
-      ) ?? [],
-    attentionItems,
-    readinessState,
-    nextAction: pickNextAction(
-      attentionItems
-    )
-  };
-}
 
 /*
  * Overview reads and normalizes - every fact here already belongs to
@@ -294,81 +67,52 @@ export function aggregateCharacterWeeklyStates(
   attentionItems: AttentionItem[];
   summary: OverviewSummaryBase;
 } {
-  const characters =
-    input.characters.map(
-      (character) =>
-        resolveCharacterState(
-          character,
-          input
-        )
-    );
+  const characters = input.characters.map((character) =>
+    resolveCharacterState(character, input)
+  );
 
-  const sortedCharacters =
-    sortCharacterWeeklyStates(
-      characters
-    );
+  const sortedCharacters = sortCharacterWeeklyStates(characters);
 
-  const attentionItems =
-    sortedCharacters.flatMap(
-      (state) => state.attentionItems
-    );
+  const attentionItems = sortedCharacters.flatMap(
+    (state) => state.attentionItems
+  );
 
-  const readyCount =
-    sortedCharacters.filter(
-      (state) =>
-        state.readinessState ===
-        "ready"
-    ).length;
+  const readyCount = sortedCharacters.filter(
+    (state) => state.readinessState === "ready"
+  ).length;
 
-  const attentionCount =
-    sortedCharacters.filter(
-      (state) =>
-        state.readinessState ===
-        "attention"
-    ).length;
+  const attentionCount = sortedCharacters.filter(
+    (state) => state.readinessState === "attention"
+  ).length;
 
-  const weeklyProgress =
-    sortedCharacters.reduce(
-      (total, state) => ({
-        completed:
-          total.completed +
-          state.weekly.completed,
-        total:
-          total.total +
-          state.weekly.total
-      }),
-      { completed: 0, total: 0 }
-    );
+  const weeklyProgress = sortedCharacters.reduce(
+    (total, state) => ({
+      completed: total.completed + state.weekly.completed,
+      total: total.total + state.weekly.total
+    }),
+    { completed: 0, total: 0 }
+  );
 
-  const vaultTrackedCount =
-    sortedCharacters.filter(
-      (state) =>
-        state.vault.state !==
-        "UNKNOWN"
-    ).length;
+  const vaultTrackedCount = sortedCharacters.filter(
+    (state) => state.vault.state !== "UNKNOWN"
+  ).length;
 
-  const vaultFullyUnlockedCount =
-    sortedCharacters.filter(
-      (state) =>
-        state.vault.state ===
-        "READY"
-    ).length;
+  const vaultFullyUnlockedCount = sortedCharacters.filter(
+    (state) => state.vault.state === "READY"
+  ).length;
 
   return {
     characters: sortedCharacters,
     attentionItems,
     summary: {
       period: input.period,
-      characterCount:
-        sortedCharacters.length,
+      characterCount: sortedCharacters.length,
       readyCount,
       attentionCount,
       weeklyProgress,
       vault: {
-        trackedCount:
-          vaultTrackedCount,
-        fullyUnlockedCount:
-          vaultFullyUnlockedCount
+        trackedCount: vaultTrackedCount,
+        fullyUnlockedCount: vaultFullyUnlockedCount
       }
     }
   };

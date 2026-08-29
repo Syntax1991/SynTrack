@@ -30,6 +30,13 @@ import {
 import { findCharacterControlDetail } from "./overview-character-state.js";
 import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
 import { loadProfessionIssuesByCharacter } from "./overview.profession-issues.js";
+import {
+  buildCharacterIdMap,
+  buildProfessionByCharacterId,
+  buildProfessionKnowledgeTreasureByCharacterId,
+  buildProfessionWeeklyByCharacterId,
+  buildResourceByCharacterId
+} from "./overview.service.maps.js";
 import { combinePinnedTrackerColumns } from "./overview-tracker-scopes.js";
 import { buildTrackerStatesByCharacterId } from "./overview-tracker-state-map.js";
 import type {
@@ -42,30 +49,23 @@ import type {
  * completion state of its own - it calls the exact same domain services
  * Weekly Checklist, Vault/M+, Gear and Professions already use, then
  * normalizes and prioritizes the result (see overview.aggregator.ts).
- * A future duplicate-state bug class (a second "is this done" answer
- * diverging from the domain's own) is structurally impossible here
- * because no completion math is reimplemented - only read and reshaped.
  */
 export class OverviewService {
-  private readonly weeklyChecklistService =
-    new WeeklyChecklistService(
-      new WeeklyChecklistRepository()
-    );
+  private readonly weeklyChecklistService = new WeeklyChecklistService(
+    new WeeklyChecklistRepository()
+  );
 
-  private readonly vaultMythicPlusService =
-    new VaultMythicPlusService(
-      new VaultMythicPlusRepository()
-    );
+  private readonly vaultMythicPlusService = new VaultMythicPlusService(
+    new VaultMythicPlusRepository()
+  );
 
-  private readonly gearReadinessService =
-    new GearReadinessService(
-      new GearReadinessRepository()
-    );
+  private readonly gearReadinessService = new GearReadinessService(
+    new GearReadinessRepository()
+  );
 
-  private readonly resourceReadinessService =
-    new ResourceReadinessService(
-      new ResourceReadinessRepository()
-    );
+  private readonly resourceReadinessService = new ResourceReadinessService(
+    new ResourceReadinessRepository()
+  );
 
   private readonly professionWeeklyStatusService =
     new ProfessionWeeklyStatusService(
@@ -77,36 +77,28 @@ export class OverviewService {
       new ProfessionKnowledgeTreasureStatusRepository()
     );
 
-  private readonly trackerDefinitionService =
-    new TrackerDefinitionService(
-      new TrackerDefinitionRepository()
-    );
+  private readonly trackerDefinitionService = new TrackerDefinitionService(
+    new TrackerDefinitionRepository()
+  );
 
-  private readonly trackerValueService =
-    new TrackerValueService(
-      new TrackerValueRepository(),
-      new TrackerDefinitionRepository()
-    );
+  private readonly trackerValueService = new TrackerValueService(
+    new TrackerValueRepository(),
+    new TrackerDefinitionRepository()
+  );
 
   private readonly trackerScopeProfileService =
-    new TrackerScopeProfileService(
-      new TrackerScopeProfileRepository()
-    );
+    new TrackerScopeProfileService(new TrackerScopeProfileRepository());
 
-  private readonly tagService =
-    new TagService(new TagRepository());
+  private readonly tagService = new TagService(new TagRepository());
 
-  private readonly dataHealthService =
-    new DataHealthService(
-      new DataHealthRepository()
-    );
+  private readonly dataHealthService = new DataHealthService(
+    new DataHealthRepository()
+  );
 
   async getOverview(): Promise<OverviewResponse> {
     const activeScope =
       await this.trackerScopeProfileService.getActive();
-
-    const seasonalScopeKey =
-      activeScope?.key ?? null;
+    const seasonalScopeKey = activeScope?.key ?? null;
 
     const [
       weeklyChecklist,
@@ -129,35 +121,21 @@ export class OverviewService {
       this.professionKnowledgeTreasureStatusService.getOverview(),
       loadProfessionIssuesByCharacter(),
       seasonalScopeKey
-        ? this.trackerDefinitionService.listByScope(
-            seasonalScopeKey
-          )
-        : Promise.resolve<
-            TrackerDefinitionView[]
-          >([]),
-      this.trackerDefinitionService.listByScope(
-        GLOBAL_TRACKER_SCOPE_KEY
-      ),
+        ? this.trackerDefinitionService.listByScope(seasonalScopeKey)
+        : Promise.resolve<TrackerDefinitionView[]>([]),
+      this.trackerDefinitionService.listByScope(GLOBAL_TRACKER_SCOPE_KEY),
       this.tagService.list(),
       this.tagService.listAllAssignments()
     ]);
 
-    /*
-     * Every matrix tracker column combines the active season's pinned
-     * trackers with GLOBAL's pinned trackers - GLOBAL survives season
-     * switches by definition, so it is always included regardless of
-     * which season is currently active.
-     */
-    const trackerColumns =
-      combinePinnedTrackerColumns(
-        seasonalTrackerDefinitions,
-        globalTrackerDefinitions
-      );
+    const trackerColumns = combinePinnedTrackerColumns(
+      seasonalTrackerDefinitions,
+      globalTrackerDefinitions
+    );
 
-    const characterIds =
-      weeklyChecklist.characters.map(
-        (character) => character.id
-      );
+    const characterIds = weeklyChecklist.characters.map(
+      (character) => character.id
+    );
 
     const trackerStatesByCharacterId =
       await buildTrackerStatesByCharacterId(
@@ -166,147 +144,48 @@ export class OverviewService {
         characterIds
       );
 
-    const weeklyByCharacterId =
-      new Map(
-        weeklyChecklist.characters.map(
-          (character) => [
-            character.id,
-            character
-          ]
-        )
-      );
-
-    const vaultByCharacterId =
-      new Map(
-        vaultOverview.characters.map(
-          (character) => [
-            character.id,
-            character
-          ]
-        )
-      );
-
-    const gearByCharacterId =
-      new Map(
-        gearOverview.characters.map(
-          (character) => [
-            character.id,
-            character
-          ]
-        )
-      );
-
-    const resourceByCharacterId =
-      new Map(
-        resourceOverview.characters.map(
-          (character) => [
-            character.id,
-            {
-              id: character.id,
-              name: character.name,
-              resources: character.resources
-            }
-          ]
-        )
-      );
-
-    const professionWeeklyByCharacterId =
-      new Map(
-        professionWeeklyOverview.characters.map(
-          (character) => [
-            character.id,
-            character
-          ]
-        )
-      );
-
-    const professionKnowledgeTreasureByCharacterId =
-      new Map(
-        professionKnowledgeTreasureOverview.characters.map(
-          (character) => [
-            character.id,
-            character
-          ]
-        )
-      );
-
-    const professionByCharacterId =
-      new Map(
-        [
-          ...professionIssuesByCharacter.entries()
-        ].map(
-          ([
-            characterId,
-            entry
-          ]) => [
-            characterId,
-            {
-              id: characterId,
-              name:
-                weeklyByCharacterId.get(
-                  characterId
-                )?.name ?? "",
-              hasTrackedProfession:
-                entry.hasTrackedProfession,
-              partialProfessionIssues:
-                entry.partialIssues,
-              professions:
-                entry.professions
-            }
-          ]
-        )
-      );
+    const weeklyByCharacterId = buildCharacterIdMap(
+      weeklyChecklist.characters
+    );
 
     const {
       characters,
       attentionItems,
       summary
-    } =
-      aggregateCharacterWeeklyStates({
-        period:
-          weeklyChecklist.period,
-        weeklyTaskCount:
-          weeklyChecklist.tasks
-            .length,
-        characters:
-          weeklyChecklist.characters.map(
-            (character) => ({
-              id: character.id,
-              name: character.name,
-              realm: character.realm,
-              region:
-                character.region,
-              className:
-                character.className,
-              level: character.level
-            })
-          ),
-        weeklyByCharacterId,
-        vaultByCharacterId,
-        gearByCharacterId,
-        professionByCharacterId,
-        resourceByCharacterId,
-        professionWeeklyByCharacterId,
-        professionKnowledgeTreasureByCharacterId,
-        trackerStatesByCharacterId
-      });
+    } = aggregateCharacterWeeklyStates({
+      period: weeklyChecklist.period,
+      weeklyTaskCount: weeklyChecklist.tasks.length,
+      characters: weeklyChecklist.characters.map((character) => ({
+        id: character.id,
+        name: character.name,
+        realm: character.realm,
+        region: character.region,
+        className: character.className,
+        level: character.level
+      })),
+      weeklyByCharacterId,
+      vaultByCharacterId: buildCharacterIdMap(vaultOverview.characters),
+      gearByCharacterId: buildCharacterIdMap(gearOverview.characters),
+      professionByCharacterId: buildProfessionByCharacterId(
+        professionIssuesByCharacter,
+        weeklyByCharacterId
+      ),
+      resourceByCharacterId: buildResourceByCharacterId(
+        resourceOverview.characters
+      ),
+      professionWeeklyByCharacterId: buildProfessionWeeklyByCharacterId(
+        professionWeeklyOverview.characters
+      ),
+      professionKnowledgeTreasureByCharacterId:
+        buildProfessionKnowledgeTreasureByCharacterId(
+          professionKnowledgeTreasureOverview.characters
+        ),
+      trackerStatesByCharacterId
+    });
 
-    /*
-     * Tags and Data Health are attached AFTER the core aggregation
-     * runs - neither participates in readinessState/attentionItems/
-     * nextAction, so overview.aggregator.ts's tested pure-function
-     * chain never needs to know about either concept.
-     */
-    const tagsByCharacterId =
-      buildTagsByCharacterId(
-        tags,
-        tagAssignments
-      );
-
+    const tagsByCharacterId = buildTagsByCharacterId(tags, tagAssignments);
     const healthByCharacterId =
-      await this.dataHealthService.getHealthByCharacterIds(
-        characterIds
-      );
+      await this.dataHealthService.getHealthByCharacterIds(characterIds);
 
     const {
       characters: charactersWithExtras,
@@ -326,34 +205,22 @@ export class OverviewService {
       characters: charactersWithExtras,
       trackerColumns,
       activeScope,
-      accountResources:
-        resourceOverview.accountResources
+      accountResources: resourceOverview.accountResources
     };
   }
 
   /*
-   * The Character Detail Hub's read path - reuses getOverview() (the
-   * exact same aggregation every domain already goes through) and
-   * narrows to one character. This is not a second aggregator: no
-   * completion/attention logic is reimplemented here.
+   * Character Detail Hub - reuses getOverview() and narrows to one
+   * character. No second aggregator: no completion logic reimplemented.
    */
   async getCharacterState(
     characterId: string
   ): Promise<CharacterControlDetailResponse> {
-    const overview =
-      await this.getOverview();
-
-    const detail =
-      findCharacterControlDetail(
-        overview,
-        characterId
-      );
+    const overview = await this.getOverview();
+    const detail = findCharacterControlDetail(overview, characterId);
 
     if (!detail) {
-      throw new AppError(
-        404,
-        "Character not found."
-      );
+      throw new AppError(404, "Character not found.");
     }
 
     return detail;
