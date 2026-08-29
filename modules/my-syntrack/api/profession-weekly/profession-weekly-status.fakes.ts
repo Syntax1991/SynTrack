@@ -18,8 +18,15 @@ export class FakeProfessionWeeklyStatusRepository
     string
   >();
 
-  seedCharacter(row: ProfessionWeeklyCharacterRow) {
-    this.characters.push(row);
+  seedCharacter(
+    row: Omit<ProfessionWeeklyCharacterRow, "professionKeys"> & {
+      professionKeys?: string[];
+    }
+  ) {
+    this.characters.push({
+      professionKeys: [],
+      ...row
+    });
   }
 
   seedSnapshot(row: ProfessionWeeklySnapshotRow) {

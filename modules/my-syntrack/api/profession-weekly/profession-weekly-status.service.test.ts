@@ -49,7 +49,11 @@ describe("ProfessionWeeklyStatusService", () => {
 
   it("derives Prof KP from Weekly Quest + Treatise only, excluding Knowledge Drops", async () => {
     const repository = new FakeProfessionWeeklyStatusRepository();
-    repository.seedCharacter({ id: "char-1", name: "Synlight" });
+    repository.seedCharacter({
+      id: "char-1",
+      name: "Synlight",
+      professionKeys: ["alchemy"]
+    });
     repository.seedProfessionName("alchemy", "Alchemy");
 
     repository.seedSnapshot({
@@ -134,7 +138,11 @@ describe("ProfessionWeeklyStatusService", () => {
 
   it("aggregates two professions independently into one character-level Prof KP", async () => {
     const repository = new FakeProfessionWeeklyStatusRepository();
-    repository.seedCharacter({ id: "char-1", name: "Synlight" });
+    repository.seedCharacter({
+      id: "char-1",
+      name: "Synlight",
+      professionKeys: ["alchemy", "blacksmithing"]
+    });
     repository.seedProfessionName("alchemy", "Alchemy");
     repository.seedProfessionName(
       "blacksmithing",
@@ -221,6 +229,60 @@ describe("ProfessionWeeklyStatusService", () => {
     );
 
     expect(treatiseStatus?.state).toBe("UNKNOWN");
+  });
+
+  it("never shows a profession the character doesn't actually have, even if it's enabled for other characters", async () => {
+    const repository = new FakeProfessionWeeklyStatusRepository();
+    repository.seedCharacter({
+      id: "char-1",
+      name: "Synfel",
+      professionKeys: ["inscription"]
+    });
+    repository.seedProfessionName("inscription", "Inscription");
+    repository.seedProfessionName("alchemy", "Alchemy");
+
+    repository.seedSnapshot({
+      characterId: "char-1",
+      sourceDefinitionId: "def-inscription-quest",
+      state: "COMPLETE",
+      currentValue: null,
+      maxValue: null,
+      capturedAt: new Date("2026-08-28T12:00:00.000Z")
+    });
+
+    const service = new ProfessionWeeklyStatusService(
+      repository,
+      lookup([
+        definition({
+          id: "def-inscription-quest",
+          professionKey: "inscription",
+          sourceKey: "weekly-quest"
+        }),
+        // Alchemy is enabled account-wide (e.g. another character has
+        // it), but Synfel doesn't practice Alchemy at all - it must
+        // never appear as a phantom UNKNOWN entry for this character.
+        definition({
+          id: "def-alchemy-quest",
+          professionKey: "alchemy",
+          sourceKey: "weekly-quest"
+        })
+      ])
+    );
+
+    const overview = await service.getOverview();
+    const character = overview.characters[0]!;
+
+    expect(character.profKp).toEqual({
+      completeCount: 1,
+      incompleteCount: 0,
+      unknownCount: 0,
+      applicableTotal: 1
+    });
+
+    expect(character.professions).toHaveLength(1);
+    expect(character.professions[0]!.professionKey).toBe(
+      "inscription"
+    );
   });
 
   it("never counts a disabled/unconfigured source in applicableTotal", async () => {

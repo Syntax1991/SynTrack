@@ -1,6 +1,7 @@
 export type ProfessionWeeklyCharacterRow = {
   id: string;
   name: string;
+  professionKeys: string[];
 };
 
 export type ProfessionWeeklySnapshotRow = {

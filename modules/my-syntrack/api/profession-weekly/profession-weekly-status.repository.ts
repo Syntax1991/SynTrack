@@ -8,11 +8,25 @@ import type {
 export class ProfessionWeeklyStatusRepository
   implements ProfessionWeeklyStatusRepositoryContract
 {
-  findCharacters(): Promise<ProfessionWeeklyCharacterRow[]> {
-    return prisma.character.findMany({
-      select: { id: true, name: true },
+  async findCharacters(): Promise<ProfessionWeeklyCharacterRow[]> {
+    const characters = await prisma.character.findMany({
+      select: {
+        id: true,
+        name: true,
+        professions: {
+          select: { profession: { select: { key: true } } }
+        }
+      },
       orderBy: [{ level: "desc" }, { name: "asc" }]
     });
+
+    return characters.map((character) => ({
+      id: character.id,
+      name: character.name,
+      professionKeys: character.professions.map(
+        (entry) => entry.profession.key
+      )
+    }));
   }
 
   findSnapshotsForPeriod(

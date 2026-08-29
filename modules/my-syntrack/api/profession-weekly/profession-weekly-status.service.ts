@@ -165,10 +165,14 @@ export class ProfessionWeeklyStatusService {
     const drops = emptyAggregate();
     const professions: ProfessionWeeklyProfessionSummary[] = [];
 
-    for (const [
-      professionKey,
-      professionDefinitions
-    ] of definitionsByProfession) {
+    for (const professionKey of character.professionKeys) {
+      const professionDefinitions =
+        definitionsByProfession.get(professionKey);
+
+      if (!professionDefinitions) {
+        continue;
+      }
+
       const sources: ProfessionWeeklySourceStatus[] = [];
       const professionProfKp = emptyAggregate();
       let dropsStatus: ProfessionWeeklySourceStatus | null = null;
