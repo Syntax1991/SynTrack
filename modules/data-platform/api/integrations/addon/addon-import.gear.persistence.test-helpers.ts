@@ -142,6 +142,7 @@ export function character(
     gear,
     resources: null,
     professionWeekly: null,
+    professionKnowledgeTreasures: null,
     ...overrides
   };
 }

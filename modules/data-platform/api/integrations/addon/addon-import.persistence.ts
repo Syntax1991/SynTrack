@@ -128,7 +128,10 @@ export class AddonImportPersistence {
                 .resourceSnapshots,
             professionWeeklySnapshots:
               characterResult
-                .professionWeeklySnapshots
+                .professionWeeklySnapshots,
+            professionKnowledgeTreasureSnapshots:
+              characterResult
+                .professionKnowledgeTreasureSnapshots
           }
         };
       }

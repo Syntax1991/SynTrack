@@ -30,6 +30,7 @@ model Character {
   tagAssignments    CharacterTagAssignment[]
   resourceSnapshots CharacterResourceSnapshot[]
   professionWeeklySnapshots CharacterProfessionWeeklySnapshot[]
+  professionKnowledgeTreasureSnapshots CharacterProfessionKnowledgeTreasureSnapshot[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
@@ -321,6 +322,72 @@ model CharacterProfessionWeeklySnapshot {
   @@unique([characterId, sourceDefinitionId, periodKey])
   @@index([sourceDefinitionId])
   @@index([periodKey])
+}
+
+enum ProfessionKnowledgeTreasureState {
+  COMPLETE
+  INCOMPLETE
+  UNKNOWN
+}
+
+/*
+ * A permanent, once-per-character-per-profession Knowledge source
+ * (e.g. a world-collectible item) - fully separate from
+ * ProfessionWeeklySourceDefinition, which resets every week. See the
+ * profession weekly correctness follow-up's Knowledge Treasures
+ * addition. Deliberately its own model rather than folded into the
+ * weekly one: reusing getWeeklyPeriod()-keyed rows for something that
+ * never resets would make "is this still current" ambiguous.
+ */
+model ProfessionKnowledgeTreasureDefinition {
+  id              String   @id @default(cuid())
+  scopeKey        String
+  professionKey   String
+  sourceKey       String
+  name            String
+  externalQuestId Int
+  knowledgePoints Int?
+  enabled         Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  snapshots CharacterProfessionKnowledgeTreasureSnapshot[]
+
+  @@unique([scopeKey, professionKey, sourceKey])
+  @@index([scopeKey])
+  @@index([enabled])
+}
+
+/*
+ * One row per character/definition, permanent - no weekly period key.
+ * Once state is COMPLETE it is never overwritten back to UNKNOWN or
+ * INCOMPLETE by a later capture (see the persistence layer's monotonic
+ * upsert) - a one-time quest flag genuinely completed can't become
+ * un-completed, so a later failed/unresolved lookup must never regress
+ * already-proven permanent truth.
+ */
+model CharacterProfessionKnowledgeTreasureSnapshot {
+  id           String @id @default(cuid())
+  characterId  String
+  definitionId String
+
+  state ProfessionKnowledgeTreasureState
+
+  flaggedCompleted Boolean?
+  externalQuestId  Int?
+
+  source     String   @default("ADDON")
+  capturedAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  character  Character                            @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  definition ProfessionKnowledgeTreasureDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, definitionId])
+  @@index([definitionId])
 }
 
 model TrackerScopeProfile {

@@ -1,3 +1,4 @@
+import type { ProfessionKnowledgeTreasureOverviewState } from "./professionKnowledgeTreasure.types";
 import type { ProfessionWeeklyOverviewState } from "./professionWeekly.types";
 
 export type OverviewDomainState =
@@ -18,6 +19,7 @@ export type AttentionDomain =
   | "vault"
   | "profession"
   | "profession-weekly"
+  | "profession-knowledge-treasure"
   | "gear"
   | "resources";
 
@@ -147,6 +149,13 @@ export type {
   ProfessionWeeklySourceStatus
 } from "./professionWeekly.types";
 
+export type {
+  ProfessionKnowledgeTreasureAggregate,
+  ProfessionKnowledgeTreasureOverviewState,
+  ProfessionKnowledgeTreasureProfessionSummary,
+  ProfessionKnowledgeTreasureSourceStatus
+} from "./professionKnowledgeTreasure.types";
+
 export type TrackerValueType =
   | "BOOLEAN"
   | "PROGRESS"
@@ -216,6 +225,7 @@ export type CharacterWeeklyState = {
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
   professionWeekly: ProfessionWeeklyOverviewState;
+  professionKnowledgeTreasures: ProfessionKnowledgeTreasureOverviewState;
   trackers: CharacterTrackerState[];
   attentionItems: AttentionItem[];
   readinessState: OverviewReadinessState;

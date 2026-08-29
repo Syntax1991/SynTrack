@@ -2,6 +2,8 @@ import type { OverviewGearCharacterInput } from "./overview-gear-state.mapper.js
 import { resolveGearOverviewState } from "./overview-gear-state.mapper.js";
 import type { OverviewProfessionCharacterInput } from "./overview-profession-state.mapper.js";
 import { resolveProfessionOverviewState } from "./overview-profession-state.mapper.js";
+import type { OverviewProfessionKnowledgeTreasureCharacterInput } from "./overview-profession-knowledge-treasure-state.mapper.js";
+import { resolveProfessionKnowledgeTreasureOverviewState } from "./overview-profession-knowledge-treasure-state.mapper.js";
 import type { OverviewProfessionWeeklyCharacterInput } from "./overview-profession-weekly-state.mapper.js";
 import { resolveProfessionWeeklyOverviewState } from "./overview-profession-weekly-state.mapper.js";
 import type { OverviewResourceCharacterInput } from "./overview-resource-state.mapper.js";
@@ -63,6 +65,10 @@ export type OverviewAggregationInput = {
   professionWeeklyByCharacterId: Map<
     string,
     OverviewProfessionWeeklyCharacterInput
+  >;
+  professionKnowledgeTreasureByCharacterId: Map<
+    string,
+    OverviewProfessionKnowledgeTreasureCharacterInput
   >;
   /*
    * Pre-fetched, already-batched pinned tracker states (see
@@ -160,6 +166,21 @@ function resolveCharacterState(
       professions: []
     };
 
+  const professionKnowledgeTreasureInput =
+    input.professionKnowledgeTreasureByCharacterId.get(
+      character.id
+    ) ?? {
+      id: character.id,
+      name: character.name,
+      treasures: {
+        completeCount: 0,
+        incompleteCount: 0,
+        unknownCount: 0,
+        applicableTotal: 0
+      },
+      professions: []
+    };
+
   const weeklyResult =
     resolveWeeklyOverviewState(
       weeklyInput,
@@ -191,10 +212,16 @@ function resolveCharacterState(
       professionWeeklyInput
     );
 
+  const professionKnowledgeTreasureResult =
+    resolveProfessionKnowledgeTreasureOverviewState(
+      professionKnowledgeTreasureInput
+    );
+
   const attentionItems = [
     weeklyResult.attentionItem,
     professionResult.attentionItem,
     professionWeeklyResult.attentionItem,
+    professionKnowledgeTreasureResult.attentionItem,
     gearResult.attentionItem,
     resourceResult.attentionItem,
     vaultResult.attentionItem
@@ -239,6 +266,9 @@ function resolveCharacterState(
     professionWeekly:
       professionWeeklyResult
         .professionWeekly,
+    professionKnowledgeTreasures:
+      professionKnowledgeTreasureResult
+        .professionKnowledgeTreasures,
     trackers:
       input.trackerStatesByCharacterId.get(
         character.id

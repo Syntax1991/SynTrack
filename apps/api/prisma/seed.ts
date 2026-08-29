@@ -7,6 +7,8 @@ import { TrackerScopeProfileRepository } from "../../../modules/my-syntrack/api/
 import { TrackerScopeProfileService } from "../../../modules/my-syntrack/api/trackers/tracker-scope-profile.service.js";
 import { ProfessionWeeklyDefinitionRepository } from "../../../modules/my-syntrack/api/profession-weekly/profession-weekly-definition.repository.js";
 import { ProfessionWeeklyDefinitionService } from "../../../modules/my-syntrack/api/profession-weekly/profession-weekly-definition.service.js";
+import { ProfessionKnowledgeTreasureDefinitionRepository } from "../../../modules/my-syntrack/api/profession-knowledge-treasures/profession-knowledge-treasure-definition.repository.js";
+import { ProfessionKnowledgeTreasureDefinitionService } from "../../../modules/my-syntrack/api/profession-knowledge-treasures/profession-knowledge-treasure-definition.service.js";
 
 const adapter = new PrismaBetterSqlite3({
   url:
@@ -544,12 +546,94 @@ async function seedKnowledgeDropsSources(
   }
 }
 
+/*
+ * One-time Knowledge Treasures are a permanent, non-weekly profession
+ * Knowledge source - fully separate from Weekly Quest/Treatise/Drops
+ * (see the profession weekly correctness follow-up's Knowledge
+ * Treasures addition). Each profession has 8 independent world-
+ * collectible treasure quest flags. Cross-checked 2026-08-29 against
+ * the same two independent maintained addons as the weekly domains
+ * (Myu's Knowledge Points Tracker and DennisRas/WeeklyKnowledge) -
+ * both agree exactly on all 88 quest ids across all 11 professions,
+ * zero conflicts. Enabled on that corroborated basis; no personal live
+ * sample has been traced for any individual treasure id specifically,
+ * though the user's account-wide characters are all expected complete
+ * (see the live acceptance in the correctness follow-up report).
+ *
+ * A profession's 2-3 "Unique Book" sources (vendor/renown-gated, 10kp
+ * each) are a related but distinct concept, deliberately out of scope
+ * here - the user's own "8/8" example matches only the 8 world-
+ * treasure sources.
+ */
+async function seedProfessionKnowledgeTreasures() {
+  const professionKnowledgeTreasureDefinitionService =
+    new ProfessionKnowledgeTreasureDefinitionService(
+      new ProfessionKnowledgeTreasureDefinitionRepository()
+    );
+
+  const treasureQuestIds: Record<string, number[]> = {
+    alchemy: [
+      89111, 89112, 89113, 89114, 89115, 89116, 89117, 89118
+    ],
+    blacksmithing: [
+      89177, 89178, 89179, 89180, 89181, 89182, 89183, 89184
+    ],
+    enchanting: [
+      89100, 89101, 89102, 89103, 89104, 89105, 89106, 89107
+    ],
+    engineering: [
+      89133, 89134, 89135, 89136, 89137, 89138, 89139, 89140
+    ],
+    herbalism: [
+      89155, 89156, 89157, 89158, 89159, 89160, 89161, 89162
+    ],
+    inscription: [
+      89067, 89068, 89069, 89070, 89071, 89072, 89073, 89074
+    ],
+    jewelcrafting: [
+      89122, 89123, 89124, 89125, 89126, 89127, 89128, 89129
+    ],
+    leatherworking: [
+      89089, 89090, 89091, 89092, 89093, 89094, 89095, 89096
+    ],
+    mining: [
+      89144, 89145, 89146, 89147, 89148, 89149, 89150, 89151
+    ],
+    skinning: [
+      89166, 89167, 89168, 89169, 89170, 89171, 89172, 89173
+    ],
+    tailoring: [
+      89078, 89079, 89080, 89081, 89082, 89083, 89084, 89085
+    ]
+  };
+
+  for (const [professionKey, questIds] of Object.entries(
+    treasureQuestIds
+  )) {
+    for (const [index, questId] of questIds.entries()) {
+      await professionKnowledgeTreasureDefinitionService.ensureDefinition(
+        {
+          scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+          professionKey,
+          sourceKey: `treasure-${index + 1}`,
+          name: `Treasure ${index + 1}`,
+          externalQuestId: questId,
+          knowledgePoints: 3,
+          enabled: true,
+          sortOrder: index
+        }
+      );
+    }
+  }
+}
+
 async function seed() {
   await seedProfessions();
   await seedBlacksmithingArmorTree();
   await seedMidnightSeason2Profile();
   await seedMidnightSeason2Resources();
   await seedProfessionWeeklySources();
+  await seedProfessionKnowledgeTreasures();
 }
 
 seed()

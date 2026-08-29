@@ -9,6 +9,8 @@ import { ResourceReadinessRepository } from "../resources/resource-readiness.rep
 import { ResourceReadinessService } from "../resources/resource-readiness.service.js";
 import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
 import { ProfessionWeeklyStatusService } from "../profession-weekly/profession-weekly-status.service.js";
+import { ProfessionKnowledgeTreasureStatusRepository } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.repository.js";
+import { ProfessionKnowledgeTreasureStatusService } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.service.js";
 import { GLOBAL_TRACKER_SCOPE_KEY } from "../trackers/global-tracker-scope.js";
 import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
 import { TrackerDefinitionService } from "../trackers/tracker-definition.service.js";
@@ -70,6 +72,11 @@ export class OverviewService {
       new ProfessionWeeklyStatusRepository()
     );
 
+  private readonly professionKnowledgeTreasureStatusService =
+    new ProfessionKnowledgeTreasureStatusService(
+      new ProfessionKnowledgeTreasureStatusRepository()
+    );
+
   private readonly trackerDefinitionService =
     new TrackerDefinitionService(
       new TrackerDefinitionRepository()
@@ -107,6 +114,7 @@ export class OverviewService {
       gearOverview,
       resourceOverview,
       professionWeeklyOverview,
+      professionKnowledgeTreasureOverview,
       professionIssuesByCharacter,
       seasonalTrackerDefinitions,
       globalTrackerDefinitions,
@@ -118,6 +126,7 @@ export class OverviewService {
       this.gearReadinessService.getOverview(),
       this.resourceReadinessService.getOverview(),
       this.professionWeeklyStatusService.getOverview(),
+      this.professionKnowledgeTreasureStatusService.getOverview(),
       loadProfessionIssuesByCharacter(),
       seasonalScopeKey
         ? this.trackerDefinitionService.listByScope(
@@ -211,6 +220,16 @@ export class OverviewService {
         )
       );
 
+    const professionKnowledgeTreasureByCharacterId =
+      new Map(
+        professionKnowledgeTreasureOverview.characters.map(
+          (character) => [
+            character.id,
+            character
+          ]
+        )
+      );
+
     const professionByCharacterId =
       new Map(
         [
@@ -268,6 +287,7 @@ export class OverviewService {
         professionByCharacterId,
         resourceByCharacterId,
         professionWeeklyByCharacterId,
+        professionKnowledgeTreasureByCharacterId,
         trackerStatesByCharacterId
       });
 

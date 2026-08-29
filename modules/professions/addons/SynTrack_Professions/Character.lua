@@ -110,6 +110,13 @@ function PT.RefreshCharacter(
         )
         or nil
 
+    existingCharacter.professionKnowledgeTreasures =
+        PT.CaptureProfessionKnowledgeTreasures
+        and PT.CaptureProfessionKnowledgeTreasures(
+            existingCharacter.professions
+        )
+        or nil
+
     existingCharacter.lastUpdatedAt =
         time()
 

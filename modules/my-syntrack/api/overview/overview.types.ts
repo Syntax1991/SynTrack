@@ -31,12 +31,22 @@ import type {
   ProfessionWeeklyAggregate,
   ProfessionWeeklyProfessionSummary
 } from "../profession-weekly/profession-weekly-status.types.js";
+import type {
+  ProfessionKnowledgeTreasureAggregate,
+  ProfessionKnowledgeTreasureProfessionSummary
+} from "../profession-knowledge-treasures/profession-knowledge-treasure-status.types.js";
 
 export type {
   ProfessionWeeklyAggregate,
   ProfessionWeeklyProfessionSummary,
   ProfessionWeeklySourceStatus
 } from "../profession-weekly/profession-weekly-status.types.js";
+
+export type {
+  ProfessionKnowledgeTreasureAggregate,
+  ProfessionKnowledgeTreasureProfessionSummary,
+  ProfessionKnowledgeTreasureSourceStatus
+} from "../profession-knowledge-treasures/profession-knowledge-treasure-status.types.js";
 
 export type {
   CharacterTrackerState,
@@ -75,6 +85,7 @@ export type AttentionDomain =
   | "vault"
   | "profession"
   | "profession-weekly"
+  | "profession-knowledge-treasure"
   | "gear"
   | "resources";
 
@@ -192,6 +203,19 @@ export type ProfessionWeeklyOverviewState = {
   professions: ProfessionWeeklyProfessionSummary[];
 };
 
+/*
+ * Permanent, once-per-character-per-profession Knowledge Treasures -
+ * fully separate from ProfessionWeeklyOverviewState (which resets
+ * weekly). Never rendered as a mandatory Overview column; it only
+ * contributes an attentionItem when incomplete (see the profession
+ * weekly correctness follow-up's Knowledge Treasures addition).
+ */
+export type ProfessionKnowledgeTreasureOverviewState = {
+  state: OverviewDomainState;
+  treasures: ProfessionKnowledgeTreasureAggregate;
+  professions: ProfessionKnowledgeTreasureProfessionSummary[];
+};
+
 export type CharacterWeeklyState = {
   character: {
     id: string;
@@ -209,6 +233,7 @@ export type CharacterWeeklyState = {
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
   professionWeekly: ProfessionWeeklyOverviewState;
+  professionKnowledgeTreasures: ProfessionKnowledgeTreasureOverviewState;
   /*
    * Pinned+enabled tracker states for the active scope, aligned by
    * trackerDefinitionId to OverviewResponse.trackerColumns - Overview

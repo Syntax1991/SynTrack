@@ -25,6 +25,7 @@ export type CharacterPersistenceResult = {
   gearSlots: number;
   resourceSnapshots: number;
   professionWeeklySnapshots: number;
+  professionKnowledgeTreasureSnapshots: number;
 };
 
 export type RecipePersistenceResult = {

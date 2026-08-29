@@ -38,6 +38,8 @@ export function baseInput(
       new Map(),
     professionWeeklyByCharacterId:
       new Map(),
+    professionKnowledgeTreasureByCharacterId:
+      new Map(),
     trackerStatesByCharacterId:
       new Map(),
     ...overrides

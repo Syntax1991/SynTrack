@@ -18,6 +18,17 @@ const severityRank: Record<
  * Domain priority used only to break ties when a character has more than
  * one attention item of the same severity - arbitrary but deterministic
  * (never re-sorts between renders).
+ *
+ * profession-knowledge-treasure ranks ahead of profession-weekly: a
+ * missing permanent treasure is a one-time setup gap ("you never even
+ * did this"), which the profession weekly correctness follow-up asked
+ * to rank above the weekly Knowledge Drops signal specifically -
+ * domainRank can't distinguish sources within the profession-weekly
+ * domain (Quest/Treatise/Drops all share it), so ranking the whole
+ * domain below Treasures is the closest expressible approximation.
+ * Still below weekly/profession (the two most time-sensitive domains)
+ * and still above gear/resources/vault, per "not above critical
+ * Gear/Vault/etc. globally yet."
  */
 const domainRank: Record<
   AttentionItem["domain"],
@@ -25,10 +36,11 @@ const domainRank: Record<
 > = {
   weekly: 0,
   profession: 1,
-  "profession-weekly": 2,
-  gear: 3,
-  resources: 4,
-  vault: 5
+  "profession-knowledge-treasure": 2,
+  "profession-weekly": 3,
+  gear: 4,
+  resources: 5,
+  vault: 6
 };
 
 function bestSeverityRank(
