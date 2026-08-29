@@ -198,14 +198,7 @@ export function GearSlotGrid({
                             )}
 
                             {enchantLabel && (
-                              <span
-                                className={
-                                  slot.issues
-                                    .missingEnchant
-                                    ? "is-warning"
-                                    : ""
-                                }
-                              >
+                              <span>
                                 {enchantLabel}
                               </span>
                             )}

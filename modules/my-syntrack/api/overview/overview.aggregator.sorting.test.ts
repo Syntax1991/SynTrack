@@ -49,8 +49,8 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
                 {
                   item: { itemLevel: 600 },
                   issues: {
-                    missingEnchant: true,
-                    missingGemCount: 0
+                    missingEnchant: false,
+                    missingGemCount: 1
                   }
                 }
               ],
@@ -94,8 +94,8 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
                 {
                   item: { itemLevel: 600 },
                   issues: {
-                    missingEnchant: true,
-                    missingGemCount: 0
+                    missingEnchant: false,
+                    missingGemCount: 1
                   }
                 }
               ],

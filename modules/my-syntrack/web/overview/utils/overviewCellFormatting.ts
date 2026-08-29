@@ -141,24 +141,19 @@ export function formatGearToken(
   }
 
   if (gear.state === "ATTENTION") {
-    const parts: string[] = [];
-
-    if (gear.missingEnchantCount > 0) {
-      parts.push(
-        `${gear.missingEnchantCount} missing ${gear.missingEnchantCount === 1 ? "enchant" : "enchants"}`
-      );
-    }
-
-    if (gear.emptySocketCount > 0) {
-      parts.push(
-        `${gear.emptySocketCount} empty ${gear.emptySocketCount === 1 ? "socket" : "sockets"}`
-      );
-    }
+    const title =
+      gear.emptySocketCount > 0
+        ? `${gear.emptySocketCount} empty ${
+            gear.emptySocketCount === 1
+              ? "socket"
+              : "sockets"
+          }`
+        : "Gear needs attention";
 
     return {
       symbol: "!",
       tone: "attention",
-      title: parts.join(", ") || "Gear needs attention"
+      title
     };
   }
 

@@ -65,7 +65,7 @@ const taskCatalog:
       key: "gear-readiness",
       title: "Gear readiness",
       description:
-        "Review missing enchants, gems and upgrade opportunities.",
+        "Review empty sockets and upgrade opportunities.",
       category: "GEAR",
       sortOrder: 50
     }
