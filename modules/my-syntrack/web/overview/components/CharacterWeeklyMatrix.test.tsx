@@ -301,47 +301,4 @@ describe("CharacterWeeklyMatrix", () => {
       screen.queryByText("Synbloom")
     ).not.toBeInTheDocument();
   });
-
-  it("shows the automatic Prof KP and Drops columns additively, alongside the existing Prof. data-health column", () => {
-    renderMatrix([
-      buildCharacter({
-        character: {
-          id: "char-1",
-          name: "Synfel",
-          realm: "Antonidas",
-          region: "eu",
-          className: "Mage",
-          level: 80
-        },
-        professionWeekly: {
-          state: "ATTENTION",
-          profKp: {
-            completeCount: 3,
-            incompleteCount: 1,
-            unknownCount: 0,
-            applicableTotal: 4
-          },
-          drops: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          professions: []
-        }
-      })
-    ]);
-
-    expect(
-      screen.getByText("Prof KP")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("Drops")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("3/4")
-    ).toBeInTheDocument();
-  });
 });

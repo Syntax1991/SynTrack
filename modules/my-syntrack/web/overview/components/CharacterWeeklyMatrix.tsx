@@ -40,7 +40,7 @@ export function CharacterWeeklyMatrix({
   } = useMatrixFilters(characters);
 
   const columnCount =
-    12 + trackerColumns.length;
+    13 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -135,8 +135,17 @@ export function CharacterWeeklyMatrix({
                 <th className="overview-col-narrow">
                   Gear
                 </th>
-                <th className="overview-col-narrow">
-                  Res.
+                <th
+                  className="overview-col-narrow"
+                  title="Tidal Spark Dust - season progress toward Sparks of Tides"
+                >
+                  Spark
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Venomblight Manaflux - Creation Catalyst charges"
+                >
+                  Cata
                 </th>
                 <th className="overview-col-action">
                   Action

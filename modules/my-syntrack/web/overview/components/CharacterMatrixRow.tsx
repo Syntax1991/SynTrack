@@ -10,7 +10,7 @@ import {
   formatItemLevelToken,
   formatProfessionToken,
   formatProfessionWeeklyAggregateToken,
-  formatResourceToken,
+  formatResourceCountToken,
   formatTierToken,
   formatVaultToken,
   formatWeeklyToken
@@ -224,8 +224,20 @@ export function CharacterMatrixRow({
 
       <td className="overview-col-narrow">
         <StatusToken
-          token={formatResourceToken(
-            state.resources
+          token={formatResourceCountToken(
+            state.resources,
+            "tidal-spark-dust",
+            "Spark"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatResourceCountToken(
+            state.resources,
+            "venomblight-manaflux",
+            "Cata"
           )}
         />
       </td>
