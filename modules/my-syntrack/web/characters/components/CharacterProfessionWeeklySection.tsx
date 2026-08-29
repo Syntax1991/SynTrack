@@ -51,9 +51,11 @@ function dropsLabel(
 }
 
 /*
- * Explains the compact Weekly/Overview Prof KP + Drops columns without
- * duplicating their aggregation logic - every value here is read
- * straight from ProfessionWeeklyStatusService's read model. A
+ * Explains the compact Weekly/Overview Quest/Treatise/Drops columns
+ * without duplicating their aggregation logic - every value here is
+ * read straight from ProfessionWeeklyStatusService's read model, shown
+ * as three separate named sources per profession (never a combined
+ * "Prof KP" total) so it's always clear which one is missing. A
  * profession with zero enabled sources this season never appears at
  * all (NOT_APPLICABLE by construction), rather than a fabricated row.
  */
@@ -85,15 +87,29 @@ export function CharacterProfessionWeeklySection({
             <h3>{profession.name}</h3>
 
             <ul className="character-profession-weekly-sources">
-              {profession.sources.map((source) => (
-                <li key={source.sourceKey}>
-                  <span>{source.name}</span>
+              {profession.quest && (
+                <li key={profession.quest.sourceKey}>
+                  <span>{profession.quest.name}</span>
 
                   <StatusToken
-                    token={sourceToken(source.state)}
+                    token={sourceToken(
+                      profession.quest.state
+                    )}
                   />
                 </li>
-              ))}
+              )}
+
+              {profession.treatise && (
+                <li key={profession.treatise.sourceKey}>
+                  <span>{profession.treatise.name}</span>
+
+                  <StatusToken
+                    token={sourceToken(
+                      profession.treatise.state
+                    )}
+                  />
+                </li>
+              )}
 
               {profession.drops && (
                 <li className="character-profession-weekly-drops">

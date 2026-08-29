@@ -160,11 +160,17 @@ describe("CharacterDetailPage", () => {
           ...detail.character,
           professionWeekly: {
             state: "ATTENTION",
-            profKp: {
+            quest: {
               completeCount: 1,
+              incompleteCount: 0,
+              unknownCount: 0,
+              applicableTotal: 1
+            },
+            treatise: {
+              completeCount: 0,
               incompleteCount: 1,
               unknownCount: 0,
-              applicableTotal: 2
+              applicableTotal: 1
             },
             drops: {
               completeCount: 0,
@@ -176,32 +182,24 @@ describe("CharacterDetailPage", () => {
               {
                 professionKey: "alchemy",
                 name: "Alchemy",
-                profKp: {
-                  completeCount: 1,
-                  incompleteCount: 1,
-                  unknownCount: 0,
-                  applicableTotal: 2
+                quest: {
+                  sourceKey: "weekly-quest",
+                  name: "Weekly Quest",
+                  sourceType: "WEEKLY_QUEST",
+                  state: "COMPLETE",
+                  currentValue: null,
+                  maxValue: null,
+                  capturedAt: null
                 },
-                sources: [
-                  {
-                    sourceKey: "weekly-quest",
-                    name: "Weekly Quest",
-                    sourceType: "WEEKLY_QUEST",
-                    state: "COMPLETE",
-                    currentValue: null,
-                    maxValue: null,
-                    capturedAt: null
-                  },
-                  {
-                    sourceKey: "treatise",
-                    name: "Treatise",
-                    sourceType: "TREATISE",
-                    state: "INCOMPLETE",
-                    currentValue: null,
-                    maxValue: null,
-                    capturedAt: null
-                  }
-                ],
+                treatise: {
+                  sourceKey: "treatise",
+                  name: "Treatise",
+                  sourceType: "TREATISE",
+                  state: "INCOMPLETE",
+                  currentValue: null,
+                  maxValue: null,
+                  capturedAt: null
+                },
                 drops: {
                   sourceKey: "knowledge-drops",
                   name: "Knowledge Drops",

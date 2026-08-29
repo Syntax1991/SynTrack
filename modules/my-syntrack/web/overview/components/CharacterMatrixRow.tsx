@@ -198,8 +198,18 @@ export function CharacterMatrixRow({
         <StatusToken
           token={formatProfessionWeeklyAggregateToken(
             state.professionWeekly
-              .profKp,
-            "Prof KP"
+              .quest,
+            "Weekly Quest"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatProfessionWeeklyAggregateToken(
+            state.professionWeekly
+              .treatise,
+            "Treatise"
           )}
         />
       </td>

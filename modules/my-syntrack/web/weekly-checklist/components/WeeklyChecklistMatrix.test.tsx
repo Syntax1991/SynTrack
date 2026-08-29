@@ -71,7 +71,8 @@ function buildCharacter(
     completedTaskKeys: [],
     professionWeekly: {
       state: "NOT_TRACKED",
-      profKp: zeroAggregate,
+      quest: zeroAggregate,
+      treatise: zeroAggregate,
       drops: zeroAggregate,
       professions: []
     },
@@ -288,7 +289,7 @@ describe("WeeklyChecklistMatrix", () => {
     );
   });
 
-  it("shows the automatic Prof KP and Drops columns additively, alongside the manual profession-knowledge task", () => {
+  it("shows Quest, Treat., and Drops as separate automatic columns, alongside the manual profession-knowledge task", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
@@ -299,11 +300,17 @@ describe("WeeklyChecklistMatrix", () => {
             ],
             professionWeekly: {
               state: "ATTENTION",
-              profKp: {
-                completeCount: 3,
+              quest: {
+                completeCount: 2,
+                incompleteCount: 0,
+                unknownCount: 0,
+                applicableTotal: 2
+              },
+              treatise: {
+                completeCount: 1,
                 incompleteCount: 1,
                 unknownCount: 0,
-                applicableTotal: 4
+                applicableTotal: 2
               },
               drops: zeroAggregate,
               professions: []
@@ -318,11 +325,19 @@ describe("WeeklyChecklistMatrix", () => {
     );
 
     expect(
-      screen.getByText("3/4")
+      screen.getByText("2/2")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("1/2")
     ).toBeInTheDocument();
 
     expect(
       screen.getByText("–")
     ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Prof KP")
+    ).not.toBeInTheDocument();
   });
 });

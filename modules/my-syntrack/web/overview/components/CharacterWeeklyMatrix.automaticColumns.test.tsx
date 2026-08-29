@@ -6,7 +6,7 @@ import {
 } from "./characterWeeklyMatrixTestHelpers";
 
 describe("CharacterWeeklyMatrix automatic columns", () => {
-  it("shows the automatic Prof KP and Drops columns additively, alongside the existing Prof. data-health column", () => {
+  it("shows Quest, Treat., and Drops as separate additive columns, alongside the existing Prof. data-health column", () => {
     renderMatrix([
       buildCharacter({
         character: {
@@ -19,11 +19,17 @@ describe("CharacterWeeklyMatrix automatic columns", () => {
         },
         professionWeekly: {
           state: "ATTENTION",
-          profKp: {
-            completeCount: 3,
+          quest: {
+            completeCount: 2,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 2
+          },
+          treatise: {
+            completeCount: 1,
             incompleteCount: 1,
             unknownCount: 0,
-            applicableTotal: 4
+            applicableTotal: 2
           },
           drops: {
             completeCount: 0,
@@ -37,7 +43,11 @@ describe("CharacterWeeklyMatrix automatic columns", () => {
     ]);
 
     expect(
-      screen.getByText("Prof KP")
+      screen.getByText("Quest")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("Treat.")
     ).toBeInTheDocument();
 
     expect(
@@ -45,8 +55,16 @@ describe("CharacterWeeklyMatrix automatic columns", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByText("3/4")
+      screen.getByText("✓")
     ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("1/2")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Prof KP")
+    ).not.toBeInTheDocument();
   });
 
   it("shows Spark and Cata as dedicated count/max columns, replacing the generic Res. column", () => {

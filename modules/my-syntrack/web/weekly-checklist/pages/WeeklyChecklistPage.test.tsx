@@ -39,7 +39,13 @@ const mockChecklist: WeeklyChecklistResponse =
         completedTaskKeys: [],
         professionWeekly: {
           state: "NOT_TRACKED",
-          profKp: {
+          quest: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          treatise: {
             completeCount: 0,
             incompleteCount: 0,
             unknownCount: 0,

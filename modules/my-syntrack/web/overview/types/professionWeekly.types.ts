@@ -20,22 +20,29 @@ export type ProfessionWeeklyAggregate = {
   applicableTotal: number;
 };
 
+/*
+ * Weekly Quest and Treatise are shown as two separate user-facing
+ * values, never merged into one combined "Prof KP" number - a 3/4
+ * doesn't tell you whether it's the Quest or the Treatise still
+ * missing. See the profession weekly correctness follow-up.
+ */
 export type ProfessionWeeklyProfessionSummary = {
   professionKey: string;
   name: string;
-  profKp: ProfessionWeeklyAggregate;
-  sources: ProfessionWeeklySourceStatus[];
+  quest: ProfessionWeeklySourceStatus | null;
+  treatise: ProfessionWeeklySourceStatus | null;
   drops: ProfessionWeeklySourceStatus | null;
 };
 
 /*
- * Prof KP (Weekly Quest + Treatise only) and Knowledge Drops are two
- * fully separate aggregates - Drops never affects `state` here. See
- * the Automatic Profession Weekly audit's hard product rule.
+ * Weekly Quest, Treatise, and Knowledge Drops are three fully separate
+ * aggregates - Drops never affects `state` here. See the Automatic
+ * Profession Weekly audit's hard product rule.
  */
 export type ProfessionWeeklyOverviewState = {
   state: OverviewDomainState;
-  profKp: ProfessionWeeklyAggregate;
+  quest: ProfessionWeeklyAggregate;
+  treatise: ProfessionWeeklyAggregate;
   drops: ProfessionWeeklyAggregate;
   professions: ProfessionWeeklyProfessionSummary[];
 };

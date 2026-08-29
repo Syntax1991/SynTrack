@@ -9,11 +9,13 @@ import type {
 import { getCompactTaskLabel } from "../utils/taskLabels";
 
 /*
- * Automatic Prof KP/Drops columns are additive and read-only next to
- * the existing manual "profession-knowledge" task - see the Automatic
- * Profession Weekly audit. They don't replace that manual task until
- * the automatic version is fully live-verified across every
- * profession, so a character can show both at once.
+ * Automatic Quest/Treatise/Drops columns are additive and read-only
+ * next to the existing manual "profession-knowledge" task - see the
+ * profession weekly correctness follow-up. Quest and Treatise are
+ * shown separately (never merged into one "Prof KP" number) so the
+ * user can tell which one is actually missing. They don't replace the
+ * manual task until the automatic version is fully live-verified
+ * across every profession, so a character can show both at once.
  */
 function aggregateToken(
   aggregate: ProfessionWeeklyAggregate,
@@ -109,14 +111,21 @@ export function WeeklyChecklistMatrix({
 
             <th
               className="matrix-col-narrow"
-              title="Automatic: Weekly Quest + Treatise, captured via addon (not the manual Profession knowledge task above)"
+              title="Automatic: weekly profession quest, captured via addon (not the manual Profession knowledge task above)"
             >
-              PROF KP
+              QUEST
             </th>
 
             <th
               className="matrix-col-narrow"
-              title="Automatic: Knowledge Drops progress, captured via addon (never affects Prof KP)"
+              title="Automatic: profession Treatise, captured via addon"
+            >
+              TREAT.
+            </th>
+
+            <th
+              className="matrix-col-narrow"
+              title="Automatic: weekly profession Knowledge Drops progress, captured via addon (never affects Quest/Treatise)"
             >
               DROPS
             </th>
@@ -254,8 +263,18 @@ export function WeeklyChecklistMatrix({
                     <StatusToken
                       token={aggregateToken(
                         character.professionWeekly
-                          .profKp,
-                        "Prof KP"
+                          .quest,
+                        "Weekly Quest"
+                      )}
+                    />
+                  </td>
+
+                  <td className="matrix-col-narrow">
+                    <StatusToken
+                      token={aggregateToken(
+                        character.professionWeekly
+                          .treatise,
+                        "Treatise"
                       )}
                     />
                   </td>

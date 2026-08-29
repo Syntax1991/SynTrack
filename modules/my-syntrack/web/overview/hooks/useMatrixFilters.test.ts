@@ -55,7 +55,8 @@ function buildCharacter(
     embellishments: { state: "NOT_TRACKED" },
     professionWeekly: {
       state: "NOT_TRACKED",
-      profKp: zeroAggregate,
+      quest: zeroAggregate,
+      treatise: zeroAggregate,
       drops: zeroAggregate,
       professions: []
     },

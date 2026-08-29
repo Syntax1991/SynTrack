@@ -40,7 +40,7 @@ export function CharacterWeeklyMatrix({
   } = useMatrixFilters(characters);
 
   const columnCount =
-    13 + trackerColumns.length;
+    14 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -117,18 +117,27 @@ export function CharacterWeeklyMatrix({
                   )
                 )}
 
-                <th className="overview-col-narrow">
+                <th
+                  className="overview-col-narrow"
+                  title="Profession data - is skill/knowledge point data captured at all"
+                >
                   Prof.
                 </th>
                 <th
                   className="overview-col-narrow"
-                  title="Automatic: Weekly Quest + Treatise, captured via addon"
+                  title="Weekly profession quest - captured automatically via addon"
                 >
-                  Prof KP
+                  Quest
                 </th>
                 <th
                   className="overview-col-narrow"
-                  title="Automatic: Knowledge Drops progress, captured via addon (never affects Prof KP)"
+                  title="Profession Treatise - captured automatically via addon"
+                >
+                  Treat.
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Weekly profession Knowledge Drops - captured automatically via addon (never affects Quest/Treatise)"
                 >
                   Drops
                 </th>
