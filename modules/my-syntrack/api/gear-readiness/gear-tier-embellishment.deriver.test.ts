@@ -82,8 +82,15 @@ describe("deriveTierOverviewState", () => {
   it("counts bag pieces toward owned current-season slots", () => {
     const result = deriveTierOverviewState({
       level: 90,
-      slots: [s2Piece("HEAD"), s2Piece("CHEST"), s2Piece("HANDS")],
+      slots: [],
       bagPieces: [
+        {
+          itemId: 271520,
+          setId: 2061,
+          expansionId: 11,
+          equipLoc: "INVTYPE_HAND",
+          setEvidenceResolved: true
+        },
         {
           itemId: 1,
           setId: S2,
@@ -101,14 +108,9 @@ describe("deriveTierOverviewState", () => {
       ]
     });
 
-    expect(result.equippedPieces).toBe(4);
+    expect(result.equippedPieces).toBe(2);
     expect(result.slots).toEqual(
-      expect.arrayContaining([
-        "HEAD",
-        "CHEST",
-        "HANDS",
-        "SHOULDER"
-      ])
+      expect.arrayContaining(["HANDS", "SHOULDER"])
     );
     expect(result.slots).not.toContain("LEGS");
   });
