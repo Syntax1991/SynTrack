@@ -126,25 +126,38 @@ model PersonalRaidTask {
 }
 
 model CharacterGearSlot {
-  id            String    @id @default(cuid())
-  characterId   String
-  slotKey       String
-  itemId        Int?
-  itemLink      String?
-  itemName      String?
-  itemLevel     Int?
-  quality       Int?
-  enchantStatus String    @default("NOT_APPLICABLE")
-  enchantName   String?
-  enchantId     Int?
-  socketCount   Int?
-  gemCount      Int       @default(0)
-  gemIds        String?
-  notes         String?
-  source        String    @default("MANUAL")
-  lastSyncedAt  DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  characterId          String
+  slotKey              String
+  itemId               Int?
+  itemLink             String?
+  itemName             String?
+  itemLevel            Int?
+  quality              Int?
+  enchantStatus        String    @default("NOT_APPLICABLE")
+  enchantName          String?
+  enchantId            Int?
+  socketCount          Int?
+  gemCount             Int       @default(0)
+  gemIds               String?
+  notes                String?
+  source               String    @default("MANUAL")
+  lastSyncedAt         DateTime?
+  /*
+   * Tier-set / embellishment evidence from Gear schemaVersion 2.
+   * Raw facts only - never derived "isTier"/"isEmbellished" booleans.
+   * setBonusSpellIds is a JSON number array when setBonusResolved.
+   */
+  setId                Int?
+  expansionId          Int?
+  setEvidenceResolved  Boolean?
+  setBonusResolved     Boolean?
+  setBonusSpellIds     String?
+  uniqueCategoryId     Int?
+  uniqueCategoryCount  Int?
+  uniquenessResolved   Boolean?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 

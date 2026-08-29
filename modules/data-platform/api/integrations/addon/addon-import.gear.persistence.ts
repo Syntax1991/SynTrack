@@ -96,7 +96,18 @@ export class AddonGearPersistence {
             : null,
         notes: null,
         source: "ADDON",
-        lastSyncedAt: capturedAt
+        lastSyncedAt: capturedAt,
+        setId: slot.setId,
+        expansionId: slot.expansionId,
+        setEvidenceResolved: slot.setEvidenceResolved,
+        setBonusResolved: slot.setBonusResolved,
+        setBonusSpellIds:
+          slot.setBonusSpellIds !== null
+            ? JSON.stringify(slot.setBonusSpellIds)
+            : null,
+        uniqueCategoryId: slot.uniqueCategoryId,
+        uniqueCategoryCount: slot.uniqueCategoryCount,
+        uniquenessResolved: slot.uniquenessResolved
       };
 
       await transaction.characterGearSlot.upsert({

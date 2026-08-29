@@ -225,12 +225,8 @@ export type AddonProfession = {
 };
 
 /*
- * One entry per known equipment slot, always present regardless of
- * whether the slot is occupied - `equipped: false` is confirmed-empty
- * evidence, distinct from an equipped item whose enrichment fields
- * (itemLevel/quality/socketCount) are temporarily null because the WoW
- * item cache hadn't resolved them yet at capture time. Never treat a
- * null enrichment field as "unequipped" or as zero.
+ * One entry per known equipment slot. `equipped: false` is confirmed-
+ * empty; null enrichment fields mean the WoW item cache is unresolved.
  */
 export type AddonGearSlot = {
   slotKey: string;
@@ -242,11 +238,21 @@ export type AddonGearSlot = {
   socketCount: number | null;
   enchantId: number | null;
   gemIds: number[];
+  // schemaVersion 2 tier/emb evidence (null when unequipped/unresolved)
+  expansionId: number | null;
+  setId: number | null;
+  setEvidenceResolved: boolean | null;
+  setBonusResolved: boolean | null;
+  setBonusSpellIds: number[] | null;
+  uniqueCategoryId: number | null;
+  uniqueCategoryCount: number | null;
+  uniquenessResolved: boolean | null;
 };
 
 export type AddonGearSnapshot = {
   schemaVersion: number;
   capturedAt: string | null;
+  currentExpansionId: number | null;
   slots: AddonGearSlot[];
 };
 

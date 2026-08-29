@@ -21,6 +21,14 @@ export type GearSlotRow = {
   notes: string | null;
   source: string;
   lastSyncedAt: Date;
+  setId: number | null;
+  expansionId: number | null;
+  setEvidenceResolved: boolean | null;
+  setBonusResolved: boolean | null;
+  setBonusSpellIds: string | null;
+  uniqueCategoryId: number | null;
+  uniqueCategoryCount: number | null;
+  uniquenessResolved: boolean | null;
 };
 
 export function createTransaction() {
@@ -103,7 +111,15 @@ export function emptySlot(slotKey: string) {
     quality: null,
     socketCount: null,
     enchantId: null,
-    gemIds: []
+    gemIds: [],
+    expansionId: null,
+    setId: null,
+    setEvidenceResolved: null,
+    setBonusResolved: null,
+    setBonusSpellIds: null,
+    uniqueCategoryId: null,
+    uniqueCategoryCount: null,
+    uniquenessResolved: null
   };
 }
 
@@ -121,6 +137,14 @@ export function equippedSlot(
     socketCount: 0,
     enchantId: null,
     gemIds: [],
+    expansionId: null,
+    setId: null,
+    setEvidenceResolved: null,
+    setBonusResolved: null,
+    setBonusSpellIds: null,
+    uniqueCategoryId: null,
+    uniqueCategoryCount: null,
+    uniquenessResolved: null,
     ...overrides
   };
 }
@@ -149,12 +173,25 @@ export function character(
 
 export function snapshot(characters: AddonCharacter[]): AddonSnapshot {
   return {
-    addonVersion: "0.1.0",
+    addonVersion: "0.2.0",
     schemaVersion: 1,
     client: { version: null, build: null, interfaceVersion: null },
     catalogs: [],
     recipeCatalogs: [],
     characterRecipeOperations: [],
     characters
+  };
+}
+
+export function gearSnapshot(
+  slots: AddonGearSnapshot["slots"],
+  overrides: Partial<AddonGearSnapshot> = {}
+): AddonGearSnapshot {
+  return {
+    schemaVersion: 2,
+    capturedAt: null,
+    currentExpansionId: 10,
+    slots,
+    ...overrides
   };
 }

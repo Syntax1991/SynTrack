@@ -5,6 +5,7 @@ import {
   createTransaction,
   emptySlot,
   equippedSlot,
+  gearSnapshot,
   snapshot
 } from "./addon-import.gear.persistence.test-helpers.js";
 
@@ -16,11 +17,9 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [equippedSlot("MAIN_HAND", { itemId: 111 })]
-        })
+        character(
+          gearSnapshot([equippedSlot("MAIN_HAND", { itemId: 111 })])
+        )
       ]),
       new Map(),
       new Map()
@@ -29,11 +28,9 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [equippedSlot("MAIN_HAND", { itemId: 222 })]
-        })
+        character(
+          gearSnapshot([equippedSlot("MAIN_HAND", { itemId: 222 })])
+        )
       ]),
       new Map(),
       new Map()
@@ -50,13 +47,7 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
 
     await persistence.persist(
       transaction as never,
-      snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [equippedSlot("OFF_HAND")]
-        })
-      ]),
+      snapshot([character(gearSnapshot([equippedSlot("OFF_HAND")]))]),
       new Map(),
       new Map()
     );
@@ -65,13 +56,7 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
 
     await persistence.persist(
       transaction as never,
-      snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [emptySlot("OFF_HAND")]
-        })
-      ]),
+      snapshot([character(gearSnapshot([emptySlot("OFF_HAND")]))]),
       new Map(),
       new Map()
     );
@@ -86,17 +71,15 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [
+        character(
+          gearSnapshot([
             equippedSlot("TRINKET_1", {
               itemLevel: null,
               quality: null,
               socketCount: null
             })
-          ]
-        })
+          ])
+        )
       ]),
       new Map(),
       new Map()
@@ -117,16 +100,14 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [
+        character(
+          gearSnapshot([
             equippedSlot("FINGER_1", { itemId: 10 }),
             emptySlot("FINGER_2"),
             equippedSlot("TRINKET_1", { itemId: 20 }),
             emptySlot("TRINKET_2")
-          ]
-        })
+          ])
+        )
       ]),
       new Map(),
       new Map()
@@ -137,5 +118,42 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
       "FINGER_1",
       "TRINKET_1"
     ]);
+  });
+
+  it("persists schemaVersion 2 tier and embellishment evidence fields", async () => {
+    const { transaction, gearSlots } = createTransaction();
+    const persistence = new AddonCharacterPersistence();
+
+    await persistence.persist(
+      transaction as never,
+      snapshot([
+        character(
+          gearSnapshot([
+            equippedSlot("HEAD", {
+              setId: 5001,
+              expansionId: 10,
+              setEvidenceResolved: true,
+              setBonusResolved: true,
+              setBonusSpellIds: [111, 222],
+              uniqueCategoryId: 42,
+              uniqueCategoryCount: 2,
+              uniquenessResolved: true
+            })
+          ])
+        )
+      ]),
+      new Map(),
+      new Map()
+    );
+
+    const row = [...gearSlots.values()][0]!;
+    expect(row.setId).toBe(5001);
+    expect(row.expansionId).toBe(10);
+    expect(row.setEvidenceResolved).toBe(true);
+    expect(row.setBonusResolved).toBe(true);
+    expect(row.setBonusSpellIds).toBe(JSON.stringify([111, 222]));
+    expect(row.uniqueCategoryId).toBe(42);
+    expect(row.uniqueCategoryCount).toBe(2);
+    expect(row.uniquenessResolved).toBe(true);
   });
 });
