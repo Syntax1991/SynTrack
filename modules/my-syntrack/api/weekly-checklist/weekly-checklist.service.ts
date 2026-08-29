@@ -1,10 +1,30 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { resolveProfessionWeeklyOverviewState } from "../overview/overview-profession-weekly-state.mapper.js";
+import type { ProfessionWeeklyOverviewState } from "../overview/overview.types.js";
+import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
+import { ProfessionWeeklyStatusService } from "../profession-weekly/profession-weekly-status.service.js";
 import { getWeeklyPeriod } from "../shared/weekly-period.js";
 import { WeeklyChecklistRepository } from "./weekly-checklist.repository.js";
 import type {
   WeeklyChecklistTaskDefinition,
   WeeklyTaskUpdateInput
 } from "./weekly-checklist.types.js";
+
+function emptyProfessionWeeklyState(): ProfessionWeeklyOverviewState {
+  const zeroAggregate = {
+    completeCount: 0,
+    incompleteCount: 0,
+    unknownCount: 0,
+    applicableTotal: 0
+  };
+
+  return {
+    state: "NOT_TRACKED",
+    profKp: zeroAggregate,
+    drops: zeroAggregate,
+    professions: []
+  };
+}
 
 const taskCatalog:
   WeeklyChecklistTaskDefinition[] = [
@@ -51,6 +71,11 @@ const taskCatalog:
   ];
 
 export class WeeklyChecklistService {
+  private readonly professionWeeklyStatusService =
+    new ProfessionWeeklyStatusService(
+      new ProfessionWeeklyStatusRepository()
+    );
+
   constructor(
     private readonly repository:
       WeeklyChecklistRepository
@@ -62,13 +87,30 @@ export class WeeklyChecklistService {
 
     const period =
       getWeeklyPeriod();
-    const [tasks, characters] =
+    const [tasks, characters, professionWeeklyOverview] =
       await Promise.all([
         this.repository.findTasks(),
         this.repository.findCharacters(
           period.key
-        )
+        ),
+        this.professionWeeklyStatusService.getOverview()
       ]);
+
+    /*
+     * Additive automatic Prof KP/Drops columns alongside the existing
+     * manual "profession-knowledge" task - see the Automatic Profession
+     * Weekly audit. The manual task stays untouched until the automatic
+     * version is fully live-verified across all professions.
+     */
+    const professionWeeklyByCharacterId = new Map(
+      professionWeeklyOverview.characters.map(
+        (character) => [
+          character.id,
+          resolveProfessionWeeklyOverviewState(character)
+            .professionWeekly
+        ]
+      )
+    );
 
     const characterItems = characters.map(
       (character) => ({
@@ -82,7 +124,11 @@ export class WeeklyChecklistService {
           character.weeklyCompletions.map(
             (completion) =>
               completion.task.key
-          )
+          ),
+        professionWeekly:
+          professionWeeklyByCharacterId.get(
+            character.id
+          ) ?? emptyProfessionWeeklyState()
       })
     );
     const completedTaskCount =

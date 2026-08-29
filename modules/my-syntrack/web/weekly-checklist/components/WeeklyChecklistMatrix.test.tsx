@@ -51,6 +51,13 @@ const tasks: WeeklyChecklistTask[] = [
   }
 ];
 
+const zeroAggregate = {
+  completeCount: 0,
+  incompleteCount: 0,
+  unknownCount: 0,
+  applicableTotal: 0
+};
+
 function buildCharacter(
   overrides: Partial<WeeklyChecklistCharacter> = {}
 ): WeeklyChecklistCharacter {
@@ -62,6 +69,12 @@ function buildCharacter(
     className: "Shaman",
     level: 80,
     completedTaskKeys: [],
+    professionWeekly: {
+      state: "NOT_TRACKED",
+      profKp: zeroAggregate,
+      drops: zeroAggregate,
+      professions: []
+    },
     ...overrides
   };
 }
@@ -273,5 +286,43 @@ describe("WeeklyChecklistMatrix", () => {
       "char-1",
       true
     );
+  });
+
+  it("shows the automatic Prof KP and Drops columns additively, alongside the manual profession-knowledge task", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            id: "char-1",
+            completedTaskKeys: [
+              "profession-knowledge"
+            ],
+            professionWeekly: {
+              state: "ATTENTION",
+              profKp: {
+                completeCount: 3,
+                incompleteCount: 1,
+                unknownCount: 0,
+                applicableTotal: 4
+              },
+              drops: zeroAggregate,
+              professions: []
+            }
+          })
+        ]}
+        onToggleAll={vi.fn()}
+        onToggleTask={vi.fn()}
+        pendingAction={null}
+        tasks={tasks}
+      />
+    );
+
+    expect(
+      screen.getByText("3/4")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("–")
+    ).toBeInTheDocument();
   });
 });

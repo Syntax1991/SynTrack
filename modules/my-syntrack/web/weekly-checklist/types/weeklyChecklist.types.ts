@@ -1,3 +1,5 @@
+import type { ProfessionWeeklyOverviewState } from "../../overview/types/professionWeekly.types";
+
 export type WeeklyChecklistPeriod = {
   key: string;
   startsAt: string;
@@ -20,7 +22,13 @@ export type WeeklyChecklistCharacter = {
   className: string;
   level: number;
   completedTaskKeys: string[];
+  professionWeekly: ProfessionWeeklyOverviewState;
 };
+
+export type {
+  ProfessionWeeklyAggregate,
+  ProfessionWeeklyOverviewState
+} from "../../overview/types/professionWeekly.types";
 
 export type WeeklyChecklistResponse = {
   period: WeeklyChecklistPeriod;
