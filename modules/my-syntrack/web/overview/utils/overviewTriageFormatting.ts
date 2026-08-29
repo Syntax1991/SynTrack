@@ -1,12 +1,18 @@
-import type { CellToken } from "./overviewCellFormatting";
-import type { ProfessionWeeklyAggregate } from "../types/overview.types";
+import type { CellToken } from "../../../../../apps/web/src/shared/types/cellToken";
+
+type TreasureCounts = {
+  completeCount: number;
+  incompleteCount: number;
+  unknownCount: number;
+  applicableTotal: number;
+};
 
 export function formatProfessionSetupToken(setup: {
   state: string;
   professions: Array<{
     name: string;
     dataStatus: string;
-    treasures: ProfessionWeeklyAggregate;
+    treasures: TreasureCounts;
   }>;
   dataIssues: string[];
 }): CellToken {
