@@ -51,6 +51,43 @@ describe("AddonResourcePersistence", () => {
     expect(trackResult.resourceSnapshots).toBe(1);
   });
 
+  it("persists an explicit currency quantity of 0 as a known zero, never dropping the row", async () => {
+    const { transaction, rows } = createTransaction();
+    const persistence = new AddonResourcePersistence({
+      listEnabledForActiveSeason: async () => [
+        heroDawncrestDefinition()
+      ]
+    });
+
+    const trackResult = result();
+
+    await persistence.persist(
+      transaction as never,
+      "char-1",
+      snapshot({
+        currencies: [
+          {
+            currencyId: 3345,
+            quantity: 0,
+            maxQuantity: null,
+            weeklyQuantity: null,
+            maxWeeklyQuantity: null,
+            isCapped: null,
+            isWeeklyCapped: null,
+            discovered: false,
+            accountWide: null
+          }
+        ]
+      }),
+      trackResult
+    );
+
+    const row = rows.get("char-1:def-hero-dawncrest");
+
+    expect(row?.quantity).toBe(0);
+    expect(trackResult.resourceSnapshots).toBe(1);
+  });
+
   it("ignores a captured currency with no matching enabled definition", async () => {
     const { transaction, rows } = createTransaction();
     const persistence = new AddonResourcePersistence({
@@ -82,6 +119,37 @@ describe("AddonResourcePersistence", () => {
 
     expect(rows.size).toBe(0);
     expect(trackResult.resourceSnapshots).toBe(0);
+  });
+
+  it("persists an explicit item count of 0 as a known zero, never dropping the row", async () => {
+    const { transaction, rows } = createTransaction();
+    const persistence = new AddonResourcePersistence({
+      listEnabledForActiveSeason: async () => [
+        sparkOfTidesDefinition()
+      ]
+    });
+
+    const trackResult = result();
+
+    await persistence.persist(
+      transaction as never,
+      "char-1",
+      snapshot({
+        items: [
+          {
+            key: "spark-of-tides",
+            itemId: 274476,
+            count: 0
+          }
+        ]
+      }),
+      trackResult
+    );
+
+    const row = rows.get("char-1:def-spark-of-tides");
+
+    expect(row?.quantity).toBe(0);
+    expect(trackResult.resourceSnapshots).toBe(1);
   });
 
   it("persists an item-backed resource matching an enabled definition", async () => {

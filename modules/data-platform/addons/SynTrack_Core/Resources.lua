@@ -121,10 +121,11 @@ end
     Enumerates every currency the character has ever discovered, via the
     same list Blizzard's own currency tab reads from - no addon-side
     hardcoded currency-ID list, so a season's new currencies need no
-    addon code change (only a backend ResourceDefinition seed change).
-    Header rows (currency-tab section dividers) are skipped.
+    addon code change. Header rows are skipped. NOT sufficient alone for
+    a never-discovered currency (GetCurrencyListInfo omits it entirely,
+    quantity=0 and all) - see captureExplicitCurrencies below.
 ]]
-local function captureCurrencies()
+local function captureEnumeratedCurrencies()
     local currencies = {}
 
     if not C_CurrencyInfo
@@ -162,6 +163,51 @@ local function captureCurrencies()
                 table.insert(currencies, entry)
             end
         end
+    end
+
+    return currencies
+end
+
+--[[
+    Explicitly queries every known tracked currency not already picked
+    up above - an undiscovered currency still returns a valid info
+    table (quantity=0, discovered=false), it just never appears in the
+    currency-tab list. captureCurrency() already returns nil (never a
+    fabricated zero) on a failed/invalid lookup.
+]]
+local function captureExplicitCurrencies(alreadyCaptured)
+    local seenCurrencyIds = {}
+
+    for _, entry in ipairs(alreadyCaptured) do
+        seenCurrencyIds[entry.currencyId] = true
+    end
+
+    local explicit = {}
+
+    for _, definition in ipairs(
+        private.ResourceCatalog.trackedCurrencies
+    ) do
+        if not seenCurrencyIds[definition.currencyId] then
+            local entry = captureCurrency(
+                definition.currencyId
+            )
+
+            if entry then
+                table.insert(explicit, entry)
+            end
+        end
+    end
+
+    return explicit
+end
+
+local function captureCurrencies()
+    local currencies = captureEnumeratedCurrencies()
+
+    for _, entry in ipairs(
+        captureExplicitCurrencies(currencies)
+    ) do
+        table.insert(currencies, entry)
     end
 
     return currencies
