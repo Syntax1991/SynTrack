@@ -8,11 +8,13 @@ import {
   formatEmbellishmentToken,
   formatGearToken,
   formatItemLevelToken,
+  formatTierToken
+} from "../utils/overviewCellFormatting";
+import {
   formatProfessionSetupToken,
   formatResourcesToken,
-  formatTierToken,
   formatWeeklySummaryToken
-} from "../utils/overviewCellFormatting";
+} from "../utils/overviewTriageFormatting";
 import { StatusToken } from "./StatusToken";
 import { TrackerCell } from "./TrackerCell";
 
