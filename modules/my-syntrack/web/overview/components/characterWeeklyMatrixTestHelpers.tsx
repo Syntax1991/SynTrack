@@ -4,6 +4,12 @@ import type {
   CharacterOverviewRow,
   TrackerDefinitionView
 } from "../types/overview.types";
+import {
+  emptyProfessionKnowledgeTreasures,
+  emptyProfessionSetup,
+  emptyProfessionWeekly,
+  emptyWeeklySummary
+} from "../types/overviewEmptyDefaults";
 import { CharacterWeeklyMatrix } from "./CharacterWeeklyMatrix";
 
 export function buildCharacter(
@@ -24,6 +30,8 @@ export function buildCharacter(
       total: 5,
       source: "MANUAL_CHECKLIST"
     },
+    weeklySummary: emptyWeeklySummary,
+    weeklyAction: null,
     vault: {
       state: "UNKNOWN",
       unlockedSlots: 0,
@@ -37,6 +45,7 @@ export function buildCharacter(
       issues: [],
       items: []
     },
+    professionSetup: emptyProfessionSetup,
     gear: {
       state: "NOT_TRACKED",
       readinessPercent: null,
@@ -57,38 +66,8 @@ export function buildCharacter(
     embellishments: {
       state: "NOT_TRACKED"
     },
-    professionWeekly: {
-      state: "NOT_TRACKED",
-      quest: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      treatise: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      drops: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      professions: []
-    },
-    professionKnowledgeTreasures: {
-      state: "NOT_TRACKED",
-      treasures: {
-        completeCount: 0,
-        incompleteCount: 0,
-        unknownCount: 0,
-        applicableTotal: 0
-      },
-      professions: []
-    },
+    professionWeekly: emptyProfessionWeekly,
+    professionKnowledgeTreasures: emptyProfessionKnowledgeTreasures,
     trackers: [],
     attentionItems: [],
     readinessState: "unknown",

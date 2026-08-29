@@ -5,144 +5,85 @@ import {
   renderMatrix
 } from "./characterWeeklyMatrixTestHelpers";
 
-describe("CharacterWeeklyMatrix automatic columns", () => {
-  it("shows Quest, Treat., and Drops as separate additive columns, alongside the existing Prof. data-health column", () => {
+describe("CharacterWeeklyMatrix triage columns", () => {
+  it("defaults to triage columns without weekly sub-detail or Spark/Cata", () => {
     renderMatrix([
       buildCharacter({
-        character: {
-          id: "char-1",
-          name: "Synfel",
-          realm: "Antonidas",
-          region: "eu",
-          className: "Mage",
-          level: 80
-        },
-        professionWeekly: {
+        weeklySummary: {
           state: "ATTENTION",
-          quest: {
-            completeCount: 2,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 2
-          },
-          treatise: {
-            completeCount: 1,
-            incompleteCount: 1,
-            unknownCount: 0,
-            applicableTotal: 2
-          },
-          drops: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          professions: []
+          completedKnown: 2,
+          applicableKnown: 4,
+          unknownCount: 4,
+          domains: []
+        },
+        professionSetup: {
+          state: "READY",
+          professions: [
+            {
+              professionId: "alchemy",
+              key: "alchemy",
+              name: "Alchemy",
+              dataStatus: "TRACKED",
+              treasures: {
+                completeCount: 8,
+                incompleteCount: 0,
+                unknownCount: 0,
+                applicableTotal: 8
+              }
+            }
+          ],
+          dataIssues: []
         }
       })
     ]);
 
-    expect(
-      screen.getByText("Quest")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Weeklies")).toBeInTheDocument();
+    expect(screen.getByText("Prof.")).toBeInTheDocument();
+    expect(screen.getByText("Gear")).toBeInTheDocument();
+    expect(screen.getByText("Res.")).toBeInTheDocument();
+    expect(screen.getByText("Action")).toBeInTheDocument();
 
-    expect(
-      screen.getByText("Treat.")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("Drops")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("✓")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("1/2")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByText("Prof KP")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Vault")).not.toBeInTheDocument();
+    expect(screen.queryByText("Quest")).not.toBeInTheDocument();
+    expect(screen.queryByText("Treat.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Drops")).not.toBeInTheDocument();
+    expect(screen.queryByText("Spark")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cata")).not.toBeInTheDocument();
   });
 
-  it("shows Spark and Cata as dedicated count/max columns, replacing the generic Res. column", () => {
+  it("shows PROF attention when permanent treasures are incomplete", () => {
     renderMatrix([
       buildCharacter({
-        character: {
-          id: "char-1",
-          name: "Synlight",
-          realm: "Antonidas",
-          region: "eu",
-          className: "Paladin",
-          level: 80
-        },
-        resources: {
-          state: "READY",
-          trackedResourceCount: 2,
-          totalRelevantResourceCount: 2,
-          attentionCount: 0,
-          items: [
+        professionSetup: {
+          state: "ATTENTION",
+          professions: [
             {
-              resourceDefinitionId: "def-spark",
-              key: "tidal-spark-dust",
-              name: "Tidal Spark Dust",
-              category: "CRAFTING_GATE",
-              snapshot: {
-                quantity: 4,
-                maxQuantity: 5,
-                weeklyQuantity: null,
-                maxWeeklyQuantity: null,
-                isCapped: false,
-                weeklyRemaining: null,
-                weeklyComplete: null,
-                capturedAt:
-                  "2026-08-28T12:00:00.000Z"
-              },
-              attentionNeeded: false
-            },
-            {
-              resourceDefinitionId: "def-cata",
-              key: "venomblight-manaflux",
-              name: "Venomblight Manaflux",
-              category: "CONVERSION",
-              snapshot: {
-                quantity: 1,
-                maxQuantity: 8,
-                weeklyQuantity: null,
-                maxWeeklyQuantity: null,
-                isCapped: false,
-                weeklyRemaining: null,
-                weeklyComplete: null,
-                capturedAt:
-                  "2026-08-28T12:00:00.000Z"
-              },
-              attentionNeeded: false
+              professionId: "leatherworking",
+              key: "leatherworking",
+              name: "Leatherworking",
+              dataStatus: "TRACKED",
+              treasures: {
+                completeCount: 7,
+                incompleteCount: 1,
+                unknownCount: 0,
+                applicableTotal: 8
+              }
             }
-          ]
+          ],
+          dataIssues: []
+        },
+        nextAction: {
+          domain: "profession",
+          label: "1 Leatherworking Knowledge Treasure missing",
+          detail: null,
+          path: "/characters/char-1",
+          severity: "this-week"
         }
       })
     ]);
 
     expect(
-      screen.getByText("Spark")
+      screen.getByText("1 Leatherworking Knowledge Treasure missing")
     ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("Cata")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("4/5")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText("1/8")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByText("Res.")
-    ).not.toBeInTheDocument();
   });
 });

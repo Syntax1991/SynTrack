@@ -3,27 +3,22 @@ import { StatusToken } from "../../../../../apps/web/src/shared/components/Statu
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type {
   ProfessionWeeklyAggregate,
-  WeeklyChecklistCharacter,
-  WeeklyChecklistTask
+  WeeklyChecklistCharacter
 } from "../types/weeklyChecklist.types";
-import { getCompactTaskLabel } from "../utils/taskLabels";
 
-/*
- * Automatic Quest/Treatise/Drops columns are additive and read-only
- * next to the existing manual "profession-knowledge" task - see the
- * profession weekly correctness follow-up. Quest and Treatise are
- * shown separately (never merged into one "Prof KP" number) so the
- * user can tell which one is actually missing. They don't replace the
- * manual task until the automatic version is fully live-verified
- * across every profession, so a character can show both at once.
- */
+const unknownActivityToken = {
+  symbol: "?",
+  tone: "unknown" as const,
+  title: "Not automatically tracked yet"
+};
+
 function aggregateToken(
   aggregate: ProfessionWeeklyAggregate,
   label: string
 ) {
   if (aggregate.applicableTotal === 0) {
     return {
-      symbol: "–",
+      symbol: "—",
       tone: "not-tracked" as const,
       title: `${label} - not tracked`
     };
@@ -52,33 +47,105 @@ function aggregateToken(
   };
 }
 
+function progressToken(character: WeeklyChecklistCharacter) {
+  const aggregates = [
+    character.professionWeekly.quest,
+    character.professionWeekly.treatise,
+    character.professionWeekly.drops
+  ];
+
+  let completedKnown = 0;
+  let applicableKnown = 0;
+  let unknownCount = 0;
+  let incomplete = 0;
+
+  for (const aggregate of aggregates) {
+    if (aggregate.applicableTotal === 0) {
+      continue;
+    }
+
+    if (
+      aggregate.incompleteCount === 0 &&
+      aggregate.unknownCount === aggregate.applicableTotal
+    ) {
+      unknownCount += 1;
+      continue;
+    }
+
+    if (aggregate.unknownCount > 0 && aggregate.incompleteCount === 0) {
+      unknownCount += 1;
+      applicableKnown += aggregate.completeCount;
+      completedKnown += aggregate.completeCount;
+      continue;
+    }
+
+    applicableKnown += aggregate.applicableTotal;
+    completedKnown += aggregate.completeCount;
+    incomplete += aggregate.incompleteCount;
+  }
+
+  // Four activity placeholders (Vault/M+/Raid/Delves) remain UNKNOWN.
+  unknownCount += 4;
+
+  if (applicableKnown === 0 && incomplete === 0) {
+    return {
+      symbol: unknownCount > 0 ? `0 · ${unknownCount}?` : "—",
+      tone: "unknown" as const,
+      title: "Weekly progress unresolved"
+    };
+  }
+
+  const symbol =
+    unknownCount > 0
+      ? `${completedKnown}/${applicableKnown} · ${unknownCount}?`
+      : `${completedKnown}/${applicableKnown}`;
+
+  return {
+    symbol,
+    tone:
+      incomplete > 0
+        ? ("attention" as const)
+        : unknownCount > 0
+          ? ("unknown" as const)
+          : ("ready" as const),
+    title: `Known automatic weekly progress ${completedKnown}/${applicableKnown}`
+  };
+}
+
+function weeklyActionLabel(character: WeeklyChecklistCharacter): string | null {
+  for (const profession of character.professionWeekly.professions) {
+    if (profession.treatise?.state === "INCOMPLETE") {
+      return `${profession.name} Treatise missing`;
+    }
+
+    if (profession.quest?.state === "INCOMPLETE") {
+      return `${profession.name} Quest remaining`;
+    }
+
+    if (profession.drops?.state === "INCOMPLETE") {
+      const remaining =
+        (profession.drops.maxValue ?? 0) -
+        (profession.drops.currentValue ?? 0);
+      return remaining > 0
+        ? `${remaining} Knowledge Drop${remaining === 1 ? "" : "s"} remaining`
+        : "Knowledge Drops remaining";
+    }
+  }
+
+  return null;
+}
+
 type WeeklyChecklistMatrixProps = {
   characters: WeeklyChecklistCharacter[];
-  tasks: WeeklyChecklistTask[];
-  pendingAction: string | null;
-  onToggleTask: (
-    characterId: string,
-    taskKey: string,
-    completed: boolean
-  ) => void;
-  onToggleAll: (
-    characterId: string,
-    completed: boolean
-  ) => void;
 };
 
 /*
- * Account-wide checklist: one character = one row, each task a
- * directly clickable compact cell - the user can check tasks across
- * every character without first selecting one, matching the
- * spreadsheet's biggest advantage over the old select-then-edit panel.
+ * Weeklies = recurring detail only. Manual built-in toggles, Gear, and
+ * old Prof KP are removed. Vault/M+/Raid/Delves stay ? until automated.
+ * ACTION is weekly-only (never Gear / permanent Treasures).
  */
 export function WeeklyChecklistMatrix({
-  characters,
-  tasks,
-  pendingAction,
-  onToggleTask,
-  onToggleAll
+  characters
 }: WeeklyChecklistMatrixProps) {
   if (characters.length === 0) {
     return (
@@ -94,237 +161,107 @@ export function WeeklyChecklistMatrix({
         <thead>
           <tr>
             <th>Character</th>
-
-            {tasks.map((task) => (
-              <th
-                className="matrix-col-narrow"
-                key={task.key}
-                title={
-                  task.description
-                }
-              >
-                {getCompactTaskLabel(
-                  task
-                )}
-              </th>
-            ))}
-
-            <th
-              className="matrix-col-narrow"
-              title="Automatic: weekly profession quest, captured via addon (not the manual Profession knowledge task above)"
-            >
-              QUEST
+            <th className="matrix-col-narrow" title="Not automatically tracked yet">
+              Vault
             </th>
-
-            <th
-              className="matrix-col-narrow"
-              title="Automatic: profession Treatise, captured via addon"
-            >
-              TREAT.
+            <th className="matrix-col-narrow" title="Not automatically tracked yet">
+              M+
             </th>
-
-            <th
-              className="matrix-col-narrow"
-              title="Automatic: weekly profession Knowledge Drops progress, captured via addon (never affects Quest/Treatise)"
-            >
-              DROPS
+            <th className="matrix-col-narrow" title="Not automatically tracked yet">
+              Raid
             </th>
-
-            <th className="matrix-col-narrow">
-              Progress
+            <th className="matrix-col-narrow" title="Not automatically tracked yet">
+              Delves
             </th>
-
-            <th
-              aria-label="Actions"
-              className="matrix-col-action"
-            />
+            <th className="matrix-col-narrow">Quest</th>
+            <th className="matrix-col-narrow">Treat.</th>
+            <th className="matrix-col-narrow">Drops</th>
+            <th className="matrix-col-narrow">Progress</th>
+            <th className="matrix-col-action">Action</th>
           </tr>
         </thead>
 
         <tbody>
-          {characters.map(
-            (character) => {
-              const completedCount =
-                character
-                  .completedTaskKeys
-                  .length;
+          {characters.map((character) => {
+            const action = weeklyActionLabel(character);
 
-              const allCompleted =
-                tasks.length > 0 &&
-                completedCount ===
-                  tasks.length;
-
-              return (
-                <tr
-                  className={
-                    allCompleted
-                      ? "is-complete"
-                      : undefined
-                  }
-                  key={character.id}
-                >
-                  <td>
-                    <div className="matrix-identity">
-                      <Link
-                        className="matrix-character-link"
-                        style={{
-                          color:
-                            getClassColor(
-                              character.className
-                            )
-                        }}
-                        to={`/characters/${character.id}`}
-                      >
-                        {
-                          character.name
-                        }
-                      </Link>
-
-                      <span>
-                        {
-                          character.className
-                        }
-                        {" · "}
-                        {
-                          character.realm
-                        }
-                      </span>
-                    </div>
-                  </td>
-
-                  {tasks.map(
-                    (task) => {
-                      const completed =
-                        character.completedTaskKeys.includes(
-                          task.key
-                        );
-
-                      const actionKey =
-                        `${character.id}:${task.key}`;
-
-                      const isPending =
-                        pendingAction ===
-                          actionKey ||
-                        pendingAction ===
-                          `${character.id}:all`;
-
-                      return (
-                        <td
-                          className="matrix-col-narrow"
-                          key={task.key}
-                        >
-                          <button
-                            className="matrix-token-button"
-                            disabled={
-                              pendingAction !==
-                              null
-                            }
-                            onClick={() =>
-                              onToggleTask(
-                                character.id,
-                                task.key,
-                                !completed
-                              )
-                            }
-                            type="button"
-                          >
-                            <StatusToken
-                              token={
-                                isPending
-                                  ? {
-                                      symbol:
-                                        "…",
-                                      tone: "progress",
-                                      title:
-                                        "Saving…"
-                                    }
-                                  : completed
-                                    ? {
-                                        symbol:
-                                          "✓",
-                                        tone: "ready",
-                                        title: `${task.title} - complete`
-                                      }
-                                    : {
-                                        symbol:
-                                          "○",
-                                        tone: "attention",
-                                        title: `${task.title} - incomplete`
-                                      }
-                              }
-                            />
-                          </button>
-                        </td>
-                      );
-                    }
-                  )}
-
-                  <td className="matrix-col-narrow">
-                    <StatusToken
-                      token={aggregateToken(
-                        character.professionWeekly
-                          .quest,
-                        "Weekly Quest"
-                      )}
-                    />
-                  </td>
-
-                  <td className="matrix-col-narrow">
-                    <StatusToken
-                      token={aggregateToken(
-                        character.professionWeekly
-                          .treatise,
-                        "Treatise"
-                      )}
-                    />
-                  </td>
-
-                  <td className="matrix-col-narrow">
-                    <StatusToken
-                      token={aggregateToken(
-                        character.professionWeekly
-                          .drops,
-                        "Knowledge Drops"
-                      )}
-                    />
-                  </td>
-
-                  <td className="matrix-col-narrow">
-                    <StatusToken
-                      token={{
-                        symbol: `${completedCount}/${tasks.length}`,
-                        tone: allCompleted
-                          ? "ready"
-                          : "progress",
-                        title: `${completedCount} of ${tasks.length} weekly tasks complete`
+            return (
+              <tr key={character.id}>
+                <td>
+                  <div className="matrix-identity">
+                    <Link
+                      className="matrix-character-link"
+                      style={{
+                        color: getClassColor(character.className)
                       }}
-                    />
-                  </td>
-
-                  <td className="matrix-col-action">
-                    <button
-                      className="text-button"
-                      disabled={
-                        pendingAction !==
-                        null
-                      }
-                      onClick={() =>
-                        onToggleAll(
-                          character.id,
-                          !allCompleted
-                        )
-                      }
-                      type="button"
+                      to={`/characters/${character.id}`}
                     >
-                      {allCompleted
-                        ? "Clear"
-                        : "Complete all"}
-                    </button>
-                  </td>
-                </tr>
-              );
-            }
-          )}
+                      {character.name}
+                    </Link>
+
+                    <span>
+                      {character.className}
+                      {" · "}
+                      {character.realm}
+                    </span>
+                  </div>
+                </td>
+
+                <td className="matrix-col-narrow">
+                  <StatusToken token={unknownActivityToken} />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken token={unknownActivityToken} />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken token={unknownActivityToken} />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken token={unknownActivityToken} />
+                </td>
+
+                <td className="matrix-col-narrow">
+                  <StatusToken
+                    token={aggregateToken(
+                      character.professionWeekly.quest,
+                      "Weekly Quest"
+                    )}
+                  />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken
+                    token={aggregateToken(
+                      character.professionWeekly.treatise,
+                      "Treatise"
+                    )}
+                  />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken
+                    token={aggregateToken(
+                      character.professionWeekly.drops,
+                      "Knowledge Drops"
+                    )}
+                  />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken token={progressToken(character)} />
+                </td>
+                <td className="matrix-col-action">
+                  {action ? (
+                    <Link
+                      className="overview-next-action"
+                      to={`/characters/${character.id}`}
+                    >
+                      {action}
+                    </Link>
+                  ) : (
+                    <span className="overview-next-action ready">✓</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

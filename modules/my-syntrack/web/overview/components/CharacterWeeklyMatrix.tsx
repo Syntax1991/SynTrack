@@ -15,9 +15,9 @@ type CharacterWeeklyMatrixProps = {
 };
 
 /*
- * The matrix is the primary SynTrack workspace, not a table beneath a
- * dashboard - it starts immediately below the toolbar, with no KPI
- * cards or large attention panel competing for the first screen.
+ * Default Overview triage matrix:
+ * Character · iLvl · Set · Emb · Weeklies · [Trackers] · Prof · Gear · Res · Action
+ * Weekly sub-detail (Vault/Quest/Treat/Drops/Spark/Cata) is not default.
  */
 export function CharacterWeeklyMatrix({
   characters,
@@ -39,39 +39,27 @@ export function CharacterWeeklyMatrix({
     visibleCharacters
   } = useMatrixFilters(characters);
 
-  const columnCount =
-    14 + trackerColumns.length;
+  const columnCount = 9 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
       <MatrixToolbar
-        onOpenTrackerManager={
-          onOpenTrackerManager
-        }
-        onReadinessFilterChange={
-          setReadinessFilter
-        }
-        onSearchTermChange={
-          setSearchTerm
-        }
+        onOpenTrackerManager={onOpenTrackerManager}
+        onReadinessFilterChange={setReadinessFilter}
+        onSearchTermChange={setSearchTerm}
         onSortByChange={setSortBy}
-        readinessFilter={
-          readinessFilter
-        }
+        readinessFilter={readinessFilter}
         searchTerm={searchTerm}
         sortBy={sortBy}
         summaryText={summaryText}
         tagFilter={tagFilter}
         tagOptions={tagOptions}
-        onTagFilterChange={
-          setTagFilter
-        }
+        onTagFilterChange={setTagFilter}
       />
 
       {characters.length === 0 ? (
         <div className="empty-state">
-          Add a character to see
-          weekly state here.
+          Add a character to see weekly state here.
         </div>
       ) : (
         <div className="table-scroll overview-matrix-scroll">
@@ -79,124 +67,65 @@ export function CharacterWeeklyMatrix({
             <thead>
               <tr>
                 <th>Character</th>
-                <th className="overview-col-narrow">
-                  iLvl
-                </th>
-                <th className="overview-col-narrow">
-                  Set
-                </th>
-                <th className="overview-col-narrow">
-                  Emb.
-                </th>
-                <th className="overview-col-narrow">
+                <th className="overview-col-narrow">iLvl</th>
+                <th className="overview-col-narrow">Set</th>
+                <th className="overview-col-narrow">Emb.</th>
+                <th
+                  className="overview-col-narrow"
+                  title="Recurring weekly work summary - details on Weeklies"
+                >
                   Weeklies
                 </th>
-                <th className="overview-col-narrow">
-                  Vault
-                </th>
 
-                {trackerColumns.map(
-                  (definition) => (
-                    <th
-                      className={
-                        definition.valueType ===
-                        "TEXT"
-                          ? "overview-col-medium"
-                          : "overview-col-narrow"
-                      }
-                      key={
-                        definition.id
-                      }
-                      title={
-                        definition.category ??
-                        undefined
-                      }
-                    >
-                      {definition.name}
-                    </th>
-                  )
-                )}
+                {trackerColumns.map((definition) => (
+                  <th
+                    className={
+                      definition.valueType === "TEXT"
+                        ? "overview-col-medium"
+                        : "overview-col-narrow"
+                    }
+                    key={definition.id}
+                    title={definition.category ?? undefined}
+                  >
+                    {definition.name}
+                  </th>
+                ))}
 
                 <th
                   className="overview-col-narrow"
-                  title="Profession data - is skill/knowledge point data captured at all"
+                  title="Permanent profession setup - data health and Knowledge Treasures (not weekly Quest/Treatise/Drops)"
                 >
                   Prof.
                 </th>
+                <th className="overview-col-narrow">Gear</th>
                 <th
                   className="overview-col-narrow"
-                  title="Weekly profession quest - captured automatically via addon"
+                  title="Resources attention"
                 >
-                  Quest
+                  Res.
                 </th>
-                <th
-                  className="overview-col-narrow"
-                  title="Profession Treatise - captured automatically via addon"
-                >
-                  Treat.
-                </th>
-                <th
-                  className="overview-col-narrow"
-                  title="Weekly profession Knowledge Drops - captured automatically via addon (never affects Quest/Treatise)"
-                >
-                  Drops
-                </th>
-                <th className="overview-col-narrow">
-                  Gear
-                </th>
-                <th
-                  className="overview-col-narrow"
-                  title="Tidal Spark Dust - season progress toward Sparks of Tides"
-                >
-                  Spark
-                </th>
-                <th
-                  className="overview-col-narrow"
-                  title="Venomblight Manaflux - Creation Catalyst charges"
-                >
-                  Cata
-                </th>
-                <th className="overview-col-action">
-                  Action
-                </th>
+                <th className="overview-col-action">Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {visibleCharacters.length ===
-              0 ? (
+              {visibleCharacters.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={
-                      columnCount
-                    }
-                  >
+                  <td colSpan={columnCount}>
                     <div className="empty-state">
-                      No characters
-                      match this
-                      filter.
+                      No characters match this filter.
                     </div>
                   </td>
                 </tr>
               ) : (
-                visibleCharacters.map(
-                  (state) => (
-                    <CharacterMatrixRow
-                      key={
-                        state
-                          .character
-                          .id
-                      }
-                      onTrackerChanged={
-                        onTrackerChanged
-                      }
-                      state={state}
-                      trackerColumns={
-                        trackerColumns
-                      }
-                    />
-                  )
-                )
+                visibleCharacters.map((state) => (
+                  <CharacterMatrixRow
+                    key={state.character.id}
+                    onTrackerChanged={onTrackerChanged}
+                    state={state}
+                    trackerColumns={trackerColumns}
+                  />
+                ))
               )}
             </tbody>
           </table>

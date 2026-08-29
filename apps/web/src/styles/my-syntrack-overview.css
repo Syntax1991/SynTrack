@@ -280,6 +280,15 @@
   white-space: normal;
 }
 
+.overview-token-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.overview-token-link:hover {
+  opacity: 0.85;
+}
+
 .overview-next-action:hover {
   text-decoration: underline;
 }

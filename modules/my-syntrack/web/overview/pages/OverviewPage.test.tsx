@@ -127,6 +127,19 @@ const mockOverview: OverviewResponse =
           },
           professions: []
         },
+        weeklySummary: {
+          state: "NOT_TRACKED",
+          completedKnown: 0,
+          applicableKnown: 0,
+          unknownCount: 0,
+          domains: []
+        },
+        weeklyAction: null,
+        professionSetup: {
+          state: "NOT_TRACKED",
+          professions: [],
+          dataIssues: []
+        },
         trackers: [],
         attentionItems: [
           {
@@ -255,15 +268,20 @@ describe("OverviewPage", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getAllByText(
-        "Synspin"
-      ).length
+      screen.getAllByText("Synspin").length
     ).toBeGreaterThan(0);
 
     expect(
-      screen.getAllByText("2/5")
-        .length
-    ).toBeGreaterThan(0);
+      screen.getByRole("columnheader", { name: "Weeklies" })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("columnheader", { name: "Prof." })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByRole("columnheader", { name: "Vault" })
+    ).not.toBeInTheDocument();
   });
 
   it("never renders the old four KPI cards, replacing them with one compact summary line", () => {

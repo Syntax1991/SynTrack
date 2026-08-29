@@ -31,6 +31,14 @@ export function buildDetail(): CharacterControlDetailResponse {
         total: 5,
         source: "MANUAL_CHECKLIST"
       },
+      weeklySummary: {
+        state: "NOT_TRACKED",
+        completedKnown: 0,
+        applicableKnown: 0,
+        unknownCount: 0,
+        domains: []
+      },
+      weeklyAction: null,
       vault: {
         state: "UNKNOWN",
         unlockedSlots: 0,
@@ -54,6 +62,11 @@ export function buildDetail(): CharacterControlDetailResponse {
             dataStatus: "TRACKED"
           }
         ]
+      },
+      professionSetup: {
+        state: "NOT_TRACKED",
+        professions: [],
+        dataIssues: []
       },
       gear: {
         state: "NOT_TRACKED",
