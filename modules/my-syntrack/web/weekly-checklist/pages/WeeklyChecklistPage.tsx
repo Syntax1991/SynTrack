@@ -4,23 +4,10 @@ import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHe
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { WeeklyChecklistMatrix } from "../components/WeeklyChecklistMatrix";
 import { useWeeklyChecklist } from "../hooks/useWeeklyChecklist";
-import { formatWeeklySummaryText } from "../utils/summaryText";
 import { WeekliesTabNav } from "../../shared/components/WeekliesTabNav";
 
-/*
- * The checklist matrix IS the character roster for this page - one
- * row per character, every task directly clickable, so account-wide
- * weekly status no longer requires selecting characters one by one.
- */
 export function WeeklyChecklistPage() {
-  const {
-    checklist,
-    isLoading,
-    error,
-    pendingAction,
-    setTaskCompleted,
-    setAllTasksCompleted
-  } = useWeeklyChecklist();
+  const { checklist, isLoading, error } = useWeeklyChecklist();
 
   return (
     <>
@@ -28,44 +15,28 @@ export function WeeklyChecklistPage() {
 
       <PageHeader
         actions={
-          <Link
-            className="button button-secondary"
-            to="/characters"
-          >
+          <Link className="button button-secondary" to="/characters">
             Manage characters
           </Link>
         }
-        description="Keep every character's recurring work visible in one reset-aware checklist."
+        description="Recurring reset-aware work across the roster. Permanent Knowledge Treasures and Gear live elsewhere."
         eyebrow="WEEKLY RESET"
-        title="Weekly Checklist"
+        title="Weeklies"
       />
 
-      {error && (
-        <StatusMessage type="error">
-          {error}
-        </StatusMessage>
-      )}
+      {error && <StatusMessage type="error">{error}</StatusMessage>}
 
       {isLoading || !checklist ? (
         <LoadingPanel />
       ) : checklist.characters.length === 0 ? (
         <section className="panel weekly-empty-state">
-          <p className="eyebrow">
-            ROSTER REQUIRED
-          </p>
-
+          <p className="eyebrow">ROSTER REQUIRED</p>
           <h2>Add your first character</h2>
-
           <p>
-            Weekly progress is tracked per
-            character. Add or sync a character
-            to begin.
+            Weekly progress is tracked per character. Add or sync a
+            character to begin.
           </p>
-
-          <Link
-            className="button button-primary"
-            to="/characters"
-          >
+          <Link className="button button-primary" to="/characters">
             Open character roster
           </Link>
         </section>
@@ -73,39 +44,12 @@ export function WeeklyChecklistPage() {
         <section className="panel matrix-panel">
           <div className="matrix-toolbar">
             <span className="matrix-summary">
-              {formatWeeklySummaryText(
-                checklist
-              )}
+              {checklist.characters.length} characters · Quest / Treatise /
+              Drops automatic · Vault / M+ / Raid / Delves not tracked yet
             </span>
           </div>
 
-          <WeeklyChecklistMatrix
-            characters={
-              checklist.characters
-            }
-            onToggleAll={(
-              characterId,
-              completed
-            ) => {
-              void setAllTasksCompleted(
-                characterId,
-                completed
-              );
-            }}
-            onToggleTask={(
-              characterId,
-              taskKey,
-              completed
-            ) => {
-              void setTaskCompleted(
-                characterId,
-                taskKey,
-                completed
-              );
-            }}
-            pendingAction={pendingAction}
-            tasks={checklist.tasks}
-          />
+          <WeeklyChecklistMatrix characters={checklist.characters} />
         </section>
       )}
     </>

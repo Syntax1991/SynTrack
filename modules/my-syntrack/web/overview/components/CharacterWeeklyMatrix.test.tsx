@@ -124,37 +124,31 @@ describe("CharacterWeeklyMatrix", () => {
     const synbloomRow = within(rows[2]!);
 
     expect(
-      synblastRow.getByTitle("2 missing enchants")
-    ).toBeInTheDocument();
+      synblastRow.getAllByTitle("2 missing enchants").length
+    ).toBeGreaterThan(0);
 
     expect(
       synbloomRow.queryByTitle("2 missing enchants")
     ).not.toBeInTheDocument();
 
     expect(
-      synbloomRow.getByTitle("Gear ready, no known issues")
-    ).toBeInTheDocument();
+      synbloomRow.getAllByTitle("Gear ready, no known issues").length
+    ).toBeGreaterThan(0);
   });
 
-  it("renders Unknown Vault state as a distinct token from Not-tracked Professions/Gear, never as 'Ready'", () => {
+  it("keeps Weeklies summary distinct from Prof./Gear not-tracked tokens", () => {
     renderMatrix([buildCharacter()]);
 
     const rows = screen.getAllByRole("row");
     const dataRow = within(rows[1]!);
 
     expect(
-      dataRow.getByTitle(
-        "Vault state unknown - no runs logged this period yet, or this character doesn't use the feature"
-      )
-    ).toHaveTextContent("?");
-
-    expect(
-      dataRow.getAllByTitle("Professions not tracked")[0]
+      dataRow.getAllByTitle("No weekly state tracked")[0]
     ).toHaveTextContent("—");
 
     expect(
-      dataRow.queryByTitle("Professions tracked, no known issues")
-    ).not.toBeInTheDocument();
+      dataRow.getAllByTitle("Profession setup")[0]
+    ).toHaveTextContent("—");
 
     expect(
       dataRow.queryByTitle("Gear ready, no known issues")
@@ -194,14 +188,14 @@ describe("CharacterWeeklyMatrix", () => {
     ).toHaveAttribute("href", "/gear-readiness");
   });
 
-  it("mutes the generic 'weekly tasks remaining' next action instead of repeating it prominently on every row", () => {
+  it("renders precise next actions without muting them as generic weekly noise", () => {
     renderMatrix([
       buildCharacter({
         nextAction: {
-          domain: "weekly",
-          label: "Weekly tasks remaining",
-          detail: "2 of 5 tasks left",
-          path: "/weekly-checklist",
+          domain: "profession",
+          label: "1 Alchemy Knowledge Treasure missing",
+          detail: null,
+          path: "/characters/char-1",
           severity: "this-week"
         },
         readinessState: "attention"
@@ -210,9 +204,9 @@ describe("CharacterWeeklyMatrix", () => {
 
     expect(
       screen.getByRole("link", {
-        name: "Weekly tasks remaining"
+        name: "1 Alchemy Knowledge Treasure missing"
       })
-    ).toHaveClass("overview-next-action", "muted");
+    ).toHaveClass("overview-next-action");
   });
 
   it("renders the real item level once Gear has tracked slots, and Set/Embellish honestly as not-tracked (no data source exists yet)", () => {

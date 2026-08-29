@@ -10,13 +10,6 @@ import type {
   WeeklyOverviewState
 } from "../types/overview.types";
 
-/*
- * A compact matrix token: a short symbol/number (never a full pill
- * label repeated in every row), a tone driving restrained color, and a
- * title/tooltip carrying the full explanation for screen readers and
- * hover. READY/UNKNOWN/NOT_TRACKED/ATTENTION are visually and
- * semantically distinct tokens - never blurred into each other.
- */
 export type CellToken = {
   symbol: string;
   tone:
@@ -68,10 +61,7 @@ export function formatVaultToken(
 
   return {
     symbol: `${vault.unlockedSlots}/${vault.slotsTotal}`,
-    tone:
-      vault.state === "READY"
-        ? "ready"
-        : "progress",
+    tone: vault.state === "READY" ? "ready" : "progress",
     title: `${vault.unlockedSlots} of ${vault.slotsTotal} Vault slots unlocked`
   };
 }
@@ -104,14 +94,6 @@ export function formatProfessionToken(
   };
 }
 
-/*
- * Additive automatic columns alongside the existing "Prof." data-health
- * column, which tracks something entirely different (is profession
- * data captured at all, not weekly completion) - see the Automatic
- * Profession Weekly audit. Prof KP (Weekly Quest + Treatise) and
- * Knowledge Drops stay visually and semantically separate, matching
- * the hard product rule that Drops never affects Prof KP.
- */
 export function formatProfessionWeeklyAggregateToken(
   aggregate: ProfessionWeeklyAggregate,
   label: string
@@ -176,9 +158,7 @@ export function formatGearToken(
     return {
       symbol: "!",
       tone: "attention",
-      title:
-        parts.join(", ") ||
-        "Gear needs attention"
+      title: parts.join(", ") || "Gear needs attention"
     };
   }
 
@@ -189,30 +169,18 @@ export function formatGearToken(
   };
 }
 
-/*
- * Dedicated columns for two specific season resources, replacing the
- * generic "Res." aggregate entirely - always shown as count/max (never
- * a ready/attention symbol), since the live-captured maxQuantity
- * already reflects the season's current cap (Blizzard raises it by 1
- * per weekly reset for Tidal Spark Dust; the addon just reports
- * whatever the live currency API says, no hardcoded season constant).
- */
 export function formatResourceCountToken(
   resources: ResourceOverviewState,
   key: string,
   label: string
 ): CellToken {
-  const item: ResourceItemView | undefined =
-    resources.items.find(
-      (candidate) => candidate.key === key
-    );
+  const item: ResourceItemView | undefined = resources.items.find(
+    (candidate) => candidate.key === key
+  );
 
   const snapshot = item?.snapshot ?? null;
 
-  if (
-    !snapshot ||
-    snapshot.quantity === null
-  ) {
+  if (!snapshot || snapshot.quantity === null) {
     return {
       symbol: "—",
       tone: "not-tracked",
@@ -231,8 +199,7 @@ export function formatResourceCountToken(
   return {
     symbol: `${snapshot.quantity}/${snapshot.maxQuantity}`,
     tone:
-      snapshot.quantity >=
-      snapshot.maxQuantity
+      snapshot.quantity >= snapshot.maxQuantity
         ? "ready"
         : "progress",
     title: `${label}: ${snapshot.quantity} of ${snapshot.maxQuantity} this season`
@@ -265,8 +232,7 @@ export function formatTierToken(
   return {
     symbol: "—",
     tone: "not-tracked",
-    title:
-      "Set/Tier not tracked - no data source exists yet"
+    title: "Set/Tier not tracked - no data source exists yet"
   };
 }
 
@@ -278,7 +244,12 @@ export function formatEmbellishmentToken(
   return {
     symbol: "—",
     tone: "not-tracked",
-    title:
-      "Embellishments not tracked - no data source exists yet"
+    title: "Embellishments not tracked - no data source exists yet"
   };
 }
+
+export {
+  formatProfessionSetupToken,
+  formatResourcesToken,
+  formatWeeklySummaryToken
+} from "./overviewTriageFormatting";

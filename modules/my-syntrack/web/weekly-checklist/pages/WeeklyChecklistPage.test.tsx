@@ -94,38 +94,29 @@ function renderPage() {
 }
 
 describe("WeeklyChecklistPage", () => {
-  it("never renders the old four KPI cards, replacing them with one compact summary line that keeps reset information visible", () => {
+  it("shows a compact Weeklies summary without KPI cards", () => {
     renderPage();
 
     expect(
       screen.getByText(
-        /1 characters · 0 complete · 0\/1 tasks · Reset/
+        /characters · Quest \/ Treatise \/ Drops automatic/
       )
     ).toBeInTheDocument();
 
     expect(
       screen.queryByText("Roster")
     ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        "Next reset"
-      )
-    ).not.toBeInTheDocument();
   });
 
-  it("renders the account-wide checklist matrix directly, without a separate character roster/selection step", () => {
+  it("renders the account-wide Weeklies matrix directly", () => {
     renderPage();
 
     expect(
-      screen.getAllByText("Synspin")
-        .length
+      screen.getAllByText("Synspin").length
     ).toBeGreaterThan(0);
 
-    expect(
-      screen.queryByText(
-        "Your roster"
-      )
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("Vault")).toBeInTheDocument();
+    expect(screen.getByText("Quest")).toBeInTheDocument();
+    expect(screen.queryByText("Complete all")).not.toBeInTheDocument();
   });
 });

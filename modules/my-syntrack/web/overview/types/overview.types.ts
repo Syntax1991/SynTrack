@@ -1,5 +1,10 @@
 import type { ProfessionKnowledgeTreasureOverviewState } from "./professionKnowledgeTreasure.types";
 import type { ProfessionWeeklyOverviewState } from "./professionWeekly.types";
+import type {
+  ProfessionSetupOverviewState,
+  WeeklyActionView,
+  WeeklySummaryOverviewState
+} from "./overviewTriage.types";
 
 export type OverviewDomainState =
   | "READY"
@@ -218,8 +223,11 @@ export type CharacterWeeklyState = {
     level: number;
   };
   weekly: WeeklyOverviewState;
+  weeklySummary: WeeklySummaryOverviewState;
+  weeklyAction: WeeklyActionView | null;
   vault: VaultOverviewState;
   professions: ProfessionOverviewState;
+  professionSetup: ProfessionSetupOverviewState;
   gear: GearOverviewState;
   resources: ResourceOverviewState;
   tier: TierOverviewState;

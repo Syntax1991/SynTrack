@@ -35,6 +35,10 @@ import type {
   ProfessionKnowledgeTreasureAggregate,
   ProfessionKnowledgeTreasureProfessionSummary
 } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.types.js";
+import type {
+  ProfessionSetupOverviewState,
+  WeeklySummaryOverviewState
+} from "./overview-triage.types.js";
 
 export type {
   ProfessionWeeklyAggregate,
@@ -47,6 +51,13 @@ export type {
   ProfessionKnowledgeTreasureProfessionSummary,
   ProfessionKnowledgeTreasureSourceStatus
 } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.types.js";
+
+export type {
+  ProfessionSetupOverviewState,
+  ProfessionSetupProfessionSummary,
+  WeeklySummaryDomainDetail,
+  WeeklySummaryOverviewState
+} from "./overview-triage.types.js";
 
 export type {
   CharacterTrackerState,
@@ -226,8 +237,17 @@ export type CharacterWeeklyState = {
     level: number;
   };
   weekly: WeeklyOverviewState;
+  weeklySummary: WeeklySummaryOverviewState;
+  weeklyAction: {
+    domain: AttentionDomain;
+    label: string;
+    detail: string | null;
+    path: string;
+    severity: AttentionSeverity;
+  } | null;
   vault: VaultOverviewState;
   professions: ProfessionOverviewState;
+  professionSetup: ProfessionSetupOverviewState;
   gear: GearOverviewState;
   resources: ResourceOverviewState;
   tier: TierOverviewState;
