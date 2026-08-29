@@ -6,7 +6,6 @@ import type {
 import { getClassColor } from "../utils/classColors";
 import {
   formatEmbellishmentToken,
-  formatGearToken,
   formatItemLevelToken,
   formatResourceCountToken,
   formatTierToken
@@ -171,16 +170,6 @@ export function CharacterMatrixRow({
               title: professionSetupTitle(state)
             }}
           />
-        </Link>
-      </td>
-
-      <td className="overview-col-narrow">
-        <Link
-          className="overview-token-link"
-          title={formatGearToken(state.gear).title}
-          to={`/characters/${state.character.id}`}
-        >
-          <StatusToken token={formatGearToken(state.gear)} />
         </Link>
       </td>
 
