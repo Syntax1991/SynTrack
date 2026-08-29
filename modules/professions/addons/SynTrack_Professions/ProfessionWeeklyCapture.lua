@@ -1,13 +1,15 @@
 local _, PT = ...
 
 --[[
-    Weekly Profession Quest + Treatise completion via the persistent
-    per-character quest flag - deliberately NOT
+    Weekly Profession Quest + Treatise + Knowledge Drops completion via
+    the persistent per-character quest flag - deliberately NOT
     IsQuestFlaggedCompletedOnAccount (documented as unreliable/stale-true
     for this exact use, see the audit) and NOT bag-item possession
     (a Treatise item disappears on use; the flag doesn't). Knowledge
-    Drops has no known persistent per-source evidence yet, so this
-    module never captures it - see the audit's UNKNOWN classification.
+    Drops is captured as a series of independent hidden-quest "slots"
+    (see ProfessionWeeklyCatalog.lua) using the exact same any-one-
+    candidate-flagged evaluation as Weekly Quest/Treatise - it is NOT a
+    currency-based count.
 ]]
 
 local function anyQuestFlagged(questIds)
@@ -61,6 +63,21 @@ local function captureProfessionEntry(
                 catalogEntry.treatise
             )
         )
+    end
+
+    if catalogEntry.knowledgeDrops then
+        for slotIndex, candidateIds in ipairs(
+            catalogEntry.knowledgeDrops
+        ) do
+            table.insert(
+                sources,
+                captureSource(
+                    "knowledge-drops-"
+                        .. slotIndex,
+                    candidateIds
+                )
+            )
+        end
     end
 
     return {
