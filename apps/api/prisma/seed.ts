@@ -416,16 +416,19 @@ async function seedMidnightSeason2Resources() {
  * weeklyQuest ids were corrected 2026-08-28 from a sequential,
  * internally-consistent reference table the user supplied
  * (93690-93714, one contiguous block covering all 11 professions) -
- * see ProfessionWeeklyCatalog.lua. Treatise ids remain community-
- * sourced/unverified. Neither list is Blizzard-documented, and neither
- * has been confirmed against a real live character yet - see the
- * Automatic Profession Weekly audit. `enabled: false` on every single
- * one is deliberate: a definition only ever affects what a user sees
- * once its id has been live-verified via
- * C_QuestLog.IsQuestFlaggedCompleted against known real completion
- * state (Slice A's live acceptance step), matching the "leave disabled
- * rather than inventing an id" rule. Flip individual entries to
- * enabled: true only after that verification, never as a batch.
+ * see ProfessionWeeklyCatalog.lua. Live acceptance on 2026-08-29
+ * across 20 real characters confirmed the corrected weekly-quest ids
+ * (captured flaggedCompleted values formed a plausible pattern -
+ * mostly true across alts for a fast weekly, rare for the Treatise -
+ * and the user confirmed that pattern matches reality) for the 8
+ * professions actually present on those characters: alchemy,
+ * blacksmithing, enchanting, engineering, inscription, jewelcrafting,
+ * leatherworking, tailoring. herbalism/mining/skinning have NO live
+ * evidence (no logged-in character has them) and stay disabled per
+ * the "leave disabled rather than inventing an id" rule - see the
+ * Automatic Profession Weekly audit. Do not enable them without a
+ * character that actually holds one of those professions to verify
+ * against.
  */
 async function seedProfessionWeeklySources() {
   const professionWeeklyDefinitionService =
@@ -435,19 +438,55 @@ async function seedProfessionWeeklySources() {
 
   const professionQuestIds: Record<
     string,
-    { weeklyQuest: number; treatise: number }
+    { weeklyQuest: number; treatise: number; verified: boolean }
   > = {
-    alchemy: { weeklyQuest: 93690, treatise: 95127 },
-    blacksmithing: { weeklyQuest: 93691, treatise: 95128 },
-    enchanting: { weeklyQuest: 93697, treatise: 95129 },
-    engineering: { weeklyQuest: 93692, treatise: 95138 },
-    herbalism: { weeklyQuest: 93700, treatise: 95130 },
-    inscription: { weeklyQuest: 93693, treatise: 95131 },
-    jewelcrafting: { weeklyQuest: 93694, treatise: 95133 },
-    leatherworking: { weeklyQuest: 93695, treatise: 95134 },
-    mining: { weeklyQuest: 93705, treatise: 95135 },
-    skinning: { weeklyQuest: 93710, treatise: 95136 },
-    tailoring: { weeklyQuest: 93696, treatise: 95137 }
+    alchemy: { weeklyQuest: 93690, treatise: 95127, verified: true },
+    blacksmithing: {
+      weeklyQuest: 93691,
+      treatise: 95128,
+      verified: true
+    },
+    enchanting: {
+      weeklyQuest: 93697,
+      treatise: 95129,
+      verified: true
+    },
+    engineering: {
+      weeklyQuest: 93692,
+      treatise: 95138,
+      verified: true
+    },
+    herbalism: {
+      weeklyQuest: 93700,
+      treatise: 95130,
+      verified: false
+    },
+    inscription: {
+      weeklyQuest: 93693,
+      treatise: 95131,
+      verified: true
+    },
+    jewelcrafting: {
+      weeklyQuest: 93694,
+      treatise: 95133,
+      verified: true
+    },
+    leatherworking: {
+      weeklyQuest: 93695,
+      treatise: 95134,
+      verified: true
+    },
+    mining: { weeklyQuest: 93705, treatise: 95135, verified: false },
+    skinning: {
+      weeklyQuest: 93710,
+      treatise: 95136,
+      verified: false
+    },
+    tailoring: {
+      weeklyQuest: 93696,
+      treatise: 95137,
+      verified: true
+    }
   };
 
   for (const [professionKey, ids] of Object.entries(
@@ -460,7 +499,7 @@ async function seedProfessionWeeklySources() {
       name: "Weekly Quest",
       sourceType: "WEEKLY_QUEST",
       externalQuestId: ids.weeklyQuest,
-      enabled: false,
+      enabled: ids.verified,
       sortOrder: 0
     });
 
@@ -471,7 +510,7 @@ async function seedProfessionWeeklySources() {
       name: "Treatise",
       sourceType: "TREATISE",
       externalQuestId: ids.treatise,
-      enabled: false,
+      enabled: ids.verified,
       sortOrder: 1
     });
   }
