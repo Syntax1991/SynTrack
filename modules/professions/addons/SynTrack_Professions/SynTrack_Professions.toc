@@ -41,6 +41,8 @@ Recipes.lua
 Professions.lua
 ProfessionWeeklyCatalog.lua
 ProfessionWeeklyCapture.lua
+KnowledgeTreasureCatalog.lua
+KnowledgeTreasureCapture.lua
 Character.lua
 SyncRefresh.lua
 ProfessionCaptureRules.lua

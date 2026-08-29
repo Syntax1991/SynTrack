@@ -99,6 +99,16 @@ export function buildDetail(): CharacterControlDetailResponse {
         },
         professions: []
       },
+      professionKnowledgeTreasures: {
+        state: "NOT_TRACKED",
+        treasures: {
+          completeCount: 0,
+          incompleteCount: 0,
+          unknownCount: 0,
+          applicableTotal: 0
+        },
+        professions: []
+      },
       trackers: [
         {
           trackerDefinitionId:

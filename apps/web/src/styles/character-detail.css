@@ -225,6 +225,29 @@ a.character-this-week-cell:hover {
   margin-left: auto;
 }
 
+.character-profession-treasure-list {
+  display: grid;
+  gap: 2px;
+}
+
+.character-profession-treasure-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.character-profession-treasure-row:last-child {
+  border-bottom: 0;
+}
+
+.character-profession-treasure-value {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
 .character-tracker-row span:first-child {
   min-width: 140px;
 }

@@ -60,6 +60,11 @@ function buildCharacter(
       drops: zeroAggregate,
       professions: []
     },
+    professionKnowledgeTreasures: {
+      state: "NOT_TRACKED",
+      treasures: zeroAggregate,
+      professions: []
+    },
     trackers: [],
     attentionItems: [],
     readinessState: "unknown",

@@ -67,7 +67,8 @@ export function result(): CharacterPersistenceResult {
     progressEntries: 0,
     gearSlots: 0,
     resourceSnapshots: 0,
-    professionWeeklySnapshots: 0
+    professionWeeklySnapshots: 0,
+    professionKnowledgeTreasureSnapshots: 0
   };
 }
 
