@@ -25,18 +25,26 @@ export type ProfessionWeeklyAggregate = {
   applicableTotal: number;
 };
 
+/*
+ * Weekly Quest and Treatise are shown as two separate user-facing
+ * values, never merged into one combined "Prof KP" number - a 3/4
+ * doesn't tell you whether it's the Quest or the Treatise still
+ * missing, which defeats the point of an automatic tracker. See the
+ * profession weekly correctness follow-up.
+ */
 export type ProfessionWeeklyProfessionSummary = {
   professionKey: string;
   name: string;
-  profKp: ProfessionWeeklyAggregate;
-  sources: ProfessionWeeklySourceStatus[];
+  quest: ProfessionWeeklySourceStatus | null;
+  treatise: ProfessionWeeklySourceStatus | null;
   drops: ProfessionWeeklySourceStatus | null;
 };
 
 export type CharacterProfessionWeeklyStatus = {
   id: string;
   name: string;
-  profKp: ProfessionWeeklyAggregate;
+  quest: ProfessionWeeklyAggregate;
+  treatise: ProfessionWeeklyAggregate;
   drops: ProfessionWeeklyAggregate;
   professions: ProfessionWeeklyProfessionSummary[];
 };

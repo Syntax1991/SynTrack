@@ -30,8 +30,30 @@ function lookup(
   };
 }
 
+function questDefinition(
+  professionKey: string
+) {
+  return definition({
+    id: `def-${professionKey}-quest`,
+    professionKey,
+    sourceKey: "weekly-quest",
+    sourceType: "WEEKLY_QUEST"
+  });
+}
+
+function treatiseDefinition(
+  professionKey: string
+) {
+  return definition({
+    id: `def-${professionKey}-treatise`,
+    professionKey,
+    sourceKey: "treatise",
+    sourceType: "TREATISE"
+  });
+}
+
 describe("ProfessionWeeklyStatusService", () => {
-  it("reports NOT_TRACKED-equivalent zero aggregate for a character with no applicable definitions", async () => {
+  it("reports a zero aggregate (no dash-worthy applicable sources) for a character with no professions", async () => {
     const repository = new FakeProfessionWeeklyStatusRepository();
     repository.seedCharacter({ id: "char-1", name: "Synlight" });
 
@@ -43,11 +65,12 @@ describe("ProfessionWeeklyStatusService", () => {
     const overview = await service.getOverview();
     const character = overview.characters[0]!;
 
-    expect(character.profKp.applicableTotal).toBe(0);
+    expect(character.quest.applicableTotal).toBe(0);
+    expect(character.treatise.applicableTotal).toBe(0);
     expect(character.professions).toHaveLength(0);
   });
 
-  it("derives Prof KP from Weekly Quest + Treatise only, excluding Knowledge Drops", async () => {
+  it("keeps Weekly Quest and Treatise as two separate aggregates, both complete, for one profession", async () => {
     const repository = new FakeProfessionWeeklyStatusRepository();
     repository.seedCharacter({
       id: "char-1",
@@ -55,99 +78,6 @@ describe("ProfessionWeeklyStatusService", () => {
       professionKeys: ["alchemy"]
     });
     repository.seedProfessionName("alchemy", "Alchemy");
-
-    repository.seedSnapshot({
-      characterId: "char-1",
-      sourceDefinitionId: "def-quest",
-      state: "COMPLETE",
-      currentValue: null,
-      maxValue: null,
-      capturedAt: new Date("2026-08-28T12:00:00.000Z")
-    });
-
-    repository.seedSnapshot({
-      characterId: "char-1",
-      sourceDefinitionId: "def-treatise",
-      state: "COMPLETE",
-      currentValue: null,
-      maxValue: null,
-      capturedAt: new Date("2026-08-28T12:00:00.000Z")
-    });
-
-    // Critical regression case: Drops is INCOMPLETE, but must never
-    // affect Prof KP - the hard product rule has no exceptions.
-    repository.seedSnapshot({
-      characterId: "char-1",
-      sourceDefinitionId: "def-drops",
-      state: "INCOMPLETE",
-      currentValue: 1,
-      maxValue: 2,
-      capturedAt: new Date("2026-08-28T12:00:00.000Z")
-    });
-
-    const service = new ProfessionWeeklyStatusService(
-      repository,
-      lookup([
-        definition({
-          id: "def-quest",
-          professionKey: "alchemy",
-          sourceKey: "weekly-quest",
-          sourceType: "WEEKLY_QUEST"
-        }),
-        definition({
-          id: "def-treatise",
-          professionKey: "alchemy",
-          sourceKey: "treatise",
-          sourceType: "TREATISE"
-        }),
-        definition({
-          id: "def-drops",
-          professionKey: "alchemy",
-          sourceKey: "knowledge-drops",
-          sourceType: "KNOWLEDGE_DROPS",
-          externalQuestId: null,
-          externalCurrencyId: 1
-        })
-      ])
-    );
-
-    const overview = await service.getOverview();
-    const character = overview.characters[0]!;
-
-    expect(character.profKp).toEqual({
-      completeCount: 2,
-      incompleteCount: 0,
-      unknownCount: 0,
-      applicableTotal: 2
-    });
-
-    expect(character.drops).toEqual({
-      completeCount: 0,
-      incompleteCount: 1,
-      unknownCount: 0,
-      applicableTotal: 1
-    });
-
-    const alchemy = character.professions[0]!;
-    expect(alchemy.name).toBe("Alchemy");
-    expect(alchemy.profKp.applicableTotal).toBe(2);
-    expect(alchemy.drops?.state).toBe("INCOMPLETE");
-    expect(alchemy.drops?.currentValue).toBe(1);
-    expect(alchemy.drops?.maxValue).toBe(2);
-  });
-
-  it("aggregates two professions independently into one character-level Prof KP", async () => {
-    const repository = new FakeProfessionWeeklyStatusRepository();
-    repository.seedCharacter({
-      id: "char-1",
-      name: "Synlight",
-      professionKeys: ["alchemy", "blacksmithing"]
-    });
-    repository.seedProfessionName("alchemy", "Alchemy");
-    repository.seedProfessionName(
-      "blacksmithing",
-      "Blacksmithing"
-    );
 
     repository.seedSnapshot({
       characterId: "char-1",
@@ -167,84 +97,13 @@ describe("ProfessionWeeklyStatusService", () => {
       capturedAt: new Date("2026-08-28T12:00:00.000Z")
     });
 
+    // Critical regression case: Drops is INCOMPLETE, but must never
+    // affect Quest or Treatise - the hard product rule has no
+    // exceptions.
     repository.seedSnapshot({
       characterId: "char-1",
-      sourceDefinitionId: "def-bs-quest",
-      state: "COMPLETE",
-      currentValue: null,
-      maxValue: null,
-      capturedAt: new Date("2026-08-28T12:00:00.000Z")
-    });
-
-    // Blacksmithing's Treatise is left uncaptured entirely (no snapshot
-    // row) - must resolve to UNKNOWN, never a silently-assumed INCOMPLETE.
-
-    const service = new ProfessionWeeklyStatusService(
-      repository,
-      lookup([
-        definition({
-          id: "def-alchemy-quest",
-          professionKey: "alchemy",
-          sourceKey: "weekly-quest"
-        }),
-        definition({
-          id: "def-alchemy-treatise",
-          professionKey: "alchemy",
-          sourceKey: "treatise",
-          sourceType: "TREATISE"
-        }),
-        definition({
-          id: "def-bs-quest",
-          professionKey: "blacksmithing",
-          sourceKey: "weekly-quest"
-        }),
-        definition({
-          id: "def-bs-treatise",
-          professionKey: "blacksmithing",
-          sourceKey: "treatise",
-          sourceType: "TREATISE"
-        })
-      ])
-    );
-
-    const overview = await service.getOverview();
-    const character = overview.characters[0]!;
-
-    // 3/4 known-applicable sources, matching the audit's own worked
-    // example (Alchemy 2/2, Blacksmithing 1/2 -> character PROF KP 3/4).
-    expect(character.profKp).toEqual({
-      completeCount: 3,
-      incompleteCount: 0,
-      unknownCount: 1,
-      applicableTotal: 4
-    });
-
-    const blacksmithing = character.professions.find(
-      (profession) =>
-        profession.professionKey === "blacksmithing"
-    )!;
-
-    const treatiseStatus = blacksmithing.sources.find(
-      (candidate) => candidate.sourceKey === "treatise"
-    );
-
-    expect(treatiseStatus?.state).toBe("UNKNOWN");
-  });
-
-  it("never shows a profession the character doesn't actually have, even if it's enabled for other characters", async () => {
-    const repository = new FakeProfessionWeeklyStatusRepository();
-    repository.seedCharacter({
-      id: "char-1",
-      name: "Synfel",
-      professionKeys: ["inscription"]
-    });
-    repository.seedProfessionName("inscription", "Inscription");
-    repository.seedProfessionName("alchemy", "Alchemy");
-
-    repository.seedSnapshot({
-      characterId: "char-1",
-      sourceDefinitionId: "def-inscription-quest",
-      state: "COMPLETE",
+      sourceDefinitionId: "def-drops",
+      state: "INCOMPLETE",
       currentValue: null,
       maxValue: null,
       capturedAt: new Date("2026-08-28T12:00:00.000Z")
@@ -253,18 +112,13 @@ describe("ProfessionWeeklyStatusService", () => {
     const service = new ProfessionWeeklyStatusService(
       repository,
       lookup([
+        questDefinition("alchemy"),
+        treatiseDefinition("alchemy"),
         definition({
-          id: "def-inscription-quest",
-          professionKey: "inscription",
-          sourceKey: "weekly-quest"
-        }),
-        // Alchemy is enabled account-wide (e.g. another character has
-        // it), but Synfel doesn't practice Alchemy at all - it must
-        // never appear as a phantom UNKNOWN entry for this character.
-        definition({
-          id: "def-alchemy-quest",
+          id: "def-drops",
           professionKey: "alchemy",
-          sourceKey: "weekly-quest"
+          sourceKey: "knowledge-drops-1",
+          sourceType: "KNOWLEDGE_DROPS"
         })
       ])
     );
@@ -272,36 +126,178 @@ describe("ProfessionWeeklyStatusService", () => {
     const overview = await service.getOverview();
     const character = overview.characters[0]!;
 
-    expect(character.profKp).toEqual({
+    expect(character.quest).toEqual({
       completeCount: 1,
       incompleteCount: 0,
       unknownCount: 0,
       applicableTotal: 1
     });
 
-    expect(character.professions).toHaveLength(1);
-    expect(character.professions[0]!.professionKey).toBe(
-      "inscription"
-    );
+    expect(character.treatise).toEqual({
+      completeCount: 1,
+      incompleteCount: 0,
+      unknownCount: 0,
+      applicableTotal: 1
+    });
+
+    expect(character.drops).toEqual({
+      completeCount: 0,
+      incompleteCount: 1,
+      unknownCount: 0,
+      applicableTotal: 1
+    });
+
+    const alchemy = character.professions[0]!;
+    expect(alchemy.name).toBe("Alchemy");
+    expect(alchemy.quest?.state).toBe("COMPLETE");
+    expect(alchemy.treatise?.state).toBe("COMPLETE");
+    expect(alchemy.drops?.state).toBe("INCOMPLETE");
+    expect(alchemy.drops?.currentValue).toBe(0);
+    expect(alchemy.drops?.maxValue).toBe(1);
   });
 
-  it("never counts a disabled/unconfigured source in applicableTotal", async () => {
+  it("merges multiple Knowledge Drops slots into one current/max status per profession", async () => {
     const repository = new FakeProfessionWeeklyStatusRepository();
-    repository.seedCharacter({ id: "char-1", name: "Synlight" });
-    repository.seedProfessionName("alchemy", "Alchemy");
+    repository.seedCharacter({
+      id: "char-1",
+      name: "Synwake",
+      professionKeys: ["enchanting"]
+    });
+    repository.seedProfessionName("enchanting", "Enchanting");
+
+    // Enchanting has 4 independent Knowledge Drops slots (two single
+    // treasure ids + a 5-alternate gathering group + a capstone) - see
+    // ProfessionWeeklyCatalog.lua. Two are complete here.
+    repository.seedSnapshot({
+      characterId: "char-1",
+      sourceDefinitionId: "def-drops-1",
+      state: "COMPLETE",
+      currentValue: null,
+      maxValue: null,
+      capturedAt: new Date("2026-08-28T10:00:00.000Z")
+    });
+
+    repository.seedSnapshot({
+      characterId: "char-1",
+      sourceDefinitionId: "def-drops-2",
+      state: "COMPLETE",
+      currentValue: null,
+      maxValue: null,
+      capturedAt: new Date("2026-08-28T11:00:00.000Z")
+    });
+
+    repository.seedSnapshot({
+      characterId: "char-1",
+      sourceDefinitionId: "def-drops-3",
+      state: "INCOMPLETE",
+      currentValue: null,
+      maxValue: null,
+      capturedAt: new Date("2026-08-28T12:00:00.000Z")
+    });
+
+    // The fourth slot (capstone) is left uncaptured entirely - the
+    // whole group must resolve UNKNOWN, never silently 2/3.
 
     const service = new ProfessionWeeklyStatusService(
       repository,
-      // listEnabledForActiveSeason already filters to enabled=true -
-      // simulating that a disabled/unverified definition simply never
-      // reaches this service at all.
-      lookup([])
+      lookup([
+        definition({
+          id: "def-drops-1",
+          professionKey: "enchanting",
+          sourceKey: "knowledge-drops-1",
+          sourceType: "KNOWLEDGE_DROPS"
+        }),
+        definition({
+          id: "def-drops-2",
+          professionKey: "enchanting",
+          sourceKey: "knowledge-drops-2",
+          sourceType: "KNOWLEDGE_DROPS"
+        }),
+        definition({
+          id: "def-drops-3",
+          professionKey: "enchanting",
+          sourceKey: "knowledge-drops-3",
+          sourceType: "KNOWLEDGE_DROPS"
+        }),
+        definition({
+          id: "def-drops-4",
+          professionKey: "enchanting",
+          sourceKey: "knowledge-drops-4",
+          sourceType: "KNOWLEDGE_DROPS"
+        })
+      ])
+    );
+
+    const overview = await service.getOverview();
+    const enchanting = overview.characters[0]!.professions[0]!;
+
+    expect(enchanting.drops?.state).toBe("UNKNOWN");
+    expect(enchanting.drops?.currentValue).toBe(2);
+    expect(enchanting.drops?.maxValue).toBe(4);
+  });
+
+  it("shows Quest 2/2 and Treatise 2/2 for a character with two professions, both sources complete on both", async () => {
+    const repository = new FakeProfessionWeeklyStatusRepository();
+    repository.seedCharacter({
+      id: "char-1",
+      name: "Synlight",
+      professionKeys: ["alchemy", "blacksmithing"]
+    });
+    repository.seedProfessionName("alchemy", "Alchemy");
+    repository.seedProfessionName(
+      "blacksmithing",
+      "Blacksmithing"
+    );
+
+    for (const professionKey of [
+      "alchemy",
+      "blacksmithing"
+    ]) {
+      repository.seedSnapshot({
+        characterId: "char-1",
+        sourceDefinitionId: `def-${professionKey}-quest`,
+        state: "COMPLETE",
+        currentValue: null,
+        maxValue: null,
+        capturedAt: new Date("2026-08-28T12:00:00.000Z")
+      });
+
+      repository.seedSnapshot({
+        characterId: "char-1",
+        sourceDefinitionId: `def-${professionKey}-treatise`,
+        state: "COMPLETE",
+        currentValue: null,
+        maxValue: null,
+        capturedAt: new Date("2026-08-28T12:00:00.000Z")
+      });
+    }
+
+    const service = new ProfessionWeeklyStatusService(
+      repository,
+      lookup([
+        questDefinition("alchemy"),
+        treatiseDefinition("alchemy"),
+        questDefinition("blacksmithing"),
+        treatiseDefinition("blacksmithing")
+      ])
     );
 
     const overview = await service.getOverview();
     const character = overview.characters[0]!;
 
-    expect(character.profKp.applicableTotal).toBe(0);
-    expect(character.drops.applicableTotal).toBe(0);
+    expect(character.quest).toEqual({
+      completeCount: 2,
+      incompleteCount: 0,
+      unknownCount: 0,
+      applicableTotal: 2
+    });
+
+    expect(character.treatise).toEqual({
+      completeCount: 2,
+      incompleteCount: 0,
+      unknownCount: 0,
+      applicableTotal: 2
+    });
   });
+
 });

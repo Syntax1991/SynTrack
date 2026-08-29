@@ -64,6 +64,52 @@ function toSourceStatus(
 }
 
 /*
+ * A profession can have several independent Knowledge Drops "slots"
+ * (separate hidden-quest treasures/catch-up items, see
+ * ProfessionWeeklyCatalog.lua) - merged here into the single
+ * current/max status Character Detail and the matrices already know
+ * how to render, matching how Quest/Treatise show one status per
+ * profession. UNKNOWN > WRONG: any unresolved slot makes the whole
+ * group UNKNOWN, never silently counted as incomplete.
+ */
+function mergeDropsStatuses(
+  statuses: ProfessionWeeklySourceStatus[]
+): ProfessionWeeklySourceStatus | null {
+  if (statuses.length === 0) {
+    return null;
+  }
+
+  const completeCount = statuses.filter(
+    (status) => status.state === "COMPLETE"
+  ).length;
+
+  const state = statuses.some(
+    (status) => status.state === "UNKNOWN"
+  )
+    ? "UNKNOWN"
+    : completeCount === statuses.length
+      ? "COMPLETE"
+      : "INCOMPLETE";
+
+  const capturedAtValues = statuses
+    .map((status) => status.capturedAt)
+    .filter((value): value is string => value !== null);
+
+  return {
+    sourceKey: "knowledge-drops",
+    name: "Knowledge Drops",
+    sourceType: "KNOWLEDGE_DROPS",
+    state,
+    currentValue: completeCount,
+    maxValue: statuses.length,
+    capturedAt:
+      capturedAtValues.length > 0
+        ? capturedAtValues.sort().at(-1)!
+        : null
+  };
+}
+
+/*
  * Read model composed from ProfessionWeeklySourceDefinition (config) +
  * CharacterProfessionWeeklySnapshot (raw authoritative game state) for
  * the CURRENT weekly period only - it persists nothing. Prof KP is
@@ -161,7 +207,8 @@ export class ProfessionWeeklyStatusService {
     professionNames: Map<string, string>,
     snapshotByKey: Map<string, ProfessionWeeklySnapshotRow>
   ): CharacterProfessionWeeklyStatus {
-    const profKp = emptyAggregate();
+    const quest = emptyAggregate();
+    const treatise = emptyAggregate();
     const drops = emptyAggregate();
     const professions: ProfessionWeeklyProfessionSummary[] = [];
 
@@ -173,9 +220,9 @@ export class ProfessionWeeklyStatusService {
         continue;
       }
 
-      const sources: ProfessionWeeklySourceStatus[] = [];
-      const professionProfKp = emptyAggregate();
-      let dropsStatus: ProfessionWeeklySourceStatus | null = null;
+      let questStatus: ProfessionWeeklySourceStatus | null = null;
+      let treatiseStatus: ProfessionWeeklySourceStatus | null = null;
+      const dropsStatuses: ProfessionWeeklySourceStatus[] = [];
 
       const sorted = [...professionDefinitions].sort(
         (left, right) => left.sortOrder - right.sortOrder
@@ -189,22 +236,25 @@ export class ProfessionWeeklyStatusService {
         const status = toSourceStatus(definition, row);
 
         if (definition.sourceType === "KNOWLEDGE_DROPS") {
-          dropsStatus = status;
+          dropsStatuses.push(status);
           accumulate(drops, status.state);
         }
+        else if (definition.sourceType === "TREATISE") {
+          treatiseStatus = status;
+          accumulate(treatise, status.state);
+        }
         else {
-          sources.push(status);
-          accumulate(professionProfKp, status.state);
-          accumulate(profKp, status.state);
+          questStatus = status;
+          accumulate(quest, status.state);
         }
       }
 
       professions.push({
         professionKey,
         name: professionNames.get(professionKey) ?? professionKey,
-        profKp: professionProfKp,
-        sources,
-        drops: dropsStatus
+        quest: questStatus,
+        treatise: treatiseStatus,
+        drops: mergeDropsStatuses(dropsStatuses)
       });
     }
 
@@ -215,7 +265,8 @@ export class ProfessionWeeklyStatusService {
     return {
       id: character.id,
       name: character.name,
-      profKp,
+      quest,
+      treatise,
       drops,
       professions
     };

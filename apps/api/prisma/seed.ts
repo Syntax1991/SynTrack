@@ -514,6 +514,56 @@ async function seedProfessionWeeklySources() {
       sortOrder: 1
     });
   }
+
+  await seedKnowledgeDropsSources(
+    professionWeeklyDefinitionService
+  );
+}
+
+/*
+ * Knowledge Drops evidence ids were cross-checked 2026-08-29 against
+ * Myu's Knowledge Points Tracker (github.com/myu-westfall/
+ * MyusKnowledgePointsTracker) - each profession has 2-4 independent
+ * hidden-quest "slots" (see ProfessionWeeklyCatalog.lua for the full
+ * any-one-candidate lists per slot; only the first candidate of each
+ * slot is stored here, matching by professionKey+sourceKey not by id).
+ * Unlike weeklyQuest/treatise, none of this has been live-verified
+ * against a real character yet, so every slot stays disabled - see the
+ * "leave disabled rather than inventing an id" rule.
+ */
+async function seedKnowledgeDropsSources(
+  professionWeeklyDefinitionService: ProfessionWeeklyDefinitionService
+) {
+  const knowledgeDropsSlots: Record<string, number[]> = {
+    alchemy: [93528, 93529],
+    blacksmithing: [93530, 93531],
+    enchanting: [93532, 93533, 95048, 95053],
+    engineering: [93534, 93535],
+    herbalism: [81425, 81430],
+    inscription: [93536, 93537],
+    jewelcrafting: [93538, 93539],
+    leatherworking: [93540, 93541],
+    mining: [88673, 88678],
+    skinning: [88534, 88529],
+    tailoring: [93542, 93543]
+  };
+
+  for (const [professionKey, slots] of Object.entries(
+    knowledgeDropsSlots
+  )) {
+    for (const [slotIndex, questId] of slots.entries()) {
+      await professionWeeklyDefinitionService.ensureDefinition({
+        scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+        professionKey,
+        sourceKey: `knowledge-drops-${slotIndex + 1}`,
+        name: "Knowledge Drops",
+        sourceType: "KNOWLEDGE_DROPS",
+        externalQuestId: questId,
+        enabled: false,
+        sortOrder: 2 + slotIndex
+      });
+    }
+  }
 }
 
 async function seed() {

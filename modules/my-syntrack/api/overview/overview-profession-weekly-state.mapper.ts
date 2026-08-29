@@ -8,13 +8,16 @@ export type OverviewProfessionWeeklyCharacterInput =
   CharacterProfessionWeeklyStatus;
 
 /*
- * Prof KP is owned by ProfessionWeeklyStatusService - this only reads
- * its already-computed aggregate and applies Overview's shared state
- * vocabulary. Knowledge Drops never affects this domain's state: a
- * character with Weekly Quest + Treatise both COMPLETE is READY
- * regardless of Drops (see the hard product rule). A character with
- * zero applicable Prof KP sources (no enabled definitions for either
- * of their professions) is NOT_TRACKED, never a false READY/ATTENTION.
+ * Weekly Quest and Treatise are owned by ProfessionWeeklyStatusService
+ * as two separate aggregates - this only reads them and applies
+ * Overview's shared state vocabulary across both combined (either one
+ * having incomplete/unknown sources drives the domain state), never
+ * merging them into a single displayed number. Knowledge Drops never
+ * affects this domain's state: a character with Weekly Quest +
+ * Treatise both COMPLETE is READY regardless of Drops (see the hard
+ * product rule). A character with zero applicable sources across both
+ * (no enabled definitions for either of their professions) is
+ * NOT_TRACKED, never a false READY/ATTENTION.
  */
 export function resolveProfessionWeeklyOverviewState(
   character: OverviewProfessionWeeklyCharacterInput
@@ -22,20 +25,30 @@ export function resolveProfessionWeeklyOverviewState(
   professionWeekly: ProfessionWeeklyOverviewState;
   attentionItem: AttentionItem | null;
 } {
-  const { profKp, drops } = character;
+  const { quest, treatise, drops } = character;
+
+  const applicableTotal =
+    quest.applicableTotal + treatise.applicableTotal;
+
+  const incompleteCount =
+    quest.incompleteCount + treatise.incompleteCount;
+
+  const unknownCount =
+    quest.unknownCount + treatise.unknownCount;
 
   const state =
-    profKp.applicableTotal === 0
+    applicableTotal === 0
       ? "NOT_TRACKED"
-      : profKp.incompleteCount > 0
+      : incompleteCount > 0
         ? "ATTENTION"
-        : profKp.unknownCount > 0
+        : unknownCount > 0
           ? "UNKNOWN"
           : "READY";
 
   const professionWeekly: ProfessionWeeklyOverviewState = {
     state,
-    profKp,
+    quest,
+    treatise,
     drops,
     professions: character.professions
   };
@@ -45,11 +58,29 @@ export function resolveProfessionWeeklyOverviewState(
   }
 
   const incompleteLabels = character.professions.flatMap(
-    (profession) =>
-      profession.sources
-        .filter((source) => source.state === "INCOMPLETE")
-        .map((source) => `${profession.name} ${source.name}`)
+    (profession) => {
+      const labels: string[] = [];
+
+      if (profession.quest?.state === "INCOMPLETE") {
+        labels.push(
+          `${profession.name} ${profession.quest.name}`
+        );
+      }
+
+      if (profession.treatise?.state === "INCOMPLETE") {
+        labels.push(
+          `${profession.name} ${profession.treatise.name}`
+        );
+      }
+
+      return labels;
+    }
   );
+
+  const label =
+    incompleteLabels.length === 1
+      ? `${incompleteLabels[0]} remaining`
+      : `${incompleteLabels.length} profession weekly sources remaining`;
 
   return {
     professionWeekly,
@@ -59,10 +90,10 @@ export function resolveProfessionWeeklyOverviewState(
       characterName: character.name,
       domain: "profession-weekly",
       severity: "this-week",
-      label: "Profession weekly work remaining",
+      label,
       detail:
         incompleteLabels.length > 0
-          ? `${incompleteLabels.join(", ")} remaining`
+          ? incompleteLabels.join(", ")
           : null,
       path: `/characters/${character.id}`
     }

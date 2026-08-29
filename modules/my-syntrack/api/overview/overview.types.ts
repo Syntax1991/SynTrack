@@ -176,15 +176,18 @@ export type EmbellishmentOverviewState = {
 };
 
 /*
- * Prof KP (Weekly Quest + Treatise only) and Knowledge Drops are kept
- * as two fully separate aggregates on purpose - Drops must never
- * affect `state` here, no exceptions (see the Automatic Profession
- * Weekly audit's hard product rule). NOT_TRACKED means zero enabled
- * definitions apply to this character's professions at all.
+ * Weekly Quest, Treatise, and Knowledge Drops are three fully separate
+ * aggregates on purpose - a combined number doesn't tell the user
+ * which one is missing, which defeats the point of an automatic
+ * tracker (see the profession weekly correctness follow-up). Drops
+ * must never affect `state` here, no exceptions (see the Automatic
+ * Profession Weekly audit's hard product rule). NOT_TRACKED means zero
+ * enabled definitions apply to this character's professions at all.
  */
 export type ProfessionWeeklyOverviewState = {
   state: OverviewDomainState;
-  profKp: ProfessionWeeklyAggregate;
+  quest: ProfessionWeeklyAggregate;
+  treatise: ProfessionWeeklyAggregate;
   drops: ProfessionWeeklyAggregate;
   professions: ProfessionWeeklyProfessionSummary[];
 };

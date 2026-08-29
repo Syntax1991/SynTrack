@@ -20,7 +20,8 @@ function emptyProfessionWeeklyState(): ProfessionWeeklyOverviewState {
 
   return {
     state: "NOT_TRACKED",
-    profKp: zeroAggregate,
+    quest: zeroAggregate,
+    treatise: zeroAggregate,
     drops: zeroAggregate,
     professions: []
   };

@@ -141,17 +141,18 @@ export function knowledgeDropsDefinition(
   overrides: Partial<{
     id: string;
     professionKey: string;
+    sourceKey: string;
   }> = {}
 ) {
   return {
     id: overrides.id ?? "def-alchemy-drops",
     scopeKey: "MIDNIGHT-S2",
     professionKey: overrides.professionKey ?? "alchemy",
-    sourceKey: "knowledge-drops",
+    sourceKey: overrides.sourceKey ?? "knowledge-drops-1",
     name: "Knowledge Drops",
     sourceType: "KNOWLEDGE_DROPS" as const,
-    externalQuestId: null,
-    externalCurrencyId: 3100,
+    externalQuestId: 93528,
+    externalCurrencyId: null,
     enabled: true,
     sortOrder: 2
   };

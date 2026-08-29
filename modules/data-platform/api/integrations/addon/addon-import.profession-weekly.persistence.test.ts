@@ -112,7 +112,7 @@ describe("AddonProfessionWeeklyPersistence", () => {
     expect([...rows.values()][0]?.state).toBe("UNKNOWN");
   });
 
-  it("derives Knowledge Drops COMPLETE only once current reaches max", async () => {
+  it("derives Knowledge Drops COMPLETE/INCOMPLETE via the same flaggedCompleted evidence as Weekly Quest/Treatise", async () => {
     const { rows, transaction } = createTransaction();
     const persistence = new AddonProfessionWeeklyPersistence({
       listEnabledForActiveSeason: async () => [
@@ -130,10 +130,8 @@ describe("AddonProfessionWeeklyPersistence", () => {
             professionKey: "alchemy",
             sources: [
               source({
-                sourceKey: "knowledge-drops",
-                flaggedCompleted: null,
-                currentValue: 3,
-                maxValue: 5
+                sourceKey: "knowledge-drops-1",
+                flaggedCompleted: false
               })
             ]
           }
@@ -145,7 +143,7 @@ describe("AddonProfessionWeeklyPersistence", () => {
     expect([...rows.values()][0]?.state).toBe("INCOMPLETE");
   });
 
-  it("derives Knowledge Drops UNKNOWN when current/max evidence is missing", async () => {
+  it("derives Knowledge Drops UNKNOWN when the hidden-quest evidence is missing", async () => {
     const { rows, transaction } = createTransaction();
     const persistence = new AddonProfessionWeeklyPersistence({
       listEnabledForActiveSeason: async () => [
@@ -163,10 +161,8 @@ describe("AddonProfessionWeeklyPersistence", () => {
             professionKey: "alchemy",
             sources: [
               source({
-                sourceKey: "knowledge-drops",
-                flaggedCompleted: null,
-                currentValue: null,
-                maxValue: null
+                sourceKey: "knowledge-drops-1",
+                flaggedCompleted: null
               })
             ]
           }

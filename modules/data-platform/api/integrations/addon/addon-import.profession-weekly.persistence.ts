@@ -25,21 +25,16 @@ export type ProfessionWeeklyDefinitionLookup = {
  * captured it, or its definition isn't enabled) never reaches this
  * function at all - see the filtering below - so it can never be
  * silently treated as INCOMPLETE.
+ *
+ * Knowledge Drops uses the exact same flaggedCompleted evidence as
+ * Weekly Quest/Treatise (each "slot" is its own any-one-candidate
+ * hidden quest, see ProfessionWeeklyCatalog.lua) - it is NOT a
+ * currency-based current/max count, per the profession weekly
+ * correctness follow-up.
  */
 function deriveState(
-  definition: ProfessionWeeklySourceDefinitionView,
   source: AddonProfessionWeeklySource
 ): "COMPLETE" | "INCOMPLETE" | "UNKNOWN" {
-  if (definition.sourceType === "KNOWLEDGE_DROPS") {
-    if (source.currentValue === null || source.maxValue === null) {
-      return "UNKNOWN";
-    }
-
-    return source.currentValue >= source.maxValue
-      ? "COMPLETE"
-      : "INCOMPLETE";
-  }
-
   if (source.flaggedCompleted === null) {
     return "UNKNOWN";
   }
@@ -123,7 +118,7 @@ export class AddonProfessionWeeklyPersistence {
             characterId,
             sourceDefinitionId: definition.id,
             periodKey,
-            state: deriveState(definition, source),
+            state: deriveState(source),
             flaggedCompleted: source.flaggedCompleted,
             externalQuestId: source.externalQuestId,
             currentValue: source.currentValue,
@@ -132,7 +127,7 @@ export class AddonProfessionWeeklyPersistence {
             capturedAt
           },
           update: {
-            state: deriveState(definition, source),
+            state: deriveState(source),
             flaggedCompleted: source.flaggedCompleted,
             externalQuestId: source.externalQuestId,
             currentValue: source.currentValue,

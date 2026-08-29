@@ -75,31 +75,21 @@ export class ProfessionWeeklyDefinitionService {
   async ensureDefinition(
     input: ProfessionWeeklySourceDefinitionSeedInput
   ): Promise<ProfessionWeeklySourceDefinitionView> {
+    /*
+     * Knowledge Drops is captured via the exact same flaggedCompleted
+     * hidden-quest evidence as Weekly Quest/Treatise (each "slot" is
+     * its own any-one-candidate hidden quest) - it is NOT currency-
+     * based, so every sourceType requires an externalQuestId. See the
+     * profession weekly correctness follow-up.
+     */
     const hasQuestId =
       input.externalQuestId !== undefined &&
       input.externalQuestId !== null;
 
-    const hasCurrencyId =
-      input.externalCurrencyId !== undefined &&
-      input.externalCurrencyId !== null;
-
-    if (
-      input.sourceType !== "KNOWLEDGE_DROPS" &&
-      !hasQuestId
-    ) {
+    if (!hasQuestId) {
       throw new AppError(
         400,
         `Profession weekly source "${input.scopeKey}/${input.professionKey}/${input.sourceKey}" needs an externalQuestId to be captured automatically.`
-      );
-    }
-
-    if (
-      input.sourceType === "KNOWLEDGE_DROPS" &&
-      !hasCurrencyId
-    ) {
-      throw new AppError(
-        400,
-        `Profession weekly source "${input.scopeKey}/${input.professionKey}/${input.sourceKey}" needs an externalCurrencyId to be captured automatically.`
       );
     }
 

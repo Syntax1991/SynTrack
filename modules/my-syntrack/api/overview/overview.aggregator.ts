@@ -139,7 +139,13 @@ function resolveCharacterState(
     ) ?? {
       id: character.id,
       name: character.name,
-      profKp: {
+      quest: {
+        completeCount: 0,
+        incompleteCount: 0,
+        unknownCount: 0,
+        applicableTotal: 0
+      },
+      treatise: {
         completeCount: 0,
         incompleteCount: 0,
         unknownCount: 0,
