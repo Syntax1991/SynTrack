@@ -8,11 +8,11 @@ import {
   formatEmbellishmentToken,
   formatGearToken,
   formatItemLevelToken,
+  formatResourceCountToken,
   formatTierToken
 } from "../utils/overviewCellFormatting";
 import {
   formatProfessionSetupToken,
-  formatResourcesToken,
   formatWeeklySummaryToken
 } from "../utils/overviewTriageFormatting";
 import { StatusToken } from "./StatusToken";
@@ -185,13 +185,23 @@ export function CharacterMatrixRow({
       </td>
 
       <td className="overview-col-narrow">
-        <Link
-          className="overview-token-link"
-          title={formatResourcesToken(state.resources).title}
-          to={`/characters/${state.character.id}`}
-        >
-          <StatusToken token={formatResourcesToken(state.resources)} />
-        </Link>
+        <StatusToken
+          token={formatResourceCountToken(
+            state.resources,
+            "tidal-spark-dust",
+            "Spark"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatResourceCountToken(
+            state.resources,
+            "venomblight-manaflux",
+            "Cata"
+          )}
+        />
       </td>
 
       <td className="overview-col-action">

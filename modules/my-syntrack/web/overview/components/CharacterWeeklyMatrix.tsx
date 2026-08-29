@@ -16,8 +16,11 @@ type CharacterWeeklyMatrixProps = {
 
 /*
  * Default Overview triage matrix:
- * Character · iLvl · Set · Emb · Weeklies · [Trackers] · Prof · Gear · Res · Action
- * Weekly sub-detail (Vault/Quest/Treat/Drops/Spark/Cata) is not default.
+ * Character · iLvl · Set · Emb · Weeklies · [Trackers] · Prof · Gear · Spark · Cata · Action
+ *
+ * PROF. = permanent profession setup (data + Knowledge Treasures).
+ * Spark/Cata are high-value roster resources (not Weeklies detail).
+ * Generic Res. and Treasure are not default columns.
  */
 export function CharacterWeeklyMatrix({
   characters,
@@ -39,7 +42,7 @@ export function CharacterWeeklyMatrix({
     visibleCharacters
   } = useMatrixFilters(characters);
 
-  const columnCount = 9 + trackerColumns.length;
+  const columnCount = 10 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -100,9 +103,15 @@ export function CharacterWeeklyMatrix({
                 <th className="overview-col-narrow">Gear</th>
                 <th
                   className="overview-col-narrow"
-                  title="Resources attention"
+                  title="Tidal Spark Dust - season progress toward Sparks of Tides"
                 >
-                  Res.
+                  Spark
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Venomblight Manaflux - Creation Catalyst charges"
+                >
+                  Cata
                 </th>
                 <th className="overview-col-action">Action</th>
               </tr>
