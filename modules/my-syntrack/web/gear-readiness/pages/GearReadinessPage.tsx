@@ -80,7 +80,7 @@ export function GearReadinessPage() {
             Vault / Mythic+
           </Link>
         }
-        description="Track equipped items, item levels, enchants and socket coverage across every character."
+        description="Track equipped items, item levels, and socket coverage across every character."
         eyebrow="PERSONAL GEAR READINESS"
         title="Gear"
       />

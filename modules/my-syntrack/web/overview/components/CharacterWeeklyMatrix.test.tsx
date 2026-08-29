@@ -93,8 +93,8 @@ describe("CharacterWeeklyMatrix", () => {
           readinessPercent: 40,
           trackedSlots: 3,
           totalRelevantSlots: 16,
-          missingEnchantCount: 2,
-          emptySocketCount: 0,
+          missingEnchantCount: 0,
+          emptySocketCount: 2,
           itemLevel: 650
         }
       }),
@@ -124,11 +124,11 @@ describe("CharacterWeeklyMatrix", () => {
     const synbloomRow = within(rows[2]!);
 
     expect(
-      synblastRow.getAllByTitle("2 missing enchants").length
+      synblastRow.getAllByTitle("2 empty sockets").length
     ).toBeGreaterThan(0);
 
     expect(
-      synbloomRow.queryByTitle("2 missing enchants")
+      synbloomRow.queryByTitle("2 empty sockets")
     ).not.toBeInTheDocument();
 
     expect(
@@ -166,14 +166,14 @@ describe("CharacterWeeklyMatrix", () => {
             domain: "gear",
             severity: "this-week",
             label: "Gear needs attention",
-            detail: "2 missing enchants",
+            detail: "2 empty sockets",
             path: "/gear-readiness"
           }
         ],
         nextAction: {
           domain: "gear",
           label: "Gear needs attention",
-          detail: "2 missing enchants",
+          detail: "2 empty sockets",
           path: "/gear-readiness",
           severity: "this-week"
         },

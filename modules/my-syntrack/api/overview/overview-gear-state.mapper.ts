@@ -21,12 +21,8 @@ export type OverviewGearCharacterInput = {
 
 /*
  * Gear is owned by GearReadinessService - this only reads its already-
- * computed per-slot issues. Gear tracking is entirely manual today (no
- * addon capture pipeline exists), so an untracked character (0 rows) must
- * read as NOT_TRACKED - GearReadinessService's own readinessPercent
- * returns 0 for that case (a real 0-of-0 fraction), which would
- * misrepresent as "0% ready" if surfaced as-is; this maps it to null
- * instead so nothing implies a proven bad score.
+ * computed per-slot issues. Missing enchants are NOT attention criteria
+ * (user checks them in-game); empty sockets remain Gear-domain issues.
  */
 export function resolveGearOverviewState(
   character: OverviewGearCharacterInput
@@ -45,35 +41,34 @@ export function resolveGearOverviewState(
     character.slots.reduce(
       (total, slot) =>
         slot.item !== null
-          ? total +
-            slot.issues
-              .missingGemCount
+          ? total + slot.issues.missingGemCount
           : total,
       0
     );
 
+  /*
+   * Prefer socket/gem issues for attention. Ignore missingEnchant even
+   * when older issueCount payloads still counted enchants.
+   */
+  const attentionIssueCount = emptySocketCount;
+
   const gear: GearOverviewState = {
     state:
-      character.trackedSlotCount ===
-      0
+      character.trackedSlotCount === 0
         ? "NOT_TRACKED"
-        : character.issueCount > 0
+        : attentionIssueCount > 0
           ? "ATTENTION"
           : "READY",
     readinessPercent:
-      character.trackedSlotCount ===
-      0
+      character.trackedSlotCount === 0
         ? null
         : character.readinessPercent,
-    trackedSlots:
-      character.trackedSlotCount,
-    totalRelevantSlots:
-      character.slots.length,
+    trackedSlots: character.trackedSlotCount,
+    totalRelevantSlots: character.slots.length,
     missingEnchantCount,
     emptySocketCount,
     itemLevel:
-      character.trackedSlotCount ===
-      0
+      character.trackedSlotCount === 0
         ? null
         : character.averageItemLevel
   };
@@ -83,20 +78,6 @@ export function resolveGearOverviewState(
       gear,
       attentionItem: null
     };
-  }
-
-  const detailParts: string[] = [];
-
-  if (missingEnchantCount > 0) {
-    detailParts.push(
-      `${missingEnchantCount} missing ${missingEnchantCount === 1 ? "enchant" : "enchants"}`
-    );
-  }
-
-  if (emptySocketCount > 0) {
-    detailParts.push(
-      `${emptySocketCount} empty ${emptySocketCount === 1 ? "socket" : "sockets"}`
-    );
   }
 
   return {
@@ -109,8 +90,13 @@ export function resolveGearOverviewState(
       severity: "this-week",
       label: "Gear needs attention",
       detail:
-        detailParts.join(", ") ||
-        null,
+        emptySocketCount > 0
+          ? `${emptySocketCount} empty ${
+              emptySocketCount === 1
+                ? "socket"
+                : "sockets"
+            }`
+          : null,
       path: "/gear-readiness"
     }
   };

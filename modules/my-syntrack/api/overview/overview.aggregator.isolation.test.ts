@@ -54,8 +54,8 @@ describe("aggregateCharacterWeeklyStates - cross-character isolation", () => {
                       itemLevel: 600
                     },
                     issues: {
-                      missingEnchant: true,
-                      missingGemCount: 0
+                      missingEnchant: false,
+                      missingGemCount: 1
                     }
                   }
                 ],

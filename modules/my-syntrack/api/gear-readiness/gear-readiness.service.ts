@@ -110,11 +110,14 @@ export class GearReadinessService {
                   }
                 : null,
               issues: {
+                /*
+                 * Enchant presence is still recorded for detail views,
+                 * but missing enchants are NOT SynTrack readiness/
+                 * attention criteria (user checks them in-game).
+                 */
                 missingEnchant,
                 missingGemCount,
-                issueCount:
-                  Number(missingEnchant) +
-                  missingGemCount
+                issueCount: missingGemCount
               }
             };
           }
@@ -127,17 +130,6 @@ export class GearReadinessService {
             total + slot.issues.issueCount,
           0
         );
-        const requiredEnchantCount =
-          trackedSlots.filter(
-            (slot) => slot.supportsEnchant
-          ).length;
-        const readyEnchantCount =
-          trackedSlots.filter(
-            (slot) =>
-              slot.supportsEnchant &&
-              slot.item?.enchantStatus ===
-                "READY"
-          ).length;
         const socketCount =
           trackedSlots.reduce(
             (total, slot) =>
@@ -154,21 +146,17 @@ export class GearReadinessService {
               ),
             0
           );
-        const requirementCount =
-          requiredEnchantCount + socketCount;
+        /*
+         * Readiness is socket/gem coverage only - enchant completion
+         * is intentionally excluded from the percentage.
+         */
         const readinessPercent =
           trackedSlots.length === 0
             ? 0
-            : requirementCount === 0
+            : socketCount === 0
               ? 100
               : Math.round(
-                  (
-                    (
-                      readyEnchantCount +
-                      gemCount
-                    ) /
-                    requirementCount
-                  ) * 100
+                  (gemCount / socketCount) * 100
                 );
 
         return {

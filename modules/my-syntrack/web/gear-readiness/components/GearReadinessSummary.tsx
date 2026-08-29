@@ -26,17 +26,6 @@ export function GearReadinessSummary({
         <small>across recorded items</small>
       </article>
 
-      <article className="gear-summary-card gear-summary-warning">
-        <span>Missing enchants</span>
-        <strong>
-          {
-            overview.summary
-              .missingEnchantCount
-          }
-        </strong>
-        <small>enchantable gear slots</small>
-      </article>
-
       <article className="gear-summary-card gear-summary-gems">
         <span>Empty sockets</span>
         <strong>

@@ -59,7 +59,7 @@ describe("aggregateCharacterWeeklyStates - gear", () => {
     ).toBe(700);
   });
 
-  it("tracked gear with a missing enchant produces an ATTENTION state and attention item", () => {
+  it("tracked gear with only missing enchants stays READY - enchants are not attention criteria", () => {
     const { characters } =
       aggregateCharacterWeeklyStates(
         baseInput({
@@ -92,7 +92,7 @@ describe("aggregateCharacterWeeklyStates - gear", () => {
 
     expect(
       characters[0]!.gear.state
-    ).toBe("ATTENTION");
+    ).toBe("READY");
 
     expect(
       characters[0]!.attentionItems
@@ -100,7 +100,7 @@ describe("aggregateCharacterWeeklyStates - gear", () => {
           (item) =>
             item.domain === "gear"
         )
-    ).toBe(true);
+    ).toBe(false);
   });
 });
 
