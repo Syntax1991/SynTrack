@@ -183,28 +183,29 @@ export type {
 export type { ResourceCategory } from "../resources/resource-definition.types.js";
 
 /*
- * Tier/Set and Embellishments have no data source anywhere in SynTrack
- * today (CharacterGearSlot has no "is this a tier piece"/"embellishment
- * identity" concept) - both are permanently NOT_TRACKED until a future
- * Gear-capture phase. Modeled now, deliberately minimal, so the matrix's
- * column contract does not need to change again once that data exists.
+ * Tier/Set + Embellishments from Gear v2 slot evidence.
+ * Unresolved evidence stays UNKNOWN (never a fabricated 0).
  */
 export type TierOverviewState = {
-  state: "NOT_TRACKED";
+  state: OverviewDomainState;
+  equippedPieces: number;
+  targetPieces: number;
+  twoPiece: boolean;
+  fourPiece: boolean;
+  rawEquippedPieces: number;
+  slots?: string[];
 };
 
 export type EmbellishmentOverviewState = {
-  state: "NOT_TRACKED";
+  state: OverviewDomainState;
+  equippedPieces: number;
+  targetPieces: number;
 };
 
 /*
- * Weekly Quest, Treatise, and Knowledge Drops are three fully separate
- * aggregates on purpose - a combined number doesn't tell the user
- * which one is missing, which defeats the point of an automatic
- * tracker (see the profession weekly correctness follow-up). Drops
- * must never affect `state` here, no exceptions (see the Automatic
- * Profession Weekly audit's hard product rule). NOT_TRACKED means zero
- * enabled definitions apply to this character's professions at all.
+ * Weekly Quest, Treatise, and Knowledge Drops are separate aggregates -
+ * a combined number hides which source is missing. Drops never affect
+ * `state`. NOT_TRACKED = no enabled definitions for this character.
  */
 export type ProfessionWeeklyOverviewState = {
   state: OverviewDomainState;
@@ -215,11 +216,8 @@ export type ProfessionWeeklyOverviewState = {
 };
 
 /*
- * Permanent, once-per-character-per-profession Knowledge Treasures -
- * fully separate from ProfessionWeeklyOverviewState (which resets
- * weekly). Never rendered as a mandatory Overview column; it only
- * contributes an attentionItem when incomplete (see the profession
- * weekly correctness follow-up's Knowledge Treasures addition).
+ * Permanent Knowledge Treasures - separate from weekly profession state.
+ * Not a mandatory Overview column; attention only when incomplete.
  */
 export type ProfessionKnowledgeTreasureOverviewState = {
   state: OverviewDomainState;

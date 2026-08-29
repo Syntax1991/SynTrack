@@ -9,6 +9,58 @@ import type {
   GearSlotKey
 } from "./gear-readiness.types.js";
 
+function parseSpellIds(
+  value: string | null | undefined
+): number[] | null {
+  if (value == null || value === "") {
+    return null;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed.filter(
+      (entry): entry is number =>
+        typeof entry === "number" && Number.isFinite(entry)
+    );
+  } catch {
+    return null;
+  }
+}
+
+function resolveCurrentExpansionId(
+  slots: {
+    item: {
+      expansionId: number | null;
+      setEvidenceResolved: boolean | null;
+    } | null;
+  }[]
+): number | null {
+  let max: number | null = null;
+
+  for (const slot of slots) {
+    const item = slot.item;
+
+    if (
+      !item ||
+      item.setEvidenceResolved !== true ||
+      item.expansionId === null
+    ) {
+      continue;
+    }
+
+    if (max === null || item.expansionId > max) {
+      max = item.expansionId;
+    }
+  }
+
+  return max;
+}
+
 function average(values: number[]) {
   if (values.length === 0) {
     return null;
@@ -106,7 +158,21 @@ export class GearReadinessService {
                       item.lastSyncedAt
                         ?.toISOString() ?? null,
                     updatedAt:
-                      item.updatedAt.toISOString()
+                      item.updatedAt.toISOString(),
+                    setId: item.setId,
+                    expansionId: item.expansionId,
+                    setEvidenceResolved:
+                      item.setEvidenceResolved,
+                    setBonusResolved:
+                      item.setBonusResolved,
+                    setBonusSpellIds:
+                      parseSpellIds(item.setBonusSpellIds),
+                    uniqueCategoryId:
+                      item.uniqueCategoryId,
+                    uniqueCategoryCount:
+                      item.uniqueCategoryCount,
+                    uniquenessResolved:
+                      item.uniquenessResolved
                   }
                 : null,
               issues: {
@@ -177,7 +243,9 @@ export class GearReadinessService {
             )
           ),
           issueCount,
-          readinessPercent
+          readinessPercent,
+          currentExpansionId:
+            resolveCurrentExpansionId(slots)
         };
       }
     );

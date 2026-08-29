@@ -40,9 +40,30 @@ export function resolveCharacterState(
     resolveVaultInput(character, input)
   );
 
-  const gearResult = resolveGearOverviewState(
-    resolveGearInput(character, input)
-  );
+  const gearInput = resolveGearInput(character, input);
+  const gearResult = resolveGearOverviewState(gearInput);
+  const tierEmbellishmentInput = {
+    level: gearInput.level ?? character.level,
+    currentExpansionId: gearInput.currentExpansionId ?? null,
+    slots: gearInput.slots.flatMap((slot) =>
+      slot.item
+        ? [
+            {
+              slotKey: slot.key ?? "UNKNOWN",
+              expansionId: slot.item.expansionId ?? null,
+              setId: slot.item.setId ?? null,
+              setEvidenceResolved:
+                slot.item.setEvidenceResolved ?? null,
+              setBonusResolved: slot.item.setBonusResolved ?? null,
+              setBonusSpellIds: slot.item.setBonusSpellIds ?? null,
+              uniqueCategoryId: slot.item.uniqueCategoryId ?? null,
+              uniquenessResolved:
+                slot.item.uniquenessResolved ?? null
+            }
+          ]
+        : []
+    )
+  };
 
   const professionInput = resolveProfessionInput(character, input);
   const professionResult = resolveProfessionOverviewState(
@@ -121,8 +142,10 @@ export function resolveCharacterState(
     professionSetup: professionSetupResult.professionSetup,
     gear: gearResult.gear,
     resources: resourceResult.resources,
-    tier: resolveTierOverviewState(),
-    embellishments: resolveEmbellishmentOverviewState(),
+    tier: resolveTierOverviewState(tierEmbellishmentInput),
+    embellishments: resolveEmbellishmentOverviewState(
+      tierEmbellishmentInput
+    ),
     professionWeekly: professionWeeklyResult.professionWeekly,
     professionKnowledgeTreasures:
       professionKnowledgeTreasureResult.professionKnowledgeTreasures,

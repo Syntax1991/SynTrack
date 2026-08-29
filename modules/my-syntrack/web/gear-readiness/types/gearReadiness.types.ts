@@ -33,6 +33,14 @@ export type GearSlotItem = {
   source: string;
   lastSyncedAt: string | null;
   updatedAt: string;
+  setId: number | null;
+  expansionId: number | null;
+  setEvidenceResolved: boolean | null;
+  setBonusResolved: boolean | null;
+  setBonusSpellIds: number[] | null;
+  uniqueCategoryId: number | null;
+  uniqueCategoryCount: number | null;
+  uniquenessResolved: boolean | null;
 };
 
 export type GearSlot = {
@@ -61,6 +69,7 @@ export type GearCharacter = {
   averageItemLevel: number | null;
   issueCount: number;
   readinessPercent: number;
+  currentExpansionId: number | null;
 };
 
 export type GearReadinessOverview = {
