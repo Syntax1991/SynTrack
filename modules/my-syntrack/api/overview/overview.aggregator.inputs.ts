@@ -56,7 +56,8 @@ export function resolveGearInput(
       issueCount: 0,
       readinessPercent: 0,
       averageItemLevel: null,
-      currentExpansionId: null
+      currentExpansionId: null,
+      bagPieces: []
     }
   );
 }

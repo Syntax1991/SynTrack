@@ -1,4 +1,5 @@
 import { EMBELLISHMENT_UNIQUE_CATEGORY_ID } from "./embellishment-category.js";
+import { isActiveSeasonTierSetId } from "./active-tier-sets.js";
 import type {
   EmbellishmentOverviewState,
   OverviewDomainState,
@@ -13,9 +14,26 @@ export const TIER_CANONICAL_SLOT_KEYS = [
   "LEGS"
 ] as const;
 
+export type TierCanonicalSlotKey =
+  (typeof TIER_CANONICAL_SLOT_KEYS)[number];
+
 export const TIER_TARGET_PIECES = 4;
 export const EMBELLISHMENT_TARGET_PIECES = 2;
 export const TIER_EMBELLISHMENT_MIN_LEVEL = 80;
+
+const equipLocToCanonical: Record<string, TierCanonicalSlotKey> = {
+  INVTYPE_HEAD: "HEAD",
+  INVTYPE_SHOULDER: "SHOULDER",
+  INVTYPE_CHEST: "CHEST",
+  INVTYPE_ROBE: "CHEST",
+  INVTYPE_HAND: "HANDS",
+  INVTYPE_LEGS: "LEGS",
+  HEAD: "HEAD",
+  SHOULDER: "SHOULDER",
+  CHEST: "CHEST",
+  HANDS: "HANDS",
+  LEGS: "LEGS"
+};
 
 export type GearTierEmbellishmentSlotInput = {
   slotKey: string;
@@ -28,115 +46,26 @@ export type GearTierEmbellishmentSlotInput = {
   uniquenessResolved: boolean | null;
 };
 
+/*
+ * Bag / bank-adjacent inventory pieces with set evidence. Used so
+ * owned current-season Tier slots count even when unequipped.
+ */
+export type GearTierBagPieceInput = {
+  itemId: number | null;
+  setId: number | null;
+  expansionId: number | null;
+  equipLoc: string | null;
+  setEvidenceResolved: boolean | null;
+};
+
 export type GearTierEmbellishmentInput = {
   level: number;
   slots: GearTierEmbellishmentSlotInput[];
+  bagPieces?: GearTierBagPieceInput[];
   currentExpansionId?: number | null;
 };
 
 const canonicalSlotSet = new Set<string>(TIER_CANONICAL_SLOT_KEYS);
-
-function resolveCurrentExpansionId(
-  input: GearTierEmbellishmentInput
-): number | null {
-  if (
-    input.currentExpansionId !== undefined &&
-    input.currentExpansionId !== null
-  ) {
-    return input.currentExpansionId;
-  }
-
-  let max: number | null = null;
-
-  for (const slot of input.slots) {
-    if (
-      slot.setEvidenceResolved === true &&
-      slot.expansionId !== null &&
-      (max === null || slot.expansionId > max)
-    ) {
-      max = slot.expansionId;
-    }
-  }
-
-  return max;
-}
-
-function isLevelAConfirmed(
-  slot: GearTierEmbellishmentSlotInput,
-  currentExpansionId: number | null
-): boolean {
-  if (
-    slot.setId === null ||
-    slot.setEvidenceResolved !== true ||
-    slot.setBonusResolved !== true ||
-    slot.setBonusSpellIds === null ||
-    slot.setBonusSpellIds.length === 0
-  ) {
-    return false;
-  }
-
-  if (currentExpansionId === null) {
-    return false;
-  }
-
-  return slot.expansionId === currentExpansionId;
-}
-
-function pickTierSetId(
-  canonical: GearTierEmbellishmentSlotInput[],
-  currentExpansionId: number | null
-): number | null {
-  const levelASetIds = new Set<number>();
-
-  for (const slot of canonical) {
-    if (isLevelAConfirmed(slot, currentExpansionId) && slot.setId !== null) {
-      levelASetIds.add(slot.setId);
-    }
-  }
-
-  const setIdCounts = new Map<number, number>();
-
-  for (const slot of canonical) {
-    if (slot.setEvidenceResolved === true && slot.setId !== null) {
-      setIdCounts.set(slot.setId, (setIdCounts.get(slot.setId) ?? 0) + 1);
-    }
-  }
-
-  const levelBSetIds = [...setIdCounts.entries()]
-    .filter(([, count]) => count >= 2)
-    .sort((left, right) => right[1] - left[1])
-    .map(([setId]) => setId);
-
-  const preferredLevelB = levelBSetIds.find((setId) =>
-    levelASetIds.has(setId)
-  );
-
-  if (preferredLevelB !== undefined) {
-    return preferredLevelB;
-  }
-
-  if (levelBSetIds.length > 0) {
-    return levelBSetIds[0]!;
-  }
-
-  if (levelASetIds.size === 0) {
-    return null;
-  }
-
-  let bestSetId: number | null = null;
-  let bestCount = 0;
-
-  for (const setId of levelASetIds) {
-    const count = setIdCounts.get(setId) ?? 0;
-
-    if (count > bestCount) {
-      bestCount = count;
-      bestSetId = setId;
-    }
-  }
-
-  return bestSetId;
-}
 
 function countedState(
   equippedPieces: number,
@@ -145,10 +74,39 @@ function countedState(
   return equippedPieces >= targetPieces ? "READY" : "IN_PROGRESS";
 }
 
+function resolveCanonicalFromEquipLoc(
+  equipLoc: string | null
+): TierCanonicalSlotKey | null {
+  if (!equipLoc) {
+    return null;
+  }
+
+  return equipLocToCanonical[equipLoc] ?? null;
+}
+
+/*
+ * Owned current-season Tier = unique canonical slots that have an
+ * active-season set piece either equipped or sitting in bags.
+ * Old-season setIds never contribute.
+ */
 export function deriveTierOverviewState(
   input: GearTierEmbellishmentInput
 ): TierOverviewState {
-  if (input.level < TIER_EMBELLISHMENT_MIN_LEVEL || input.slots.length === 0) {
+  if (input.level < TIER_EMBELLISHMENT_MIN_LEVEL) {
+    return {
+      state: "NOT_TRACKED",
+      equippedPieces: 0,
+      targetPieces: TIER_TARGET_PIECES,
+      twoPiece: false,
+      fourPiece: false,
+      rawEquippedPieces: 0
+    };
+  }
+
+  const hasEquipped = input.slots.length > 0;
+  const hasBag = (input.bagPieces ?? []).length > 0;
+
+  if (!hasEquipped && !hasBag) {
     return {
       state: "NOT_TRACKED",
       equippedPieces: 0,
@@ -174,24 +132,39 @@ export function deriveTierOverviewState(
     };
   }
 
-  const currentExpansionId = resolveCurrentExpansionId(input);
-  const chosenSetId = pickTierSetId(canonical, currentExpansionId);
-  const rawEquippedPieces =
-    chosenSetId === null
-      ? 0
-      : canonical.filter(
-          (slot) =>
-            slot.setEvidenceResolved === true && slot.setId === chosenSetId
-        ).length;
+  const ownedSlots = new Set<TierCanonicalSlotKey>();
+  const equippedSlots: string[] = [];
+
+  for (const slot of canonical) {
+    if (
+      !isActiveSeasonTierSetId(slot.setId) ||
+      slot.setEvidenceResolved !== true
+    ) {
+      continue;
+    }
+
+    const key = slot.slotKey as TierCanonicalSlotKey;
+    ownedSlots.add(key);
+    equippedSlots.push(slot.slotKey);
+  }
+
+  for (const piece of input.bagPieces ?? []) {
+    if (
+      piece.setEvidenceResolved !== true ||
+      !isActiveSeasonTierSetId(piece.setId)
+    ) {
+      continue;
+    }
+
+    const key = resolveCanonicalFromEquipLoc(piece.equipLoc);
+
+    if (key) {
+      ownedSlots.add(key);
+    }
+  }
+
+  const rawEquippedPieces = ownedSlots.size;
   const equippedPieces = Math.min(rawEquippedPieces, TIER_TARGET_PIECES);
-  const contributingSlots = canonical
-    .filter(
-      (slot) =>
-        chosenSetId !== null &&
-        slot.setEvidenceResolved === true &&
-        slot.setId === chosenSetId
-    )
-    .map((slot) => slot.slotKey);
 
   return {
     state: countedState(equippedPieces, TIER_TARGET_PIECES),
@@ -200,7 +173,7 @@ export function deriveTierOverviewState(
     twoPiece: rawEquippedPieces >= 2,
     fourPiece: rawEquippedPieces >= 4,
     rawEquippedPieces,
-    slots: contributingSlots
+    slots: [...ownedSlots]
   };
 }
 

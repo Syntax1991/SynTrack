@@ -2,7 +2,7 @@ import type {
   AddonImportTransaction,
   CharacterPersistenceResult
 } from "./addon-import.persistence.types.js";
-import type { AddonGearSnapshot } from "./addon-import.types.js";
+import type { AddonGearSnapshot } from "./addon-import.gear.types.js";
 
 /*
  * The 9 of 16 equipment slots that can carry an enchant - mirrors
@@ -126,6 +126,25 @@ export class AddonGearPersistence {
       });
 
       result.gearSlots += 1;
+    }
+
+    await transaction.characterGearBagSetPiece.deleteMany({
+      where: { characterId }
+    });
+
+    if (gear.bagSetPieces.length > 0) {
+      await transaction.characterGearBagSetPiece.createMany({
+        data: gear.bagSetPieces.map((piece) => ({
+          characterId,
+          itemId: piece.itemId,
+          itemLink: piece.itemLink,
+          setId: piece.setId,
+          expansionId: piece.expansionId,
+          equipLoc: piece.equipLoc,
+          setEvidenceResolved: piece.setEvidenceResolved,
+          lastSyncedAt: capturedAt
+        }))
+      });
     }
   }
 }

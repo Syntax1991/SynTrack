@@ -31,9 +31,21 @@ export type GearSlotRow = {
   uniquenessResolved: boolean | null;
 };
 
+export type BagSetPieceRow = {
+  characterId: string;
+  itemId: number | null;
+  itemLink: string | null;
+  setId: number | null;
+  expansionId: number | null;
+  equipLoc: string | null;
+  setEvidenceResolved: boolean | null;
+  lastSyncedAt: Date | null;
+};
+
 export function createTransaction() {
   const characters = new Map<string, { id: string }>();
   const gearSlots = new Map<string, GearSlotRow>();
+  const bagPieces = new Map<string, BagSetPieceRow>();
   let nextCharacterId = 1;
 
   const transaction = {
@@ -95,10 +107,36 @@ export function createTransaction() {
         gearSlots.set(key, row);
         return row;
       }
+    },
+    characterGearBagSetPiece: {
+      deleteMany: async (args: {
+        where: { characterId: string };
+      }) => {
+        let count = 0;
+
+        for (const [key, row] of bagPieces) {
+          if (row.characterId === args.where.characterId) {
+            bagPieces.delete(key);
+            count += 1;
+          }
+        }
+
+        return { count };
+      },
+      createMany: async (args: {
+        data: BagSetPieceRow[];
+      }) => {
+        for (const row of args.data) {
+          const key = `${row.characterId}:${row.itemId ?? "x"}:${bagPieces.size}`;
+          bagPieces.set(key, row);
+        }
+
+        return { count: args.data.length };
+      }
     }
   };
 
-  return { transaction, gearSlots };
+  return { transaction, gearSlots, bagPieces };
 }
 
 export function emptySlot(slotKey: string) {
@@ -192,6 +230,7 @@ export function gearSnapshot(
     capturedAt: null,
     currentExpansionId: 10,
     slots,
+    bagSetPieces: [],
     ...overrides
   };
 }

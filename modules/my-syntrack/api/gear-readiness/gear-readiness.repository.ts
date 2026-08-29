@@ -25,7 +25,8 @@ export class GearReadinessRepository {
         region: true,
         className: true,
         level: true,
-        gearSlots: true
+        gearSlots: true,
+        gearBagSetPieces: true
       },
       orderBy: [
         {

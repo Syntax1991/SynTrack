@@ -8,10 +8,11 @@ import {
 } from "./addon-import.lua-utils.js";
 import { parseItemLink } from "./addon-import.item-link.normalizer.js";
 import type {
+  AddonGearBagSetPiece,
   AddonGearSlot,
-  AddonGearSnapshot,
-  LuaValue
-} from "./addon-import.types.js";
+  AddonGearSnapshot
+} from "./addon-import.gear.types.js";
+import type { LuaValue } from "./addon-import.types.js";
 
 export const gearSlotKeys = [
   "HEAD",
@@ -196,10 +197,35 @@ export function normalizeGearSnapshot(
     }
   }
 
+  const bagSetPieces: AddonGearBagSetPiece[] = [];
+  const bagTable = asTable(data.bagSetPieces);
+
+  if (bagTable) {
+    for (const key of Object.keys(bagTable)) {
+      const piece = asTable(bagTable[key]);
+
+      if (!piece) {
+        continue;
+      }
+
+      bagSetPieces.push({
+        itemId: asNumber(piece.itemId),
+        itemLink: asString(piece.itemLink),
+        setId: asNumber(piece.setId),
+        expansionId: asNumber(piece.expansionId),
+        equipLoc: asString(piece.equipLoc),
+        setEvidenceResolved: asOptionalBoolean(
+          piece.setEvidenceResolved
+        )
+      });
+    }
+  }
+
   return {
     schemaVersion,
     capturedAt: unixTimestampToIso(module.capturedAt),
     currentExpansionId: asNumber(data.currentExpansionId),
-    slots
+    slots,
+    bagSetPieces
   };
 }

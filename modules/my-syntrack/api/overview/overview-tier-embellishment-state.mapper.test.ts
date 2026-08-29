@@ -19,15 +19,15 @@ describe("resolveTierOverviewState / resolveEmbellishmentOverviewState", () => {
     });
   });
 
-  it("derives tier progress from resolved gear evidence", () => {
+  it("derives tier progress from Midnight S2 allowlisted setIds", () => {
     const result = resolveTierOverviewState({
       level: 80,
-      currentExpansionId: 10,
+      currentExpansionId: 11,
       slots: [
         {
           slotKey: "HEAD",
-          expansionId: 10,
-          setId: 5001,
+          expansionId: 11,
+          setId: 2058,
           setEvidenceResolved: true,
           setBonusResolved: true,
           setBonusSpellIds: [111],
@@ -36,8 +36,8 @@ describe("resolveTierOverviewState / resolveEmbellishmentOverviewState", () => {
         },
         {
           slotKey: "SHOULDER",
-          expansionId: 10,
-          setId: 5001,
+          expansionId: 11,
+          setId: 2058,
           setEvidenceResolved: true,
           setBonusResolved: true,
           setBonusSpellIds: [111],
@@ -52,14 +52,32 @@ describe("resolveTierOverviewState / resolveEmbellishmentOverviewState", () => {
     expect(result.twoPiece).toBe(true);
   });
 
-  it("keeps embellishments UNKNOWN until category id is configured", () => {
+  it("counts configured embellishment category as progress", () => {
+    expect(
+      resolveEmbellishmentOverviewState({
+        level: 80,
+        slots: [
+          {
+            slotKey: "WAIST",
+            expansionId: 11,
+            setId: null,
+            setEvidenceResolved: true,
+            setBonusResolved: true,
+            setBonusSpellIds: [],
+            uniqueCategoryId: 512,
+            uniquenessResolved: true
+          }
+        ]
+      }).state
+    ).toBe("IN_PROGRESS");
+
     expect(
       resolveEmbellishmentOverviewState({
         level: 80,
         slots: [
           {
             slotKey: "FINGER_1",
-            expansionId: 10,
+            expansionId: 11,
             setId: null,
             setEvidenceResolved: true,
             setBonusResolved: true,
@@ -68,7 +86,7 @@ describe("resolveTierOverviewState / resolveEmbellishmentOverviewState", () => {
             uniquenessResolved: true
           }
         ]
-      }).state
-    ).toBe("UNKNOWN");
+      }).equippedPieces
+    ).toBe(0);
   });
 });

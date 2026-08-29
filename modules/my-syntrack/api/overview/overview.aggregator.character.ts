@@ -45,6 +45,7 @@ export function resolveCharacterState(
   const tierEmbellishmentInput = {
     level: gearInput.level ?? character.level,
     currentExpansionId: gearInput.currentExpansionId ?? null,
+    bagPieces: gearInput.bagPieces ?? [],
     slots: gearInput.slots.flatMap((slot) =>
       slot.item
         ? [

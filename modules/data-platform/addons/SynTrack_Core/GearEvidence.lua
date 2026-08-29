@@ -5,11 +5,6 @@
 ]]
 
 local _, private = ...
---[[
-    Gear set / uniqueness evidence helpers for Tier Set and Embellishment
-    derivation. Raw facts only - never "isTier" / "isEmbellished" booleans.
-    UNKNOWN > WRONG: unresolved item cache returns resolved=false, not zero.
-]]
 
 local GearEvidence = {}
 
@@ -19,11 +14,12 @@ function GearEvidence.getItemInfoFields(itemLink)
             quality = nil,
             expansionId = nil,
             setId = nil,
+            equipLoc = nil,
             itemInfoResolved = false
         }
     end
 
-    local itemName, _, quality, _, _, _, _, _, _, _, _, _, _, _, expansionId, setId =
+    local itemName, _, quality, _, _, _, _, _, equipLoc, _, _, _, _, _, expansionId, setId =
         C_Item.GetItemInfo(itemLink)
 
     if type(itemName) ~= "string" then
@@ -31,6 +27,7 @@ function GearEvidence.getItemInfoFields(itemLink)
             quality = nil,
             expansionId = nil,
             setId = nil,
+            equipLoc = nil,
             itemInfoResolved = false
         }
     end
@@ -39,8 +36,62 @@ function GearEvidence.getItemInfoFields(itemLink)
         quality = type(quality) == "number" and quality or nil,
         expansionId = type(expansionId) == "number" and expansionId or nil,
         setId = type(setId) == "number" and setId or nil,
+        equipLoc = type(equipLoc) == "string" and equipLoc or nil,
         itemInfoResolved = true
     }
+end
+
+--[[
+    Scan bags for items that have a setId. Backend filters to the active
+    Midnight Season 2 allowlist - the addon only reports raw set facts.
+]]
+function GearEvidence.captureBagSetPieces()
+    if not C_Container or not C_Container.GetContainerNumSlots
+        or not C_Container.GetContainerItemLink
+    then
+        return {}
+    end
+
+    local pieces = {}
+    local firstBag = BACKPACK_CONTAINER or 0
+    local lastBag = NUM_BAG_SLOTS or 4
+
+    for bag = firstBag, lastBag do
+        local numSlots = C_Container.GetContainerNumSlots(bag)
+
+        if type(numSlots) == "number" then
+            for slot = 1, numSlots do
+                local itemLink =
+                    C_Container.GetContainerItemLink(bag, slot)
+
+                if itemLink then
+                    local info = GearEvidence.getItemInfoFields(itemLink)
+
+                    if info.itemInfoResolved and type(info.setId) == "number" then
+                        local itemId =
+                            C_Item.GetItemIDForItemInfo
+                                and C_Item.GetItemIDForItemInfo(itemLink)
+                                or nil
+
+                        if type(itemId) ~= "number" and type(GetItemInfoInstant) == "function" then
+                            itemId = GetItemInfoInstant(itemLink)
+                        end
+
+                        pieces[#pieces + 1] = {
+                            itemId = itemId,
+                            itemLink = itemLink,
+                            setId = info.setId,
+                            expansionId = info.expansionId,
+                            equipLoc = info.equipLoc,
+                            setEvidenceResolved = true
+                        }
+                    end
+                end
+            end
+        end
+    end
+
+    return pieces
 end
 
 function GearEvidence.getSetBonusSpellIds(itemId)

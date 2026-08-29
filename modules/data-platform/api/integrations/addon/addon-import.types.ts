@@ -224,37 +224,13 @@ export type AddonProfession = {
   expansions: AddonExpansion[];
 };
 
-/*
- * One entry per known equipment slot. `equipped: false` is confirmed-
- * empty; null enrichment fields mean the WoW item cache is unresolved.
- */
-export type AddonGearSlot = {
-  slotKey: string;
-  equipped: boolean;
-  itemId: number | null;
-  itemLink: string | null;
-  itemLevel: number | null;
-  quality: number | null;
-  socketCount: number | null;
-  enchantId: number | null;
-  gemIds: number[];
-  // schemaVersion 2 tier/emb evidence (null when unequipped/unresolved)
-  expansionId: number | null;
-  setId: number | null;
-  setEvidenceResolved: boolean | null;
-  setBonusResolved: boolean | null;
-  setBonusSpellIds: number[] | null;
-  uniqueCategoryId: number | null;
-  uniqueCategoryCount: number | null;
-  uniquenessResolved: boolean | null;
-};
+export type {
+  AddonGearBagSetPiece,
+  AddonGearSlot,
+  AddonGearSnapshot
+} from "./addon-import.gear.types.js";
 
-export type AddonGearSnapshot = {
-  schemaVersion: number;
-  capturedAt: string | null;
-  currentExpansionId: number | null;
-  slots: AddonGearSlot[];
-};
+import type { AddonGearSnapshot } from "./addon-import.gear.types.js";
 
 export type AddonCharacter = {
   key: string;

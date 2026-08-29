@@ -26,6 +26,7 @@ model Character {
   weeklyMythicRuns  WeeklyMythicPlusRun[]
   personalRaidTasks PersonalRaidTask[]
   gearSlots         CharacterGearSlot[]
+  gearBagSetPieces CharacterGearBagSetPiece[]
   trackerValues     CharacterTrackerValue[]
   tagAssignments    CharacterTagAssignment[]
   resourceSnapshots CharacterResourceSnapshot[]
@@ -164,6 +165,25 @@ model CharacterGearSlot {
   @@unique([characterId, slotKey])
   @@index([slotKey])
   @@index([source])
+}
+
+model CharacterGearBagSetPiece {
+  id                   String    @id @default(cuid())
+  characterId          String
+  itemId               Int?
+  itemLink             String?
+  setId                Int?
+  expansionId          Int?
+  equipLoc             String?
+  setEvidenceResolved  Boolean?
+  lastSyncedAt         DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@index([characterId, setId])
+  @@index([characterId])
 }
 
 enum ResourceCategory {

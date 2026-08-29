@@ -111,7 +111,8 @@ local function captureGear()
 
     return {
         slots = slots,
-        currentExpansionId = GearEvidence.getCurrentExpansionId()
+        currentExpansionId = GearEvidence.getCurrentExpansionId(),
+        bagSetPieces = GearEvidence.captureBagSetPieces()
     }
 end
 
@@ -185,9 +186,14 @@ end
 local equipmentFrame = CreateFrame("Frame")
 
 equipmentFrame:RegisterEvent("PLAYER_EQUIPMENT_CHANGED")
+equipmentFrame:RegisterEvent("BAG_UPDATE_DELAYED")
 
-equipmentFrame:SetScript("OnEvent", function()
-    scheduleRecapture("equipment-changed")
+equipmentFrame:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_EQUIPMENT_CHANGED" then
+        scheduleRecapture("equipment-changed")
+    else
+        scheduleRecapture("bag-changed")
+    end
 end)
 
 local pendingItemLoads = {}
