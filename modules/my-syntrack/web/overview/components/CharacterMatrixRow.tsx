@@ -9,6 +9,7 @@ import {
   formatGearToken,
   formatItemLevelToken,
   formatProfessionToken,
+  formatProfessionWeeklyAggregateToken,
   formatResourceToken,
   formatTierToken,
   formatVaultToken,
@@ -189,6 +190,26 @@ export function CharacterMatrixRow({
         <StatusToken
           token={formatProfessionToken(
             state.professions
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatProfessionWeeklyAggregateToken(
+            state.professionWeekly
+              .profKp,
+            "Prof KP"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatProfessionWeeklyAggregateToken(
+            state.professionWeekly
+              .drops,
+            "Knowledge Drops"
           )}
         />
       </td>

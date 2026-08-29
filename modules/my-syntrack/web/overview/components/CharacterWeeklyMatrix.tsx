@@ -40,7 +40,7 @@ export function CharacterWeeklyMatrix({
   } = useMatrixFilters(characters);
 
   const columnCount =
-    10 + trackerColumns.length;
+    12 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -119,6 +119,18 @@ export function CharacterWeeklyMatrix({
 
                 <th className="overview-col-narrow">
                   Prof.
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Automatic: Weekly Quest + Treatise, captured via addon"
+                >
+                  Prof KP
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Automatic: Knowledge Drops progress, captured via addon (never affects Prof KP)"
+                >
+                  Drops
                 </th>
                 <th className="overview-col-narrow">
                   Gear

@@ -2,6 +2,7 @@ import type {
   EmbellishmentOverviewState,
   GearOverviewState,
   ProfessionOverviewState,
+  ProfessionWeeklyAggregate,
   ResourceOverviewState,
   TierOverviewState,
   VaultOverviewState,
@@ -99,6 +100,49 @@ export function formatProfessionToken(
     symbol: "✓",
     tone: "ready",
     title: "Professions tracked, no known issues"
+  };
+}
+
+/*
+ * Additive automatic columns alongside the existing "Prof." data-health
+ * column, which tracks something entirely different (is profession
+ * data captured at all, not weekly completion) - see the Automatic
+ * Profession Weekly audit. Prof KP (Weekly Quest + Treatise) and
+ * Knowledge Drops stay visually and semantically separate, matching
+ * the hard product rule that Drops never affects Prof KP.
+ */
+export function formatProfessionWeeklyAggregateToken(
+  aggregate: ProfessionWeeklyAggregate,
+  label: string
+): CellToken {
+  if (aggregate.applicableTotal === 0) {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: `${label} not tracked`
+    };
+  }
+
+  if (aggregate.incompleteCount > 0) {
+    return {
+      symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
+      tone: "attention",
+      title: `${label}: ${aggregate.incompleteCount} incomplete this week`
+    };
+  }
+
+  if (aggregate.unknownCount > 0) {
+    return {
+      symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
+      tone: "unknown",
+      title: `${label}: ${aggregate.unknownCount} unknown`
+    };
+  }
+
+  return {
+    symbol: "✓",
+    tone: "ready",
+    title: `${label} complete this week`
   };
 }
 
