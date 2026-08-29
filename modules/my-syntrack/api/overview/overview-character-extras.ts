@@ -29,6 +29,10 @@ function defaultHealth(
     resources: {
       state: "NOT_TRACKED",
       lastSyncedAt: null
+    },
+    professionWeekly: {
+      state: "NOT_TRACKED",
+      items: []
     }
   };
 }

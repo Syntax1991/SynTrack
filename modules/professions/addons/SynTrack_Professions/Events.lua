@@ -51,21 +51,25 @@ local automaticRefreshEvents = {
         reason = "trade-skill-close",
         delay = 0.25,
         announce = false
+    },
+
+    --[[
+        Weekly Profession Quest turn-ins fire this reliably, and so do
+        hidden-quest completions (Treatise use, Knowledge Drops) - a
+        completed quest fires QUEST_TURNED_IN regardless of whether it
+        has a visible turn-in UI. This is the single event that lets
+        Profession Weekly state update live without requiring a
+        /reload or loading screen. See the profession weekly
+        correctness audit - QUEST_LOG_UPDATE and raw BAG_UPDATE_DELAYED
+        were deliberately NOT registered here (too frequent/unrelated,
+        would defeat the point of debouncing).
+    ]]
+    QUEST_TURNED_IN = {
+        reason = "quest-turned-in",
+        delay = 1,
+        announce = false
     }
 }
-
-local function trimCommand(value)
-    local command =
-        string.lower(
-            value
-            or ""
-        )
-
-    return string.match(
-        command,
-        "^%s*(.-)%s*$"
-    )
-end
 
 local function cancelPendingTimer()
     if pendingTimer
@@ -82,6 +86,14 @@ local function clearPendingRefresh()
 
     pendingReason = nil
     pendingAnnounce = false
+end
+
+--[[
+    Public wrapper so SlashCommands.lua can clear a pending debounced
+    refresh before forcing an immediate manual sync.
+]]
+function PT.ClearPendingProfessionRefresh()
+    clearPendingRefresh()
 end
 
 local function runScheduledRefresh()
@@ -136,6 +148,23 @@ local function scheduleRefresh(
     runScheduledRefresh()
 end
 
+--[[
+    Public wrapper so ProfessionWeeklyRefreshEvents.lua can trigger the
+    same debounced refresh pipeline without duplicating the pending-
+    timer/coalescing logic above.
+]]
+function PT.ScheduleProfessionRefresh(
+    reason,
+    delay,
+    announce
+)
+    scheduleRefresh(
+        reason,
+        delay,
+        announce
+    )
+end
+
 local function scheduleInitialSync()
     local announce =
         not hasAnnouncedInitialSync
@@ -150,99 +179,6 @@ local function scheduleInitialSync()
     )
 end
 
-local function printCaptureStatus()
-    if PT.PrintCurrentProfessionCaptureStatus then
-        PT.PrintCurrentProfessionCaptureStatus()
-        return
-    end
-
-    PT.PrintStatus()
-end
-
-local function runBackgroundProbe()
-    if not PT.RunBackgroundProfessionProbe then
-        PT.Print(
-            "Background-Probe ist nicht verfügbar."
-        )
-
-        return
-    end
-
-    PT.RunBackgroundProfessionProbe()
-end
-
-local function runHeadlessProbe()
-    if not PT.RunHeadlessProfessionProbe then
-        PT.Print(
-            "Headless-Probe ist nicht verfügbar."
-        )
-
-        return
-    end
-
-    PT.RunHeadlessProfessionProbe()
-end
-
-local function handleSlashCommand(input)
-    local command =
-        trimCommand(
-            input
-        )
-
-    if command == "" then
-        PT.PrintStatus()
-        return
-    end
-
-    if command == "status" then
-        printCaptureStatus()
-        return
-    end
-
-    if command == "probe" then
-        runBackgroundProbe()
-        return
-    end
-
-    if command == "headless" then
-        runHeadlessProbe()
-        return
-    end
-
-    if command == "sync" then
-        clearPendingRefresh()
-
-        PT.RunProfessionRefresh(
-            "manual",
-            "Manueller Sync",
-            true
-        )
-
-        return
-    end
-
-    PT.Print(
-        "Befehle: /st status, /st sync, /st probe, /st headless"
-    )
-end
-
-local function initializeSlashCommands()
-    SLASH_PROFESSIONTRACKER1 =
-        "/syntrack"
-
-    SLASH_PROFESSIONTRACKER2 =
-        "/st"
-
-    SLASH_PROFESSIONTRACKER3 =
-        "/professiontracker"
-
-    SLASH_PROFESSIONTRACKER4 =
-        "/pt"
-
-    SlashCmdList.PROFESSIONTRACKER =
-        handleSlashCommand
-end
-
 local function handleAddonLoaded(
     loadedAddonName
 )
@@ -251,7 +187,7 @@ local function handleAddonLoaded(
     end
 
     PT.EnsureDatabase()
-    initializeSlashCommands()
+    PT.InitializeProfessionSlashCommands()
 end
 
 local function headlessProbeActive()
@@ -293,7 +229,9 @@ end
 local function handleEvent(
     _,
     event,
-    argument
+    argument,
+    _,
+    spellId
 )
     if event == "ADDON_LOADED" then
         handleAddonLoaded(
@@ -313,6 +251,17 @@ local function handleEvent(
         return
     end
 
+    if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        if not headlessProbeActive() then
+            PT.HandleTreatiseSpellcastSucceeded(
+                argument,
+                spellId
+            )
+        end
+
+        return
+    end
+
     handleAutomaticRefresh(
         event
     )
@@ -328,6 +277,10 @@ eventFrame:RegisterEvent(
 
 eventFrame:RegisterEvent(
     "PLAYER_LOGOUT"
+)
+
+eventFrame:RegisterEvent(
+    "UNIT_SPELLCAST_SUCCEEDED"
 )
 
 for event in pairs(

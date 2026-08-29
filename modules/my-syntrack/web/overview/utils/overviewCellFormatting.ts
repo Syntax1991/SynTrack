@@ -2,6 +2,8 @@ import type {
   EmbellishmentOverviewState,
   GearOverviewState,
   ProfessionOverviewState,
+  ProfessionWeeklyAggregate,
+  ResourceItemView,
   ResourceOverviewState,
   TierOverviewState,
   VaultOverviewState,
@@ -102,6 +104,49 @@ export function formatProfessionToken(
   };
 }
 
+/*
+ * Additive automatic columns alongside the existing "Prof." data-health
+ * column, which tracks something entirely different (is profession
+ * data captured at all, not weekly completion) - see the Automatic
+ * Profession Weekly audit. Prof KP (Weekly Quest + Treatise) and
+ * Knowledge Drops stay visually and semantically separate, matching
+ * the hard product rule that Drops never affects Prof KP.
+ */
+export function formatProfessionWeeklyAggregateToken(
+  aggregate: ProfessionWeeklyAggregate,
+  label: string
+): CellToken {
+  if (aggregate.applicableTotal === 0) {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: `${label} not tracked`
+    };
+  }
+
+  if (aggregate.incompleteCount > 0) {
+    return {
+      symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
+      tone: "attention",
+      title: `${label}: ${aggregate.incompleteCount} incomplete this week`
+    };
+  }
+
+  if (aggregate.unknownCount > 0) {
+    return {
+      symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
+      tone: "unknown",
+      title: `${label}: ${aggregate.unknownCount} unknown`
+    };
+  }
+
+  return {
+    symbol: "✓",
+    tone: "ready",
+    title: `${label} complete this week`
+  };
+}
+
 export function formatGearToken(
   gear: GearOverviewState
 ): CellToken {
@@ -144,31 +189,53 @@ export function formatGearToken(
   };
 }
 
-export function formatResourceToken(
-  resources: ResourceOverviewState
+/*
+ * Dedicated columns for two specific season resources, replacing the
+ * generic "Res." aggregate entirely - always shown as count/max (never
+ * a ready/attention symbol), since the live-captured maxQuantity
+ * already reflects the season's current cap (Blizzard raises it by 1
+ * per weekly reset for Tidal Spark Dust; the addon just reports
+ * whatever the live currency API says, no hardcoded season constant).
+ */
+export function formatResourceCountToken(
+  resources: ResourceOverviewState,
+  key: string,
+  label: string
 ): CellToken {
-  if (resources.state === "NOT_TRACKED") {
+  const item: ResourceItemView | undefined =
+    resources.items.find(
+      (candidate) => candidate.key === key
+    );
+
+  const snapshot = item?.snapshot ?? null;
+
+  if (
+    !snapshot ||
+    snapshot.quantity === null
+  ) {
     return {
       symbol: "—",
       tone: "not-tracked",
-      title: "Resources not tracked"
+      title: `${label} not tracked`
     };
   }
 
-  if (resources.state === "ATTENTION") {
+  if (snapshot.maxQuantity === null) {
     return {
-      symbol: String(
-        resources.attentionCount
-      ),
-      tone: "attention",
-      title: `${resources.attentionCount} ${resources.attentionCount === 1 ? "resource" : "resources"} not complete this week`
+      symbol: String(snapshot.quantity),
+      tone: "unknown",
+      title: `${label}: ${snapshot.quantity} (season maximum unknown)`
     };
   }
 
   return {
-    symbol: "✓",
-    tone: "ready",
-    title: "Resources complete this week"
+    symbol: `${snapshot.quantity}/${snapshot.maxQuantity}`,
+    tone:
+      snapshot.quantity >=
+      snapshot.maxQuantity
+        ? "ready"
+        : "progress",
+    title: `${label}: ${snapshot.quantity} of ${snapshot.maxQuantity} this season`
   };
 }
 

@@ -42,4 +42,8 @@ export type CharacterDataHealth = {
     state: DomainHealthState;
     lastSyncedAt: string | null;
   };
+  professionWeekly: {
+    state: DomainHealthState;
+    items: ProfessionHealthEntry[];
+  };
 };

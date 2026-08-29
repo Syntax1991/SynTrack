@@ -36,7 +36,29 @@ const mockChecklist: WeeklyChecklistResponse =
         region: "eu",
         className: "Mage",
         level: 80,
-        completedTaskKeys: []
+        completedTaskKeys: [],
+        professionWeekly: {
+          state: "NOT_TRACKED",
+          quest: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          treatise: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          drops: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          professions: []
+        }
       }
     ],
     summary: {

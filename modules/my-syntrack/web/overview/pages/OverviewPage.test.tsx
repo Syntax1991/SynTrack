@@ -95,6 +95,28 @@ const mockOverview: OverviewResponse =
         embellishments: {
           state: "NOT_TRACKED"
         },
+        professionWeekly: {
+          state: "NOT_TRACKED",
+          quest: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          treatise: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          drops: {
+            completeCount: 0,
+            incompleteCount: 0,
+            unknownCount: 0,
+            applicableTotal: 0
+          },
+          professions: []
+        },
         trackers: [],
         attentionItems: [
           {
@@ -140,6 +162,10 @@ const mockOverview: OverviewResponse =
           resources: {
             state: "NOT_TRACKED",
             lastSyncedAt: null
+          },
+          professionWeekly: {
+            state: "NOT_TRACKED",
+            items: []
           }
         }
       }

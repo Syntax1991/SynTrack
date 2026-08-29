@@ -39,6 +39,8 @@ RecipeCatalog.lua
 CharacterRecipeOperations.lua
 Recipes.lua
 Professions.lua
+ProfessionWeeklyCatalog.lua
+ProfessionWeeklyCapture.lua
 Character.lua
 SyncRefresh.lua
 ProfessionCaptureRules.lua
@@ -54,5 +56,7 @@ ProfessionCaptureLocale.lua
 ProfessionCaptureReminderView.lua
 ProfessionCaptureReminder.lua
 ProfessionCaptureMessages.lua
+ProfessionWeeklyRefreshEvents.lua
+SlashCommands.lua
 Events.lua
 SynTrackModule.lua

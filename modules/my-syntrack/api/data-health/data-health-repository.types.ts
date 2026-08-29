@@ -23,6 +23,17 @@ export type ResourceSnapshotSummaryRow = {
   maxCapturedAt: Date | null;
 };
 
+/*
+ * One row per (character, profession) that has at least one captured
+ * source this period - a profession with zero enabled definitions
+ * never produces a row at all (NOT_APPLICABLE, not NEVER_CAPTURED).
+ */
+export type ProfessionWeeklySnapshotHealthRow = {
+  characterId: string;
+  professionKey: string;
+  capturedAt: Date;
+};
+
 export interface DataHealthRepositoryContract {
   findCharacterSync(
     characterIds: string[]
@@ -43,4 +54,8 @@ export interface DataHealthRepositoryContract {
   findResourceSnapshotSummary(
     characterIds: string[]
   ): Promise<ResourceSnapshotSummaryRow[]>;
+  findProfessionWeeklySnapshots(
+    characterIds: string[],
+    periodKey: string
+  ): Promise<ProfessionWeeklySnapshotHealthRow[]>;
 }

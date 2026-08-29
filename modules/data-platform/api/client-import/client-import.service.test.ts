@@ -30,7 +30,8 @@ const fakeImportResult: AddonImportResult =
       professionAssignments: 0,
       progressEntries: 0,
       gearSlots: 0,
-      resourceSnapshots: 0
+      resourceSnapshots: 0,
+      professionWeeklySnapshots: 0
     }
   };
 

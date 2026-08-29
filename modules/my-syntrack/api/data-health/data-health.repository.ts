@@ -4,6 +4,7 @@ import type {
   DataHealthRepositoryContract,
   GearSlotSummaryRow,
   ProfessionAssignmentRow,
+  ProfessionWeeklySnapshotHealthRow,
   ResourceSnapshotSummaryRow
 } from "./data-health-repository.types.js";
 
@@ -182,6 +183,36 @@ export class DataHealthRepository
         group._count._all,
       maxCapturedAt:
         group._max.capturedAt
+    }));
+  }
+
+  async findProfessionWeeklySnapshots(
+    characterIds: string[],
+    periodKey: string
+  ): Promise<ProfessionWeeklySnapshotHealthRow[]> {
+    if (characterIds.length === 0) {
+      return [];
+    }
+
+    const rows =
+      await prisma.characterProfessionWeeklySnapshot.findMany({
+        where: {
+          characterId: { in: characterIds },
+          periodKey
+        },
+        select: {
+          characterId: true,
+          capturedAt: true,
+          sourceDefinition: {
+            select: { professionKey: true }
+          }
+        }
+      });
+
+    return rows.map((row) => ({
+      characterId: row.characterId,
+      professionKey: row.sourceDefinition.professionKey,
+      capturedAt: row.capturedAt
     }));
   }
 }

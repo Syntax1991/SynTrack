@@ -31,15 +31,19 @@ export class DataHealthService {
       return new Map();
     }
 
+    const weeklyPeriod =
+      getWeeklyPeriod(now);
+
     const periodStartsAt = new Date(
-      getWeeklyPeriod(now).startsAt
+      weeklyPeriod.startsAt
     );
 
     const [
       characterSyncRows,
       professionAssignments,
       gearSlotSummaries,
-      resourceSnapshotSummaries
+      resourceSnapshotSummaries,
+      professionWeeklySnapshots
     ] = await Promise.all([
       this.repository.findCharacterSync(
         characterIds
@@ -52,8 +56,32 @@ export class DataHealthService {
       ),
       this.repository.findResourceSnapshotSummary(
         characterIds
+      ),
+      this.repository.findProfessionWeeklySnapshots(
+        characterIds,
+        weeklyPeriod.key
       )
     ]);
+
+    const professionWeeklyRowsByCharacterId =
+      new Map<
+        string,
+        typeof professionWeeklySnapshots
+      >();
+
+    for (const row of professionWeeklySnapshots) {
+      const existing =
+        professionWeeklyRowsByCharacterId.get(
+          row.characterId
+        ) ?? [];
+
+      existing.push(row);
+
+      professionWeeklyRowsByCharacterId.set(
+        row.characterId,
+        existing
+      );
+    }
 
     const professionMaxSyncByAssignmentId =
       await this.repository.findProfessionMaxSync(
@@ -152,6 +180,45 @@ export class DataHealthService {
           }
         );
 
+      const professionWeeklyRows =
+        professionWeeklyRowsByCharacterId.get(
+          characterId
+        ) ?? [];
+
+      const maxCapturedAtByProfessionKey =
+        new Map<string, Date>();
+
+      for (const row of professionWeeklyRows) {
+        const existing =
+          maxCapturedAtByProfessionKey.get(
+            row.professionKey
+          );
+
+        if (
+          !existing ||
+          row.capturedAt > existing
+        ) {
+          maxCapturedAtByProfessionKey.set(
+            row.professionKey,
+            row.capturedAt
+          );
+        }
+      }
+
+      const professionWeeklyItems = [
+        ...maxCapturedAtByProfessionKey.entries()
+      ].map(([professionKey, capturedAt]) => ({
+        professionId: professionKey,
+        name: professionKey,
+        state:
+          resolveTimestampFreshness(
+            capturedAt,
+            periodStartsAt
+          ),
+        lastSyncedAt:
+          capturedAt.toISOString()
+      }));
+
       const gearSummary =
         gearSummaryById.get(
           characterId
@@ -202,6 +269,13 @@ export class DataHealthService {
             lastSyncedAt:
               resourceSummary?.maxCapturedAt?.toISOString() ??
               null
+          },
+          professionWeekly: {
+            state:
+              aggregateProfessionHealth(
+                professionWeeklyItems
+              ),
+            items: professionWeeklyItems
           }
         }
       );

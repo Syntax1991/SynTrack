@@ -36,6 +36,8 @@ export function baseInput(
       new Map(),
     resourceByCharacterId:
       new Map(),
+    professionWeeklyByCharacterId:
+      new Map(),
     trackerStatesByCharacterId:
       new Map(),
     ...overrides

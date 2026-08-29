@@ -40,7 +40,7 @@ export function CharacterWeeklyMatrix({
   } = useMatrixFilters(characters);
 
   const columnCount =
-    10 + trackerColumns.length;
+    14 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -117,14 +117,44 @@ export function CharacterWeeklyMatrix({
                   )
                 )}
 
-                <th className="overview-col-narrow">
+                <th
+                  className="overview-col-narrow"
+                  title="Profession data - is skill/knowledge point data captured at all"
+                >
                   Prof.
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Weekly profession quest - captured automatically via addon"
+                >
+                  Quest
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Profession Treatise - captured automatically via addon"
+                >
+                  Treat.
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Weekly profession Knowledge Drops - captured automatically via addon (never affects Quest/Treatise)"
+                >
+                  Drops
                 </th>
                 <th className="overview-col-narrow">
                   Gear
                 </th>
-                <th className="overview-col-narrow">
-                  Res.
+                <th
+                  className="overview-col-narrow"
+                  title="Tidal Spark Dust - season progress toward Sparks of Tides"
+                >
+                  Spark
+                </th>
+                <th
+                  className="overview-col-narrow"
+                  title="Venomblight Manaflux - Creation Catalyst charges"
+                >
+                  Cata
                 </th>
                 <th className="overview-col-action">
                   Action

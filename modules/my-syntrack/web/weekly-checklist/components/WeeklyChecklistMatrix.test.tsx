@@ -51,6 +51,13 @@ const tasks: WeeklyChecklistTask[] = [
   }
 ];
 
+const zeroAggregate = {
+  completeCount: 0,
+  incompleteCount: 0,
+  unknownCount: 0,
+  applicableTotal: 0
+};
+
 function buildCharacter(
   overrides: Partial<WeeklyChecklistCharacter> = {}
 ): WeeklyChecklistCharacter {
@@ -62,6 +69,13 @@ function buildCharacter(
     className: "Shaman",
     level: 80,
     completedTaskKeys: [],
+    professionWeekly: {
+      state: "NOT_TRACKED",
+      quest: zeroAggregate,
+      treatise: zeroAggregate,
+      drops: zeroAggregate,
+      professions: []
+    },
     ...overrides
   };
 }
@@ -273,5 +287,57 @@ describe("WeeklyChecklistMatrix", () => {
       "char-1",
       true
     );
+  });
+
+  it("shows Quest, Treat., and Drops as separate automatic columns, alongside the manual profession-knowledge task", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            id: "char-1",
+            completedTaskKeys: [
+              "profession-knowledge"
+            ],
+            professionWeekly: {
+              state: "ATTENTION",
+              quest: {
+                completeCount: 2,
+                incompleteCount: 0,
+                unknownCount: 0,
+                applicableTotal: 2
+              },
+              treatise: {
+                completeCount: 1,
+                incompleteCount: 1,
+                unknownCount: 0,
+                applicableTotal: 2
+              },
+              drops: zeroAggregate,
+              professions: []
+            }
+          })
+        ]}
+        onToggleAll={vi.fn()}
+        onToggleTask={vi.fn()}
+        pendingAction={null}
+        tasks={tasks}
+      />
+    );
+
+    expect(
+      screen.getByText("2/2")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("1/2")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("–")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText("Prof KP")
+    ).not.toBeInTheDocument();
   });
 });

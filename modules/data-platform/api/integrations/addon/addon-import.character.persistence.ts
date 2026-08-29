@@ -1,5 +1,6 @@
 import { AddonGearPersistence } from "./addon-import.gear.persistence.js";
 import { AddonProfessionPersistence } from "./addon-import.profession.persistence.js";
+import { AddonProfessionWeeklyPersistence } from "./addon-import.profession-weekly.persistence.js";
 import { AddonResourcePersistence } from "./addon-import.resource.persistence.js";
 import { getSyncDate } from "./addon-import.persistence-utils.js";
 import type {
@@ -23,6 +24,9 @@ export class AddonCharacterPersistence {
   private readonly professionPersistence =
     new AddonProfessionPersistence();
 
+  private readonly professionWeeklyPersistence =
+    new AddonProfessionWeeklyPersistence();
+
   async persist(
     transaction: AddonImportTransaction,
     snapshot: AddonSnapshot,
@@ -34,7 +38,8 @@ export class AddonCharacterPersistence {
       professionAssignments: 0,
       progressEntries: 0,
       gearSlots: 0,
-      resourceSnapshots: 0
+      resourceSnapshots: 0,
+      professionWeeklySnapshots: 0
     };
 
     for (
@@ -136,6 +141,13 @@ export class AddonCharacterPersistence {
       transaction,
       storedCharacter.id,
       character.resources,
+      result
+    );
+
+    await this.professionWeeklyPersistence.persist(
+      transaction,
+      storedCharacter.id,
+      character.professionWeekly,
       result
     );
   }

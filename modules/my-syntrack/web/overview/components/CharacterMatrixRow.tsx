@@ -9,7 +9,8 @@ import {
   formatGearToken,
   formatItemLevelToken,
   formatProfessionToken,
-  formatResourceToken,
+  formatProfessionWeeklyAggregateToken,
+  formatResourceCountToken,
   formatTierToken,
   formatVaultToken,
   formatWeeklyToken
@@ -195,6 +196,36 @@ export function CharacterMatrixRow({
 
       <td className="overview-col-narrow">
         <StatusToken
+          token={formatProfessionWeeklyAggregateToken(
+            state.professionWeekly
+              .quest,
+            "Weekly Quest"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatProfessionWeeklyAggregateToken(
+            state.professionWeekly
+              .treatise,
+            "Treatise"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatProfessionWeeklyAggregateToken(
+            state.professionWeekly
+              .drops,
+            "Knowledge Drops"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
           token={formatGearToken(
             state.gear
           )}
@@ -203,8 +234,20 @@ export function CharacterMatrixRow({
 
       <td className="overview-col-narrow">
         <StatusToken
-          token={formatResourceToken(
-            state.resources
+          token={formatResourceCountToken(
+            state.resources,
+            "tidal-spark-dust",
+            "Spark"
+          )}
+        />
+      </td>
+
+      <td className="overview-col-narrow">
+        <StatusToken
+          token={formatResourceCountToken(
+            state.resources,
+            "venomblight-manaflux",
+            "Cata"
           )}
         />
       </td>

@@ -5,6 +5,8 @@ import { ResourceDefinitionRepository } from "../../../modules/my-syntrack/api/r
 import { ResourceDefinitionService } from "../../../modules/my-syntrack/api/resources/resource-definition.service.js";
 import { TrackerScopeProfileRepository } from "../../../modules/my-syntrack/api/trackers/tracker-scope-profile.repository.js";
 import { TrackerScopeProfileService } from "../../../modules/my-syntrack/api/trackers/tracker-scope-profile.service.js";
+import { ProfessionWeeklyDefinitionRepository } from "../../../modules/my-syntrack/api/profession-weekly/profession-weekly-definition.repository.js";
+import { ProfessionWeeklyDefinitionService } from "../../../modules/my-syntrack/api/profession-weekly/profession-weekly-definition.service.js";
 
 const adapter = new PrismaBetterSqlite3({
   url:
@@ -410,11 +412,144 @@ async function seedMidnightSeason2Resources() {
   });
 }
 
+/*
+ * weeklyQuest ids were corrected 2026-08-28 from a sequential,
+ * internally-consistent reference table the user supplied
+ * (93690-93714, one contiguous block covering all 11 professions) -
+ * see ProfessionWeeklyCatalog.lua. Live acceptance on 2026-08-29
+ * across 20 real characters personally confirmed these ids for the 8
+ * professions actually present on those characters: alchemy,
+ * blacksmithing, enchanting, engineering, inscription, jewelcrafting,
+ * leatherworking, tailoring.
+ *
+ * herbalism/mining/skinning have no personal live sample (no logged-in
+ * character holds them), but ALL 11 professions' weeklyQuest AND
+ * treatise ids were independently cross-checked 2026-08-29 byte-for-
+ * byte against TWO separately-maintained, actively-used addons
+ * tracking this exact mechanic - Myu's Knowledge Points Tracker
+ * (github.com/myu-westfall/MyusKnowledgePointsTracker) and
+ * DennisRas/WeeklyKnowledge - with zero discrepancies between either
+ * source or SynTrack's own catalog. Per the evidence-tiered policy (a
+ * personal live sample is not the only path to confidence - see the
+ * profession weekly correctness follow-up), that counts as
+ * CORROBORATED: the generic per-character quest-flag mechanism is
+ * already proven working via the other 8 professions, and two
+ * independent maintained datasets agree on these 3's identities. All
+ * 11 are therefore enabled. Being honest about which is which: only
+ * the 8 above have an actual personal live sample; herbalism/mining/
+ * skinning rely on corroboration alone.
+ */
+async function seedProfessionWeeklySources() {
+  const professionWeeklyDefinitionService =
+    new ProfessionWeeklyDefinitionService(
+      new ProfessionWeeklyDefinitionRepository()
+    );
+
+  const professionQuestIds: Record<
+    string,
+    { weeklyQuest: number; treatise: number }
+  > = {
+    alchemy: { weeklyQuest: 93690, treatise: 95127 },
+    blacksmithing: { weeklyQuest: 93691, treatise: 95128 },
+    enchanting: { weeklyQuest: 93697, treatise: 95129 },
+    engineering: { weeklyQuest: 93692, treatise: 95138 },
+    herbalism: { weeklyQuest: 93700, treatise: 95130 },
+    inscription: { weeklyQuest: 93693, treatise: 95131 },
+    jewelcrafting: { weeklyQuest: 93694, treatise: 95133 },
+    leatherworking: { weeklyQuest: 93695, treatise: 95134 },
+    mining: { weeklyQuest: 93705, treatise: 95135 },
+    skinning: { weeklyQuest: 93710, treatise: 95136 },
+    tailoring: { weeklyQuest: 93696, treatise: 95137 }
+  };
+
+  for (const [professionKey, ids] of Object.entries(
+    professionQuestIds
+  )) {
+    await professionWeeklyDefinitionService.ensureDefinition({
+      scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+      professionKey,
+      sourceKey: "weekly-quest",
+      name: "Weekly Quest",
+      sourceType: "WEEKLY_QUEST",
+      externalQuestId: ids.weeklyQuest,
+      enabled: true,
+      sortOrder: 0
+    });
+
+    await professionWeeklyDefinitionService.ensureDefinition({
+      scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+      professionKey,
+      sourceKey: "treatise",
+      name: "Treatise",
+      sourceType: "TREATISE",
+      externalQuestId: ids.treatise,
+      enabled: true,
+      sortOrder: 1
+    });
+  }
+
+  await seedKnowledgeDropsSources(
+    professionWeeklyDefinitionService
+  );
+}
+
+/*
+ * Knowledge Drops evidence: each profession has 2-4 independent
+ * hidden-quest "slots" (see ProfessionWeeklyCatalog.lua for the full
+ * any-one-candidate lists per slot; only the first candidate of each
+ * slot is stored here, matching by professionKey+sourceKey not by
+ * id). Cross-checked 2026-08-29 against the same two independent
+ * maintained addons as weeklyQuest/treatise above (Myu's Knowledge
+ * Points Tracker and DennisRas/WeeklyKnowledge) - both agree exactly
+ * on every slot's identity and grouping for all 11 professions,
+ * including the previously-uncertain Skinning capstone (88529). No
+ * conflicts found, so CORROBORATED per the evidence-tiered policy;
+ * enabled on that basis. Unlike weeklyQuest/treatise, there is no
+ * personal live sample for ANY profession's Drops yet - that remains
+ * an honest evidence gap, not a reason to withhold a well-corroborated
+ * definition.
+ */
+async function seedKnowledgeDropsSources(
+  professionWeeklyDefinitionService: ProfessionWeeklyDefinitionService
+) {
+  const knowledgeDropsSlots: Record<string, number[]> = {
+    alchemy: [93528, 93529],
+    blacksmithing: [93530, 93531],
+    enchanting: [93532, 93533, 95048, 95053],
+    engineering: [93534, 93535],
+    herbalism: [81425, 81430],
+    inscription: [93536, 93537],
+    jewelcrafting: [93538, 93539],
+    leatherworking: [93540, 93541],
+    mining: [88673, 88678],
+    skinning: [88534, 88529],
+    tailoring: [93542, 93543]
+  };
+
+  for (const [professionKey, slots] of Object.entries(
+    knowledgeDropsSlots
+  )) {
+    for (const [slotIndex, questId] of slots.entries()) {
+      await professionWeeklyDefinitionService.ensureDefinition({
+        scopeKey: MIDNIGHT_SEASON_2_SCOPE_KEY,
+        professionKey,
+        sourceKey: `knowledge-drops-${slotIndex + 1}`,
+        name: "Knowledge Drops",
+        sourceType: "KNOWLEDGE_DROPS",
+        externalQuestId: questId,
+        enabled: true,
+        sortOrder: 2 + slotIndex
+      });
+    }
+  }
+}
+
 async function seed() {
   await seedProfessions();
   await seedBlacksmithingArmorTree();
   await seedMidnightSeason2Profile();
   await seedMidnightSeason2Resources();
+  await seedProfessionWeeklySources();
 }
 
 seed()

@@ -27,6 +27,16 @@ import type {
   AccountResourceView,
   ResourceItemView
 } from "../resources/resource-readiness.types.js";
+import type {
+  ProfessionWeeklyAggregate,
+  ProfessionWeeklyProfessionSummary
+} from "../profession-weekly/profession-weekly-status.types.js";
+
+export type {
+  ProfessionWeeklyAggregate,
+  ProfessionWeeklyProfessionSummary,
+  ProfessionWeeklySourceStatus
+} from "../profession-weekly/profession-weekly-status.types.js";
 
 export type {
   CharacterTrackerState,
@@ -64,6 +74,7 @@ export type AttentionDomain =
   | "weekly"
   | "vault"
   | "profession"
+  | "profession-weekly"
   | "gear"
   | "resources";
 
@@ -164,6 +175,23 @@ export type EmbellishmentOverviewState = {
   state: "NOT_TRACKED";
 };
 
+/*
+ * Weekly Quest, Treatise, and Knowledge Drops are three fully separate
+ * aggregates on purpose - a combined number doesn't tell the user
+ * which one is missing, which defeats the point of an automatic
+ * tracker (see the profession weekly correctness follow-up). Drops
+ * must never affect `state` here, no exceptions (see the Automatic
+ * Profession Weekly audit's hard product rule). NOT_TRACKED means zero
+ * enabled definitions apply to this character's professions at all.
+ */
+export type ProfessionWeeklyOverviewState = {
+  state: OverviewDomainState;
+  quest: ProfessionWeeklyAggregate;
+  treatise: ProfessionWeeklyAggregate;
+  drops: ProfessionWeeklyAggregate;
+  professions: ProfessionWeeklyProfessionSummary[];
+};
+
 export type CharacterWeeklyState = {
   character: {
     id: string;
@@ -180,6 +208,7 @@ export type CharacterWeeklyState = {
   resources: ResourceOverviewState;
   tier: TierOverviewState;
   embellishments: EmbellishmentOverviewState;
+  professionWeekly: ProfessionWeeklyOverviewState;
   /*
    * Pinned+enabled tracker states for the active scope, aligned by
    * trackerDefinitionId to OverviewResponse.trackerColumns - Overview
