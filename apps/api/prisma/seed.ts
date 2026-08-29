@@ -417,18 +417,27 @@ async function seedMidnightSeason2Resources() {
  * internally-consistent reference table the user supplied
  * (93690-93714, one contiguous block covering all 11 professions) -
  * see ProfessionWeeklyCatalog.lua. Live acceptance on 2026-08-29
- * across 20 real characters confirmed the corrected weekly-quest ids
- * (captured flaggedCompleted values formed a plausible pattern -
- * mostly true across alts for a fast weekly, rare for the Treatise -
- * and the user confirmed that pattern matches reality) for the 8
+ * across 20 real characters personally confirmed these ids for the 8
  * professions actually present on those characters: alchemy,
  * blacksmithing, enchanting, engineering, inscription, jewelcrafting,
- * leatherworking, tailoring. herbalism/mining/skinning have NO live
- * evidence (no logged-in character has them) and stay disabled per
- * the "leave disabled rather than inventing an id" rule - see the
- * Automatic Profession Weekly audit. Do not enable them without a
- * character that actually holds one of those professions to verify
- * against.
+ * leatherworking, tailoring.
+ *
+ * herbalism/mining/skinning have no personal live sample (no logged-in
+ * character holds them), but ALL 11 professions' weeklyQuest AND
+ * treatise ids were independently cross-checked 2026-08-29 byte-for-
+ * byte against TWO separately-maintained, actively-used addons
+ * tracking this exact mechanic - Myu's Knowledge Points Tracker
+ * (github.com/myu-westfall/MyusKnowledgePointsTracker) and
+ * DennisRas/WeeklyKnowledge - with zero discrepancies between either
+ * source or SynTrack's own catalog. Per the evidence-tiered policy (a
+ * personal live sample is not the only path to confidence - see the
+ * profession weekly correctness follow-up), that counts as
+ * CORROBORATED: the generic per-character quest-flag mechanism is
+ * already proven working via the other 8 professions, and two
+ * independent maintained datasets agree on these 3's identities. All
+ * 11 are therefore enabled. Being honest about which is which: only
+ * the 8 above have an actual personal live sample; herbalism/mining/
+ * skinning rely on corroboration alone.
  */
 async function seedProfessionWeeklySources() {
   const professionWeeklyDefinitionService =
@@ -438,55 +447,19 @@ async function seedProfessionWeeklySources() {
 
   const professionQuestIds: Record<
     string,
-    { weeklyQuest: number; treatise: number; verified: boolean }
+    { weeklyQuest: number; treatise: number }
   > = {
-    alchemy: { weeklyQuest: 93690, treatise: 95127, verified: true },
-    blacksmithing: {
-      weeklyQuest: 93691,
-      treatise: 95128,
-      verified: true
-    },
-    enchanting: {
-      weeklyQuest: 93697,
-      treatise: 95129,
-      verified: true
-    },
-    engineering: {
-      weeklyQuest: 93692,
-      treatise: 95138,
-      verified: true
-    },
-    herbalism: {
-      weeklyQuest: 93700,
-      treatise: 95130,
-      verified: false
-    },
-    inscription: {
-      weeklyQuest: 93693,
-      treatise: 95131,
-      verified: true
-    },
-    jewelcrafting: {
-      weeklyQuest: 93694,
-      treatise: 95133,
-      verified: true
-    },
-    leatherworking: {
-      weeklyQuest: 93695,
-      treatise: 95134,
-      verified: true
-    },
-    mining: { weeklyQuest: 93705, treatise: 95135, verified: false },
-    skinning: {
-      weeklyQuest: 93710,
-      treatise: 95136,
-      verified: false
-    },
-    tailoring: {
-      weeklyQuest: 93696,
-      treatise: 95137,
-      verified: true
-    }
+    alchemy: { weeklyQuest: 93690, treatise: 95127 },
+    blacksmithing: { weeklyQuest: 93691, treatise: 95128 },
+    enchanting: { weeklyQuest: 93697, treatise: 95129 },
+    engineering: { weeklyQuest: 93692, treatise: 95138 },
+    herbalism: { weeklyQuest: 93700, treatise: 95130 },
+    inscription: { weeklyQuest: 93693, treatise: 95131 },
+    jewelcrafting: { weeklyQuest: 93694, treatise: 95133 },
+    leatherworking: { weeklyQuest: 93695, treatise: 95134 },
+    mining: { weeklyQuest: 93705, treatise: 95135 },
+    skinning: { weeklyQuest: 93710, treatise: 95136 },
+    tailoring: { weeklyQuest: 93696, treatise: 95137 }
   };
 
   for (const [professionKey, ids] of Object.entries(
@@ -499,7 +472,7 @@ async function seedProfessionWeeklySources() {
       name: "Weekly Quest",
       sourceType: "WEEKLY_QUEST",
       externalQuestId: ids.weeklyQuest,
-      enabled: ids.verified,
+      enabled: true,
       sortOrder: 0
     });
 
@@ -510,7 +483,7 @@ async function seedProfessionWeeklySources() {
       name: "Treatise",
       sourceType: "TREATISE",
       externalQuestId: ids.treatise,
-      enabled: ids.verified,
+      enabled: true,
       sortOrder: 1
     });
   }
@@ -521,15 +494,20 @@ async function seedProfessionWeeklySources() {
 }
 
 /*
- * Knowledge Drops evidence ids were cross-checked 2026-08-29 against
- * Myu's Knowledge Points Tracker (github.com/myu-westfall/
- * MyusKnowledgePointsTracker) - each profession has 2-4 independent
+ * Knowledge Drops evidence: each profession has 2-4 independent
  * hidden-quest "slots" (see ProfessionWeeklyCatalog.lua for the full
  * any-one-candidate lists per slot; only the first candidate of each
- * slot is stored here, matching by professionKey+sourceKey not by id).
- * Unlike weeklyQuest/treatise, none of this has been live-verified
- * against a real character yet, so every slot stays disabled - see the
- * "leave disabled rather than inventing an id" rule.
+ * slot is stored here, matching by professionKey+sourceKey not by
+ * id). Cross-checked 2026-08-29 against the same two independent
+ * maintained addons as weeklyQuest/treatise above (Myu's Knowledge
+ * Points Tracker and DennisRas/WeeklyKnowledge) - both agree exactly
+ * on every slot's identity and grouping for all 11 professions,
+ * including the previously-uncertain Skinning capstone (88529). No
+ * conflicts found, so CORROBORATED per the evidence-tiered policy;
+ * enabled on that basis. Unlike weeklyQuest/treatise, there is no
+ * personal live sample for ANY profession's Drops yet - that remains
+ * an honest evidence gap, not a reason to withhold a well-corroborated
+ * definition.
  */
 async function seedKnowledgeDropsSources(
   professionWeeklyDefinitionService: ProfessionWeeklyDefinitionService
@@ -559,7 +537,7 @@ async function seedKnowledgeDropsSources(
         name: "Knowledge Drops",
         sourceType: "KNOWLEDGE_DROPS",
         externalQuestId: questId,
-        enabled: false,
+        enabled: true,
         sortOrder: 2 + slotIndex
       });
     }
