@@ -85,10 +85,17 @@ export function buildDetail(): CharacterControlDetailResponse {
         items: []
       },
       tier: {
-        state: "NOT_TRACKED"
+        state: "NOT_TRACKED",
+        equippedPieces: 0,
+        targetPieces: 4,
+        twoPiece: false,
+        fourPiece: false,
+        rawEquippedPieces: 0
       },
       embellishments: {
-        state: "NOT_TRACKED"
+        state: "NOT_TRACKED",
+        equippedPieces: 0,
+        targetPieces: 2
       },
       professionWeekly: {
         state: "NOT_TRACKED",

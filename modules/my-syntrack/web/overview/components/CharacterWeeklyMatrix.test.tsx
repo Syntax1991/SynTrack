@@ -205,7 +205,7 @@ describe("CharacterWeeklyMatrix", () => {
     ).toHaveClass("overview-next-action");
   });
 
-  it("renders the real item level once Gear has tracked slots, and Set/Embellish honestly as not-tracked (no data source exists yet)", () => {
+  it("renders the real item level once Gear has tracked slots, and Set/Embellish as — when not tracked", () => {
     renderMatrix([
       buildCharacter({
         gear: {
@@ -230,13 +230,13 @@ describe("CharacterWeeklyMatrix", () => {
 
     expect(
       dataRow.getAllByTitle(
-        "Set/Tier not tracked - no data source exists yet"
+        "Set/Tier not tracked"
       ).length
     ).toBeGreaterThanOrEqual(1);
 
     expect(
       dataRow.getAllByTitle(
-        "Embellishments not tracked - no data source exists yet"
+        "Embellishments not tracked"
       ).length
     ).toBeGreaterThanOrEqual(1);
   });

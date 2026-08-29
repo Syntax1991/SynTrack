@@ -140,20 +140,25 @@ export type AccountResourceView = {
 };
 
 export type TierOverviewState = {
-  state: "NOT_TRACKED";
+  state: OverviewDomainState;
+  equippedPieces: number;
+  targetPieces: number;
+  twoPiece: boolean;
+  fourPiece: boolean;
+  rawEquippedPieces: number;
+  slots?: string[];
 };
-
 export type EmbellishmentOverviewState = {
-  state: "NOT_TRACKED";
+  state: OverviewDomainState;
+  equippedPieces: number;
+  targetPieces: number;
 };
-
 export type {
   ProfessionWeeklyAggregate,
   ProfessionWeeklyOverviewState,
   ProfessionWeeklyProfessionSummary,
   ProfessionWeeklySourceStatus
 } from "./professionWeekly.types";
-
 export type {
   ProfessionKnowledgeTreasureAggregate,
   ProfessionKnowledgeTreasureOverviewState,
