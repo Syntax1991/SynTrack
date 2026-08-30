@@ -62,6 +62,49 @@ describe("normalizeResourceSnapshot", () => {
     expect(snapshot?.currencies[0]?.quantity).toBe(0);
   });
 
+  it("keeps quantity null (never a fabricated 0) when the addon never set it at all", () => {
+    const snapshot = normalizeResourceSnapshot(
+      resourcesModule({
+        currencies: {
+          "1": { currencyId: 3345 }
+        },
+        items: {}
+      })
+    );
+
+    expect(snapshot?.currencies[0]?.quantity).toBeNull();
+  });
+
+  it("preserves a real item count of 0 rather than dropping the row", () => {
+    const snapshot = normalizeResourceSnapshot(
+      resourcesModule({
+        currencies: {},
+        items: {
+          "1": {
+            key: "spark-of-tides",
+            itemId: 274476,
+            count: 0
+          }
+        }
+      })
+    );
+
+    expect(snapshot?.items[0]?.count).toBe(0);
+  });
+
+  it("keeps item count null (never a fabricated 0) when the lookup never resolved", () => {
+    const snapshot = normalizeResourceSnapshot(
+      resourcesModule({
+        currencies: {},
+        items: {
+          "1": { key: "spark-of-tides", itemId: 274476 }
+        }
+      })
+    );
+
+    expect(snapshot?.items[0]?.count).toBeNull();
+  });
+
   it("returns null for an absent resources module", () => {
     expect(
       normalizeResourceSnapshot(undefined)
