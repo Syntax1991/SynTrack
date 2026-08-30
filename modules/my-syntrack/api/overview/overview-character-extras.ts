@@ -1,5 +1,9 @@
 import type { CharacterDataHealth } from "../data-health/data-health.types.js";
 import { characterNeedsRefresh } from "../data-health/data-health.mapper.js";
+import {
+  resolveCharacterTrackingProfile,
+  type CharacterTrackingProfile
+} from "../character-tracking/character-tracking-profile.js";
 import type {
   TagAssignment,
   TagView
@@ -100,20 +104,19 @@ export function attachCharacterExtras(
   refreshNeededCount: number;
 } {
   const charactersWithExtras: CharacterOverviewRow[] =
-    characters.map((state) => ({
-      ...state,
-      tags:
-        tagsByCharacterId.get(
-          state.character.id
-        ) ?? [],
-      health:
-        healthByCharacterId.get(
-          state.character.id
-        ) ??
-        defaultHealth(
-          state.character.id
-        )
-    }));
+    characters.map((state) => {
+      const tags =
+        tagsByCharacterId.get(state.character.id) ?? [];
+
+      return {
+        ...state,
+        tags,
+        trackingProfile: resolveCharacterTrackingProfile(tags),
+        health:
+          healthByCharacterId.get(state.character.id) ??
+          defaultHealth(state.character.id)
+      };
+    });
 
   const refreshNeededCount =
     charactersWithExtras.filter(

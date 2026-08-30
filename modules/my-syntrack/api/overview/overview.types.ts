@@ -22,6 +22,7 @@ import type {
 } from "../trackers/tracker.types.js";
 import type { TrackerScopeProfileView } from "../trackers/tracker-scope-profile.types.js";
 import type { TagView } from "../tags/tag.types.js";
+import type { CharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import type { CharacterDataHealth } from "../data-health/data-health.types.js";
 import type {
   AccountResourceView,
@@ -317,6 +318,7 @@ export type OverviewSummary =
 export type CharacterOverviewRow =
   CharacterWeeklyState & {
     tags: TagView[];
+    trackingProfile: CharacterTrackingProfile;
     health: CharacterDataHealth;
   };
 

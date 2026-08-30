@@ -90,6 +90,7 @@ function buildOverview(): OverviewResponse {
       (state) => ({
         ...state,
         tags: [],
+        trackingProfile: "FULL" as const,
         health: {
           characterId:
             state.character.id,

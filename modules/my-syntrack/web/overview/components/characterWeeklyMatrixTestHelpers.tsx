@@ -4,6 +4,7 @@ import type {
   CharacterOverviewRow,
   TrackerDefinitionView
 } from "../types/overview.types";
+import type { CharacterTrackingProfile } from "../../../api/character-tracking/character-tracking-profile.js";
 import {
   emptyProfessionKnowledgeTreasures,
   emptyProfessionSetup,
@@ -82,6 +83,7 @@ export function buildCharacter(
     readinessState: "unknown",
     nextAction: null,
     tags: [],
+    trackingProfile: "FULL" satisfies CharacterTrackingProfile,
     health: {
       characterId: "char-1",
       character: {

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { isWeeklyGameplayEnabled } from "../../../api/character-tracking/character-tracking-profile.js";
+import { isWeeklyGameplayEnabled } from "../../../api/character-tracking/domain-applicability.js";
 import { formatKnownWeeklyProgressSymbol } from "../../../api/weekly-progress/weekly-progress-display.js";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
