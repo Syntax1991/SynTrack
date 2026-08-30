@@ -131,4 +131,58 @@ public class SynTrackApiClientTests
         Assert.Contains("deadbeef", handler.LastRequestBody);
         Assert.EndsWith("/client/link/status", handler.LastRequest!.RequestUri!.ToString());
     }
+
+    [Fact]
+    public async Task GetMeSendsTheDeviceCredentialAsABearerTokenAndReturnsTheBattleTag()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"battleTag\":\"Syntax#21715\"}", System.Text.Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateClient(handler);
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Equal("Bearer", handler.LastRequest!.Headers.Authorization!.Scheme);
+        Assert.Equal("dvc_token", handler.LastRequest.Headers.Authorization.Parameter);
+        Assert.EndsWith("/client/me", handler.LastRequest.RequestUri!.ToString());
+        Assert.Equal("Syntax#21715", profile!.BattleTag);
+    }
+
+    [Fact]
+    public async Task GetMeReturnsANullBattleTagWhenTheCredentialPredatesRaiderAccountLinkage()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"battleTag\":null}", System.Text.Encoding.UTF8, "application/json")
+        });
+
+        var client = CreateClient(handler);
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.NotNull(profile);
+        Assert.Null(profile!.BattleTag);
+    }
+
+    [Fact]
+    public async Task GetMeReturnsNullInsteadOfThrowingOn401()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        var client = CreateClient(handler);
+
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Null(profile);
+    }
+
+    [Fact]
+    public async Task GetMeReturnsNullInsteadOfThrowingOnANetworkFailure()
+    {
+        var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("connect failed"));
+        var client = CreateClient(handler);
+
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Null(profile);
+    }
 }

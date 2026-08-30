@@ -30,6 +30,12 @@ public class SyncEngineTests : IDisposable
         public Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
+        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,
             string fileModifiedAt, string contentSha256, string rawBody, CancellationToken cancellationToken)

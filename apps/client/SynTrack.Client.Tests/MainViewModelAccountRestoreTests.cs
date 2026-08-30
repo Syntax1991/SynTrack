@@ -68,6 +68,12 @@ public class MainViewModelAccountRestoreTests
         public Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
+        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult<ClientProfileResponse?>(null);
+
+        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<ClientCharacterSummary>>(Array.Empty<ClientCharacterSummary>());
+
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,
             string fileModifiedAt, string contentSha256, string rawBody, CancellationToken cancellationToken) =>
@@ -88,6 +94,7 @@ public class MainViewModelAccountRestoreTests
             new FakeWowAccountDiscoveryService(),
             settingsService,
             credentialService,
+            apiClient,
             deviceLinkService,
             syncEngine,
             new SavedVariablesWatcherService(),

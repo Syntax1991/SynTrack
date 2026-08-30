@@ -36,4 +36,30 @@ public class MainViewModelSecurityTests
         Assert.NotNull(property);
         Assert.Equal(typeof(string), property!.PropertyType);
     }
+
+    /// <summary>
+    /// BattleTag ("Syntax#21715") is display identity, not a secret - it
+    /// is fine for it to be a public bindable property. This only proves
+    /// it is a plain string (not, say, a token/credential wrapper type)
+    /// and that adding it did not also introduce a raw-secret property
+    /// alongside it.
+    /// </summary>
+    [Fact]
+    public void BattleTagIsExposedAsAPlainStringDisplayProperty()
+    {
+        var property = typeof(MainViewModel).GetProperty("BattleTag", BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.NotNull(property);
+        Assert.Equal(typeof(string), property!.PropertyType);
+    }
+
+    [Fact]
+    public void NoPublicPropertyNameReferencesAnAccessOrRefreshToken()
+    {
+        var properties = typeof(MainViewModel).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.DoesNotContain(properties, p =>
+            p.Name.Contains("AccessToken", StringComparison.OrdinalIgnoreCase) ||
+            p.Name.Contains("RefreshToken", StringComparison.OrdinalIgnoreCase));
+    }
 }

@@ -13,6 +13,21 @@ public interface ISynTrackApiClient
 
     Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Returns null on any failure (network, non-2xx, malformed response)
+    /// rather than throwing - a profile fetch must never be able to crash
+    /// or block the UI; the caller just leaves the identity line hidden.
+    /// </summary>
+    Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns an empty list on any failure (network, non-2xx, malformed
+    /// response) rather than throwing - a roster fetch must never be able
+    /// to disrupt the SavedVariables watcher or sync pipeline, which are
+    /// entirely independent of this call.
+    /// </summary>
+    Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken);
+
     Task<SyncStatus> SendImportAsync(
         string deviceToken,
         string addon,
@@ -72,6 +87,67 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         response.EnsureSuccessStatusCode();
 
         return (await response.Content.ReadFromJsonAsync<DeviceLinkStatusResponse>(JsonOptions, cancellationToken))!;
+    }
+
+    public async Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/client/me");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", deviceToken);
+
+        try
+        {
+            var response = await _http.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<ClientProfileResponse>(JsonOptions, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/client/characters");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", deviceToken);
+
+        try
+        {
+            var response = await _http.SendAsync(request, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return Array.Empty<ClientCharacterSummary>();
+            }
+
+            var parsed = await response.Content.ReadFromJsonAsync<ClientCharactersResponse>(JsonOptions, cancellationToken);
+            return parsed?.Items ?? new List<ClientCharacterSummary>();
+        }
+        catch (HttpRequestException)
+        {
+            return Array.Empty<ClientCharacterSummary>();
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return Array.Empty<ClientCharacterSummary>();
+        }
+        catch (JsonException)
+        {
+            return Array.Empty<ClientCharacterSummary>();
+        }
     }
 
     public async Task<SyncStatus> SendImportAsync(
