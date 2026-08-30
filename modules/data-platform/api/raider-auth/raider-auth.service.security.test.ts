@@ -110,6 +110,14 @@ describe("RaiderAuthService — security properties", () => {
       expect(result.intent).toBe(
         "login"
       );
+
+      // Tagged distinctly from other failures so the frontend can show
+      // "sign-in expired" instead of a generic message - see
+      // raider-auth.controller.ts#errorRedirect and
+      // modules/data-platform/web/raider-auth/utils/authErrorCopy.ts.
+      expect(result.reason).toBe(
+        "state_expired"
+      );
     }
   });
 

@@ -7,9 +7,6 @@ import { isSafeInternalPath } from "./internal-path.js";
 import { RaiderAuthService } from "./raider-auth.service.js";
 import type { RaiderAuthIntent } from "./raider-auth.types.js";
 
-const genericSignInFailureMessage =
-  "Could not sign in with Battle.net. Please try again.";
-
 function getQueryValue(
   value: unknown
 ): string {
@@ -238,14 +235,31 @@ export class RaiderAuthController {
         return this.errorRedirect(
           outcome.outcome === "error"
             ? outcome.intent
-            : "login"
+            : "login",
+          outcome.outcome === "error"
+            ? outcome.reason
+            : undefined
         );
       }
     }
   }
 
+  /*
+   * `error` carries a short stable code, not a sentence - the frontend
+   * (LoginPage/RegisterPage) owns the actual copy per code, so this is
+   * free to gain more distinct reasons later without the URL shape
+   * changing. "state_expired" specifically covers the "OAuth state was
+   * missing/expired when the callback arrived" case (see
+   * raider-auth-callback.service.ts / BattleNetRepository.consumeOAuthState)
+   * so a user who waited too long, double-submitted, or reused an old
+   * callback link gets an accurate message instead of a generic one -
+   * every code still resolves to a fresh /login or /register page, so
+   * "Try again" always starts a brand-new OAuth attempt rather than
+   * retrying the dead state.
+   */
   private errorRedirect(
-    intent: RaiderAuthIntent
+    intent: RaiderAuthIntent,
+    reason?: "state_expired"
   ): string {
     const target = new URL(
       intent === "register"
@@ -256,7 +270,7 @@ export class RaiderAuthController {
 
     target.searchParams.set(
       "error",
-      genericSignInFailureMessage
+      reason ?? "failed"
     );
 
     return target.toString();

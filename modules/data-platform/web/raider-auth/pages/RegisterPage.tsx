@@ -1,14 +1,16 @@
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { getRaiderLoginUrl } from "../api/raiderAuthApi";
 import { useRaiderSessionStatus } from "../hooks/useRaiderSessionStatus";
+import { getAuthErrorCopy } from "../utils/authErrorCopy";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 
 export function RegisterPage() {
   const status = useRaiderSessionStatus();
   const [searchParams] = useSearchParams();
 
-  const hasError =
-    Boolean(searchParams.get("error"));
+  const errorCopy = getAuthErrorCopy(
+    searchParams.get("error")
+  );
 
   if (status === "checking") {
     return (
@@ -22,7 +24,7 @@ export function RegisterPage() {
     return <Navigate replace to="/" />;
   }
 
-  if (hasError) {
+  if (errorCopy) {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
@@ -30,10 +32,10 @@ export function RegisterPage() {
             ST
           </span>
 
-          <h1>Sign-in failed</h1>
+          <h1>{errorCopy.title}</h1>
 
           <p>
-            Could not sign in with Battle.net.
+            {errorCopy.description}
           </p>
 
           <Link

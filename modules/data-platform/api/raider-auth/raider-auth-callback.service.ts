@@ -102,7 +102,8 @@ export class RaiderAuthCallbackService {
         outcome: "error",
         intent: "login",
         message:
-          "Der Battle.net-Anmeldevorgang ist ungültig oder abgelaufen."
+          "Der Battle.net-Anmeldevorgang ist ungültig oder abgelaufen.",
+        reason: "state_expired"
       };
     }
 

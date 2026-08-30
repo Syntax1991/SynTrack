@@ -145,4 +145,36 @@ describe("LoginPage — error outcome", () => {
       screen.queryByText(/ECONNRESET/)
     ).not.toBeInTheDocument();
   });
+
+  it("shows a distinct message for an expired/invalid OAuth state, not the generic failure copy", async () => {
+    renderLogin(
+      "/login?error=state_expired"
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Sign-in expired"
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        /Battle\.net sign-in expired or could not be verified/u
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText(
+        "Could not sign in with Battle.net."
+      )
+    ).not.toBeInTheDocument();
+
+    // "Try again" must start a brand-new flow, never resubmit the dead
+    // state - it links to a fresh /login, not back to the same URL.
+    expect(
+      screen.getByRole("link", {
+        name: "Try again"
+      })
+    ).toHaveAttribute("href", "/login");
+  });
 });

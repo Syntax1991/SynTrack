@@ -89,4 +89,28 @@ describe("RegisterPage — error outcome", () => {
       screen.queryByText(/ECONNRESET/)
     ).not.toBeInTheDocument();
   });
+
+  it("shows a distinct message for an expired/invalid OAuth state, not the generic failure copy", async () => {
+    renderRegister(
+      "/register?error=state_expired"
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Sign-in expired"
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        /Battle\.net sign-in expired or could not be verified/u
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("link", {
+        name: "Try again"
+      })
+    ).toHaveAttribute("href", "/register");
+  });
 });

@@ -57,6 +57,17 @@ export type RaiderAuthCallbackOutcome =
       outcome: "error";
       intent: RaiderAuthIntent;
       message: string;
+      /*
+       * Narrows the generic failure into a reason the frontend can give
+       * distinct, accurate copy for. "state_expired" specifically means
+       * consumeOAuthState() found no matching (or an expired)
+       * BattleNetOAuthState row for the state Blizzard's callback sent
+       * back - i.e. the user took too long, reused an old callback URL,
+       * or the callback reached a different backend/DB than the one that
+       * issued the state. Omitted for every other failure, which keeps
+       * the existing generic "sign-in failed" copy.
+       */
+      reason?: "state_expired";
     };
 
 export type RaiderPendingRegistrationInfo = {
