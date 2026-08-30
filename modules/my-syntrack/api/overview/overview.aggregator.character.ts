@@ -1,4 +1,4 @@
-import type { OverviewAggregationInput } from "./overview.aggregator.js";
+import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import {
   resolveGearInput,
   resolveProfessionInput,
@@ -22,6 +22,7 @@ import {
   resolveTierOverviewState
 } from "./overview-tier-embellishment-state.mapper.js";
 import { pickNextAction } from "./overview.sorting.js";
+import type { OverviewAggregationInput } from "./overview.aggregator.js";
 import type {
   AttentionItem,
   CharacterWeeklyState
@@ -94,9 +95,13 @@ export function resolveCharacterState(
     treasures: treasureInput
   });
 
+  const characterTags =
+    input.tagsByCharacterId?.get(character.id) ?? [];
+
   const weeklySummaryResult = resolveWeeklySummaryOverviewState({
     characterId: character.id,
     characterName: character.name,
+    trackingProfile: resolveCharacterTrackingProfile(characterTags),
     vault: vaultResult.vault,
     professionWeekly: professionWeeklyResult.professionWeekly
   });

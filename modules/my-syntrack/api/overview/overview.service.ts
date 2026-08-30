@@ -148,6 +148,8 @@ export class OverviewService {
       weeklyChecklist.characters
     );
 
+    const tagsByCharacterId = buildTagsByCharacterId(tags, tagAssignments);
+
     const {
       characters,
       attentionItems,
@@ -180,10 +182,10 @@ export class OverviewService {
         buildProfessionKnowledgeTreasureByCharacterId(
           professionKnowledgeTreasureOverview.characters
         ),
-      trackerStatesByCharacterId
+      trackerStatesByCharacterId,
+      tagsByCharacterId
     });
 
-    const tagsByCharacterId = buildTagsByCharacterId(tags, tagAssignments);
     const healthByCharacterId =
       await this.dataHealthService.getHealthByCharacterIds(characterIds);
 

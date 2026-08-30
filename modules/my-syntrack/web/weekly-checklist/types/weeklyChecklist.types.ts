@@ -1,4 +1,5 @@
 import type { ProfessionWeeklyOverviewState } from "../../overview/types/professionWeekly.types";
+import type { CharacterTrackingProfile } from "../../../api/character-tracking/character-tracking-profile.js";
 
 export type WeeklyChecklistPeriod = {
   key: string;
@@ -21,6 +22,7 @@ export type WeeklyChecklistCharacter = {
   region: string;
   className: string;
   level: number;
+  trackingProfile: CharacterTrackingProfile;
   completedTaskKeys: string[];
   professionWeekly: ProfessionWeeklyOverviewState;
 };

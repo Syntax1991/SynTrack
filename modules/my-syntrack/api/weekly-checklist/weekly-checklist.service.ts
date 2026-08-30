@@ -1,8 +1,12 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { resolveProfessionWeeklyOverviewState } from "../overview/overview-profession-weekly-state.mapper.js";
 import type { ProfessionWeeklyOverviewState } from "../overview/overview.types.js";
 import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
 import { ProfessionWeeklyStatusService } from "../profession-weekly/profession-weekly-status.service.js";
+import { TagRepository } from "../tags/tag.repository.js";
+import { TagService } from "../tags/tag.service.js";
+import { buildTagsByCharacterId } from "../overview/overview-character-extras.js";
 import { getWeeklyPeriod } from "../shared/weekly-period.js";
 import { WeeklyChecklistRepository } from "./weekly-checklist.repository.js";
 import type {
@@ -77,6 +81,8 @@ export class WeeklyChecklistService {
       new ProfessionWeeklyStatusRepository()
     );
 
+  private readonly tagService = new TagService(new TagRepository());
+
   constructor(
     private readonly repository:
       WeeklyChecklistRepository
@@ -88,13 +94,15 @@ export class WeeklyChecklistService {
 
     const period =
       getWeeklyPeriod();
-    const [tasks, characters, professionWeeklyOverview] =
+    const [tasks, characters, professionWeeklyOverview, tags, tagAssignments] =
       await Promise.all([
         this.repository.findTasks(),
         this.repository.findCharacters(
           period.key
         ),
-        this.professionWeeklyStatusService.getOverview()
+        this.professionWeeklyStatusService.getOverview(),
+        this.tagService.list(),
+        this.tagService.listAllAssignments()
       ]);
 
     /*
@@ -113,6 +121,8 @@ export class WeeklyChecklistService {
       )
     );
 
+    const tagsByCharacterId = buildTagsByCharacterId(tags, tagAssignments);
+
     const characterItems = characters.map(
       (character) => ({
         id: character.id,
@@ -121,6 +131,9 @@ export class WeeklyChecklistService {
         region: character.region,
         className: character.className,
         level: character.level,
+        trackingProfile: resolveCharacterTrackingProfile(
+          tagsByCharacterId.get(character.id) ?? []
+        ),
         completedTaskKeys:
           character.weeklyCompletions.map(
             (completion) =>

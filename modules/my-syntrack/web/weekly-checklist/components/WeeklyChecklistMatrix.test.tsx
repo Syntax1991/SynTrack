@@ -22,6 +22,7 @@ function buildCharacter(
     region: "eu",
     className: "Shaman",
     level: 80,
+    trackingProfile: "FULL",
     completedTaskKeys: [],
     professionWeekly: {
       state: "NOT_TRACKED",
@@ -66,7 +67,7 @@ describe("WeeklyChecklistMatrix", () => {
     expect(screen.getByText("Synbloom")).toBeInTheDocument();
   });
 
-  it("shows ? for not-yet-automated activity domains", () => {
+  it("shows ? for not-yet-automated activity domains on gameplay-enabled chars", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix characters={[buildCharacter()]} />
     );
@@ -75,6 +76,23 @@ describe("WeeklyChecklistMatrix", () => {
       "Not automatically tracked yet"
     );
     expect(unknowns.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("shows — for gameplay domains on profession-only characters", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            trackingProfile: "PROFESSION"
+          })
+        ]}
+      />
+    );
+
+    const disabled = screen.getAllByTitle(
+      "Not applicable for this character profile"
+    );
+    expect(disabled).toHaveLength(4);
   });
 
   it("surfaces weekly-only action from Treatise incompleteness", () => {
