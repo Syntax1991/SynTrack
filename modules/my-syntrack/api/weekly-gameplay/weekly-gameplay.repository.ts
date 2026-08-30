@@ -21,6 +21,7 @@ export class WeeklyGameplayRepository {
       mythicPlusCaptured: row.mythicPlusCaptured,
       raidCaptured: row.raidCaptured,
       vaultActivities: row.vaultActivities.map((activity) => ({
+        type: activity.type,
         typeName: activity.typeName,
         threshold: activity.threshold,
         progress: activity.progress

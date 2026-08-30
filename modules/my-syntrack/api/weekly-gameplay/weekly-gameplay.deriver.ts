@@ -3,8 +3,14 @@ import type {
   WeeklyGameplayDomainView,
   WeeklyGameplaySnapshotInput
 } from "./weekly-gameplay.types.js";
-
-const MYTHIC_PLUS_VAULT_CAP = 8;
+import {
+  capturedThresholds,
+  mythicPlusThresholds,
+  resolveVaultAggregate,
+  resolveVaultCategory,
+  thisWeekMythicPlusRuns,
+  thisWeekRaidKills
+} from "./weekly-gameplay.vault.js";
 
 function unknownDomain(label: string): WeeklyGameplayDomainView {
   return {
@@ -12,19 +18,26 @@ function unknownDomain(label: string): WeeklyGameplayDomainView {
     completeCount: 0,
     applicableTotal: 0,
     unknownCount: 1,
-    label
+    label,
+    rawCompleteCount: 0,
+    knownUnlockedSlots: 0,
+    maxSlots: 0,
+    hasUnknownCategories: false,
+    unknownCategoryCount: 0
   };
 }
 
-function knownDomain(
+function thresholdDomain(
   label: string,
-  completeCount: number,
-  applicableTotal: number
+  rawCompleteCount: number,
+  thresholds: number[]
 ): WeeklyGameplayDomainView {
-  if (applicableTotal <= 0) {
+  if (thresholds.length === 0) {
     return unknownDomain(label);
   }
 
+  const applicableTotal = Math.max(...thresholds);
+  const completeCount = Math.min(rawCompleteCount, applicableTotal);
   const incomplete = completeCount < applicableTotal;
 
   return {
@@ -32,155 +45,109 @@ function knownDomain(
     completeCount,
     applicableTotal,
     unknownCount: 0,
-    label
+    label,
+    rawCompleteCount,
+    knownUnlockedSlots: completeCount,
+    maxSlots: applicableTotal,
+    hasUnknownCategories: false,
+    unknownCategoryCount: 0
   };
-}
-
-function vaultFamily(
-  typeName: string | null
-): "mythic-plus" | "raid" | "world" | null {
-  const name = typeName?.toLowerCase() ?? "";
-
-  if (
-    name === "activities" ||
-    name === "mythicplus" ||
-    name === "dungeon"
-  ) {
-    return "mythic-plus";
-  }
-
-  if (name === "raid") {
-    return "raid";
-  }
-
-  if (name === "world") {
-    return "world";
-  }
-
-  return null;
-}
-
-function unlocked(activity: {
-  threshold: number | null;
-  progress: number | null;
-}): boolean {
-  return (
-    activity.threshold !== null &&
-    activity.progress !== null &&
-    activity.progress >= activity.threshold
-  );
-}
-
-function deriveVault(
-  snapshot: WeeklyGameplaySnapshotInput
-): WeeklyGameplayDomainView {
-  if (!snapshot.vaultCaptured || snapshot.vaultCurrentPeriod !== true) {
-    return unknownDomain("Vault");
-  }
-
-  const families = new Set<"mythic-plus" | "raid" | "world">();
-
-  for (const activity of snapshot.vaultActivities) {
-    const family = vaultFamily(activity.typeName);
-
-    if (family && unlocked(activity)) {
-      families.add(family);
-    }
-  }
-
-  return knownDomain("Vault", families.size, 3);
 }
 
 function deriveMythicPlus(
   snapshot: WeeklyGameplaySnapshotInput
 ): WeeklyGameplayDomainView {
-  if (!snapshot.mythicPlusCaptured) {
+  const runs = thisWeekMythicPlusRuns(snapshot);
+
+  if (runs === null) {
     return unknownDomain("M+");
   }
 
-  const completedThisWeek = snapshot.mythicPlusRuns.filter(
-    (run) => run.completed !== false && run.thisWeek !== false
-  ).length;
-
-  return knownDomain("M+", completedThisWeek, MYTHIC_PLUS_VAULT_CAP);
-}
-
-function parseKilledEncounters(encountersJson: string): {
-  killed: number;
-  total: number;
-} | null {
-  try {
-    const parsed = JSON.parse(encountersJson) as Array<{
-      isKilled?: boolean | null;
-    }>;
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return null;
-    }
-
-    return {
-      killed: parsed.filter((encounter) => encounter.isKilled === true).length,
-      total: parsed.length
-    };
-  } catch {
-    return null;
-  }
+  return thresholdDomain("M+", runs, mythicPlusThresholds(snapshot));
 }
 
 function deriveRaid(
   snapshot: WeeklyGameplaySnapshotInput
 ): WeeklyGameplayDomainView {
-  if (!snapshot.raidCaptured) {
+  const raid = thisWeekRaidKills(snapshot);
+
+  if (!raid) {
     return unknownDomain("Raid");
   }
 
-  const lockouts = [...snapshot.raidLockouts].sort(
-    (left, right) => (right.numEncounters ?? 0) - (left.numEncounters ?? 0)
-  );
-  const primary = lockouts[0];
+  const raidThresholds = capturedThresholds(snapshot, "raid");
 
-  if (!primary) {
-    return unknownDomain("Raid");
+  if (raidThresholds.length > 0) {
+    return thresholdDomain("Raid", raid.killed, raidThresholds);
   }
 
-  const parsed = parseKilledEncounters(primary.encountersJson);
+  const completeCount = Math.min(raid.killed, raid.total);
 
-  if (parsed) {
-    return knownDomain("Raid", parsed.killed, parsed.total);
-  }
-
-  if (
-    primary.encounterProgress !== null &&
-    primary.numEncounters !== null &&
-    primary.numEncounters > 0
-  ) {
-    return knownDomain(
-      "Raid",
-      primary.encounterProgress,
-      primary.numEncounters
-    );
-  }
-
-  return unknownDomain("Raid");
+  return {
+    state: completeCount < raid.total ? "ATTENTION" : "READY",
+    completeCount,
+    applicableTotal: raid.total,
+    unknownCount: 0,
+    label: "Raid",
+    rawCompleteCount: raid.killed,
+    knownUnlockedSlots: completeCount,
+    maxSlots: raid.total,
+    hasUnknownCategories: false,
+    unknownCategoryCount: 0
+  };
 }
 
 function deriveDelves(
   snapshot: WeeklyGameplaySnapshotInput
 ): WeeklyGameplayDomainView {
-  if (!snapshot.vaultCaptured || snapshot.vaultCurrentPeriod !== true) {
+  const category = resolveVaultCategory(snapshot, "world");
+
+  if (!category.known) {
     return unknownDomain("Delves");
   }
 
-  const world = snapshot.vaultActivities.filter(
-    (activity) => vaultFamily(activity.typeName) === "world"
-  );
+  return {
+    state:
+      category.unlocked < category.slots ? "ATTENTION" : "READY",
+    completeCount: category.unlocked,
+    applicableTotal: category.slots,
+    unknownCount: 0,
+    label: "Delves",
+    rawCompleteCount: category.unlocked,
+    knownUnlockedSlots: category.unlocked,
+    maxSlots: category.slots,
+    hasUnknownCategories: false,
+    unknownCategoryCount: 0
+  };
+}
 
-  if (world.length === 0) {
-    return unknownDomain("Delves");
+function deriveVault(
+  snapshot: WeeklyGameplaySnapshotInput
+): WeeklyGameplayDomainView {
+  const aggregate = resolveVaultAggregate(snapshot);
+
+  if (aggregate.maxSlots <= 0 || aggregate.unknownCategoryCount === 3) {
+    return unknownDomain("Vault");
   }
 
-  const unlockedCount = world.filter(unlocked).length;
-  return knownDomain("Delves", unlockedCount, world.length);
+  const state: WeeklyGameplayDomainView["state"] = aggregate.hasUnknownCategories
+    ? "IN_PROGRESS"
+    : aggregate.knownUnlockedSlots < aggregate.maxSlots
+      ? "ATTENTION"
+      : "READY";
+
+  return {
+    state,
+    completeCount: aggregate.knownUnlockedSlots,
+    applicableTotal: aggregate.maxSlots,
+    unknownCount: aggregate.unknownCategoryCount,
+    label: "Vault",
+    rawCompleteCount: aggregate.knownUnlockedSlots,
+    knownUnlockedSlots: aggregate.knownUnlockedSlots,
+    maxSlots: aggregate.maxSlots,
+    hasUnknownCategories: aggregate.hasUnknownCategories,
+    unknownCategoryCount: aggregate.unknownCategoryCount
+  };
 }
 
 export function deriveWeeklyGameplay(
@@ -190,7 +157,7 @@ export function deriveWeeklyGameplay(
   const raid = deriveRaid(snapshot);
   const remainingRuns = Math.max(
     0,
-    MYTHIC_PLUS_VAULT_CAP - mythicPlus.completeCount
+    mythicPlus.applicableTotal - mythicPlus.completeCount
   );
 
   return {
@@ -201,7 +168,7 @@ export function deriveWeeklyGameplay(
     delves: deriveDelves(snapshot),
     mythicPlusAction:
       mythicPlus.state === "ATTENTION" && remainingRuns > 0
-        ? `${remainingRuns} more M+ run${remainingRuns === 1 ? "" : "s"} for Vault slot 3`
+        ? `${remainingRuns} more M+ run${remainingRuns === 1 ? "" : "s"} for Vault slot ${mythicPlusThresholds(snapshot).length}`
         : null,
     raidAction:
       raid.state === "ATTENTION"

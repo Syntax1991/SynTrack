@@ -3,7 +3,25 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
+import type { WeeklyGameplayDomainView } from "../../../api/weekly-gameplay/weekly-gameplay.types.js";
 import { WeeklyChecklistMatrix } from "./WeeklyChecklistMatrix";
+
+function gameplayDomain(
+  overrides: Partial<WeeklyGameplayDomainView> & Pick<WeeklyGameplayDomainView, "label">
+): WeeklyGameplayDomainView {
+  return {
+    state: "UNKNOWN",
+    completeCount: 0,
+    applicableTotal: 0,
+    unknownCount: 1,
+    rawCompleteCount: 0,
+    knownUnlockedSlots: 0,
+    maxSlots: 0,
+    hasUnknownCategories: false,
+    unknownCategoryCount: 0,
+    ...overrides
+  };
+}
 
 const zeroAggregate = {
   completeCount: 0,
@@ -84,7 +102,35 @@ describe("WeeklyChecklistMatrix", () => {
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
-            trackingProfile: "PROFESSION"
+            trackingProfile: "PROFESSION",
+            weeklyGameplay: {
+              characterId: "char-1",
+              vault: gameplayDomain({
+                label: "Vault",
+                state: "IN_PROGRESS",
+                completeCount: 6,
+                applicableTotal: 9,
+                knownUnlockedSlots: 6,
+                maxSlots: 9,
+                hasUnknownCategories: true,
+                unknownCount: 1
+              }),
+              mythicPlus: gameplayDomain({
+                label: "M+",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8
+              }),
+              raid: gameplayDomain({
+                label: "Raid",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8
+              }),
+              delves: gameplayDomain({ label: "Delves" }),
+              mythicPlusAction: null,
+              raidAction: null
+            }
           })
         ]}
       />
@@ -94,6 +140,52 @@ describe("WeeklyChecklistMatrix", () => {
       "Not applicable for this character profile"
     );
     expect(disabled).toHaveLength(4);
+    expect(screen.queryByText("≥6/9")).not.toBeInTheDocument();
+  });
+
+  it("renders Synblast M+ 8/8 and Vault ≥6/9 when Delves are unresolved", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            weeklyGameplay: {
+              characterId: "char-1",
+              vault: gameplayDomain({
+                label: "Vault",
+                state: "IN_PROGRESS",
+                completeCount: 6,
+                applicableTotal: 9,
+                knownUnlockedSlots: 6,
+                maxSlots: 9,
+                hasUnknownCategories: true,
+                unknownCategoryCount: 1,
+                unknownCount: 1
+              }),
+              mythicPlus: gameplayDomain({
+                label: "M+",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8,
+                rawCompleteCount: 16
+              }),
+              raid: gameplayDomain({
+                label: "Raid",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8
+              }),
+              delves: gameplayDomain({ label: "Delves" }),
+              mythicPlusAction: null,
+              raidAction: null
+            }
+          })
+        ]}
+      />
+    );
+
+    expect(screen.getAllByText("8/8").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("≥6/9")).toBeInTheDocument();
+    expect(screen.queryByText("16/8")).not.toBeInTheDocument();
   });
 
   it("surfaces weekly-only action from Treatise incompleteness", () => {

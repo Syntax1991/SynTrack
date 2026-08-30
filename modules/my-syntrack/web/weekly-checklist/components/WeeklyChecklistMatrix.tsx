@@ -7,46 +7,7 @@ import type {
   ProfessionWeeklyAggregate,
   WeeklyChecklistCharacter
 } from "../types/weeklyChecklist.types";
-
-const disabledActivityToken = {
-  symbol: "—",
-  tone: "not-tracked" as const,
-  title: "Not applicable for this character profile"
-};
-
-const unknownActivityToken = {
-  symbol: "?",
-  tone: "unknown" as const,
-  title: "Not automatically tracked yet"
-};
-
-function gameplayDomainToken(
-  character: WeeklyChecklistCharacter,
-  domain: "vault" | "mythicPlus" | "raid" | "delves"
-) {
-  if (!isWeeklyGameplayEnabled(character.trackingProfile)) {
-    return disabledActivityToken;
-  }
-
-  const view = character.weeklyGameplay?.[domain];
-
-  if (!view || view.state === "UNKNOWN") {
-    return unknownActivityToken;
-  }
-
-  if (view.applicableTotal <= 0) {
-    return unknownActivityToken;
-  }
-
-  return {
-    symbol: `${view.completeCount}/${view.applicableTotal}`,
-    tone:
-      view.state === "READY"
-        ? ("ready" as const)
-        : ("attention" as const),
-    title: `${view.label} ${view.completeCount}/${view.applicableTotal}`
-  };
-}
+import { gameplayDomainToken } from "./weeklyChecklistTokens";
 
 function aggregateToken(
   aggregate: ProfessionWeeklyAggregate,

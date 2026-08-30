@@ -21,3 +21,21 @@ export function formatKnownWeeklyProgressSymbol(input: {
 
   return fraction;
 }
+
+export function formatVaultSlotSymbol(input: {
+  knownUnlockedSlots: number;
+  maxSlots: number;
+  hasUnknownCategories: boolean;
+}): string {
+  if (input.maxSlots <= 0) {
+    return "?";
+  }
+
+  const fraction = `${input.knownUnlockedSlots}/${input.maxSlots}`;
+
+  if (input.hasUnknownCategories) {
+    return `≥${fraction}`;
+  }
+
+  return fraction;
+}
