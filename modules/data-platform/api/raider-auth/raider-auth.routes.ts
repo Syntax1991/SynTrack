@@ -55,3 +55,17 @@ raiderAuthRouter.post(
     controller.logout
   )
 );
+
+raiderAuthRouter.get(
+  "/register/pending",
+  asyncHandler(
+    controller.getRegistrationPending
+  )
+);
+
+raiderAuthRouter.post(
+  "/register/confirm",
+  asyncHandler(
+    controller.confirmRegistration
+  )
+);

@@ -1,158 +1,82 @@
-import { randomBytes } from "node:crypto";
-import { env } from "../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
-import { normalizeBattleNetCharacters } from "../integrations/battlenet/battlenet-import.mapper.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import type { BattleNetRepository } from "../integrations/battlenet/battlenet.repository.js";
+import { RaiderAuthCallbackService } from "./raider-auth-callback.service.js";
 import { RaiderAuthRepository } from "./raider-auth.repository.js";
 import type {
+  RaiderAuthCallbackOutcome,
+  RaiderAuthIntent,
+  RaiderPendingRegistrationInfo,
   RaiderSessionResult,
   RaiderSessionStatus
 } from "./raider-auth.types.js";
 
-const oauthStateLifetimeMilliseconds =
-  10 * 60 * 1000;
-
-const sessionLifetimeMilliseconds =
-  30 * 24 * 60 * 60 * 1000;
-
 const tokenExpiryBufferMilliseconds =
   30 * 1000;
 
+/*
+ * Public entry point the rest of the app depends on (controller, plus
+ * device-auth/guild routes that only ever call requireSession /
+ * requireUsableAccessToken). OAuth-round-trip orchestration is delegated
+ * to RaiderAuthCallbackService - see that file for why - everything here
+ * is either a thin forward or operates on an already-established
+ * RaiderSession.
+ */
 export class RaiderAuthService {
+  private readonly callbackService:
+    RaiderAuthCallbackService;
+
   constructor(
     private readonly repository:
       RaiderAuthRepository,
 
-    private readonly battleNetRepository:
+    battleNetRepository:
       BattleNetRepository,
 
-    private readonly battleNetClient:
-      BattleNetClient
-  ) {}
+    battleNetClient: BattleNetClient
+  ) {
+    this.callbackService =
+      new RaiderAuthCallbackService(
+        repository,
+        battleNetRepository,
+        battleNetClient
+      );
+  }
 
-  async createAuthorizationUrl():
-    Promise<string> {
-    this.assertConfigured();
-
-    const state =
-      randomBytes(32).toString("hex");
-
-    await this.battleNetRepository.createOAuthState(
-      state,
-      new Date(
-        Date.now() +
-          oauthStateLifetimeMilliseconds
-      )
-    );
-
-    return this.battleNetClient.createAuthorizationUrl(
-      state,
-      env.BATTLENET_RAIDER_REDIRECT_URI
+  createAuthorizationUrl(
+    intent: RaiderAuthIntent,
+    returnTo: string | null
+  ): Promise<string> {
+    return this.callbackService.createAuthorizationUrl(
+      intent,
+      returnTo
     );
   }
 
-  async handleCallback(
+  handleCallback(
     code: string,
     state: string
-  ): Promise<RaiderSessionResult> {
-    this.assertConfigured();
-
-    if (!code || !state) {
-      throw new AppError(
-        400,
-        "Battle.net hat keinen vollständigen OAuth-Callback geliefert."
-      );
-    }
-
-    const stateIsValid =
-      await this.battleNetRepository.consumeOAuthState(
-        state
-      );
-
-    if (!stateIsValid) {
-      throw new AppError(
-        400,
-        "Der Battle.net-Anmeldevorgang ist ungültig oder abgelaufen."
-      );
-    }
-
-    const token =
-      await this.battleNetClient.exchangeAuthorizationCode(
-        code,
-        env.BATTLENET_RAIDER_REDIRECT_URI
-      );
-
-    const userInfo =
-      await this.battleNetClient.getUserInfo(
-        token.access_token
-      );
-
-    const battleTag =
-      userInfo.battletag ?? null;
-
-    const accountProfile =
-      await this.battleNetClient.getAccountProfile(
-        token.access_token
-      );
-
-    const characters =
-      normalizeBattleNetCharacters(
-        accountProfile
-      );
-
-    const existingAccount =
-      battleTag
-        ? await this.repository.findAccountByBattleTag(
-            battleTag
-          )
-        : null;
-
-    const account =
-      existingAccount ??
-      (await this.repository.createAccount(
-        battleTag
-      ));
-
-    const expiresInSeconds =
-      token.expires_in ?? 86400;
-
-    await this.repository.updateAccountToken(
-      account.id,
-      {
-        accessToken:
-          token.access_token,
-        tokenType:
-          token.token_type,
-        scope:
-          token.scope ?? null,
-        tokenExpiresAt: new Date(
-          Date.now() +
-            expiresInSeconds * 1000
-        )
-      }
+  ): Promise<RaiderAuthCallbackOutcome> {
+    return this.callbackService.handleCallback(
+      code,
+      state
     );
+  }
 
-    const sessionToken =
-      randomBytes(32).toString("hex");
+  peekPendingRegistration(
+    pendingToken: string
+  ): Promise<RaiderPendingRegistrationInfo> {
+    return this.callbackService.peekPendingRegistration(
+      pendingToken
+    );
+  }
 
-    await this.repository.createSession({
-      token: sessionToken,
-      raiderAccountId: account.id,
-      charactersJson: JSON.stringify(
-        characters
-      ),
-      expiresAt: new Date(
-        Date.now() +
-          sessionLifetimeMilliseconds
-      )
-    });
-
-    return {
-      token: sessionToken,
-      raiderAccountId: account.id,
-      characters
-    };
+  confirmRegistration(
+    pendingToken: string
+  ): Promise<RaiderSessionResult> {
+    return this.callbackService.confirmRegistration(
+      pendingToken
+    );
   }
 
   async requireSession(
@@ -252,17 +176,5 @@ export class RaiderAuthService {
     await this.repository.deleteSession(
       token
     );
-  }
-
-  private assertConfigured(): void {
-    if (
-      !env.BATTLENET_CLIENT_ID ||
-      !env.BATTLENET_CLIENT_SECRET
-    ) {
-      throw new AppError(
-        503,
-        "Battle.net Client-ID oder Client-Secret fehlt in apps/api/.env."
-      );
-    }
   }
 }
