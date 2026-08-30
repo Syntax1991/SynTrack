@@ -1,0 +1,131 @@
+import { Router } from "express";
+import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.js";
+import { CharacterRepository } from "../../../my-syntrack/api/characters/character.repository.js";
+import { DataHealthRepository } from "../../../my-syntrack/api/data-health/data-health.repository.js";
+import { GearReadinessRepository } from "../../../my-syntrack/api/gear-readiness/gear-readiness.repository.js";
+import { GearReadinessService } from "../../../my-syntrack/api/gear-readiness/gear-readiness.service.js";
+import { deviceCredentialAuthService } from "../device-auth/device-link.routes.js";
+import { ClientCharactersController } from "./client-characters.controller.js";
+import { ClientCharactersService } from "./client-characters.service.js";
+
+const characterRepository =
+  new CharacterRepository();
+
+const gearReadinessService =
+  new GearReadinessService(
+    new GearReadinessRepository()
+  );
+
+const dataHealthRepository =
+  new DataHealthRepository();
+
+const service = new ClientCharactersService(
+  async () => {
+    const rows =
+      await characterRepository.findAll();
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      realm: row.realm,
+      className: row.className,
+      level: row.level
+    }));
+  },
+  async (characterIds) => {
+    if (characterIds.length === 0) {
+      return new Map();
+    }
+
+    // Reuses GearReadinessService's existing averageItemLevel
+    // computation wholesale rather than re-deriving item level from
+    // CharacterGearSlot rows a second time.
+    const overview =
+      await gearReadinessService.getOverview();
+
+    const idSet = new Set(characterIds);
+
+    return new Map(
+      overview.characters
+        .filter((character) =>
+          idSet.has(character.id)
+        )
+        .map((character) => [
+          character.id,
+          character.averageItemLevel
+        ])
+    );
+  },
+  async (characterIds) => {
+    if (characterIds.length === 0) {
+      return new Map();
+    }
+
+    const [
+      gearSummaries,
+      resourceSummaries
+    ] = await Promise.all([
+      dataHealthRepository.findGearSlotSummary(
+        characterIds
+      ),
+      dataHealthRepository.findResourceSnapshotSummary(
+        characterIds
+      )
+    ]);
+
+    // "Last synced" = the most recent addon capture across either
+    // domain DataHealthRepository already tracks for this character -
+    // never an unrelated Character.updatedAt-style timestamp.
+    const lastCapturedAt = new Map<
+      string,
+      Date | null
+    >();
+
+    for (const row of gearSummaries) {
+      lastCapturedAt.set(
+        row.characterId,
+        row.maxLastSyncedAt
+      );
+    }
+
+    for (const row of resourceSummaries) {
+      const existing =
+        lastCapturedAt.get(
+          row.characterId
+        ) ?? null;
+
+      const candidate =
+        row.maxCapturedAt;
+
+      if (
+        candidate &&
+        (!existing ||
+          candidate > existing)
+      ) {
+        lastCapturedAt.set(
+          row.characterId,
+          candidate
+        );
+      }
+    }
+
+    return lastCapturedAt;
+  }
+);
+
+const controller =
+  new ClientCharactersController(
+    (rawToken) =>
+      deviceCredentialAuthService.requireValidCredential(
+        rawToken
+      ),
+    service
+  );
+
+export const clientCharactersRouter =
+  Router();
+
+clientCharactersRouter.get(
+  "/characters",
+  asyncHandler(controller.list)
+);
