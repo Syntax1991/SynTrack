@@ -837,23 +837,56 @@ model GuildVerification {
 
 model BattleNetOAuthState {
   id        String   @id
+  intent    String   @default("login")
+  returnTo  String?
   expiresAt DateTime
   createdAt DateTime @default(now())
 
   @@index([expiresAt])
 }
 
+// battleNetAccountId is the canonical, stable identity Blizzard returns
+// on every OAuth userinfo response (its "id"/"sub" claim) - this is the
+// uniqueness/lookup key. battleTag is only a synced-on-login display
+// field: BattleTags are mutable (a player can change theirs), so it is
+// intentionally NOT unique at the DB level - see raider-auth.repository.ts
+// for how legacy rows (created before this column existed) get backfilled.
 model RaiderAccount {
-  id             String    @id @default(cuid())
-  battleTag      String?   @unique
-  accessToken    String?
-  tokenType      String?
-  scope          String?
-  tokenExpiresAt DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  battleNetAccountId String?   @unique
+  battleTag          String?
+  accessToken        String?
+  tokenType          String?
+  scope              String?
+  tokenExpiresAt     DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   sessions RaiderSession[]
+
+  @@index([battleTag])
+}
+
+// A short-lived, single-use record bridging "Battle.net OAuth succeeded"
+// and "the user explicitly clicked Create account" (raider-auth.service
+// RaiderAuthService.confirmRegistration). No RaiderAccount is ever
+// created off the back of OAuth success alone - only consuming this row
+// via the confirm endpoint creates one. Mirrors the spirit of
+// DeviceLinkRequest's PENDING -> CONSUMED shape, scoped down to what
+// registration confirmation actually needs.
+model RaiderPendingRegistration {
+  id                 String   @id
+  battleNetAccountId String
+  battleTag          String?
+  accessToken        String
+  tokenType          String
+  scope              String?
+  tokenExpiresAt     DateTime
+  charactersJson     String
+  expiresAt          DateTime
+  createdAt          DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 model RaiderSession {

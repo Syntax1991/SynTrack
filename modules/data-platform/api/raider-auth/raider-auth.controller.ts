@@ -3,7 +3,9 @@ import type {
 } from "express";
 import { env } from "../../../../apps/api/src/config/env.js";
 import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
+import { isSafeInternalPath } from "./internal-path.js";
 import { RaiderAuthService } from "./raider-auth.service.js";
+import type { RaiderAuthIntent } from "./raider-auth.types.js";
 
 function getQueryValue(
   value: unknown
@@ -13,6 +15,15 @@ function getQueryValue(
     : "";
 }
 
+function getIntentQueryValue(
+  value: unknown
+): RaiderAuthIntent {
+  return getQueryValue(value) ===
+    "register"
+    ? "register"
+    : "login";
+}
+
 export class RaiderAuthController {
   constructor(
     private readonly service:
@@ -20,12 +31,30 @@ export class RaiderAuthController {
   ) {}
 
   connect: RequestHandler = async (
-    _request,
+    request,
     response
   ) => {
+    const intent =
+      getIntentQueryValue(
+        request.query.intent
+      );
+
+    const rawReturnTo =
+      getQueryValue(
+        request.query.returnTo
+      );
+
+    const returnTo =
+      isSafeInternalPath(rawReturnTo)
+        ? rawReturnTo
+        : null;
+
     const authorizationUrl =
       await this.service
-        .createAuthorizationUrl();
+        .createAuthorizationUrl(
+          intent,
+          returnTo
+        );
 
     response.redirect(
       authorizationUrl
@@ -36,11 +65,6 @@ export class RaiderAuthController {
     request,
     response
   ) => {
-    const frontendUrl = new URL(
-      "/raider-login",
-      env.FRONTEND_ORIGIN
-    );
-
     try {
       const providerError =
         getQueryValue(
@@ -49,12 +73,6 @@ export class RaiderAuthController {
         getQueryValue(
           request.query.error
         );
-
-      if (providerError) {
-        throw new Error(
-          providerError
-        );
-      }
 
       const code =
         getQueryValue(
@@ -66,28 +84,58 @@ export class RaiderAuthController {
           request.query.state
         );
 
+      if (providerError) {
+        response.redirect(
+          this.errorRedirect(
+            "login"
+          )
+        );
+
+        return;
+      }
+
       const result =
         await this.service.handleCallback(
           code,
           state
         );
 
-      frontendUrl.hash =
-        `token=${result.token}`;
-    }
-    catch (error) {
-      frontendUrl.searchParams.set(
-        "error",
-        error instanceof Error
-          ? error.message
-          : "Raider-Login mit Battle.net fehlgeschlagen."
+      response.redirect(
+        this.redirectForOutcome(
+          result
+        )
       );
     }
-
-    response.redirect(
-      frontendUrl.toString()
-    );
+    catch {
+      response.redirect(
+        this.errorRedirect("login")
+      );
+    }
   };
+
+  getRegistrationPending: RequestHandler =
+    async (request, response) => {
+      const pendingToken =
+        requireBearerToken(request);
+
+      response.json(
+        await this.service.peekPendingRegistration(
+          pendingToken
+        )
+      );
+    };
+
+  confirmRegistration: RequestHandler =
+    async (request, response) => {
+      const pendingToken =
+        requireBearerToken(request);
+
+      response.json(
+        await this.service.confirmRegistration(
+          pendingToken
+        )
+      );
+    };
 
   getSession: RequestHandler = async (
     request,
@@ -114,4 +162,117 @@ export class RaiderAuthController {
 
     response.status(204).send();
   };
+
+  private redirectForOutcome(
+    outcome: Awaited<
+      ReturnType<
+        RaiderAuthService["handleCallback"]
+      >
+    >
+  ): string {
+    switch (outcome.outcome) {
+      case "login-success": {
+        const target = new URL(
+          "/raider-login",
+          env.FRONTEND_ORIGIN
+        );
+
+        target.hash = `token=${outcome.token}`;
+
+        if (outcome.returnTo) {
+          target.searchParams.set(
+            "returnTo",
+            outcome.returnTo
+          );
+        }
+
+        return target.toString();
+      }
+
+      case "login-unknown-account": {
+        const target = new URL(
+          "/login",
+          env.FRONTEND_ORIGIN
+        );
+
+        target.searchParams.set(
+          "outcome",
+          "unknown-account"
+        );
+
+        return target.toString();
+      }
+
+      case "register-existing-account": {
+        const target = new URL(
+          "/register/confirm",
+          env.FRONTEND_ORIGIN
+        );
+
+        target.searchParams.set(
+          "outcome",
+          "existing"
+        );
+
+        target.hash = `token=${outcome.token}`;
+
+        return target.toString();
+      }
+
+      case "register-pending": {
+        const target = new URL(
+          "/register/confirm",
+          env.FRONTEND_ORIGIN
+        );
+
+        target.hash = `pendingToken=${outcome.pendingToken}`;
+
+        return target.toString();
+      }
+
+      case "error":
+      default: {
+        return this.errorRedirect(
+          outcome.outcome === "error"
+            ? outcome.intent
+            : "login",
+          outcome.outcome === "error"
+            ? outcome.reason
+            : undefined
+        );
+      }
+    }
+  }
+
+  /*
+   * `error` carries a short stable code, not a sentence - the frontend
+   * (LoginPage/RegisterPage) owns the actual copy per code, so this is
+   * free to gain more distinct reasons later without the URL shape
+   * changing. "state_expired" specifically covers the "OAuth state was
+   * missing/expired when the callback arrived" case (see
+   * raider-auth-callback.service.ts / BattleNetRepository.consumeOAuthState)
+   * so a user who waited too long, double-submitted, or reused an old
+   * callback link gets an accurate message instead of a generic one -
+   * every code still resolves to a fresh /login or /register page, so
+   * "Try again" always starts a brand-new OAuth attempt rather than
+   * retrying the dead state.
+   */
+  private errorRedirect(
+    intent: RaiderAuthIntent,
+    reason?: "state_expired"
+  ): string {
+    const target = new URL(
+      intent === "register"
+        ? "/register"
+        : "/login",
+      env.FRONTEND_ORIGIN
+    );
+
+    target.searchParams.set(
+      "error",
+      reason ?? "failed"
+    );
+
+    return target.toString();
+  }
 }

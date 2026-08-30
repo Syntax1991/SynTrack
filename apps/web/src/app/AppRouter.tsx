@@ -19,6 +19,9 @@ import { RaidTasksPage } from "../../../../modules/my-syntrack/web/raid-tasks/pa
 import { WeeklyChecklistPage } from "../../../../modules/my-syntrack/web/weekly-checklist/pages/WeeklyChecklistPage";
 import { VaultMythicPlusPage } from "../../../../modules/my-syntrack/web/vault-mythic-plus/pages/VaultMythicPlusPage";
 import { RaiderLoginCallbackPage } from "../../../../modules/data-platform/web/raider-auth/pages/RaiderLoginCallbackPage";
+import { LoginPage } from "../../../../modules/data-platform/web/raider-auth/pages/LoginPage";
+import { RegisterPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterPage";
+import { RegisterConfirmPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterConfirmPage";
 import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTablePage";
 import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
 import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
@@ -241,6 +244,21 @@ export function AppRouter() {
       <Route
         element={<RaiderLoginCallbackPage />}
         path="raider-login"
+      />
+
+      <Route
+        element={<LoginPage />}
+        path="login"
+      />
+
+      <Route
+        element={<RegisterPage />}
+        path="register"
+      />
+
+      <Route
+        element={<RegisterConfirmPage />}
+        path="register/confirm"
       />
 
       <Route

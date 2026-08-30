@@ -93,3 +93,59 @@
 .raider-session-gate-card .button {
   margin-top: 4px;
 }
+
+.raider-session-gate-card h1 {
+  line-height: 1.2;
+}
+
+.raider-auth-tagline {
+  margin: -8px 0 0;
+  color: var(--primary-hover);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.raider-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.raider-auth-actions .button {
+  flex: 1 1 auto;
+}
+
+.raider-auth-secondary {
+  margin-top: 2px !important;
+  font-size: 0.8rem !important;
+}
+
+.raider-auth-secondary a {
+  color: var(--primary-hover);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.raider-auth-secondary a:hover {
+  text-decoration: underline;
+}
+
+.raider-auth-identity-label {
+  margin-top: -4px !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.raider-auth-identity-value {
+  margin-top: -8px !important;
+  color: var(--text) !important;
+  font-size: 1.05rem !important;
+  font-weight: 750;
+}
