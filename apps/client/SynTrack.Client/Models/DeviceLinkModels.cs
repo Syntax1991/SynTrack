@@ -17,3 +17,14 @@ public sealed class DeviceLinkStatusResponse
     public required string Status { get; init; }
     public string? Credential { get; init; }
 }
+
+/// <summary>
+/// Mirrors GET /api/client/me. BattleTag is null both when the
+/// authenticated device credential predates raiderAccountId linkage and
+/// when the linked RaiderAccount has none on file - the client treats
+/// both the same way (no identity line shown), never as an error.
+/// </summary>
+public sealed class ClientProfileResponse
+{
+    public string? BattleTag { get; init; }
+}

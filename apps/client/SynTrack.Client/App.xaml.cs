@@ -37,8 +37,10 @@ public partial class App : Application
             ? "dotnet-hosted"
             : "exe";
 
+        var clientVersion = GetType().Assembly.GetName().Version?.ToString() ?? "0.1.0";
+
         logger.Info(
-            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType}");
+            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType} version={clientVersion} assemblyDir={AppContext.BaseDirectory}");
 
         // A raw SynTrack.Client.exe double-click landing as a second,
         // uncoordinated process while a dotnet.exe-hosted instance was
@@ -65,7 +67,6 @@ public partial class App : Application
         var apiClient = new SynTrackApiClient(_httpClient, ApiBaseUrl);
         var deviceLinkService = new DeviceLinkService(apiClient, credentialService, WebBaseUrl);
 
-        var clientVersion = GetType().Assembly.GetName().Version?.ToString() ?? "0.1.0";
         var syncGate = settingsService.LoadSyncGate();
         var syncEngine = new SyncEngine(credentialService, apiClient, settingsService, syncGate, clientVersion);
 
@@ -76,6 +77,7 @@ public partial class App : Application
             accountDiscovery,
             settingsService,
             credentialService,
+            apiClient,
             deviceLinkService,
             syncEngine,
             _watcher,

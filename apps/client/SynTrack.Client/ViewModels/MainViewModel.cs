@@ -16,6 +16,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IWowAccountDiscoveryService _accountDiscovery;
     private readonly IClientSettingsService _settingsService;
     private readonly ICredentialService _credentialService;
+    private readonly ISynTrackApiClient _apiClient;
     private readonly DeviceLinkService _deviceLinkService;
     private readonly SyncEngine _syncEngine;
     private readonly SavedVariablesWatcherService _watcher;
@@ -28,6 +29,17 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _connected;
+
+    /// <summary>
+    /// The authenticated identity ("Syntax#21715"), fetched from
+    /// GET /api/client/me - never fabricated from local settings. Null
+    /// while signed out, while the profile fetch is in flight, or on
+    /// fetch failure; the UI just omits the "Connected as" line, it never
+    /// shows a placeholder or crashes. This is display data only, not a
+    /// credential - see MainViewModelSecurityTests.
+    /// </summary>
+    [ObservableProperty]
+    private string? _battleTag;
 
     [ObservableProperty]
     private SyncStatus _syncStatus = SyncStatus.WaitingForData;
@@ -56,17 +68,71 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _autostart;
 
+    [ObservableProperty]
+    private bool _isLoadingCharacters;
+
+    /// <summary>
+    /// Null when idle/loading/loaded successfully - set only on an actual
+    /// roster fetch failure, and deliberately independent of sync/watcher
+    /// health: a broken roster call must never affect whether
+    /// SavedVariables continue uploading.
+    /// </summary>
+    [ObservableProperty]
+    private string? _charactersError;
+
     public ObservableCollection<AccountCandidate> AccountCandidates { get; } = new();
+
+    public ObservableCollection<CharacterRosterEntry> Characters { get; } = new();
 
     public string SyncStatusLabel => SyncStatus.ToDisplayLabel();
 
     public string SyncStatusTone => SyncStatus.ToTone();
+
+    /// <summary>User-facing connection state - see the status-language table in the redesign spec.</summary>
+    public string ConnectionStatusLabel => IsLinking
+        ? "Signing in..."
+        : Connected
+            ? "Connected"
+            : "Signed out";
+
+    public string ConnectionStatusTone => IsLinking
+        ? "warning"
+        : Connected
+            ? "positive"
+            : "neutral";
+
+    public string WowDetectionLabel => WowPath is null
+        ? "World of Warcraft not found"
+        : "World of Warcraft detected";
+
+    /// <summary>
+    /// Two states only (no "paused" concept exists in the watcher today) -
+    /// deliberately not inventing new watcher business logic just for
+    /// presentation, per the "don't rewrite working business logic" rule.
+    /// </summary>
+    public string WatcherStatusLabel => WowPath is null || AccountName is null
+        ? "Waiting for WoW account"
+        : "Watching SavedVariables";
+
+    public string WatcherStatusTone => WowPath is null || AccountName is null
+        ? "neutral"
+        : "positive";
+
+    /// <summary>
+    /// True only once loading has finished, no error occurred, and the
+    /// roster is genuinely empty - manually re-raised after every mutation
+    /// of <see cref="Characters"/> (see RefreshCharactersAsync/Disconnect)
+    /// since ObservableCollection.Count changes don't raise PropertyChanged
+    /// on their own.
+    /// </summary>
+    public bool ShowEmptyRosterMessage => !IsLoadingCharacters && CharactersError is null && Characters.Count == 0;
 
     public MainViewModel(
         IWowDiscoveryService wowDiscovery,
         IWowAccountDiscoveryService accountDiscovery,
         IClientSettingsService settingsService,
         ICredentialService credentialService,
+        ISynTrackApiClient apiClient,
         DeviceLinkService deviceLinkService,
         SyncEngine syncEngine,
         SavedVariablesWatcherService watcher,
@@ -78,6 +144,7 @@ public sealed partial class MainViewModel : ObservableObject
         _accountDiscovery = accountDiscovery;
         _settingsService = settingsService;
         _credentialService = credentialService;
+        _apiClient = apiClient;
         _deviceLinkService = deviceLinkService;
         _syncEngine = syncEngine;
         _watcher = watcher;
@@ -106,6 +173,12 @@ public sealed partial class MainViewModel : ObservableObject
         // even though the watcher was already targeting the right account.
         RefreshAccountCandidates();
         RestartWatcherIfReady();
+
+        if (_connected)
+        {
+            _ = RefreshProfileAsync();
+            _ = RefreshCharactersAsync();
+        }
     }
 
     /// <summary>CommunityToolkit-generated hook, fired whenever <see cref="SyncStatus"/> changes.</summary>
@@ -114,6 +187,35 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(SyncStatusLabel));
         OnPropertyChanged(nameof(SyncStatusTone));
     }
+
+    partial void OnConnectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ConnectionStatusLabel));
+        OnPropertyChanged(nameof(ConnectionStatusTone));
+    }
+
+    partial void OnIsLinkingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ConnectionStatusLabel));
+        OnPropertyChanged(nameof(ConnectionStatusTone));
+    }
+
+    partial void OnWowPathChanged(string? value)
+    {
+        OnPropertyChanged(nameof(WowDetectionLabel));
+        OnPropertyChanged(nameof(WatcherStatusLabel));
+        OnPropertyChanged(nameof(WatcherStatusTone));
+    }
+
+    partial void OnAccountNameChanged(string? value)
+    {
+        OnPropertyChanged(nameof(WatcherStatusLabel));
+        OnPropertyChanged(nameof(WatcherStatusTone));
+    }
+
+    partial void OnIsLoadingCharactersChanged(bool value) => OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+
+    partial void OnCharactersErrorChanged(string? value) => OnPropertyChanged(nameof(ShowEmptyRosterMessage));
 
     [RelayCommand]
     private void DetectWow()
@@ -260,6 +362,10 @@ public sealed partial class MainViewModel : ObservableObject
         _credentialService.Clear();
         Connected = false;
         PendingUserCode = null;
+        BattleTag = null;
+        Characters.Clear();
+        CharactersError = null;
+        OnPropertyChanged(nameof(ShowEmptyRosterMessage));
         _logger.Info("Device disconnected.");
     }
 
@@ -287,7 +393,97 @@ public sealed partial class MainViewModel : ObservableObject
         Connected = true;
         PendingUserCode = null;
         _logger.Info("Device link approved; credential stored.");
+        _ = RefreshProfileAsync();
+        _ = RefreshCharactersAsync();
     });
+
+    /// <summary>
+    /// Loads the authenticated BattleTag from GET /api/client/me. Never
+    /// throws - a failed profile fetch (network error, malformed
+    /// response, or a device credential that predates raiderAccountId
+    /// linkage) just leaves BattleTag null and the UI omits the identity
+    /// line, it never blocks or crashes the connected state.
+    /// </summary>
+    private async Task RefreshProfileAsync()
+    {
+        var token = _credentialService.Load();
+
+        if (token is null)
+        {
+            _dispatcher.Invoke(() => BattleTag = null);
+            return;
+        }
+
+        string? battleTag;
+
+        try
+        {
+            var profile = await _apiClient.GetMeAsync(token, CancellationToken.None);
+            battleTag = profile?.BattleTag;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.Warn($"Profile fetch failed: {ex.Message}");
+            battleTag = null;
+        }
+
+        _dispatcher.Invoke(() => BattleTag = battleTag);
+    }
+
+    /// <summary>
+    /// Loads the character roster from GET /api/client/characters. Never
+    /// throws and never touches SyncStatus/watcher state - a broken
+    /// roster fetch only ever surfaces as CharactersError, it can never
+    /// stop or fail a SavedVariables sync.
+    /// </summary>
+    private async Task RefreshCharactersAsync()
+    {
+        var token = _credentialService.Load();
+
+        if (token is null)
+        {
+            _dispatcher.Invoke(() =>
+            {
+                Characters.Clear();
+                CharactersError = null;
+                OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+            });
+
+            return;
+        }
+
+        _dispatcher.Invoke(() => IsLoadingCharacters = true);
+
+        IReadOnlyList<ClientCharacterSummary> summaries;
+        string? error = null;
+
+        try
+        {
+            summaries = await _apiClient.GetCharactersAsync(token, CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.Warn($"Character roster fetch failed: {ex.Message}");
+            summaries = Array.Empty<ClientCharacterSummary>();
+            error = "Could not load character roster. Automatic SavedVariables sync continues if device authentication remains valid.";
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var entries = summaries.Select(summary => CharacterRosterEntry.From(summary, now)).ToList();
+
+        _dispatcher.Invoke(() =>
+        {
+            Characters.Clear();
+
+            foreach (var entry in entries)
+            {
+                Characters.Add(entry);
+            }
+
+            CharactersError = error;
+            IsLoadingCharacters = false;
+        });
+    }
 
     private void OnLinkExpired() => _dispatcher.Invoke(() =>
     {
@@ -303,5 +499,11 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnSyncCompleted(DateTimeOffset at) => _dispatcher.Invoke(() =>
     {
         LastSyncAt = at;
+
+        // A successful upload is the one moment new capture data could
+        // actually change the roster (item level / last-synced column) -
+        // bounded to this event rather than polling, so it can never
+        // become a request storm.
+        _ = RefreshCharactersAsync();
     });
 }

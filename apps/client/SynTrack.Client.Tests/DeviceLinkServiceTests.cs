@@ -25,6 +25,12 @@ public class DeviceLinkServiceTests
                 : new DeviceLinkStatusResponse { Status = "PENDING" });
         }
 
+        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult<ClientProfileResponse?>(new ClientProfileResponse { BattleTag = "Syntax#21715" });
+
+        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<ClientCharacterSummary>>(Array.Empty<ClientCharacterSummary>());
+
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,
             string fileModifiedAt, string contentSha256, string rawBody, CancellationToken cancellationToken) =>
