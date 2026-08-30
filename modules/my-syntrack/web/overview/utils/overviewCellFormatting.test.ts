@@ -32,16 +32,74 @@ describe("overviewCellFormatting", () => {
     expect(gear.symbol).not.toBe("✓");
   });
 
-  it("never renders Set/Embellishments (no data source yet) as Ready", () => {
+  it("formats Set/Embellishments as —, ?, or N/target", () => {
     expect(
-      formatTierToken({ state: "NOT_TRACKED" }).tone
+      formatTierToken({
+        state: "NOT_TRACKED",
+        equippedPieces: 0,
+        targetPieces: 4,
+        twoPiece: false,
+        fourPiece: false,
+        rawEquippedPieces: 0
+      })
+    ).toMatchObject({ symbol: "—", tone: "not-tracked" });
+
+    expect(
+      formatTierToken({
+        state: "UNKNOWN",
+        equippedPieces: 0,
+        targetPieces: 4,
+        twoPiece: false,
+        fourPiece: false,
+        rawEquippedPieces: 0
+      })
+    ).toMatchObject({ symbol: "?", tone: "unknown" });
+
+    expect(
+      formatTierToken({
+        state: "IN_PROGRESS",
+        equippedPieces: 2,
+        targetPieces: 4,
+        twoPiece: true,
+        fourPiece: false,
+        rawEquippedPieces: 2
+      })
+    ).toMatchObject({ symbol: "2/4", tone: "progress" });
+
+    expect(
+      formatTierToken({
+        state: "READY",
+        equippedPieces: 4,
+        targetPieces: 4,
+        twoPiece: true,
+        fourPiece: true,
+        rawEquippedPieces: 5
+      })
+    ).toMatchObject({ symbol: "4/4", tone: "ready" });
+
+    expect(
+      formatEmbellishmentToken({
+        state: "NOT_TRACKED",
+        equippedPieces: 0,
+        targetPieces: 2
+      }).tone
     ).toBe("not-tracked");
 
     expect(
       formatEmbellishmentToken({
-        state: "NOT_TRACKED"
-      }).tone
-    ).toBe("not-tracked");
+        state: "UNKNOWN",
+        equippedPieces: 0,
+        targetPieces: 2
+      })
+    ).toMatchObject({ symbol: "?", tone: "unknown" });
+
+    expect(
+      formatEmbellishmentToken({
+        state: "IN_PROGRESS",
+        equippedPieces: 1,
+        targetPieces: 2
+      })
+    ).toMatchObject({ symbol: "1/2", tone: "progress" });
   });
 
   it("keeps formatGearToken available for Character Detail even without Overview Gear column", () => {

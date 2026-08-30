@@ -50,11 +50,14 @@ export function resolveGearInput(
     input.gearByCharacterId.get(character.id) ?? {
       id: character.id,
       name: character.name,
+      level: character.level,
       slots: [],
       trackedSlotCount: 0,
       issueCount: 0,
       readinessPercent: 0,
-      averageItemLevel: null
+      averageItemLevel: null,
+      currentExpansionId: null,
+      bagPieces: []
     }
   );
 }

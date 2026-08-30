@@ -4,10 +4,10 @@ import type { LuaTable } from "./addon-import.types.js";
 
 function gearModule(
   data: LuaTable,
-  schemaVersion = 1
+  schemaVersion = 2
 ): LuaTable {
   return {
-    version: "0.1.0",
+    version: "0.2.0",
     schemaVersion,
     capturedAt: 1787857509,
     reason: "test",
@@ -20,9 +20,17 @@ describe("normalizeGearSnapshot", () => {
     expect(normalizeGearSnapshot(undefined)).toBeNull();
   });
 
-  it("returns null for an unsupported schema version rather than misreading it", () => {
+  it("returns null for schemaVersion 1 rather than misreading or wiping it", () => {
     const result = normalizeGearSnapshot(
-      gearModule({ slots: { HEAD: { equipped: false } } }, 2)
+      gearModule({ slots: { HEAD: { equipped: false } } }, 1)
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("returns null for an unsupported future schema version", () => {
+    const result = normalizeGearSnapshot(
+      gearModule({ slots: { HEAD: { equipped: false } } }, 3)
     );
 
     expect(result).toBeNull();
@@ -43,14 +51,23 @@ describe("normalizeGearSnapshot", () => {
         quality: null,
         socketCount: null,
         enchantId: null,
-        gemIds: []
+        gemIds: [],
+        expansionId: null,
+        setId: null,
+        setEvidenceResolved: null,
+        setBonusResolved: null,
+        setBonusSpellIds: null,
+        uniqueCategoryId: null,
+        uniqueCategoryCount: null,
+        uniquenessResolved: null
       }
     ]);
   });
 
-  it("normalizes a fully-enriched equipped slot", () => {
+  it("normalizes a fully-enriched equipped slot with tier evidence", () => {
     const result = normalizeGearSnapshot(
       gearModule({
+        currentExpansionId: 10,
         slots: {
           MAIN_HAND: {
             equipped: true,
@@ -58,12 +75,21 @@ describe("normalizeGearSnapshot", () => {
             itemLink: "item:12345:6789:111::::0:0:80",
             itemLevel: 675,
             quality: 4,
-            socketCount: 1
+            socketCount: 1,
+            expansionId: 10,
+            setId: null,
+            setEvidenceResolved: true,
+            setBonusResolved: true,
+            setBonusSpellIds: {},
+            uniqueCategoryId: 123,
+            uniqueCategoryCount: 2,
+            uniquenessResolved: true
           }
         }
       })
     );
 
+    expect(result?.currentExpansionId).toBe(10);
     expect(result?.slots).toEqual([
       {
         slotKey: "MAIN_HAND",
@@ -74,9 +100,44 @@ describe("normalizeGearSnapshot", () => {
         quality: 4,
         socketCount: 1,
         enchantId: 6789,
-        gemIds: [111]
+        gemIds: [111],
+        expansionId: 10,
+        setId: null,
+        setEvidenceResolved: true,
+        setBonusResolved: true,
+        setBonusSpellIds: [],
+        uniqueCategoryId: 123,
+        uniqueCategoryCount: 2,
+        uniquenessResolved: true
       }
     ]);
+  });
+
+  it("normalizes setBonusSpellIds from a Lua array table", () => {
+    const result = normalizeGearSnapshot(
+      gearModule({
+        currentExpansionId: 10,
+        slots: {
+          HEAD: {
+            equipped: true,
+            itemId: 99,
+            itemLink: "item:99",
+            itemLevel: 700,
+            quality: 4,
+            socketCount: 0,
+            expansionId: 10,
+            setId: 5001,
+            setEvidenceResolved: true,
+            setBonusResolved: true,
+            setBonusSpellIds: { 1: 111, 2: 222 },
+            uniquenessResolved: true
+          }
+        }
+      })
+    );
+
+    expect(result?.slots[0]?.setBonusSpellIds).toEqual([111, 222]);
+    expect(result?.slots[0]?.setId).toBe(5001);
   });
 
   it("keeps an equipped slot present even when enrichment fields are all null", () => {
@@ -89,7 +150,10 @@ describe("normalizeGearSnapshot", () => {
             itemLink: "item:999",
             itemLevel: null,
             quality: null,
-            socketCount: null
+            socketCount: null,
+            setEvidenceResolved: false,
+            setBonusResolved: false,
+            uniquenessResolved: false
           }
         }
       })
@@ -102,7 +166,10 @@ describe("normalizeGearSnapshot", () => {
       itemId: 999,
       itemLevel: null,
       quality: null,
-      socketCount: null
+      socketCount: null,
+      setEvidenceResolved: false,
+      setBonusResolved: false,
+      uniquenessResolved: false
     });
   });
 

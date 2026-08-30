@@ -222,23 +222,52 @@ export function formatItemLevelToken(
 export function formatTierToken(
   tier: TierOverviewState
 ): CellToken {
-  void tier;
+  if (tier.state === "NOT_TRACKED") {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Set/Tier not tracked"
+    };
+  }
+
+  if (tier.state === "UNKNOWN") {
+    return {
+      symbol: "?",
+      tone: "unknown",
+      title: "Set/Tier evidence incomplete"
+    };
+  }
 
   return {
-    symbol: "—",
-    tone: "not-tracked",
-    title: "Set/Tier not tracked - no data source exists yet"
+    symbol: `${tier.equippedPieces}/${tier.targetPieces}`,
+    tone: tier.state === "READY" ? "ready" : "progress",
+    title: `${tier.equippedPieces} of ${tier.targetPieces} tier pieces equipped`
   };
 }
 
 export function formatEmbellishmentToken(
   embellishments: EmbellishmentOverviewState
 ): CellToken {
-  void embellishments;
+  if (embellishments.state === "NOT_TRACKED") {
+    return {
+      symbol: "—",
+      tone: "not-tracked",
+      title: "Embellishments not tracked"
+    };
+  }
+
+  if (embellishments.state === "UNKNOWN") {
+    return {
+      symbol: "?",
+      tone: "unknown",
+      title: "Embellishment evidence incomplete"
+    };
+  }
 
   return {
-    symbol: "—",
-    tone: "not-tracked",
-    title: "Embellishments not tracked - no data source exists yet"
+    symbol: `${embellishments.equippedPieces}/${embellishments.targetPieces}`,
+    tone:
+      embellishments.state === "READY" ? "ready" : "progress",
+    title: `${embellishments.equippedPieces} of ${embellishments.targetPieces} embellishments equipped`
   };
 }

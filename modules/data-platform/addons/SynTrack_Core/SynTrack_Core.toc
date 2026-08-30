@@ -14,6 +14,7 @@ EventBus.lua
 ModuleRegistry.lua
 Export.lua
 Commands.lua
+GearEvidence.lua
 Gear.lua
 ResourceCatalog.lua
 Resources.lua

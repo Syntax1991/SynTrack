@@ -5,6 +5,7 @@ import {
   createTransaction,
   emptySlot,
   equippedSlot,
+  gearSnapshot,
   snapshot
 } from "./addon-import.gear.persistence.test-helpers.js";
 
@@ -13,8 +14,6 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
     const { transaction, gearSlots } = createTransaction();
     const persistence = new AddonCharacterPersistence();
 
-    // Manually seed a MANUAL row for a different character, as if it
-    // pre-existed from the Gear Readiness page.
     gearSlots.set("char-manual:HEAD", {
       characterId: "char-manual",
       slotKey: "HEAD",
@@ -31,7 +30,15 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
       gemIds: null,
       notes: null,
       source: "MANUAL",
-      lastSyncedAt: null as unknown as Date
+      lastSyncedAt: null as unknown as Date,
+      setId: null,
+      expansionId: null,
+      setEvidenceResolved: null,
+      setBonusResolved: null,
+      setBonusSpellIds: null,
+      uniqueCategoryId: null,
+      uniqueCategoryCount: null,
+      uniquenessResolved: null
     });
 
     await persistence.persist(
@@ -53,14 +60,12 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [
+        character(
+          gearSnapshot([
             equippedSlot("MAIN_HAND", { itemId: 1 }),
             equippedSlot("OFF_HAND", { itemId: 2 })
-          ]
-        })
+          ])
+        )
       ]),
       new Map(),
       new Map()
@@ -71,14 +76,12 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [
+        character(
+          gearSnapshot([
             equippedSlot("MAIN_HAND", { itemId: 999 }),
             emptySlot("OFF_HAND")
-          ]
-        })
+          ])
+        )
       ]),
       new Map(),
       new Map()
@@ -95,26 +98,18 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [equippedSlot("HEAD", { itemId: 5 })]
-        })
+        character(gearSnapshot([equippedSlot("HEAD", { itemId: 5 })]))
       ]),
       new Map(),
       new Map()
     );
 
-    // A second import that only reports MAIN_HAND (HEAD absent, not
-    // reported empty) must not touch the earlier HEAD row.
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [equippedSlot("MAIN_HAND", { itemId: 6 })]
-        })
+        character(
+          gearSnapshot([equippedSlot("MAIN_HAND", { itemId: 6 })])
+        )
       ]),
       new Map(),
       new Map()
@@ -134,11 +129,11 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
     await persistence.persist(
       transaction as never,
       snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: "2026-08-27T19:34:31.000Z",
-          slots: [equippedSlot("HEAD")]
-        })
+        character(
+          gearSnapshot([equippedSlot("HEAD")], {
+            capturedAt: "2026-08-27T19:34:31.000Z"
+          })
+        )
       ]),
       new Map(),
       new Map()
@@ -155,13 +150,7 @@ describe("AddonCharacterPersistence gear ownership and source semantics", () => 
 
     await persistence.persist(
       transaction as never,
-      snapshot([
-        character({
-          schemaVersion: 1,
-          capturedAt: null,
-          slots: [equippedSlot("HEAD")]
-        })
-      ]),
+      snapshot([character(gearSnapshot([equippedSlot("HEAD")]))]),
       new Map(),
       new Map()
     );

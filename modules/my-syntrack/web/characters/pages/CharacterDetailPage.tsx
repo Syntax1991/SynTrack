@@ -11,6 +11,7 @@ import { CharacterProfessionWeeklySection } from "../components/CharacterProfess
 import { CharacterResourcesSection } from "../components/CharacterResourcesSection";
 import { CharacterStatusStrip } from "../components/CharacterStatusStrip";
 import { CharacterThisWeekSection } from "../components/CharacterThisWeekSection";
+import { CharacterTierEmbellishmentSection } from "../components/CharacterTierEmbellishmentSection";
 import { CharacterTrackersSection } from "../components/CharacterTrackersSection";
 import { useCharacterControlDetail } from "../hooks/useCharacterControlDetail";
 
@@ -140,6 +141,13 @@ export function CharacterDetailPage() {
       <CharacterResourcesSection
         resources={
           detail.character.resources
+        }
+      />
+
+      <CharacterTierEmbellishmentSection
+        tier={detail.character.tier}
+        embellishments={
+          detail.character.embellishments
         }
       />
 
