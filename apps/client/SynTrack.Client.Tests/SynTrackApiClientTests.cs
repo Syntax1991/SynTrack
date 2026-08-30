@@ -137,7 +137,10 @@ public class SynTrackApiClientTests
     {
         var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("{\"battleTag\":\"Syntax#21715\"}", System.Text.Encoding.UTF8, "application/json")
+            Content = new StringContent(
+                "{\"identityStatus\":\"connected\",\"battleTag\":\"Syntax#21715\"}",
+                System.Text.Encoding.UTF8,
+                "application/json")
         });
 
         var client = CreateClient(handler);
@@ -151,17 +154,20 @@ public class SynTrackApiClientTests
     }
 
     [Fact]
-    public async Task GetMeReturnsANullBattleTagWhenTheCredentialPredatesRaiderAccountLinkage()
+    public async Task GetMeReturnsReconnectRequiredWhenCredentialPredatesRaiderAccountLinkage()
     {
         var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("{\"battleTag\":null}", System.Text.Encoding.UTF8, "application/json")
+            Content = new StringContent(
+                "{\"identityStatus\":\"legacy_reconnect_required\",\"battleTag\":null}",
+                System.Text.Encoding.UTF8,
+                "application/json")
         });
 
         var client = CreateClient(handler);
         var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
 
-        Assert.Equal(AccountHealth.FullyConnected, profile.Health);
+        Assert.Equal(AccountHealth.ReconnectRequired, profile.Health);
         Assert.Null(profile.BattleTag);
     }
 

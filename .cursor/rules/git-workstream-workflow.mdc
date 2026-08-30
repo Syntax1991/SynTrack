@@ -1,0 +1,50 @@
+---
+description: Permanent Git workstream/epic branch workflow — reuse active branches and PRs; no micro-branches
+alwaysApply: true
+---
+
+# Git workstream workflow (permanent)
+
+## Core
+- Branches = meaningful WORKSTREAMS / EPICS only. Not one branch per tiny tweak.
+- Small related fixes = more commits on the active workstream branch.
+- Default: REUSE the existing active workstream branch and its open PR.
+
+## Canonical vs worktrees
+- Permanent repo: `D:\Projects\SynTrack`
+- Temp worktrees (not separate repos): `D:\Projects\SynTrack-client`, `D:\Projects\SynTrack-web`
+- Never manually copy/move source between worktrees. Integrate via Git (PR → master).
+- One worktree owns one branch; no cross-edit of another worktree’s branch/files/processes.
+
+## Master
+- Stable integration only. No direct development on master.
+- Merge only after: implementation complete, tests green, live/visual acceptance, user acceptance, no blocking correctness issues.
+- After merge: verify master has commits; delete remote+local feature branch; remove unused worktree; prune.
+- Never hard-reset master blindly. Keep `archive/master-before-cleanup-2026-08-27` untouched.
+
+## Current workstreams (examples)
+- Desktop client → `feature/client` (PR #17 while open). Design, auth, BattleTag, roster, device linking, sync UI, settings, acceptance bugs, client tests/docs all stay here.
+- Web → `feature/webapp` similarly.
+- Do NOT create `feature/client-*`, `fix/client-*`, etc. while that milestone is open.
+
+## New branch only when independent lifecycle
+Parallel unrelated domain, risky experiment, urgent hotfix vs master, separate PR schedule, new epic after previous merged, or major conflict risk. “One small feature” is NOT enough.
+
+## PRs
+- One PR per unfinished workstream. Push updates to the same PR.
+- Do not open follow-up PRs for small fixes on the same epic.
+
+## Ops
+- `npm run dev:stop` before switching branches in a worktree. Do not kill unrelated processes.
+- Never touch `scripts/dev-manager.services.mjs`.
+- Addon sync only if this workstream changed addons.
+- Pre-commit: `npm verify` / git checks / `dotnet` as applicable.
+- Rebase onto master before merge when needed; force-with-lease only after rebase (never `--force`).
+
+## Status reporting (when starting phases)
+Include: Workstream / Branch / Worktree / Existing PR / New branch created: YES/NO  
+During an active epic, expect New branch created: NO.
+
+## Before creating a branch/PR
+Ask: existing active workstream? belongs there? needs independent lifecycle?  
+If YES / YES / NO → reuse branch. If open PR exists → commit/push/update it.
