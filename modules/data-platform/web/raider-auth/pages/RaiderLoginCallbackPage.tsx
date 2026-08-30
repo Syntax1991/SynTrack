@@ -7,6 +7,7 @@ import { setRaiderSessionToken } from "../../../../../apps/web/src/shared/api/ra
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
+import { isSafeInternalPath } from "../utils/internalPath";
 
 function extractTokenFromHash(
   hash: string
@@ -27,13 +28,33 @@ export function RaiderLoginCallbackPage() {
   const [error, setError] =
     useState<string | null>(null);
 
+  // Captured once, during render, before anything has a chance to clear
+  // it - React 18/19 StrictMode double-invokes effects (and this same
+  // lazy initializer) in development, and re-reading the live
+  // window.location.hash from inside the effect would see it already
+  // stripped by the first invocation's replaceState, misreading a real
+  // token as "missing" on the second pass.
+  const [initialHash] = useState(
+    () => window.location.hash
+  );
+
   useEffect(() => {
     const token = extractTokenFromHash(
-      window.location.hash
+      initialHash
     );
 
     if (token) {
       setRaiderSessionToken(token);
+
+      const rawReturnTo =
+        searchParams.get("returnTo");
+
+      const destination =
+        isSafeInternalPath(
+          rawReturnTo
+        )
+          ? rawReturnTo
+          : "/";
 
       window.history.replaceState(
         null,
@@ -41,12 +62,9 @@ export function RaiderLoginCallbackPage() {
         window.location.pathname
       );
 
-      navigate(
-        "/guild/raider-link",
-        {
-          replace: true
-        }
-      );
+      navigate(destination, {
+        replace: true
+      });
 
       return;
     }
@@ -55,7 +73,7 @@ export function RaiderLoginCallbackPage() {
       searchParams.get("error") ??
         "Battle.net-Login fehlgeschlagen."
     );
-  }, [navigate, searchParams]);
+  }, [initialHash, navigate, searchParams]);
 
   return (
     <>

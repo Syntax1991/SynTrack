@@ -2,13 +2,47 @@ import {
   apiRequest,
   getApiUrl
 } from "../../../../../apps/web/src/shared/api/httpClient";
-import type { RaiderSessionStatus } from "../types/raiderAuth.types";
+import { isSafeInternalPath } from "../utils/internalPath";
+import type {
+  RaiderAuthIntent,
+  RaiderPendingRegistrationInfo,
+  RaiderSessionResult,
+  RaiderSessionStatus
+} from "../types/raiderAuth.types";
 
-export function getRaiderLoginUrl():
-  string {
-  return getApiUrl(
-    "/auth/raider/connect"
+type RaiderLoginUrlOptions = {
+  intent?: RaiderAuthIntent;
+  returnTo?: string | null;
+};
+
+export function getRaiderLoginUrl(
+  options?: RaiderLoginUrlOptions
+): string {
+  const url = new URL(
+    getApiUrl(
+      "/auth/raider/connect"
+    )
   );
+
+  if (options?.intent === "register") {
+    url.searchParams.set(
+      "intent",
+      "register"
+    );
+  }
+
+  if (
+    isSafeInternalPath(
+      options?.returnTo
+    )
+  ) {
+    url.searchParams.set(
+      "returnTo",
+      options.returnTo
+    );
+  }
+
+  return url.toString();
 }
 
 export function getRaiderSessionStatus():
@@ -24,6 +58,33 @@ export function raiderLogout():
     "/auth/raider/logout",
     {
       method: "POST"
+    }
+  );
+}
+
+export function getPendingRegistration(
+  pendingToken: string
+): Promise<RaiderPendingRegistrationInfo> {
+  return apiRequest<RaiderPendingRegistrationInfo>(
+    "/auth/raider/register/pending",
+    {
+      headers: {
+        Authorization: `Bearer ${pendingToken}`
+      }
+    }
+  );
+}
+
+export function confirmRegistration(
+  pendingToken: string
+): Promise<RaiderSessionResult> {
+  return apiRequest<RaiderSessionResult>(
+    "/auth/raider/register/confirm",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${pendingToken}`
+      }
     }
   );
 }
