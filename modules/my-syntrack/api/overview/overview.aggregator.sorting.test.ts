@@ -19,6 +19,63 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
             name: "Synblast"
           })
         ],
+        professionByCharacterId: new Map([
+          [
+            "attention-char",
+            {
+              id: "attention-char",
+              name: "Synblast",
+              hasTrackedProfession: true,
+              partialProfessionIssues: [],
+              professions: [
+                {
+                  professionId: "alchemy",
+                  key: "alchemy",
+                  name: "Alchemy",
+                  category: "CRAFTING",
+                  skill: 100,
+                  knowledgePoints: 40,
+                  dataStatus: "TRACKED"
+                }
+              ]
+            }
+          ]
+        ]),
+        professionKnowledgeTreasureByCharacterId: new Map([
+          [
+            "attention-char",
+            {
+              id: "attention-char",
+              name: "Synblast",
+              treasures: {
+                completeCount: 0,
+                incompleteCount: 1,
+                unknownCount: 0,
+                applicableTotal: 1
+              },
+              professions: [
+                {
+                  professionKey: "alchemy",
+                  name: "Alchemy",
+                  treasures: {
+                    completeCount: 0,
+                    incompleteCount: 1,
+                    unknownCount: 0,
+                    applicableTotal: 1
+                  },
+                  sources: [
+                    {
+                      sourceKey: "treasure-1",
+                      name: "Treasure 1",
+                      state: "INCOMPLETE",
+                      capturedAt: null
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        ]),
         gearByCharacterId: new Map([
           [
             "ready-char",
@@ -50,12 +107,12 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
                   item: { itemLevel: 600 },
                   issues: {
                     missingEnchant: false,
-                    missingGemCount: 1
+                    missingGemCount: 3
                   }
                 }
               ],
               trackedSlotCount: 1,
-              issueCount: 1,
+              issueCount: 3,
               readinessPercent: 0,
               averageItemLevel: 600
             }
@@ -81,7 +138,7 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
     expect(characters[0]!.readinessState).not.toBe("ready");
   });
 
-  it("prefers precise gear action over unresolved weekly placeholders", () => {
+  it("does not promote empty sockets to gear nextAction", () => {
     const { characters } = aggregateCharacterWeeklyStates(
       baseInput({
         gearByCharacterId: new Map([
@@ -109,6 +166,7 @@ describe("aggregateCharacterWeeklyStates - sorting and readiness semantics", () 
       })
     );
 
-    expect(characters[0]!.nextAction?.domain).toBe("gear");
+    expect(characters[0]!.nextAction?.domain).not.toBe("gear");
+    expect(characters[0]!.gear.emptySocketCount).toBe(1);
   });
 });

@@ -3,11 +3,11 @@ import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
 import { baseInput } from "./overview.aggregator.fixtures.js";
 
 /*
- * Missing enchants must not drive Gear attention / Overview Action /
- * character readiness. Raw enchant capture remains elsewhere.
+ * Overview must never surface generic Gear attention — not for enchants,
+ * not for empty sockets. Factual counts remain on gear.* fields.
  */
-describe("aggregateCharacterWeeklyStates - enchant attention removed", () => {
-  it("fresh gear with missing enchants does not produce Gear attention", () => {
+describe("aggregateCharacterWeeklyStates - generic gear attention removed", () => {
+  it("missing enchants do not produce Gear attention", () => {
     const { characters } = aggregateCharacterWeeklyStates(
       baseInput({
         gearByCharacterId: new Map([
@@ -23,19 +23,12 @@ describe("aggregateCharacterWeeklyStates - enchant attention removed", () => {
                     missingEnchant: true,
                     missingGemCount: 0
                   }
-                },
-                {
-                  item: { itemLevel: 698 },
-                  issues: {
-                    missingEnchant: true,
-                    missingGemCount: 0
-                  }
                 }
               ],
-              trackedSlotCount: 2,
-              issueCount: 2,
+              trackedSlotCount: 1,
+              issueCount: 1,
               readinessPercent: 0,
-              averageItemLevel: 699
+              averageItemLevel: 700
             }
           ]
         ])
@@ -45,17 +38,14 @@ describe("aggregateCharacterWeeklyStates - enchant attention removed", () => {
     const character = characters[0]!;
 
     expect(character.gear.state).toBe("READY");
-    expect(character.gear.missingEnchantCount).toBe(2);
+    expect(character.gear.missingEnchantCount).toBe(1);
     expect(
-      character.attentionItems.some(
-        (item) => item.domain === "gear"
-      )
+      character.attentionItems.some((item) => item.domain === "gear")
     ).toBe(false);
     expect(character.nextAction?.domain).not.toBe("gear");
-    expect(character.readinessState).not.toBe("attention");
   });
 
-  it("empty sockets still produce Gear attention without mentioning enchants", () => {
+  it("empty sockets do not produce Gear attention or nextAction", () => {
     const { characters } = aggregateCharacterWeeklyStates(
       baseInput({
         gearByCharacterId: new Map([
@@ -85,10 +75,12 @@ describe("aggregateCharacterWeeklyStates - enchant attention removed", () => {
 
     const character = characters[0]!;
 
-    expect(character.gear.state).toBe("ATTENTION");
+    expect(character.gear.state).toBe("READY");
     expect(character.gear.emptySocketCount).toBe(2);
-    expect(character.nextAction?.domain).toBe("gear");
-    expect(character.nextAction?.detail).toContain("socket");
-    expect(character.nextAction?.detail).not.toMatch(/enchant/i);
+    expect(
+      character.attentionItems.some((item) => item.domain === "gear")
+    ).toBe(false);
+    expect(character.nextAction?.domain).not.toBe("gear");
+    expect(character.readinessState).not.toBe("attention");
   });
 });

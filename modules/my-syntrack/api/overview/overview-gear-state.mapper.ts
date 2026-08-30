@@ -1,13 +1,23 @@
 import type {
-  AttentionItem,
   GearOverviewState
 } from "./overview.types.js";
 
 export type OverviewGearCharacterInput = {
   id: string;
   name: string;
+  level?: number;
   slots: {
-    item: unknown;
+    key?: string;
+    item: {
+      itemLevel?: number | null;
+      expansionId?: number | null;
+      setId?: number | null;
+      setEvidenceResolved?: boolean | null;
+      setBonusResolved?: boolean | null;
+      setBonusSpellIds?: number[] | null;
+      uniqueCategoryId?: number | null;
+      uniquenessResolved?: boolean | null;
+    } | null;
     issues: {
       missingEnchant: boolean;
       missingGemCount: number;
@@ -17,18 +27,25 @@ export type OverviewGearCharacterInput = {
   issueCount: number;
   readinessPercent: number;
   averageItemLevel: number | null;
+  currentExpansionId?: number | null;
+  bagPieces?: {
+    itemId: number | null;
+    setId: number | null;
+    expansionId: number | null;
+    equipLoc: string | null;
+    setEvidenceResolved: boolean | null;
+  }[];
 };
 
 /*
- * Gear is owned by GearReadinessService - this only reads its already-
- * computed per-slot issues. Missing enchants are NOT attention criteria
- * (user checks them in-game); empty sockets remain Gear-domain issues.
+ * Gear factual read model for Overview iLvl and Character Detail.
+ * Missing enchants and empty sockets are captured as counts but never
+ * produce Overview attention or generic "Gear needs attention" actions.
  */
 export function resolveGearOverviewState(
   character: OverviewGearCharacterInput
 ): {
   gear: GearOverviewState;
-  attentionItem: AttentionItem | null;
 } {
   const missingEnchantCount =
     character.slots.filter(
@@ -46,58 +63,24 @@ export function resolveGearOverviewState(
       0
     );
 
-  /*
-   * Prefer socket/gem issues for attention. Ignore missingEnchant even
-   * when older issueCount payloads still counted enchants.
-   */
-  const attentionIssueCount = emptySocketCount;
-
-  const gear: GearOverviewState = {
-    state:
-      character.trackedSlotCount === 0
-        ? "NOT_TRACKED"
-        : attentionIssueCount > 0
-          ? "ATTENTION"
-          : "READY",
-    readinessPercent:
-      character.trackedSlotCount === 0
-        ? null
-        : character.readinessPercent,
-    trackedSlots: character.trackedSlotCount,
-    totalRelevantSlots: character.slots.length,
-    missingEnchantCount,
-    emptySocketCount,
-    itemLevel:
-      character.trackedSlotCount === 0
-        ? null
-        : character.averageItemLevel
-  };
-
-  if (gear.state !== "ATTENTION") {
-    return {
-      gear,
-      attentionItem: null
-    };
-  }
-
   return {
-    gear,
-    attentionItem: {
-      id: `${character.id}:gear`,
-      characterId: character.id,
-      characterName: character.name,
-      domain: "gear",
-      severity: "this-week",
-      label: "Gear needs attention",
-      detail:
-        emptySocketCount > 0
-          ? `${emptySocketCount} empty ${
-              emptySocketCount === 1
-                ? "socket"
-                : "sockets"
-            }`
-          : null,
-      path: "/gear-readiness"
+    gear: {
+      state:
+        character.trackedSlotCount === 0
+          ? "NOT_TRACKED"
+          : "READY",
+      readinessPercent:
+        character.trackedSlotCount === 0
+          ? null
+          : character.readinessPercent,
+      trackedSlots: character.trackedSlotCount,
+      totalRelevantSlots: character.slots.length,
+      missingEnchantCount,
+      emptySocketCount,
+      itemLevel:
+        character.trackedSlotCount === 0
+          ? null
+          : character.averageItemLevel
     }
   };
 }

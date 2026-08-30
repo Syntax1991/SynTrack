@@ -156,21 +156,21 @@ describe("CharacterWeeklyMatrix", () => {
       buildCharacter({
         attentionItems: [
           {
-            id: "char-1:gear",
+            id: "char-1:profession",
             characterId: "char-1",
             characterName: "Synblast",
-            domain: "gear",
+            domain: "profession",
             severity: "this-week",
-            label: "Gear needs attention",
-            detail: "2 empty sockets",
-            path: "/gear-readiness"
+            label: "1 Alchemy Knowledge Treasure missing",
+            detail: null,
+            path: "/characters/char-1"
           }
         ],
         nextAction: {
-          domain: "gear",
-          label: "Gear needs attention",
-          detail: "2 empty sockets",
-          path: "/gear-readiness",
+          domain: "profession",
+          label: "1 Alchemy Knowledge Treasure missing",
+          detail: null,
+          path: "/characters/char-1",
           severity: "this-week"
         },
         readinessState: "attention"
@@ -179,9 +179,9 @@ describe("CharacterWeeklyMatrix", () => {
 
     expect(
       screen.getByRole("link", {
-        name: "Gear needs attention"
+        name: "1 Alchemy Knowledge Treasure missing"
       })
-    ).toHaveAttribute("href", "/gear-readiness");
+    ).toHaveAttribute("href", "/characters/char-1");
   });
 
   it("renders precise next actions without muting them as generic weekly noise", () => {
@@ -255,14 +255,14 @@ describe("CharacterWeeklyMatrix", () => {
         readinessState: "attention",
         attentionItems: [
           {
-            id: "char-1:gear",
+            id: "char-1:profession",
             characterId: "char-1",
             characterName: "Synblast",
-            domain: "gear",
+            domain: "profession",
             severity: "this-week",
-            label: "Gear needs attention",
+            label: "1 Alchemy Knowledge Treasure missing",
             detail: null,
-            path: "/gear-readiness"
+            path: "/characters/char-1"
           }
         ]
       }),

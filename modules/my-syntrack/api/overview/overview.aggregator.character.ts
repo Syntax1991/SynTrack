@@ -87,7 +87,6 @@ export function resolveCharacterState(
   const attentionItems = [
     weeklySummaryResult.weeklyAction,
     professionSetupResult.attentionItem,
-    gearResult.attentionItem,
     resourceResult.attentionItem
   ].filter((item): item is AttentionItem => item !== null);
 
