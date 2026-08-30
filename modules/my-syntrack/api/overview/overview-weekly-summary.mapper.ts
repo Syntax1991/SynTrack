@@ -1,3 +1,7 @@
+import {
+  isWeeklyGameplayEnabled,
+  type CharacterTrackingProfile
+} from "../character-tracking/character-tracking-profile.js";
 import type {
   AttentionItem,
   ProfessionWeeklyOverviewState,
@@ -12,6 +16,7 @@ import type { OverviewDomainState } from "./overview.types.js";
 export type WeeklySummaryInput = {
   characterId: string;
   characterName: string;
+  trackingProfile?: CharacterTrackingProfile;
   vault: VaultOverviewState;
   professionWeekly: ProfessionWeeklyOverviewState;
   /*
@@ -101,9 +106,13 @@ export function resolveWeeklySummaryOverviewState(
   weeklyAction: AttentionItem | null;
 } {
   const { vault, professionWeekly } = input;
+  const gameplayEnabled = isWeeklyGameplayEnabled(
+    input.trackingProfile ?? "FULL"
+  );
 
-  const vaultDetail: WeeklySummaryDomainDetail =
-    vault.state === "UNKNOWN"
+  const vaultDetail: WeeklySummaryDomainDetail = !gameplayEnabled
+    ? activityPlaceholder("vault", "Vault", "NOT_TRACKED")
+    : vault.state === "UNKNOWN"
       ? activityPlaceholder("vault", "Vault", "UNKNOWN")
       : vault.state === "NOT_TRACKED"
         ? activityPlaceholder("vault", "Vault", "NOT_TRACKED")
@@ -116,22 +125,27 @@ export function resolveWeeklySummaryOverviewState(
             unknownCount: 0
           };
 
+  const gameplayActivityState = (
+    state: OverviewDomainState | undefined
+  ): OverviewDomainState =>
+    gameplayEnabled ? (state ?? "UNKNOWN") : "NOT_TRACKED";
+
   const domains: WeeklySummaryDomainDetail[] = [
     vaultDetail,
     activityPlaceholder(
       "mythic-plus",
       "M+",
-      input.mythicPlusState ?? "UNKNOWN"
+      gameplayActivityState(input.mythicPlusState)
     ),
     activityPlaceholder(
       "raid",
       "Raid",
-      input.raidState ?? "UNKNOWN"
+      gameplayActivityState(input.raidState)
     ),
     activityPlaceholder(
       "delves",
       "Delves",
-      input.delvesState ?? "UNKNOWN"
+      gameplayActivityState(input.delvesState)
     ),
     aggregateToDetail(
       "Quest",
@@ -257,6 +271,7 @@ function resolveWeeklyOnlyAction(
   const vault = domains.find((domain) => domain.key === "vault");
 
   if (
+    isWeeklyGameplayEnabled(input.trackingProfile ?? "FULL") &&
     vault &&
     vault.state === "ATTENTION" &&
     vault.applicableTotal > vault.completeCount

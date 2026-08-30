@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { isWeeklyGameplayEnabled } from "../../../api/character-tracking/character-tracking-profile.js";
+import { formatKnownWeeklyProgressSymbol } from "../../../api/weekly-progress/weekly-progress-display.js";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type {
@@ -6,11 +8,23 @@ import type {
   WeeklyChecklistCharacter
 } from "../types/weeklyChecklist.types";
 
+const disabledActivityToken = {
+  symbol: "—",
+  tone: "not-tracked" as const,
+  title: "Not applicable for this character profile"
+};
+
 const unknownActivityToken = {
   symbol: "?",
   tone: "unknown" as const,
   title: "Not automatically tracked yet"
 };
+
+function gameplayActivityToken(character: WeeklyChecklistCharacter) {
+  return isWeeklyGameplayEnabled(character.trackingProfile)
+    ? unknownActivityToken
+    : disabledActivityToken;
+}
 
 function aggregateToken(
   aggregate: ProfessionWeeklyAggregate,
@@ -84,8 +98,10 @@ function progressToken(character: WeeklyChecklistCharacter) {
     incomplete += aggregate.incompleteCount;
   }
 
-  // Four activity placeholders (Vault/M+/Raid/Delves) remain UNKNOWN.
-  unknownCount += 4;
+  // Vault/M+/Raid/Delves remain UNKNOWN placeholders for gameplay-enabled chars.
+  if (isWeeklyGameplayEnabled(character.trackingProfile)) {
+    unknownCount += 4;
+  }
 
   if (applicableKnown === 0 && incomplete === 0) {
     return {
@@ -95,10 +111,11 @@ function progressToken(character: WeeklyChecklistCharacter) {
     };
   }
 
-  const symbol =
-    unknownCount > 0
-      ? `${completedKnown}/${applicableKnown} · ${unknownCount}?`
-      : `${completedKnown}/${applicableKnown}`;
+  const symbol = formatKnownWeeklyProgressSymbol({
+    completedKnown,
+    applicableKnown,
+    unknownCount
+  });
 
   return {
     symbol,
@@ -208,16 +225,16 @@ export function WeeklyChecklistMatrix({
                 </td>
 
                 <td className="matrix-col-narrow">
-                  <StatusToken token={unknownActivityToken} />
+                  <StatusToken token={gameplayActivityToken(character)} />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={unknownActivityToken} />
+                  <StatusToken token={gameplayActivityToken(character)} />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={unknownActivityToken} />
+                  <StatusToken token={gameplayActivityToken(character)} />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={unknownActivityToken} />
+                  <StatusToken token={gameplayActivityToken(character)} />
                 </td>
 
                 <td className="matrix-col-narrow">

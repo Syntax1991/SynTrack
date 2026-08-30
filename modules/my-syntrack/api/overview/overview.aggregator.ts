@@ -1,3 +1,4 @@
+import type { TagView } from "../tags/tag.types.js";
 import type { OverviewGearCharacterInput } from "./overview-gear-state.mapper.js";
 import type { OverviewProfessionCharacterInput } from "./overview-profession-state.mapper.js";
 import type { OverviewProfessionKnowledgeTreasureCharacterInput } from "./overview-profession-knowledge-treasure-state.mapper.js";
@@ -52,6 +53,7 @@ export type OverviewAggregationInput = {
    * tracker completion itself.
    */
   trackerStatesByCharacterId: Map<string, CharacterTrackerState[]>;
+  tagsByCharacterId?: Map<string, TagView[]>;
 };
 
 /*
