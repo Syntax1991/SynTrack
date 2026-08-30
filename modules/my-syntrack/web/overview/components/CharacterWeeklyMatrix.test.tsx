@@ -77,7 +77,7 @@ describe("CharacterWeeklyMatrix", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps a character's Gear status inside their own row, never bleeding into another character's row", () => {
+  it("keeps each character's iLvl in their own row after Gear column removal", () => {
     renderMatrix([
       buildCharacter({
         character: {
@@ -119,24 +119,19 @@ describe("CharacterWeeklyMatrix", () => {
       })
     ]);
 
+    expect(screen.queryByText("Gear")).not.toBeInTheDocument();
+
     const rows = screen.getAllByRole("row");
     const synblastRow = within(rows[1]!);
     const synbloomRow = within(rows[2]!);
 
-    expect(
-      synblastRow.getAllByTitle("2 empty sockets").length
-    ).toBeGreaterThan(0);
-
-    expect(
-      synbloomRow.queryByTitle("2 empty sockets")
-    ).not.toBeInTheDocument();
-
-    expect(
-      synbloomRow.getAllByTitle("Gear ready, no known issues").length
-    ).toBeGreaterThan(0);
+    expect(synblastRow.getByText("650")).toBeInTheDocument();
+    expect(synbloomRow.queryByText("650")).not.toBeInTheDocument();
+    expect(synbloomRow.getByText("660")).toBeInTheDocument();
+    expect(synblastRow.queryByText("660")).not.toBeInTheDocument();
   });
 
-  it("keeps Weeklies summary distinct from Prof./Gear not-tracked tokens", () => {
+  it("keeps Weeklies summary distinct from Prof. not-tracked tokens without a Gear column", () => {
     renderMatrix([buildCharacter()]);
 
     const rows = screen.getAllByRole("row");
@@ -150,6 +145,7 @@ describe("CharacterWeeklyMatrix", () => {
       dataRow.getAllByTitle("Profession setup")[0]
     ).toHaveTextContent("—");
 
+    expect(screen.queryByText("Gear")).not.toBeInTheDocument();
     expect(
       dataRow.queryByTitle("Gear ready, no known issues")
     ).not.toBeInTheDocument();
@@ -160,21 +156,21 @@ describe("CharacterWeeklyMatrix", () => {
       buildCharacter({
         attentionItems: [
           {
-            id: "char-1:gear",
+            id: "char-1:profession",
             characterId: "char-1",
             characterName: "Synblast",
-            domain: "gear",
+            domain: "profession",
             severity: "this-week",
-            label: "Gear needs attention",
-            detail: "2 empty sockets",
-            path: "/gear-readiness"
+            label: "1 Alchemy Knowledge Treasure missing",
+            detail: null,
+            path: "/characters/char-1"
           }
         ],
         nextAction: {
-          domain: "gear",
-          label: "Gear needs attention",
-          detail: "2 empty sockets",
-          path: "/gear-readiness",
+          domain: "profession",
+          label: "1 Alchemy Knowledge Treasure missing",
+          detail: null,
+          path: "/characters/char-1",
           severity: "this-week"
         },
         readinessState: "attention"
@@ -183,9 +179,9 @@ describe("CharacterWeeklyMatrix", () => {
 
     expect(
       screen.getByRole("link", {
-        name: "Gear needs attention"
+        name: "1 Alchemy Knowledge Treasure missing"
       })
-    ).toHaveAttribute("href", "/gear-readiness");
+    ).toHaveAttribute("href", "/characters/char-1");
   });
 
   it("renders precise next actions without muting them as generic weekly noise", () => {
@@ -259,14 +255,14 @@ describe("CharacterWeeklyMatrix", () => {
         readinessState: "attention",
         attentionItems: [
           {
-            id: "char-1:gear",
+            id: "char-1:profession",
             characterId: "char-1",
             characterName: "Synblast",
-            domain: "gear",
+            domain: "profession",
             severity: "this-week",
-            label: "Gear needs attention",
+            label: "1 Alchemy Knowledge Treasure missing",
             detail: null,
-            path: "/gear-readiness"
+            path: "/characters/char-1"
           }
         ]
       }),

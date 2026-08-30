@@ -44,6 +44,21 @@ describe("overviewCellFormatting", () => {
     ).toBe("not-tracked");
   });
 
+  it("keeps formatGearToken available for Character Detail even without Overview Gear column", () => {
+    const gear = formatGearToken({
+      state: "ATTENTION",
+      readinessPercent: 50,
+      trackedSlots: 8,
+      totalRelevantSlots: 16,
+      missingEnchantCount: 0,
+      emptySocketCount: 2,
+      itemLevel: 680
+    });
+
+    expect(gear.symbol).toBe("!");
+    expect(gear.title).toContain("empty socket");
+  });
+
   it("keeps Vault UNKNOWN visually and semantically distinct from an explicit 0/N", () => {
     const unknown = formatVaultToken({
       state: "UNKNOWN",
@@ -67,12 +82,7 @@ describe("overviewCellFormatting", () => {
     expect(explicitZero.symbol).toBe("0/3");
     expect(explicitZero.tone).toBe("progress");
 
-    expect(unknown.symbol).not.toBe(
-      explicitZero.symbol
-    );
-
-    expect(unknown.tone).not.toBe(
-      explicitZero.tone
-    );
+    expect(unknown.symbol).not.toBe(explicitZero.symbol);
+    expect(unknown.tone).not.toBe(explicitZero.tone);
   });
 });

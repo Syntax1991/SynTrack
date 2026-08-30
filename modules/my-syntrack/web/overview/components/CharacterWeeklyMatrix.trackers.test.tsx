@@ -60,14 +60,14 @@ describe("CharacterWeeklyMatrix - pinned tracker columns", () => {
           readinessState: "attention",
           attentionItems: [
             {
-              id: "char-2:gear",
+              id: "char-2:profession",
               characterId: "char-2",
               characterName: "Synbloom",
-              domain: "gear",
+              domain: "profession",
               severity: "this-week",
-              label: "Gear needs attention",
+              label: "1 Leatherworking Knowledge Treasure missing",
               detail: null,
-              path: "/gear-readiness"
+              path: "/characters/char-2"
             }
           ]
         })

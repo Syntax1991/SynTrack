@@ -6,7 +6,7 @@ import {
 } from "./characterWeeklyMatrixTestHelpers";
 
 describe("CharacterWeeklyMatrix triage columns", () => {
-  it("defaults to triage columns with Spark/Cata and without Treasure or Res.", () => {
+  it("defaults to triage columns without Gear, Treasure, or Res.", () => {
     renderMatrix([
       buildCharacter({
         weeklySummary: {
@@ -37,16 +37,17 @@ describe("CharacterWeeklyMatrix triage columns", () => {
       })
     ]);
 
+    expect(screen.getByText("Character")).toBeInTheDocument();
     expect(screen.getByText("iLvl")).toBeInTheDocument();
     expect(screen.getByText("Set")).toBeInTheDocument();
     expect(screen.getByText("Emb.")).toBeInTheDocument();
     expect(screen.getByText("Weeklies")).toBeInTheDocument();
     expect(screen.getByText("Prof.")).toBeInTheDocument();
-    expect(screen.getByText("Gear")).toBeInTheDocument();
     expect(screen.getByText("Spark")).toBeInTheDocument();
     expect(screen.getByText("Cata")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
 
+    expect(screen.queryByText("Gear")).not.toBeInTheDocument();
     expect(screen.queryByText("Res.")).not.toBeInTheDocument();
     expect(screen.queryByText("Treasure")).not.toBeInTheDocument();
     expect(screen.queryByText("TREASURE")).not.toBeInTheDocument();
@@ -54,6 +55,27 @@ describe("CharacterWeeklyMatrix triage columns", () => {
     expect(screen.queryByText("Quest")).not.toBeInTheDocument();
     expect(screen.queryByText("Treat.")).not.toBeInTheDocument();
     expect(screen.queryByText("Drops")).not.toBeInTheDocument();
+  });
+
+  it("keeps Gear domain gem/socket facts on the row without a Gear column", () => {
+    const character = buildCharacter({
+      gear: {
+        state: "READY",
+        readinessPercent: 100,
+        trackedSlots: 16,
+        totalRelevantSlots: 16,
+        missingEnchantCount: 0,
+        emptySocketCount: 0,
+        itemLevel: 684
+      }
+    });
+
+    renderMatrix([character]);
+
+    expect(screen.queryByText("Gear")).not.toBeInTheDocument();
+    expect(character.gear.emptySocketCount).toBe(0);
+    expect(character.gear.itemLevel).toBe(684);
+    expect(character.gear.state).toBe("READY");
   });
 
   it("shows PROF attention when permanent treasures are incomplete", () => {
@@ -146,5 +168,6 @@ describe("CharacterWeeklyMatrix triage columns", () => {
     expect(screen.getByText("4/5")).toBeInTheDocument();
     expect(screen.getByText("1/8")).toBeInTheDocument();
     expect(screen.queryByText("Res.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Gear")).not.toBeInTheDocument();
   });
 });

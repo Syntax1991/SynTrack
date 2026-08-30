@@ -16,10 +16,12 @@ type CharacterWeeklyMatrixProps = {
 
 /*
  * Default Overview triage matrix:
- * Character · iLvl · Set · Emb · Weeklies · [Trackers] · Prof · Gear · Spark · Cata · Action
+ * Character · iLvl · Set · Emb · Weeklies · [Trackers] · Prof · Spark · Cata · Action
  *
  * PROF. = permanent profession setup (data + Knowledge Treasures).
  * Spark/Cata are high-value roster resources (not Weeklies detail).
+ * Gear capture remains for iLvl / Character Detail / SET·EMB later;
+ * there is no default Overview GEAR status column.
  * Generic Res. and Treasure are not default columns.
  */
 export function CharacterWeeklyMatrix({
@@ -42,7 +44,7 @@ export function CharacterWeeklyMatrix({
     visibleCharacters
   } = useMatrixFilters(characters);
 
-  const columnCount = 10 + trackerColumns.length;
+  const columnCount = 9 + trackerColumns.length;
 
   return (
     <section className="overview-matrix-panel">
@@ -100,7 +102,6 @@ export function CharacterWeeklyMatrix({
                 >
                   Prof.
                 </th>
-                <th className="overview-col-narrow">Gear</th>
                 <th
                   className="overview-col-narrow"
                   title="Tidal Spark Dust - season progress toward Sparks of Tides"

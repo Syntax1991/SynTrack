@@ -65,6 +65,63 @@ describe("aggregateCharacterWeeklyStates - cross-character isolation", () => {
                 averageItemLevel: null
               }
             ]
+          ]),
+          professionByCharacterId: new Map([
+            [
+              "char-1",
+              {
+                id: "char-1",
+                name: "Synblast",
+                hasTrackedProfession: true,
+                partialProfessionIssues: [],
+                professions: [
+                  {
+                    professionId: "alchemy",
+                    key: "alchemy",
+                    name: "Alchemy",
+                    category: "CRAFTING",
+                    skill: 100,
+                    knowledgePoints: 40,
+                    dataStatus: "TRACKED"
+                  }
+                ]
+              }
+            ]
+          ]),
+          professionKnowledgeTreasureByCharacterId: new Map([
+            [
+              "char-1",
+              {
+                id: "char-1",
+                name: "Synblast",
+                treasures: {
+                  completeCount: 0,
+                  incompleteCount: 1,
+                  unknownCount: 0,
+                  applicableTotal: 1
+                },
+                professions: [
+                  {
+                    professionKey: "alchemy",
+                    name: "Alchemy",
+                    treasures: {
+                      completeCount: 0,
+                      incompleteCount: 1,
+                      unknownCount: 0,
+                      applicableTotal: 1
+                    },
+                    sources: [
+                      {
+                        sourceKey: "treasure-1",
+                        name: "Treasure 1",
+                        state: "INCOMPLETE",
+                        capturedAt: null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           ])
         })
       );
@@ -91,6 +148,11 @@ describe("aggregateCharacterWeeklyStates - cross-character isolation", () => {
       synblast?.attentionItems[0]
         ?.characterId
     ).toBe("char-1");
+
+    expect(
+      synblast?.attentionItems[0]
+        ?.domain
+    ).toBe("profession");
 
     expect(
       synbloom?.attentionItems
