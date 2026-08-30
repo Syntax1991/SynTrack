@@ -203,6 +203,35 @@ public class MainViewModelCharactersTests
 
         Assert.Empty(viewModel.Characters);
         Assert.True(viewModel.ShowEmptyRosterMessage);
+        Assert.False(viewModel.ShowRosterOwnershipBlocked);
+    }
+
+    [Fact]
+    public void LegacyCredentialBlocksRosterWithReconnectNotFalseEmpty()
+    {
+        var (viewModel, _) = Build(
+            existingCredential: "dvc_legacy",
+            configureApi: fake =>
+            {
+                fake.NextProfile = new ClientProfileFetchResult
+                {
+                    Health = AccountHealth.ReconnectRequired
+                };
+                fake.NextCharacters = new ClientCharactersFetchResult
+                {
+                    Status = ClientCharactersFetchStatus.LegacyReconnectRequired
+                };
+            });
+
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+
+        Assert.Equal(AccountHealth.ReconnectRequired, viewModel.AccountHealth);
+        Assert.Equal("Reconnect required", viewModel.ConnectionStatusLabel);
+        Assert.Null(viewModel.BattleTag);
+        Assert.Empty(viewModel.Characters);
+        Assert.Null(viewModel.CharactersError);
+        Assert.False(viewModel.ShowEmptyRosterMessage);
+        Assert.True(viewModel.ShowRosterOwnershipBlocked);
     }
 
     [Fact]
@@ -219,6 +248,7 @@ public class MainViewModelCharactersTests
         Assert.NotNull(viewModel.CharactersError);
         Assert.True(api.GetCharactersCallCount > 0);
         Assert.False(viewModel.ShowEmptyRosterMessage);
+        Assert.False(viewModel.ShowRosterOwnershipBlocked);
     }
 
     [Fact]

@@ -206,6 +206,8 @@ public class MainViewModelProfileTests
         Assert.Equal("dvc_legacy", credentials.Load());
         Assert.False(viewModel.ShowEmptyRosterMessage);
         Assert.True(viewModel.ShowReconnectRequired);
+        Assert.False(viewModel.ShowFullyConnectedIdentity);
+        Assert.NotEqual("Connected", viewModel.ConnectionStatusLabel);
     }
 
     [Fact]
