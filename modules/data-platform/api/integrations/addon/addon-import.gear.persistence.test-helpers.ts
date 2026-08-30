@@ -43,25 +43,81 @@ export type BagSetPieceRow = {
 };
 
 export function createTransaction() {
-  const characters = new Map<string, { id: string }>();
+  const characters = new Map<
+    string,
+    { id: string; raiderAccountId: string | null }
+  >();
+  const charactersById = new Map<
+    string,
+    { id: string; raiderAccountId: string | null }
+  >();
   const gearSlots = new Map<string, GearSlotRow>();
   const bagPieces = new Map<string, BagSetPieceRow>();
   let nextCharacterId = 1;
 
+  const identityKey = (identity: {
+    name: string;
+    realm: string;
+    region: string;
+  }) => JSON.stringify(identity);
+
   const transaction = {
     character: {
-      upsert: async (args: {
-        where: { name_realm_region: { name: string; realm: string; region: string } };
+      findUnique: async (args: {
+        where: {
+          name_realm_region: {
+            name: string;
+            realm: string;
+            region: string;
+          };
+        };
       }) => {
-        const key = JSON.stringify(args.where.name_realm_region);
-        const existing = characters.get(key);
+        return (
+          characters.get(
+            identityKey(args.where.name_realm_region)
+          ) ?? null
+        );
+      },
+      update: async (args: {
+        where: { id: string };
+        data: { raiderAccountId?: string | null };
+      }) => {
+        const existing = charactersById.get(args.where.id);
 
-        if (existing) {
-          return existing;
+        if (!existing) {
+          throw new Error(
+            `character ${args.where.id} not found`
+          );
         }
 
-        const created = { id: `char-${nextCharacterId++}` };
-        characters.set(key, created);
+        if ("raiderAccountId" in args.data) {
+          existing.raiderAccountId =
+            args.data.raiderAccountId ?? null;
+        }
+
+        return existing;
+      },
+      create: async (args: {
+        data: {
+          name: string;
+          realm: string;
+          region: string;
+          raiderAccountId?: string | null;
+        };
+      }) => {
+        const created = {
+          id: `char-${nextCharacterId++}`,
+          raiderAccountId: args.data.raiderAccountId ?? null
+        };
+        characters.set(
+          identityKey({
+            name: args.data.name,
+            realm: args.data.realm,
+            region: args.data.region
+          }),
+          created
+        );
+        charactersById.set(created.id, created);
         return created;
       }
     },

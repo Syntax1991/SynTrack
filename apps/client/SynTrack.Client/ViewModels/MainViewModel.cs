@@ -12,6 +12,8 @@ using SynTrack.Client.Services;
 
 public sealed partial class MainViewModel : ObservableObject
 {
+    private static readonly TimeSpan RosterRefreshDebounce = TimeSpan.FromMilliseconds(750);
+
     private readonly IWowDiscoveryService _wowDiscovery;
     private readonly IWowAccountDiscoveryService _accountDiscovery;
     private readonly IClientSettingsService _settingsService;
@@ -26,17 +28,17 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly Dispatcher _dispatcher;
 
     private ClientSettings _settings;
+    private CancellationTokenSource? _rosterDebounceCts;
 
     [ObservableProperty]
     private bool _connected;
 
+    [ObservableProperty]
+    private AccountHealth _accountHealth = AccountHealth.SignedOut;
+
     /// <summary>
-    /// The authenticated identity ("Syntax#21715"), fetched from
-    /// GET /api/client/me - never fabricated from local settings. Null
-    /// while signed out, while the profile fetch is in flight, or on
-    /// fetch failure; the UI just omits the "Connected as" line, it never
-    /// shows a placeholder or crashes. This is display data only, not a
-    /// credential - see MainViewModelSecurityTests.
+    /// Authenticated BattleTag from GET /api/client/me when
+    /// <see cref="AccountHealth"/> is FullyConnected. Never fabricated.
     /// </summary>
     [ObservableProperty]
     private string? _battleTag;
@@ -72,10 +74,7 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isLoadingCharacters;
 
     /// <summary>
-    /// Null when idle/loading/loaded successfully - set only on an actual
-    /// roster fetch failure, and deliberately independent of sync/watcher
-    /// health: a broken roster call must never affect whether
-    /// SavedVariables continue uploading.
+    /// Set only on roster network/API failure. Independent of watcher/sync.
     /// </summary>
     [ObservableProperty]
     private string? _charactersError;
@@ -88,28 +87,43 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string SyncStatusTone => SyncStatus.ToTone();
 
-    /// <summary>User-facing connection state - see the status-language table in the redesign spec.</summary>
-    public string ConnectionStatusLabel => IsLinking
-        ? "Signing in..."
-        : Connected
-            ? "Connected"
-            : "Signed out";
+    public string ConnectionStatusLabel => AccountHealth switch
+    {
+        AccountHealth.SigningIn => "Signing in...",
+        AccountHealth.FullyConnected => "Connected",
+        AccountHealth.ReconnectRequired => "Reconnect required",
+        AccountHealth.ConnectionIssue => "Connection issue",
+        _ => "Signed out"
+    };
 
-    public string ConnectionStatusTone => IsLinking
-        ? "warning"
-        : Connected
-            ? "positive"
-            : "neutral";
+    public string ConnectionStatusTone => AccountHealth switch
+    {
+        AccountHealth.SigningIn => "warning",
+        AccountHealth.FullyConnected => "positive",
+        AccountHealth.ReconnectRequired => "warning",
+        AccountHealth.ConnectionIssue => "warning",
+        _ => "neutral"
+    };
+
+    public bool ShowFullyConnectedIdentity =>
+        AccountHealth == AccountHealth.FullyConnected && BattleTag is not null;
+
+    public bool ShowReconnectRequired => AccountHealth == AccountHealth.ReconnectRequired;
+
+    public bool ShowConnectionIssue => AccountHealth == AccountHealth.ConnectionIssue;
+
+    public bool ShowConnectedShell =>
+        AccountHealth is AccountHealth.FullyConnected
+            or AccountHealth.ReconnectRequired
+            or AccountHealth.ConnectionIssue;
+
+    public bool ShowSignedOutShell =>
+        AccountHealth is AccountHealth.SignedOut or AccountHealth.SigningIn;
 
     public string WowDetectionLabel => WowPath is null
         ? "World of Warcraft not found"
         : "World of Warcraft detected";
 
-    /// <summary>
-    /// Two states only (no "paused" concept exists in the watcher today) -
-    /// deliberately not inventing new watcher business logic just for
-    /// presentation, per the "don't rewrite working business logic" rule.
-    /// </summary>
     public string WatcherStatusLabel => WowPath is null || AccountName is null
         ? "Waiting for WoW account"
         : "Watching SavedVariables";
@@ -119,13 +133,24 @@ public sealed partial class MainViewModel : ObservableObject
         : "positive";
 
     /// <summary>
-    /// True only once loading has finished, no error occurred, and the
-    /// roster is genuinely empty - manually re-raised after every mutation
-    /// of <see cref="Characters"/> (see RefreshCharactersAsync/Disconnect)
-    /// since ObservableCollection.Count changes don't raise PropertyChanged
-    /// on their own.
+    /// True empty roster only when fully connected, load finished, no error,
+    /// and the owning account genuinely has zero characters.
     /// </summary>
-    public bool ShowEmptyRosterMessage => !IsLoadingCharacters && CharactersError is null && Characters.Count == 0;
+    public bool ShowEmptyRosterMessage =>
+        AccountHealth == AccountHealth.FullyConnected
+        && !IsLoadingCharacters
+        && CharactersError is null
+        && Characters.Count == 0;
+
+    /// <summary>
+    /// Roster blocked until Battle.net reconnect binds ownership.
+    /// ConnectionIssue uses CharactersError — never conflate network
+    /// failure with legacy reconnect messaging.
+    /// </summary>
+    public bool ShowRosterOwnershipBlocked =>
+        AccountHealth == AccountHealth.ReconnectRequired
+        && !IsLoadingCharacters
+        && Characters.Count == 0;
 
     public MainViewModel(
         IWowDiscoveryService wowDiscovery,
@@ -159,29 +184,23 @@ public sealed partial class MainViewModel : ObservableObject
         _startMinimized = _settings.StartMinimized;
         _autostart = _settings.Autostart;
         _connected = _credentialService.Load() is not null;
+        _accountHealth = _connected ? AccountHealth.ConnectionIssue : AccountHealth.SignedOut;
 
         _deviceLinkService.LinkApproved += OnLinkApproved;
         _deviceLinkService.LinkExpired += OnLinkExpired;
         _syncEngine.SyncStatusChanged += HandleSyncEngineStatusChanged;
         _syncEngine.SyncCompleted += OnSyncCompleted;
 
-        // A restored AccountName is already usable by RestartWatcherIfReady
-        // below regardless of this call - but the "WoW Account" ComboBox is
-        // bound via SelectedValue against AccountCandidates, so without
-        // populating that collection here too, a persisted account shows as
-        // an empty dropdown on every launch until the user clicks Detect,
-        // even though the watcher was already targeting the right account.
         RefreshAccountCandidates();
         RestartWatcherIfReady();
 
         if (_connected)
         {
             _ = RefreshProfileAsync();
-            _ = RefreshCharactersAsync();
+            ScheduleRosterRefresh();
         }
     }
 
-    /// <summary>CommunityToolkit-generated hook, fired whenever <see cref="SyncStatus"/> changes.</summary>
     partial void OnSyncStatusChanged(SyncStatus value)
     {
         OnPropertyChanged(nameof(SyncStatusLabel));
@@ -192,6 +211,29 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ConnectionStatusLabel));
         OnPropertyChanged(nameof(ConnectionStatusTone));
+        OnPropertyChanged(nameof(ShowConnectedShell));
+    }
+
+    partial void OnAccountHealthChanged(AccountHealth value)
+    {
+        Connected = value is AccountHealth.FullyConnected
+            or AccountHealth.ReconnectRequired
+            or AccountHealth.ConnectionIssue;
+
+        OnPropertyChanged(nameof(ConnectionStatusLabel));
+        OnPropertyChanged(nameof(ConnectionStatusTone));
+        OnPropertyChanged(nameof(ShowFullyConnectedIdentity));
+        OnPropertyChanged(nameof(ShowReconnectRequired));
+        OnPropertyChanged(nameof(ShowConnectionIssue));
+        OnPropertyChanged(nameof(ShowConnectedShell));
+        OnPropertyChanged(nameof(ShowSignedOutShell));
+        OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+        OnPropertyChanged(nameof(ShowRosterOwnershipBlocked));
+    }
+
+    partial void OnBattleTagChanged(string? value)
+    {
+        OnPropertyChanged(nameof(ShowFullyConnectedIdentity));
     }
 
     partial void OnIsLinkingChanged(bool value)
@@ -213,7 +255,11 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(WatcherStatusTone));
     }
 
-    partial void OnIsLoadingCharactersChanged(bool value) => OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+    partial void OnIsLoadingCharactersChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+        OnPropertyChanged(nameof(ShowRosterOwnershipBlocked));
+    }
 
     partial void OnCharactersErrorChanged(string? value) => OnPropertyChanged(nameof(ShowEmptyRosterMessage));
 
@@ -298,11 +344,6 @@ public sealed partial class MainViewModel : ObservableObject
         _logger.Info($"Watcher active for account {AccountName} at {savedVariablesDir}");
     }
 
-    // SynTrack_Core.lua is an account-wide file: a second character
-    // logging out and writing while the first character's sync is
-    // still uploading must not be silently dropped, or that second
-    // character's data never reaches the backend until some unrelated
-    // later event happens to trigger a sync again. See DirtyWhileRunningGate.
     private readonly DirtyWhileRunningGate _syncGate = new();
 
     private void OnStableChangeDetected() => _ = SyncNowAsync();
@@ -342,6 +383,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsLinking = true;
+        AccountHealth = AccountHealth.SigningIn;
 
         try
         {
@@ -350,10 +392,41 @@ public sealed partial class MainViewModel : ObservableObject
             Process.Start(new ProcessStartInfo(verificationUrl) { UseShellExecute = true });
             _logger.Info("Device link requested; verification page opened.");
         }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.Warn($"Device link failed to start: {ex.Message}");
+            AccountHealth = _credentialService.Load() is null
+                ? AccountHealth.SignedOut
+                : AccountHealth.ConnectionIssue;
+        }
         finally
         {
             IsLinking = false;
         }
+    }
+
+    /// <summary>
+    /// One-time Battle.net reconnect for legacy unowned credentials.
+    /// Clears the local DPAPI credential first, then opens the browser flow.
+    /// </summary>
+    [RelayCommand]
+    private async Task ReconnectAsync()
+    {
+        _credentialService.Clear();
+        BattleTag = null;
+        Characters.Clear();
+        CharactersError = null;
+        AccountHealth = AccountHealth.SignedOut;
+        OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+        _logger.Info("Legacy credential cleared; starting Battle.net reconnect.");
+        await ConnectAsync();
+    }
+
+    [RelayCommand]
+    private async Task RetryProfileAsync()
+    {
+        await RefreshProfileAsync();
+        ScheduleRosterRefresh();
     }
 
     [RelayCommand]
@@ -361,6 +434,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _credentialService.Clear();
         Connected = false;
+        AccountHealth = AccountHealth.SignedOut;
         PendingUserCode = null;
         BattleTag = null;
         Characters.Clear();
@@ -390,52 +464,80 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnLinkApproved() => _dispatcher.Invoke(() =>
     {
-        Connected = true;
         PendingUserCode = null;
         _logger.Info("Device link approved; credential stored.");
         _ = RefreshProfileAsync();
-        _ = RefreshCharactersAsync();
+        ScheduleRosterRefresh();
     });
 
-    /// <summary>
-    /// Loads the authenticated BattleTag from GET /api/client/me. Never
-    /// throws - a failed profile fetch (network error, malformed
-    /// response, or a device credential that predates raiderAccountId
-    /// linkage) just leaves BattleTag null and the UI omits the identity
-    /// line, it never blocks or crashes the connected state.
-    /// </summary>
     private async Task RefreshProfileAsync()
     {
         var token = _credentialService.Load();
 
         if (token is null)
         {
-            _dispatcher.Invoke(() => BattleTag = null);
+            _dispatcher.Invoke(() =>
+            {
+                BattleTag = null;
+                AccountHealth = AccountHealth.SignedOut;
+            });
             return;
         }
 
-        string? battleTag;
+        ClientProfileFetchResult result;
 
         try
         {
-            var profile = await _apiClient.GetMeAsync(token, CancellationToken.None);
-            battleTag = profile?.BattleTag;
+            result = await _apiClient.GetMeAsync(token, CancellationToken.None);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.Warn($"Profile fetch failed: {ex.Message}");
-            battleTag = null;
+            result = new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
         }
 
-        _dispatcher.Invoke(() => BattleTag = battleTag);
+        _dispatcher.Invoke(() =>
+        {
+            if (result.Health == AccountHealth.SignedOut)
+            {
+                // Auth invalid/revoked — clear local credential and return to signed-out.
+                _credentialService.Clear();
+                BattleTag = null;
+                AccountHealth = AccountHealth.SignedOut;
+                Characters.Clear();
+                CharactersError = null;
+                OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+                _logger.Warn("Device credential rejected; signed out.");
+                return;
+            }
+
+            BattleTag = result.BattleTag;
+            AccountHealth = result.Health;
+        });
     }
 
-    /// <summary>
-    /// Loads the character roster from GET /api/client/characters. Never
-    /// throws and never touches SyncStatus/watcher state - a broken
-    /// roster fetch only ever surfaces as CharactersError, it can never
-    /// stop or fail a SavedVariables sync.
-    /// </summary>
+    private void ScheduleRosterRefresh()
+    {
+        _rosterDebounceCts?.Cancel();
+        _rosterDebounceCts = new CancellationTokenSource();
+        var token = _rosterDebounceCts.Token;
+        _ = DebouncedRefreshCharactersAsync(token);
+    }
+
+    private async Task DebouncedRefreshCharactersAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(RosterRefreshDebounce, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await RefreshCharactersAsync();
+    }
+
     private async Task RefreshCharactersAsync()
     {
         var token = _credentialService.Load();
@@ -454,18 +556,56 @@ public sealed partial class MainViewModel : ObservableObject
 
         _dispatcher.Invoke(() => IsLoadingCharacters = true);
 
-        IReadOnlyList<ClientCharacterSummary> summaries;
+        ClientCharactersFetchResult fetch;
         string? error = null;
+        IReadOnlyList<ClientCharacterSummary> summaries = Array.Empty<ClientCharacterSummary>();
 
         try
         {
-            summaries = await _apiClient.GetCharactersAsync(token, CancellationToken.None);
+            fetch = await _apiClient.GetCharactersAsync(token, CancellationToken.None);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.Warn($"Character roster fetch failed: {ex.Message}");
-            summaries = Array.Empty<ClientCharacterSummary>();
-            error = "Could not load character roster. Automatic SavedVariables sync continues if device authentication remains valid.";
+            fetch = new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
+        }
+
+        switch (fetch.Status)
+        {
+            case ClientCharactersFetchStatus.Ok:
+                summaries = fetch.Items;
+                break;
+
+            case ClientCharactersFetchStatus.LegacyReconnectRequired:
+                // Align with profile: never green Connected + empty roster for legacy.
+                _dispatcher.Invoke(() =>
+                {
+                    BattleTag = null;
+                    AccountHealth = AccountHealth.ReconnectRequired;
+                    Characters.Clear();
+                    CharactersError = null;
+                    IsLoadingCharacters = false;
+                    OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+                    OnPropertyChanged(nameof(ShowRosterOwnershipBlocked));
+                });
+                return;
+
+            case ClientCharactersFetchStatus.Unauthorized:
+                _dispatcher.Invoke(() =>
+                {
+                    _credentialService.Clear();
+                    BattleTag = null;
+                    AccountHealth = AccountHealth.SignedOut;
+                    Characters.Clear();
+                    CharactersError = null;
+                    IsLoadingCharacters = false;
+                    OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+                });
+                return;
+
+            case ClientCharactersFetchStatus.TemporaryFailure:
+                error = "Could not load character roster. Automatic SavedVariables sync continues if device authentication remains valid.";
+                break;
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -482,12 +622,18 @@ public sealed partial class MainViewModel : ObservableObject
 
             CharactersError = error;
             IsLoadingCharacters = false;
+            OnPropertyChanged(nameof(ShowEmptyRosterMessage));
         });
     }
 
     private void OnLinkExpired() => _dispatcher.Invoke(() =>
     {
         PendingUserCode = null;
+        if (_credentialService.Load() is null)
+        {
+            AccountHealth = AccountHealth.SignedOut;
+        }
+
         _logger.Warn("Device link expired before approval.");
     });
 
@@ -499,11 +645,6 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnSyncCompleted(DateTimeOffset at) => _dispatcher.Invoke(() =>
     {
         LastSyncAt = at;
-
-        // A successful upload is the one moment new capture data could
-        // actually change the roster (item level / last-synced column) -
-        // bounded to this event rather than polling, so it can never
-        // become a request storm.
-        _ = RefreshCharactersAsync();
+        ScheduleRosterRefresh();
     });
 }

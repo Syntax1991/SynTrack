@@ -25,11 +25,15 @@ export class AddonImportPersistence {
     new AddonRecipePersistence();
 
   async persist(
-    snapshot: AddonSnapshot
+    snapshot: AddonSnapshot,
+    ownership: {
+      ownerRaiderAccountId?: string | null;
+    } = {}
   ): Promise<AddonImportResult> {
     const result =
       await this.persistTransaction(
-        snapshot
+        snapshot,
+        ownership
       );
 
     /*
@@ -64,7 +68,10 @@ export class AddonImportPersistence {
   }
 
   private async persistTransaction(
-    snapshot: AddonSnapshot
+    snapshot: AddonSnapshot,
+    ownership: {
+      ownerRaiderAccountId?: string | null;
+    }
   ): Promise<AddonImportResult> {
     return prisma.$transaction(
       async (
@@ -88,7 +95,8 @@ export class AddonImportPersistence {
             transaction,
             snapshot,
             professionIds,
-            catalogResult.nodeIds
+            catalogResult.nodeIds,
+            ownership
           );
 
         await this.recipePersistence.persist(

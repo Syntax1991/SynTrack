@@ -19,7 +19,7 @@ function credentialRow(
 }
 
 describe("ClientProfileService", () => {
-  it("returns the battleTag for a credential linked to a RaiderAccount", async () => {
+  it("returns connected + battleTag for an owned credential", async () => {
     const requireValidCredential = vi
       .fn()
       .mockResolvedValue(
@@ -45,6 +45,7 @@ describe("ClientProfileService", () => {
       );
 
     expect(result).toEqual({
+      identityStatus: "connected",
       battleTag: "Syntax#21715"
     });
 
@@ -59,7 +60,7 @@ describe("ClientProfileService", () => {
     ).toHaveBeenCalledWith("raider-1");
   });
 
-  it("returns a null battleTag, not an error, for a credential that predates raiderAccountId", async () => {
+  it("returns legacy_reconnect_required for a credential that predates raiderAccountId", async () => {
     const requireValidCredential = vi
       .fn()
       .mockResolvedValue(
@@ -82,6 +83,8 @@ describe("ClientProfileService", () => {
       );
 
     expect(result).toEqual({
+      identityStatus:
+        "legacy_reconnect_required",
       battleTag: null
     });
 
@@ -90,7 +93,7 @@ describe("ClientProfileService", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("returns a null battleTag when the RaiderAccount has none on file", async () => {
+  it("returns connected with a null battleTag when the RaiderAccount has none on file", async () => {
     const requireValidCredential = vi
       .fn()
       .mockResolvedValue(
@@ -114,6 +117,7 @@ describe("ClientProfileService", () => {
       );
 
     expect(result).toEqual({
+      identityStatus: "connected",
       battleTag: null
     });
   });

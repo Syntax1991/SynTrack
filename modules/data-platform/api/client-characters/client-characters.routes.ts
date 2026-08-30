@@ -1,15 +1,12 @@
 import { Router } from "express";
 import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.js";
-import { CharacterRepository } from "../../../my-syntrack/api/characters/character.repository.js";
+import { prisma } from "../../../../apps/api/src/infrastructure/database/prismaClient.js";
 import { DataHealthRepository } from "../../../my-syntrack/api/data-health/data-health.repository.js";
 import { GearReadinessRepository } from "../../../my-syntrack/api/gear-readiness/gear-readiness.repository.js";
 import { GearReadinessService } from "../../../my-syntrack/api/gear-readiness/gear-readiness.service.js";
 import { deviceCredentialAuthService } from "../device-auth/device-link.routes.js";
 import { ClientCharactersController } from "./client-characters.controller.js";
 import { ClientCharactersService } from "./client-characters.service.js";
-
-const characterRepository =
-  new CharacterRepository();
 
 const gearReadinessService =
   new GearReadinessService(
@@ -20,26 +17,30 @@ const dataHealthRepository =
   new DataHealthRepository();
 
 const service = new ClientCharactersService(
-  async () => {
+  async (raiderAccountId) => {
     const rows =
-      await characterRepository.findAll();
+      await prisma.character.findMany({
+        where: { raiderAccountId },
+        orderBy: [
+          { name: "asc" },
+          { realm: "asc" }
+        ],
+        select: {
+          id: true,
+          name: true,
+          realm: true,
+          className: true,
+          level: true
+        }
+      });
 
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      realm: row.realm,
-      className: row.className,
-      level: row.level
-    }));
+    return rows;
   },
   async (characterIds) => {
     if (characterIds.length === 0) {
       return new Map();
     }
 
-    // Reuses GearReadinessService's existing averageItemLevel
-    // computation wholesale rather than re-deriving item level from
-    // CharacterGearSlot rows a second time.
     const overview =
       await gearReadinessService.getOverview();
 
@@ -73,9 +74,6 @@ const service = new ClientCharactersService(
       )
     ]);
 
-    // "Last synced" = the most recent addon capture across either
-    // domain DataHealthRepository already tracks for this character -
-    // never an unrelated Character.updatedAt-style timestamp.
     const lastCapturedAt = new Map<
       string,
       Date | null

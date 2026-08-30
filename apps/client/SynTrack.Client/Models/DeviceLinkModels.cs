@@ -19,12 +19,42 @@ public sealed class DeviceLinkStatusResponse
 }
 
 /// <summary>
-/// Mirrors GET /api/client/me. BattleTag is null both when the
-/// authenticated device credential predates raiderAccountId linkage and
-/// when the linked RaiderAccount has none on file - the client treats
-/// both the same way (no identity line shown), never as an error.
+/// Healthy-connection states the desktop client must distinguish.
+/// Never treat legacy (unowned credential) as FullyConnected.
 /// </summary>
+public enum AccountHealth
+{
+    SignedOut,
+    SigningIn,
+    FullyConnected,
+    ReconnectRequired,
+    ConnectionIssue
+}
+
+/// <summary>Result of GET /api/client/me including transport outcome.</summary>
+public sealed class ClientProfileFetchResult
+{
+    public required AccountHealth Health { get; init; }
+    public string? BattleTag { get; init; }
+}
+
+/// <summary>DTO body of GET /api/client/me.</summary>
 public sealed class ClientProfileResponse
 {
+    public string? IdentityStatus { get; init; }
     public string? BattleTag { get; init; }
+}
+
+public enum ClientCharactersFetchStatus
+{
+    Ok,
+    LegacyReconnectRequired,
+    Unauthorized,
+    TemporaryFailure
+}
+
+public sealed class ClientCharactersFetchResult
+{
+    public required ClientCharactersFetchStatus Status { get; init; }
+    public IReadOnlyList<ClientCharacterSummary> Items { get; init; } = Array.Empty<ClientCharacterSummary>();
 }

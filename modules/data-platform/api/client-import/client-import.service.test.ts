@@ -39,7 +39,10 @@ const fakeImportResult: AddonImportResult =
 let importSavedVariables: ReturnType<
   typeof vi.fn<
     (
-      source: string
+      source: string,
+      ownership?: {
+        ownerRaiderAccountId?: string | null;
+      }
     ) => Promise<AddonImportResult>
   >
 >;
@@ -50,7 +53,10 @@ beforeEach(() => {
   importSavedVariables = vi
     .fn<
       (
-        source: string
+        source: string,
+        ownership?: {
+          ownerRaiderAccountId?: string | null;
+        }
       ) => Promise<AddonImportResult>
     >()
     .mockResolvedValue(
@@ -58,24 +64,40 @@ beforeEach(() => {
     );
 
   service = new ClientImportService(
-    (source: string) =>
-      importSavedVariables(source)
+    (source, ownership) =>
+      importSavedVariables(source, ownership)
   );
 });
 
 describe("ClientImportService", () => {
-  it("dispatches the raw body unchanged to AddonImportService", async () => {
+  it("dispatches the raw body unchanged to AddonImportService with ownership", async () => {
     const rawBody =
       'SynTrackCoreDB = { ["format"] = "syntrack-saved-variables" }';
 
     await service.importFromDevice({
       rawBody,
-      headers: validHeaders
+      headers: validHeaders,
+      ownerRaiderAccountId: "account-a"
     });
 
     expect(
       importSavedVariables
-    ).toHaveBeenCalledWith(rawBody);
+    ).toHaveBeenCalledWith(rawBody, {
+      ownerRaiderAccountId: "account-a"
+    });
+  });
+
+  it("forwards a null owner for legacy credentials without inventing one", async () => {
+    await service.importFromDevice({
+      rawBody: "SynTrackCoreDB = {}",
+      headers: validHeaders,
+      ownerRaiderAccountId: null
+    });
+
+    expect(importSavedVariables).toHaveBeenCalledWith(
+      "SynTrackCoreDB = {}",
+      { ownerRaiderAccountId: null }
+    );
   });
 
   it("returns a structured result carrying the addon and observed timestamps", async () => {

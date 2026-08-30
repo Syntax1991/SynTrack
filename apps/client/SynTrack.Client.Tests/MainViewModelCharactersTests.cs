@@ -6,10 +6,9 @@ using SynTrack.Client.Services;
 using SynTrack.Client.ViewModels;
 
 /// <summary>
-/// Covers the character roster panel: loaded automatically alongside the
-/// profile on startup-if-already-connected and on approval, cleared on
-/// sign-out, and a failed fetch must surface only as CharactersError -
-/// never throw, and never affect sync/watcher state.
+/// Character roster: loads after auth, refreshes after sync (debounced),
+/// true-empty vs ownership/network blocked states, and roster failures
+/// never stop the watcher/sync pipeline.
 /// </summary>
 public class MainViewModelCharactersTests
 {
@@ -57,7 +56,11 @@ public class MainViewModelCharactersTests
 
     private sealed class FakeApiClient : ISynTrackApiClient
     {
-        public List<ClientCharacterSummary> NextCharacters { get; } = new();
+        public ClientProfileFetchResult NextProfile { get; set; } =
+            new() { Health = AccountHealth.FullyConnected, BattleTag = "Syntax#21715" };
+
+        public ClientCharactersFetchResult NextCharacters { get; set; } =
+            new() { Status = ClientCharactersFetchStatus.Ok };
 
         public bool ThrowOnGetCharacters { get; set; }
 
@@ -69,10 +72,10 @@ public class MainViewModelCharactersTests
         public Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
-            Task.FromResult<ClientProfileResponse?>(null);
+        public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(NextProfile);
 
-        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
+        public Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
         {
             GetCharactersCallCount++;
 
@@ -81,7 +84,7 @@ public class MainViewModelCharactersTests
                 throw new HttpRequestException("simulated failure");
             }
 
-            return Task.FromResult<IReadOnlyList<ClientCharacterSummary>>(NextCharacters);
+            return Task.FromResult(NextCharacters);
         }
 
         public Task<SyncStatus> SendImportAsync(
@@ -151,25 +154,55 @@ public class MainViewModelCharactersTests
     {
         var (viewModel, api) = Build(
             existingCredential: "dvc_existing",
-            configureApi: fake => fake.NextCharacters.AddRange(new[]
+            configureApi: fake =>
             {
-                new ClientCharacterSummary
+                fake.NextCharacters = new ClientCharactersFetchResult
                 {
-                    Id = "char-1",
-                    Name = "Synblast",
-                    Realm = "Antonidas",
-                    ClassName = "Mage",
-                    Level = 80,
-                    ItemLevel = 312.3,
-                    LastSyncedAt = DateTimeOffset.UtcNow
-                }
-            }));
+                    Status = ClientCharactersFetchStatus.Ok,
+                    Items = new[]
+                    {
+                        new ClientCharacterSummary
+                        {
+                            Id = "char-1",
+                            Name = "Synblast",
+                            Realm = "Antonidas",
+                            ClassName = "Mage",
+                            Level = 80,
+                            ItemLevel = 312.3,
+                            LastSyncedAt = DateTimeOffset.UtcNow
+                        }
+                    }
+                };
+            });
 
-        PumpDispatcher(TimeSpan.FromMilliseconds(500));
+        // Debounce is 750ms + profile/roster dispatch
+        PumpDispatcher(TimeSpan.FromSeconds(2));
 
         Assert.Single(viewModel.Characters);
         Assert.Equal("Synblast", viewModel.Characters[0].Name);
         Assert.Null(viewModel.CharactersError);
+        Assert.True(viewModel.AccountHealth == AccountHealth.FullyConnected);
+        Assert.False(viewModel.ShowEmptyRosterMessage);
+    }
+
+    [Fact]
+    public void TrueZeroRosterShowsEmptyStateOnlyWhenFullyConnected()
+    {
+        var (viewModel, _) = Build(
+            existingCredential: "dvc_existing",
+            configureApi: fake =>
+            {
+                fake.NextCharacters = new ClientCharactersFetchResult
+                {
+                    Status = ClientCharactersFetchStatus.Ok,
+                    Items = Array.Empty<ClientCharacterSummary>()
+                };
+            });
+
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+
+        Assert.Empty(viewModel.Characters);
+        Assert.True(viewModel.ShowEmptyRosterMessage);
     }
 
     [Fact]
@@ -179,12 +212,13 @@ public class MainViewModelCharactersTests
             existingCredential: "dvc_existing",
             configureApi: fake => fake.ThrowOnGetCharacters = true);
 
-        var exception = Record.Exception(() => PumpDispatcher(TimeSpan.FromMilliseconds(500)));
+        var exception = Record.Exception(() => PumpDispatcher(TimeSpan.FromSeconds(2)));
 
         Assert.Null(exception);
         Assert.Empty(viewModel.Characters);
         Assert.NotNull(viewModel.CharactersError);
         Assert.True(api.GetCharactersCallCount > 0);
+        Assert.False(viewModel.ShowEmptyRosterMessage);
     }
 
     [Fact]
@@ -194,13 +228,10 @@ public class MainViewModelCharactersTests
             existingCredential: "dvc_existing",
             configureApi: fake => fake.ThrowOnGetCharacters = true);
 
-        PumpDispatcher(TimeSpan.FromMilliseconds(500));
+        PumpDispatcher(TimeSpan.FromSeconds(2));
 
         await viewModel.SyncNowCommand.ExecuteAsync(null);
 
-        // No WoW path configured in this fixture - see the equivalent
-        // profile-fetch-failure test for why WaitingForData, not Synced,
-        // is the correct "reached its ordinary outcome" assertion here.
         Assert.Equal(SyncStatus.WaitingForData, viewModel.SyncStatus);
     }
 
@@ -209,16 +240,26 @@ public class MainViewModelCharactersTests
     {
         var (viewModel, _) = Build(
             existingCredential: "dvc_existing",
-            configureApi: fake => fake.NextCharacters.Add(new ClientCharacterSummary
+            configureApi: fake =>
             {
-                Id = "char-1",
-                Name = "Synblast",
-                Realm = "Antonidas",
-                ClassName = "Mage",
-                Level = 80
-            }));
+                fake.NextCharacters = new ClientCharactersFetchResult
+                {
+                    Status = ClientCharactersFetchStatus.Ok,
+                    Items = new[]
+                    {
+                        new ClientCharacterSummary
+                        {
+                            Id = "char-1",
+                            Name = "Synblast",
+                            Realm = "Antonidas",
+                            ClassName = "Mage",
+                            Level = 80
+                        }
+                    }
+                };
+            });
 
-        PumpDispatcher(TimeSpan.FromMilliseconds(500));
+        PumpDispatcher(TimeSpan.FromSeconds(2));
         Assert.Single(viewModel.Characters);
 
         viewModel.DisconnectCommand.Execute(null);

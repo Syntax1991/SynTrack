@@ -2,12 +2,11 @@ import type { DeviceCredentialRow } from "../device-auth/device-link-repository.
 import type { ClientProfileResult } from "./client-profile.types.js";
 
 /*
- * The device credential is the only thing that authenticates this call
- * (see DeviceCredentialAuthService.requireValidCredential, injected here
- * rather than imported directly so this stays testable with a fake). A
- * credential issued before DeviceCredential.raiderAccountId existed
- * simply has no identity to show - that is not an error, the client just
- * omits the "Connected as" line.
+ * The device credential is the only authenticator. A credential issued
+ * before DeviceCredential.raiderAccountId existed is valid for transport
+ * auth but must NOT be treated as a healthy connected identity - the
+ * client surfaces legacy_reconnect_required instead of fabricating an
+ * owner.
  */
 export class ClientProfileService {
   constructor(
@@ -28,7 +27,11 @@ export class ClientProfileService {
       );
 
     if (!credential.raiderAccountId) {
-      return { battleTag: null };
+      return {
+        identityStatus:
+          "legacy_reconnect_required",
+        battleTag: null
+      };
     }
 
     const battleTag =
@@ -36,6 +39,9 @@ export class ClientProfileService {
         credential.raiderAccountId
       );
 
-    return { battleTag };
+    return {
+      identityStatus: "connected",
+      battleTag
+    };
   }
 }

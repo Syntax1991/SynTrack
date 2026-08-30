@@ -131,10 +131,12 @@ describe("Device identity is isolated per RaiderAccount end-to-end", () => {
       );
 
     expect(profileA).toEqual({
+      identityStatus: "connected",
       battleTag: "Syntax#21715"
     });
 
     expect(profileB).toEqual({
+      identityStatus: "connected",
       battleTag: "Otherplayer#1234"
     });
 
@@ -187,6 +189,7 @@ describe("Device identity is isolated per RaiderAccount end-to-end", () => {
       );
 
     expect(profile).toEqual({
+      identityStatus: "legacy_reconnect_required",
       battleTag: null
     });
 

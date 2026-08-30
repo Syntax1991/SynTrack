@@ -1,12 +1,8 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import type { DeviceCredentialRow } from "../device-auth/device-link-repository.types.js";
 import { ClientCharactersService } from "./client-characters.service.js";
 
-/*
- * Same extraction/error-message pattern as client-import.routes.ts and
- * client-profile.controller.ts - deliberately not requireBearerToken,
- * which is RaiderSession-specific.
- */
 function requireDeviceToken(
   request: Parameters<RequestHandler>[0]
 ): string {
@@ -33,7 +29,7 @@ export class ClientCharactersController {
   constructor(
     private readonly requireValidCredential: (
       rawToken: string
-    ) => Promise<unknown>,
+    ) => Promise<DeviceCredentialRow>,
     private readonly service: ClientCharactersService
   ) {}
 
@@ -45,15 +41,23 @@ export class ClientCharactersController {
       request
     );
 
-    // Any valid, non-revoked device credential may read the roster -
-    // see ClientCharactersService for why there is no further
-    // per-account filtering.
-    await this.requireValidCredential(
-      token
-    );
+    const credential =
+      await this.requireValidCredential(
+        token
+      );
+
+    if (!credential.raiderAccountId) {
+      throw new AppError(
+        409,
+        "Device credential has no linked SynTrack account. Reconnect with Battle.net."
+      );
+    }
 
     response.json({
-      items: await this.service.list()
+      items:
+        await this.service.listForAccount(
+          credential.raiderAccountId
+        )
     });
   };
 }

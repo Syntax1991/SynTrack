@@ -6,13 +6,8 @@ using SynTrack.Client.Services;
 using SynTrack.Client.ViewModels;
 
 /// <summary>
-/// Covers the "Connected as Syntax#21715" identity line: BattleTag must
-/// come only from the authenticated GET /api/client/me call, never be
-/// fabricated locally, be re-fetched on both startup-if-already-connected
-/// and on a fresh approval, and be cleared on sign-out. Deliberately never
-/// calls MainViewModel.ConnectCommand - that path calls
-/// Process.Start(UseShellExecute) to open the real system browser, which
-/// must not happen from a unit test.
+/// Covers account health: FullyConnected + BattleTag, legacy Reconnect required,
+/// temporary profile failure preserving credential, and unauthorized sign-out.
 /// </summary>
 public class MainViewModelProfileTests
 {
@@ -62,7 +57,8 @@ public class MainViewModelProfileTests
 
     private sealed class FakeApiClient : ISynTrackApiClient
     {
-        public ClientProfileResponse? NextProfile { get; set; }
+        public ClientProfileFetchResult NextProfile { get; set; } =
+            new() { Health = AccountHealth.ConnectionIssue };
 
         public bool ThrowOnGetMe { get; set; }
 
@@ -83,7 +79,7 @@ public class MainViewModelProfileTests
                 ? StatusResponses.Dequeue()
                 : new DeviceLinkStatusResponse { Status = "PENDING" });
 
-        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
+        public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
         {
             GetMeCallCount++;
             LastTokenUsed = deviceToken;
@@ -96,14 +92,15 @@ public class MainViewModelProfileTests
             return Task.FromResult(NextProfile);
         }
 
-        public List<ClientCharacterSummary> NextCharacters { get; } = new();
+        public ClientCharactersFetchResult NextCharacters { get; set; } =
+            new() { Status = ClientCharactersFetchStatus.Ok };
 
         public int GetCharactersCallCount { get; private set; }
 
-        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
+        public Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
         {
             GetCharactersCallCount++;
-            return Task.FromResult<IReadOnlyList<ClientCharacterSummary>>(NextCharacters);
+            return Task.FromResult(NextCharacters);
         }
 
         public Task<SyncStatus> SendImportAsync(
@@ -140,17 +137,6 @@ public class MainViewModelProfileTests
         return (viewModel, api, credentials, deviceLinkService);
     }
 
-    /// <summary>
-    /// MainViewModel marshals every state change back onto its captured
-    /// Dispatcher (see _dispatcher.Invoke in RefreshProfileAsync,
-    /// OnLinkApproved, etc.) - correct in the real app, where WPF's own
-    /// message loop is already pumping. An xUnit test thread has no such
-    /// pump running, so a background continuation's Invoke back onto
-    /// Dispatcher.CurrentDispatcher would otherwise never be processed.
-    /// This drains that dispatcher's queue for a bounded window so
-    /// fire-and-forget async work (device-link polling, profile fetches)
-    /// gets a chance to actually reach the ViewModel's properties.
-    /// </summary>
     private static void PumpDispatcher(TimeSpan duration)
     {
         var frame = new DispatcherFrame();
@@ -176,6 +162,7 @@ public class MainViewModelProfileTests
         var (viewModel, api, _, _) = Build();
 
         Assert.False(viewModel.Connected);
+        Assert.Equal(AccountHealth.SignedOut, viewModel.AccountHealth);
         Assert.Null(viewModel.BattleTag);
         Assert.Equal(0, api.GetMeCallCount);
     }
@@ -183,26 +170,42 @@ public class MainViewModelProfileTests
     [Fact]
     public void AnAlreadyConnectedStartupFetchesTheProfileAutomatically()
     {
-        // NextProfile must be configured before construction: the fake's
-        // GetMeAsync returns an already-completed Task, so the
-        // constructor's fire-and-forget RefreshProfileAsync call actually
-        // runs to completion synchronously during construction itself -
-        // setting NextProfile afterward would be too late.
         var (viewModel, api, _, _) = Build(
             existingCredential: "dvc_existing",
-            configureApi: fake => fake.NextProfile = new ClientProfileResponse { BattleTag = "Syntax#21715" });
+            configureApi: fake => fake.NextProfile = new ClientProfileFetchResult
+            {
+                Health = AccountHealth.FullyConnected,
+                BattleTag = "Syntax#21715"
+            });
 
-        // Pumping here is still worthwhile defense-in-depth in case that
-        // synchronous-completion assumption ever stops holding (e.g. a
-        // real HttpClient call would not complete synchronously).
-        // awaiting it directly (see RefreshProfileAsync) - give the
-        // fire-and-forget task a chance to complete by pumping the
-        // dispatcher it marshals its result back onto.
         PumpDispatcher(TimeSpan.FromMilliseconds(500));
 
         Assert.True(viewModel.Connected);
+        Assert.Equal(AccountHealth.FullyConnected, viewModel.AccountHealth);
         Assert.Equal("Syntax#21715", viewModel.BattleTag);
+        Assert.Equal("Connected", viewModel.ConnectionStatusLabel);
         Assert.Equal("dvc_existing", api.LastTokenUsed);
+    }
+
+    [Fact]
+    public void LegacyCredentialShowsReconnectRequiredNotHealthyConnected()
+    {
+        var (viewModel, _, credentials, _) = Build(
+            existingCredential: "dvc_legacy",
+            configureApi: fake => fake.NextProfile = new ClientProfileFetchResult
+            {
+                Health = AccountHealth.ReconnectRequired
+            });
+
+        PumpDispatcher(TimeSpan.FromMilliseconds(500));
+
+        Assert.True(viewModel.Connected);
+        Assert.Equal(AccountHealth.ReconnectRequired, viewModel.AccountHealth);
+        Assert.Equal("Reconnect required", viewModel.ConnectionStatusLabel);
+        Assert.Null(viewModel.BattleTag);
+        Assert.Equal("dvc_legacy", credentials.Load());
+        Assert.False(viewModel.ShowEmptyRosterMessage);
+        Assert.True(viewModel.ShowReconnectRequired);
     }
 
     [Fact]
@@ -211,32 +214,29 @@ public class MainViewModelProfileTests
         var (viewModel, api, credentials, deviceLinkService) = Build();
 
         api.StatusResponses.Enqueue(new DeviceLinkStatusResponse { Status = "CONSUMED", Credential = "dvc_final-secret" });
-        api.NextProfile = new ClientProfileResponse { BattleTag = "Syntax#21715" };
+        api.NextProfile = new ClientProfileFetchResult
+        {
+            Health = AccountHealth.FullyConnected,
+            BattleTag = "Syntax#21715"
+        };
 
         Assert.False(viewModel.Connected);
         Assert.Null(viewModel.BattleTag);
 
-        // Deliberately calls DeviceLinkService.StartLinkAsync directly,
-        // not MainViewModel.ConnectCommand - the command additionally
-        // launches the system browser via Process.Start, which a unit
-        // test must never trigger.
         await deviceLinkService.StartLinkAsync(CancellationToken.None);
 
-        // The internal poll loop's Task.Delay(3s) runs regardless of any
-        // dispatcher; pumping here just gives OnLinkApproved's
-        // _dispatcher.Invoke (fired from that background continuation) a
-        // chance to actually reach the ViewModel's properties.
         PumpDispatcher(TimeSpan.FromSeconds(4));
 
         Assert.True(viewModel.Connected);
         Assert.Equal("dvc_final-secret", credentials.Load());
         Assert.Equal("Syntax#21715", viewModel.BattleTag);
+        Assert.Equal(AccountHealth.FullyConnected, viewModel.AccountHealth);
     }
 
     [Fact]
-    public void AFailedProfileFetchLeavesBattleTagNullWithoutThrowing()
+    public void ATemporaryProfileFailurePreservesCredentialAndShowsConnectionIssue()
     {
-        var (viewModel, api, _, _) = Build(
+        var (viewModel, api, credentials, _) = Build(
             existingCredential: "dvc_existing",
             configureApi: fake => fake.ThrowOnGetMe = true);
 
@@ -244,16 +244,30 @@ public class MainViewModelProfileTests
 
         Assert.Null(exception);
         Assert.True(viewModel.Connected);
+        Assert.Equal(AccountHealth.ConnectionIssue, viewModel.AccountHealth);
+        Assert.Equal("Connection issue", viewModel.ConnectionStatusLabel);
         Assert.Null(viewModel.BattleTag);
+        Assert.Equal("dvc_existing", credentials.Load());
         Assert.True(api.GetMeCallCount > 0);
     }
 
-    /// <summary>
-    /// The identity line and SavedVariables syncing are independent
-    /// features: SyncEngine/SendImportAsync never depends on
-    /// ClientProfileService or GetMeAsync at all, so a broken profile
-    /// fetch must never be able to affect whether a sync succeeds.
-    /// </summary>
+    [Fact]
+    public void UnauthorizedProfileClearsCredentialAndSignsOut()
+    {
+        var (viewModel, _, credentials, _) = Build(
+            existingCredential: "dvc_revoked",
+            configureApi: fake => fake.NextProfile = new ClientProfileFetchResult
+            {
+                Health = AccountHealth.SignedOut
+            });
+
+        PumpDispatcher(TimeSpan.FromMilliseconds(500));
+
+        Assert.False(viewModel.Connected);
+        Assert.Equal(AccountHealth.SignedOut, viewModel.AccountHealth);
+        Assert.Null(credentials.Load());
+    }
+
     [Fact]
     public async Task AFailedProfileFetchDoesNotPreventSyncFromSucceeding()
     {
@@ -266,11 +280,6 @@ public class MainViewModelProfileTests
 
         await viewModel.SyncNowCommand.ExecuteAsync(null);
 
-        // No WoW path is configured in this fixture, so the sync engine's
-        // own ordinary "nothing to sync yet" outcome is WaitingForData -
-        // the point is that it reaches that normal outcome at all,
-        // unaffected by the earlier profile-fetch failure, rather than
-        // being stuck on some auth-tainted or unreachable status.
         Assert.Equal(SyncStatus.WaitingForData, viewModel.SyncStatus);
     }
 
@@ -279,7 +288,11 @@ public class MainViewModelProfileTests
     {
         var (viewModel, _, credentials, _) = Build(
             existingCredential: "dvc_existing",
-            configureApi: fake => fake.NextProfile = new ClientProfileResponse { BattleTag = "Syntax#21715" });
+            configureApi: fake => fake.NextProfile = new ClientProfileFetchResult
+            {
+                Health = AccountHealth.FullyConnected,
+                BattleTag = "Syntax#21715"
+            });
 
         PumpDispatcher(TimeSpan.FromMilliseconds(500));
         Assert.Equal("Syntax#21715", viewModel.BattleTag);
@@ -287,6 +300,7 @@ public class MainViewModelProfileTests
         viewModel.DisconnectCommand.Execute(null);
 
         Assert.False(viewModel.Connected);
+        Assert.Equal(AccountHealth.SignedOut, viewModel.AccountHealth);
         Assert.Null(viewModel.BattleTag);
         Assert.Null(credentials.Load());
     }

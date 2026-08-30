@@ -146,7 +146,8 @@ public class SynTrackApiClientTests
         Assert.Equal("Bearer", handler.LastRequest!.Headers.Authorization!.Scheme);
         Assert.Equal("dvc_token", handler.LastRequest.Headers.Authorization.Parameter);
         Assert.EndsWith("/client/me", handler.LastRequest.RequestUri!.ToString());
-        Assert.Equal("Syntax#21715", profile!.BattleTag);
+        Assert.Equal("Syntax#21715", profile.BattleTag);
+        Assert.Equal(AccountHealth.FullyConnected, profile.Health);
     }
 
     [Fact]
@@ -160,29 +161,31 @@ public class SynTrackApiClientTests
         var client = CreateClient(handler);
         var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
 
-        Assert.NotNull(profile);
-        Assert.Null(profile!.BattleTag);
+        Assert.Equal(AccountHealth.FullyConnected, profile.Health);
+        Assert.Null(profile.BattleTag);
     }
 
     [Fact]
-    public async Task GetMeReturnsNullInsteadOfThrowingOn401()
+    public async Task GetMeReturnsSignedOutInsteadOfThrowingOn401()
     {
         var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
         var client = CreateClient(handler);
 
         var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
 
-        Assert.Null(profile);
+        Assert.Equal(AccountHealth.SignedOut, profile.Health);
+        Assert.Null(profile.BattleTag);
     }
 
     [Fact]
-    public async Task GetMeReturnsNullInsteadOfThrowingOnANetworkFailure()
+    public async Task GetMeReturnsConnectionIssueInsteadOfThrowingOnANetworkFailure()
     {
         var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("connect failed"));
         var client = CreateClient(handler);
 
         var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
 
-        Assert.Null(profile);
+        Assert.Equal(AccountHealth.ConnectionIssue, profile.Health);
+        Assert.Null(profile.BattleTag);
     }
 }

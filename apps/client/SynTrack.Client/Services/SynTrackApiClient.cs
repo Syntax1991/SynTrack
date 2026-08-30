@@ -1,5 +1,6 @@
 namespace SynTrack.Client.Services;
 
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -14,19 +15,17 @@ public interface ISynTrackApiClient
     Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Returns null on any failure (network, non-2xx, malformed response)
-    /// rather than throwing - a profile fetch must never be able to crash
-    /// or block the UI; the caller just leaves the identity line hidden.
+    /// Distinguishes fully connected identity, legacy reconnect-required,
+    /// unauthorized/revoked, and temporary network failures - never collapses
+    /// those into a single nullable BattleTag.
     /// </summary>
-    Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken);
+    Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Returns an empty list on any failure (network, non-2xx, malformed
-    /// response) rather than throwing - a roster fetch must never be able
-    /// to disrupt the SavedVariables watcher or sync pipeline, which are
-    /// entirely independent of this call.
+    /// Roster fetch that never throws into the sync/watcher pipeline.
+    /// Distinguishes ok / legacy / unauthorized / temporary failure.
     /// </summary>
-    Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken);
+    Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken);
 
     Task<SyncStatus> SendImportAsync(
         string deviceToken,
@@ -89,7 +88,7 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         return (await response.Content.ReadFromJsonAsync<DeviceLinkStatusResponse>(JsonOptions, cancellationToken))!;
     }
 
-    public async Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
+    public async Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/client/me");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", deviceToken);
@@ -98,28 +97,44 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         {
             var response = await _http.SendAsync(request, cancellationToken);
 
-            if (!response.IsSuccessStatusCode)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                return null;
+                return new ClientProfileFetchResult { Health = AccountHealth.SignedOut };
             }
 
-            return await response.Content.ReadFromJsonAsync<ClientProfileResponse>(JsonOptions, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
+            }
+
+            var body = await response.Content.ReadFromJsonAsync<ClientProfileResponse>(JsonOptions, cancellationToken);
+
+            if (string.Equals(body?.IdentityStatus, "legacy_reconnect_required", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ClientProfileFetchResult { Health = AccountHealth.ReconnectRequired };
+            }
+
+            return new ClientProfileFetchResult
+            {
+                Health = AccountHealth.FullyConnected,
+                BattleTag = body?.BattleTag
+            };
         }
         catch (HttpRequestException)
         {
-            return null;
+            return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return null;
+            return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
         }
         catch (JsonException)
         {
-            return null;
+            return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
         }
     }
 
-    public async Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
+    public async Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/client/characters");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", deviceToken);
@@ -128,25 +143,39 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         {
             var response = await _http.SendAsync(request, cancellationToken);
 
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.Unauthorized };
+            }
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.LegacyReconnectRequired };
+            }
+
             if (!response.IsSuccessStatusCode)
             {
-                return Array.Empty<ClientCharacterSummary>();
+                return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
             }
 
             var parsed = await response.Content.ReadFromJsonAsync<ClientCharactersResponse>(JsonOptions, cancellationToken);
-            return parsed?.Items ?? new List<ClientCharacterSummary>();
+            return new ClientCharactersFetchResult
+            {
+                Status = ClientCharactersFetchStatus.Ok,
+                Items = parsed?.Items ?? new List<ClientCharacterSummary>()
+            };
         }
         catch (HttpRequestException)
         {
-            return Array.Empty<ClientCharacterSummary>();
+            return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return Array.Empty<ClientCharacterSummary>();
+            return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
         }
         catch (JsonException)
         {
-            return Array.Empty<ClientCharacterSummary>();
+            return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
         }
     }
 

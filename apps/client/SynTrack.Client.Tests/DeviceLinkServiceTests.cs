@@ -25,11 +25,15 @@ public class DeviceLinkServiceTests
                 : new DeviceLinkStatusResponse { Status = "PENDING" });
         }
 
-        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
-            Task.FromResult<ClientProfileResponse?>(new ClientProfileResponse { BattleTag = "Syntax#21715" });
+        public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientProfileFetchResult
+            {
+                Health = AccountHealth.FullyConnected,
+                BattleTag = "Syntax#21715"
+            });
 
-        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<ClientCharacterSummary>>(Array.Empty<ClientCharacterSummary>());
+        public Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.Ok });
 
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,

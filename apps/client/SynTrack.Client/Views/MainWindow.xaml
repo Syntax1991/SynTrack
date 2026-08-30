@@ -48,21 +48,29 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
-                            Visibility="{Binding Connected, Converter={StaticResource BoolToVisibility}}">
+                            Visibility="{Binding ShowFullyConnectedIdentity, Converter={StaticResource BoolToVisibility}}">
                     <Ellipse Style="{StaticResource StatusDot}" Margin="0,0,7,0"
                              Fill="{Binding ConnectionStatusTone, Converter={StaticResource ToneToBrush}}" />
                     <TextBlock Style="{StaticResource BodyText}" FontWeight="SemiBold"
-                               Visibility="{Binding BattleTag, Converter={StaticResource NullToVisibility}}"
                                Text="{Binding BattleTag}" />
-                    <TextBlock Style="{StaticResource MutedText}"
-                               Visibility="{Binding BattleTag, Converter={StaticResource NullToVisibility}, ConverterParameter=invert}"
-                               Text="Connected" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding ShowReconnectRequired, Converter={StaticResource BoolToVisibility}}">
+                    <Ellipse Style="{StaticResource StatusDot}" Margin="0,0,7,0"
+                             Fill="{Binding ConnectionStatusTone, Converter={StaticResource ToneToBrush}}" />
+                    <TextBlock Style="{StaticResource BodyText}" FontWeight="SemiBold" Text="Reconnect required" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding ShowConnectionIssue, Converter={StaticResource BoolToVisibility}}">
+                    <Ellipse Style="{StaticResource StatusDot}" Margin="0,0,7,0"
+                             Fill="{Binding ConnectionStatusTone, Converter={StaticResource ToneToBrush}}" />
+                    <TextBlock Style="{StaticResource BodyText}" FontWeight="SemiBold" Text="Connection issue" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- ===================== Signed-out state ===================== -->
-        <StackPanel Grid.Row="1" Visibility="{Binding Connected, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}"
+        <StackPanel Grid.Row="1" Visibility="{Binding ShowSignedOutShell, Converter={StaticResource BoolToVisibility}}"
                     Margin="0,60,0,0" HorizontalAlignment="Center">
 
             <Border Width="52" Height="52" CornerRadius="13" Background="{StaticResource AccentBrush}"
@@ -104,7 +112,7 @@
         </StackPanel>
 
         <!-- ===================== Connected state: two-column layout ===================== -->
-        <Grid Grid.Row="1" Visibility="{Binding Connected, Converter={StaticResource BoolToVisibility}}">
+        <Grid Grid.Row="1" Visibility="{Binding ShowConnectedShell, Converter={StaticResource BoolToVisibility}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="320" />
                 <ColumnDefinition Width="*" />
@@ -124,12 +132,23 @@
                             <TextBlock Text="{Binding ConnectionStatusLabel}" Style="{StaticResource BodyText}" FontWeight="SemiBold" />
                         </StackPanel>
                         <TextBlock Margin="15,4,0,0"
-                                   Visibility="{Binding BattleTag, Converter={StaticResource NullToVisibility}}"
+                                   Visibility="{Binding ShowFullyConnectedIdentity, Converter={StaticResource BoolToVisibility}}"
                                    Text="{Binding BattleTag, StringFormat='Connected as {0}'}"
                                    Style="{StaticResource BodyText}" />
-                        <TextBlock Margin="15,4,0,0" Style="{StaticResource MutedText}"
-                                   Text="Account identity unavailable"
-                                   Visibility="{Binding BattleTag, Converter={StaticResource NullToVisibility}, ConverterParameter=invert}" />
+                        <StackPanel Margin="15,4,0,0"
+                                    Visibility="{Binding ShowReconnectRequired, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                       Text="This client credential is not linked to a SynTrack account. Reconnect with Battle.net once to bind ownership." />
+                            <Button Content="Reconnect with Battle.net" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding ReconnectCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="14,8" />
+                        </StackPanel>
+                        <StackPanel Margin="15,4,0,0"
+                                    Visibility="{Binding ShowConnectionIssue, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                       Text="Could not load account identity. Your credential is preserved — retry when SynTrack is reachable." />
+                            <Button Content="Retry" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding RetryProfileCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" />
+                        </StackPanel>
                         <Button Content="Disconnect" Style="{StaticResource DangerGhostButton}"
                                 Command="{Binding DisconnectCommand}" HorizontalAlignment="Left" Margin="12,8,0,0" />
 
@@ -235,6 +254,11 @@
                                HorizontalAlignment="Left" Margin="12,14,0,0"
                                Text="{Binding CharactersError}"
                                Visibility="{Binding CharactersError, Converter={StaticResource NullToVisibility}}" />
+
+                    <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" MaxWidth="440"
+                               HorizontalAlignment="Left" Margin="12,14,0,0"
+                               Text="Reconnect with Battle.net to load your account-scoped character roster."
+                               Visibility="{Binding ShowRosterOwnershipBlocked, Converter={StaticResource BoolToVisibility}}" />
 
                     <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" MaxWidth="440"
                                HorizontalAlignment="Left" Margin="12,14,0,0"

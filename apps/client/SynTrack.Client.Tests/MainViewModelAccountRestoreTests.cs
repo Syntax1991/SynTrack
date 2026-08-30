@@ -68,11 +68,11 @@ public class MainViewModelAccountRestoreTests
         public Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<ClientProfileResponse?> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
-            Task.FromResult<ClientProfileResponse?>(null);
+        public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientProfileFetchResult { Health = AccountHealth.SignedOut });
 
-        public Task<IReadOnlyList<ClientCharacterSummary>> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyList<ClientCharacterSummary>>(Array.Empty<ClientCharacterSummary>());
+        public Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.Ok });
 
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,

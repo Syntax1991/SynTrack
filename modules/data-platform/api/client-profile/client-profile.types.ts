@@ -1,9 +1,19 @@
+export type ClientIdentityStatus =
+  | "connected"
+  | "legacy_reconnect_required";
+
 export type ClientProfileResult = {
   /*
-   * Null covers two distinct cases the client must treat the same way
-   * (no identity to show, not an error): the device credential predates
-   * this feature (issued before DeviceCredential.raiderAccountId
-   * existed), or the approving RaiderAccount has no battleTag on file.
+   * connected = DeviceCredential has a resolvable RaiderAccount owner.
+   * legacy_reconnect_required = valid credential but no raiderAccountId
+   * (issued before ownership linkage). Never auto-assign; client must
+   * reconnect via Battle.net to bind a canonical owner.
+   */
+  identityStatus: ClientIdentityStatus;
+  /*
+   * Present only when identityStatus is connected and the RaiderAccount
+   * has a battleTag on file. Null battleTag with connected status means
+   * ownership is proven but Battle.net has not supplied a tag yet.
    */
   battleTag: string | null;
 };
