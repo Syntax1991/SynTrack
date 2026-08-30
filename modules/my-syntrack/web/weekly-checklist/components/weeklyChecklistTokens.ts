@@ -35,9 +35,14 @@ export function gameplayDomainToken(
   if (domain === "vault") {
     const symbol = formatVaultSlotSymbol({
       knownUnlockedSlots: view.knownUnlockedSlots,
-      maxSlots: view.maxSlots,
-      hasUnknownCategories: view.hasUnknownCategories
+      maxSlots: view.maxSlots
     });
+    const unknownNote =
+      view.hasUnknownCategories && view.unknownCategoryCount > 0
+        ? ` · ${view.unknownCategoryCount} category unresolved`
+        : view.hasUnknownCategories
+          ? " · some categories unresolved"
+          : "";
 
     return {
       symbol,
@@ -47,7 +52,7 @@ export function gameplayDomainToken(
           : view.hasUnknownCategories
             ? ("unknown" as const)
             : ("attention" as const),
-      title: `${view.label} ${symbol}`
+      title: `${view.label} ${symbol}${unknownNote}`
     };
   }
 

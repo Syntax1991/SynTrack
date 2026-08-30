@@ -140,10 +140,10 @@ describe("WeeklyChecklistMatrix", () => {
       "Not applicable for this character profile"
     );
     expect(disabled).toHaveLength(4);
-    expect(screen.queryByText("≥6/9")).not.toBeInTheDocument();
+    expect(screen.queryByText("6/9")).not.toBeInTheDocument();
   });
 
-  it("renders Synblast M+ 8/8 and Vault ≥6/9 when Delves are unresolved", () => {
+  it("renders Synblast M+ 8/8 and Vault 6/9 when Delves are unresolved", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
@@ -184,8 +184,12 @@ describe("WeeklyChecklistMatrix", () => {
     );
 
     expect(screen.getAllByText("8/8").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("≥6/9")).toBeInTheDocument();
+    expect(screen.getByText("6/9")).toBeInTheDocument();
+    expect(screen.queryByText("≥6/9")).not.toBeInTheDocument();
     expect(screen.queryByText("16/8")).not.toBeInTheDocument();
+    expect(
+      screen.getByTitle("Vault 6/9 · 1 category unresolved")
+    ).toBeInTheDocument();
   });
 
   it("surfaces weekly-only action from Treatise incompleteness", () => {

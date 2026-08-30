@@ -76,8 +76,7 @@ describe("deriveWeeklyGameplay", () => {
     expect(
       formatVaultSlotSymbol({
         knownUnlockedSlots: view.vault.knownUnlockedSlots,
-        maxSlots: view.vault.maxSlots,
-        hasUnknownCategories: view.vault.hasUnknownCategories
+        maxSlots: view.vault.maxSlots
       })
     ).toBe("?");
   });
@@ -133,7 +132,7 @@ describe("deriveWeeklyGameplay", () => {
     expect(view.mythicPlusAction).toBeNull();
   });
 
-  it("Synblast: M+ complete + raid complete + Delves UNKNOWN is ≥6/9, not ?", () => {
+  it("Synblast: M+ complete + raid complete + Delves UNKNOWN is 6/9 cell, not ?", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
         mythicPlusCaptured: true,
@@ -160,10 +159,9 @@ describe("deriveWeeklyGameplay", () => {
     expect(
       formatVaultSlotSymbol({
         knownUnlockedSlots: view.vault.knownUnlockedSlots,
-        maxSlots: view.vault.maxSlots,
-        hasUnknownCategories: view.vault.hasUnknownCategories
+        maxSlots: view.vault.maxSlots
       })
-    ).toBe("≥6/9");
+    ).toBe("6/9");
   });
 
   it("does not treat unknown Delves as zero unlocked vault slots", () => {
@@ -179,13 +177,7 @@ describe("deriveWeeklyGameplay", () => {
     expect(view.vault.knownUnlockedSlots).toBe(6);
     expect(view.vault.hasUnknownCategories).toBe(true);
     expect(view.vault.state).not.toBe("READY");
-    expect(
-      formatVaultSlotSymbol({
-        knownUnlockedSlots: view.vault.knownUnlockedSlots,
-        maxSlots: view.vault.maxSlots,
-        hasUnknownCategories: view.vault.hasUnknownCategories
-      })
-    ).not.toBe("6/9");
+    expect(view.vault.state).toBe("IN_PROGRESS");
   });
 
   it("uses exact Vault unlocked/maximum when every category is known", () => {
@@ -214,8 +206,7 @@ describe("deriveWeeklyGameplay", () => {
     expect(
       formatVaultSlotSymbol({
         knownUnlockedSlots: view.vault.knownUnlockedSlots,
-        maxSlots: view.vault.maxSlots,
-        hasUnknownCategories: view.vault.hasUnknownCategories
+        maxSlots: view.vault.maxSlots
       })
     ).toBe("9/9");
     expect(view.delves).toMatchObject({

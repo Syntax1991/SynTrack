@@ -22,20 +22,18 @@ export function formatKnownWeeklyProgressSymbol(input: {
   return fraction;
 }
 
+/*
+ * Compact Vault cell: always knownUnlocked/maxSlots.
+ * Partial/unknown category state stays on the read model and is shown via
+ * tooltip / tone — never as a ≥ prefix in the matrix cell.
+ */
 export function formatVaultSlotSymbol(input: {
   knownUnlockedSlots: number;
   maxSlots: number;
-  hasUnknownCategories: boolean;
 }): string {
   if (input.maxSlots <= 0) {
     return "?";
   }
 
-  const fraction = `${input.knownUnlockedSlots}/${input.maxSlots}`;
-
-  if (input.hasUnknownCategories) {
-    return `≥${fraction}`;
-  }
-
-  return fraction;
+  return `${input.knownUnlockedSlots}/${input.maxSlots}`;
 }
