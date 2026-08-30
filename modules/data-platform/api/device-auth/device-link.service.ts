@@ -54,7 +54,7 @@ export class DeviceLinkService {
     private readonly credentialRepository: DeviceCredentialRepositoryContract,
     private readonly requireRaiderSession: (
       token: string
-    ) => Promise<unknown>
+    ) => Promise<{ raiderAccountId: string }>
   ) {}
 
   async createLink(
@@ -97,9 +97,10 @@ export class DeviceLinkService {
     userCode: string,
     raiderSessionToken: string
   ): Promise<void> {
-    await this.requireRaiderSession(
-      raiderSessionToken
-    );
+    const raiderSession =
+      await this.requireRaiderSession(
+        raiderSessionToken
+      );
 
     const link =
       await this.linkRepository.findByUserCode(
@@ -130,7 +131,8 @@ export class DeviceLinkService {
     }
 
     await this.linkRepository.markApproved(
-      link.id
+      link.id,
+      raiderSession.raiderAccountId
     );
   }
 
@@ -185,7 +187,9 @@ export class DeviceLinkService {
             "SynTrack Client",
           tokenHash: hashSecret(
             rawToken
-          )
+          ),
+          raiderAccountId:
+            link.raiderAccountId
         }
       );
 

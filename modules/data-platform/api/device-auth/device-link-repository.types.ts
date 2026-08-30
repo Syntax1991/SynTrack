@@ -6,6 +6,7 @@ export type DeviceLinkRequestRow = {
   deviceCodeHash: string;
   status: DeviceLinkStatus;
   clientName: string | null;
+  raiderAccountId: string | null;
   expiresAt: Date;
   approvedAt: Date | null;
   consumedAt: Date | null;
@@ -17,6 +18,7 @@ export type DeviceCredentialRow = {
   name: string;
   tokenHash: string;
   linkRequestId: string | null;
+  raiderAccountId: string | null;
   createdAt: Date;
   lastSeenAt: Date | null;
   revokedAt: Date | null;
@@ -39,7 +41,8 @@ export interface DeviceLinkRepositoryContract {
   ): Promise<DeviceLinkRequestRow | null>;
 
   markApproved(
-    id: string
+    id: string,
+    raiderAccountId: string | null
   ): Promise<DeviceLinkRequestRow>;
 
   markExpired(
@@ -56,6 +59,7 @@ export interface DeviceLinkRepositoryContract {
     credential: {
       name: string;
       tokenHash: string;
+      raiderAccountId: string | null;
     }
   ): Promise<DeviceCredentialRow>;
 }

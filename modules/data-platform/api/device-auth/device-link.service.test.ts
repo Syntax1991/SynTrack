@@ -12,7 +12,7 @@ let requireRaiderSession: ReturnType<
   typeof vi.fn<
     (
       token: string
-    ) => Promise<unknown>
+    ) => Promise<{ raiderAccountId: string }>
   >
 >;
 
@@ -31,7 +31,7 @@ beforeEach(() => {
     .fn<
       (
         token: string
-      ) => Promise<unknown>
+      ) => Promise<{ raiderAccountId: string }>
     >()
     .mockResolvedValue({
       raiderAccountId: "raider-1"
@@ -201,6 +201,28 @@ describe("DeviceLinkService", () => {
     expect(
       storedCredential.tokenHash
     ).toHaveLength(64);
+  });
+
+  it("the issued credential is stamped with the approving RaiderAccount id", async () => {
+    const { userCode, deviceCode } =
+      await service.createLink(null);
+
+    await service.approve(
+      userCode,
+      "raider-token"
+    );
+
+    await service.pollStatus(
+      deviceCode
+    );
+
+    const storedCredential = [
+      ...linkRepository.credentials.values()
+    ][0]!;
+
+    expect(
+      storedCredential.raiderAccountId
+    ).toBe("raider-1");
   });
 
   it("a second poll cannot recover the secret", async () => {

@@ -854,6 +854,8 @@ model RaiderAccount {
   updatedAt      DateTime  @updatedAt
 
   sessions RaiderSession[]
+  deviceLinkRequests DeviceLinkRequest[]
+  deviceCredentials  DeviceCredential[]
 }
 
 model RaiderSession {
@@ -876,31 +878,37 @@ enum DeviceLinkStatus {
 }
 
 model DeviceLinkRequest {
-  id             String           @id @default(cuid())
-  userCode       String           @unique
-  deviceCodeHash String           @unique
-  status         DeviceLinkStatus @default(PENDING)
-  clientName     String?
-  expiresAt      DateTime
-  approvedAt     DateTime?
-  consumedAt     DateTime?
-  createdAt      DateTime         @default(now())
+  id              String           @id @default(cuid())
+  userCode        String           @unique
+  deviceCodeHash  String           @unique
+  status          DeviceLinkStatus @default(PENDING)
+  clientName      String?
+  raiderAccountId String?
+  expiresAt       DateTime
+  approvedAt      DateTime?
+  consumedAt      DateTime?
+  createdAt       DateTime         @default(now())
 
-  device DeviceCredential?
+  raiderAccount RaiderAccount?    @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
+  device        DeviceCredential?
 
   @@index([status, expiresAt])
+  @@index([raiderAccountId])
 }
 
 model DeviceCredential {
-  id            String    @id @default(cuid())
-  name          String
-  tokenHash     String    @unique
-  linkRequestId String?   @unique
-  createdAt     DateTime  @default(now())
-  lastSeenAt    DateTime?
-  revokedAt     DateTime?
+  id              String    @id @default(cuid())
+  name            String
+  tokenHash       String    @unique
+  linkRequestId   String?   @unique
+  raiderAccountId String?
+  createdAt       DateTime  @default(now())
+  lastSeenAt      DateTime?
+  revokedAt       DateTime?
 
-  linkRequest DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+  linkRequest   DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+  raiderAccount RaiderAccount?     @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
 
   @@index([revokedAt])
+  @@index([raiderAccountId])
 }

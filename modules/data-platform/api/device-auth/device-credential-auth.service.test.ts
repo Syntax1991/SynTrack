@@ -19,6 +19,7 @@ function seed(
     name: "Test Client",
     tokenHash,
     linkRequestId: null,
+    raiderAccountId: null,
     createdAt: new Date(),
     lastSeenAt: null,
     revokedAt: null,

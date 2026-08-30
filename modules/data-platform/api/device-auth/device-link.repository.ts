@@ -46,14 +46,16 @@ export class DeviceLinkRepository
   }
 
   markApproved(
-    id: string
+    id: string,
+    raiderAccountId: string | null
   ): Promise<DeviceLinkRequestRow> {
     return prisma.deviceLinkRequest.update(
       {
         where: { id },
         data: {
           status: "APPROVED",
-          approvedAt: new Date()
+          approvedAt: new Date(),
+          raiderAccountId
         }
       }
     );
@@ -75,6 +77,7 @@ export class DeviceLinkRepository
     credential: {
       name: string;
       tokenHash: string;
+      raiderAccountId: string | null;
     }
   ): Promise<DeviceCredentialRow> {
     const [, created] =
@@ -96,7 +99,9 @@ export class DeviceLinkRepository
               name: credential.name,
               tokenHash:
                 credential.tokenHash,
-              linkRequestId
+              linkRequestId,
+              raiderAccountId:
+                credential.raiderAccountId
             }
           }
         )

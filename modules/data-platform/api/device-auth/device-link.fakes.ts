@@ -36,6 +36,7 @@ export class FakeDeviceLinkRepository
         input.deviceCodeHash,
       status: "PENDING",
       clientName: input.clientName,
+      raiderAccountId: null,
       expiresAt: input.expiresAt,
       approvedAt: null,
       consumedAt: null,
@@ -70,7 +71,10 @@ export class FakeDeviceLinkRepository
     );
   }
 
-  async markApproved(id: string) {
+  async markApproved(
+    id: string,
+    raiderAccountId: string | null
+  ) {
     const existing =
       this.links.get(id);
 
@@ -84,7 +88,8 @@ export class FakeDeviceLinkRepository
       {
         ...existing,
         status: "APPROVED",
-        approvedAt: new Date()
+        approvedAt: new Date(),
+        raiderAccountId
       };
 
     this.links.set(id, updated);
@@ -118,6 +123,7 @@ export class FakeDeviceLinkRepository
     credential: {
       name: string;
       tokenHash: string;
+      raiderAccountId: string | null;
     }
   ) {
     const existingLink =
@@ -142,6 +148,8 @@ export class FakeDeviceLinkRepository
       name: credential.name,
       tokenHash: credential.tokenHash,
       linkRequestId,
+      raiderAccountId:
+        credential.raiderAccountId,
       createdAt: new Date(),
       lastSeenAt: null,
       revokedAt: null
