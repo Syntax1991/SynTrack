@@ -177,6 +177,7 @@ const mockOverview: OverviewResponse =
           severity: "this-week"
         },
         tags: [],
+        trackingProfile: "FULL",
         health: {
           characterId: "char-1",
           character: {

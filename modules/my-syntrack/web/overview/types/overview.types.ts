@@ -332,12 +332,11 @@ export type CharacterDataHealth = {
   };
 };
 
-export type CharacterOverviewRow =
-  CharacterWeeklyState & {
-    tags: TagView[];
-    health: CharacterDataHealth;
-  };
-
+export type CharacterOverviewRow = CharacterWeeklyState & {
+  tags: TagView[];
+  trackingProfile: "FULL" | "WEEKLY" | "PROFESSION" | "MINIMAL";
+  health: CharacterDataHealth;
+};
 export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];

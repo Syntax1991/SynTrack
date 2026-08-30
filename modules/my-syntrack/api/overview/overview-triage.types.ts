@@ -2,6 +2,7 @@ import type {
   ProfessionKnowledgeTreasureAggregate,
   ProfessionKnowledgeTreasureProfessionSummary
 } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.types.js";
+import type { DomainApplicability } from "../character-tracking/domain-applicability.js";
 import type {
   CharacterProfessionSummary,
   OverviewDomainState
@@ -28,6 +29,7 @@ export type WeeklySummaryDomainDetail = {
   completeCount: number;
   applicableTotal: number;
   unknownCount: number;
+  applicability?: DomainApplicability;
 };
 
 export type WeeklySummaryOverviewState = {

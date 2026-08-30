@@ -1,7 +1,10 @@
+import type { CharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import {
-  isWeeklyGameplayEnabled,
-  type CharacterTrackingProfile
-} from "../character-tracking/character-tracking-profile.js";
+  isWeeklyGameplayDomainEnabled,
+  resolveWeeklyGameplayDomainApplicability,
+  type DomainApplicability,
+  type WeeklyGameplayDomain
+} from "../character-tracking/domain-applicability.js";
 import type {
   AttentionItem,
   ProfessionWeeklyOverviewState,
@@ -81,7 +84,8 @@ function aggregateToDetail(
 function activityPlaceholder(
   key: string,
   label: string,
-  state: OverviewDomainState = "UNKNOWN"
+  state: OverviewDomainState = "UNKNOWN",
+  applicability: DomainApplicability = "ENABLED"
 ): WeeklySummaryDomainDetail {
   return {
     key,
@@ -89,8 +93,32 @@ function activityPlaceholder(
     state,
     completeCount: 0,
     applicableTotal: state === "NOT_TRACKED" ? 0 : 1,
-    unknownCount: state === "UNKNOWN" ? 1 : 0
+    unknownCount: state === "UNKNOWN" ? 1 : 0,
+    applicability
   };
+}
+
+function gameplayDomainDetail(
+  key: WeeklyGameplayDomain,
+  label: string,
+  profile: CharacterTrackingProfile,
+  capturedState?: OverviewDomainState
+): WeeklySummaryDomainDetail {
+  const applicability = resolveWeeklyGameplayDomainApplicability(
+    profile,
+    key
+  );
+
+  if (applicability === "DISABLED_BY_PROFILE") {
+    return activityPlaceholder(key, label, "NOT_TRACKED", applicability);
+  }
+
+  return activityPlaceholder(
+    key,
+    label,
+    capturedState ?? "UNKNOWN",
+    applicability
+  );
 }
 
 /*
@@ -106,46 +134,39 @@ export function resolveWeeklySummaryOverviewState(
   weeklyAction: AttentionItem | null;
 } {
   const { vault, professionWeekly } = input;
-  const gameplayEnabled = isWeeklyGameplayEnabled(
-    input.trackingProfile ?? "FULL"
-  );
+  const profile = input.trackingProfile ?? "FULL";
 
-  const vaultDetail: WeeklySummaryDomainDetail = !gameplayEnabled
-    ? activityPlaceholder("vault", "Vault", "NOT_TRACKED")
-    : vault.state === "UNKNOWN"
-      ? activityPlaceholder("vault", "Vault", "UNKNOWN")
-      : vault.state === "NOT_TRACKED"
-        ? activityPlaceholder("vault", "Vault", "NOT_TRACKED")
-        : {
-            key: "vault",
-            label: "Vault",
-            state: vault.state,
-            completeCount: vault.unlockedSlots,
-            applicableTotal: vault.slotsTotal,
-            unknownCount: 0
-          };
-
-  const gameplayActivityState = (
-    state: OverviewDomainState | undefined
-  ): OverviewDomainState =>
-    gameplayEnabled ? (state ?? "UNKNOWN") : "NOT_TRACKED";
+  const vaultDetail: WeeklySummaryDomainDetail =
+    !isWeeklyGameplayDomainEnabled(profile, "vault")
+      ? gameplayDomainDetail("vault", "Vault", profile)
+      : vault.state === "UNKNOWN"
+        ? gameplayDomainDetail("vault", "Vault", profile, "UNKNOWN")
+        : vault.state === "NOT_TRACKED"
+          ? gameplayDomainDetail("vault", "Vault", profile, "NOT_TRACKED")
+          : {
+              key: "vault",
+              label: "Vault",
+              state: vault.state,
+              completeCount: vault.unlockedSlots,
+              applicableTotal: vault.slotsTotal,
+              unknownCount: 0,
+              applicability: "ENABLED"
+            };
 
   const domains: WeeklySummaryDomainDetail[] = [
     vaultDetail,
-    activityPlaceholder(
+    gameplayDomainDetail(
       "mythic-plus",
       "M+",
-      gameplayActivityState(input.mythicPlusState)
+      profile,
+      input.mythicPlusState
     ),
-    activityPlaceholder(
-      "raid",
-      "Raid",
-      gameplayActivityState(input.raidState)
-    ),
-    activityPlaceholder(
+    gameplayDomainDetail("raid", "Raid", profile, input.raidState),
+    gameplayDomainDetail(
       "delves",
       "Delves",
-      gameplayActivityState(input.delvesState)
+      profile,
+      input.delvesState
     ),
     aggregateToDetail(
       "Quest",
@@ -269,9 +290,10 @@ function resolveWeeklyOnlyAction(
   }
 
   const vault = domains.find((domain) => domain.key === "vault");
+  const profile = input.trackingProfile ?? "FULL";
 
   if (
-    isWeeklyGameplayEnabled(input.trackingProfile ?? "FULL") &&
+    isWeeklyGameplayDomainEnabled(profile, "vault") &&
     vault &&
     vault.state === "ATTENTION" &&
     vault.applicableTotal > vault.completeCount

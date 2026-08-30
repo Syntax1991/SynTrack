@@ -200,6 +200,11 @@ describe("resolveWeeklySummaryOverviewState", () => {
       expect(gameplayDomains.every((domain) => domain.state === "NOT_TRACKED")).toBe(
         true
       );
+      expect(
+        gameplayDomains.every(
+          (domain) => domain.applicability === "DISABLED_BY_PROFILE"
+        )
+      ).toBe(true);
       expect(weeklySummary.completedKnown).toBe(4);
       expect(weeklySummary.applicableKnown).toBe(8);
       expect(weeklySummary.unknownCount).toBe(0);

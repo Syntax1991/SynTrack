@@ -53,8 +53,10 @@ export function resolveCharacterTrackingProfile(
   return "FULL";
 }
 
-export function isWeeklyGameplayEnabled(
-  profile: CharacterTrackingProfile
-): boolean {
-  return profile === "FULL" || profile === "WEEKLY";
-}
+export {
+  isWeeklyGameplayEnabled,
+  isWeeklyGameplayDomainEnabled,
+  resolveWeeklyGameplayDomainApplicability,
+  type DomainApplicability,
+  type WeeklyGameplayDomain
+} from "./domain-applicability.js";

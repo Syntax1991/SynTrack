@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  isWeeklyGameplayEnabled,
-  resolveCharacterTrackingProfile
-} from "./character-tracking-profile.js";
+import { resolveCharacterTrackingProfile } from "./character-tracking-profile.js";
+import { isWeeklyGameplayEnabled } from "./domain-applicability.js";
 
 describe("resolveCharacterTrackingProfile", () => {
   it("maps Profession tag to PROFESSION", () => {
