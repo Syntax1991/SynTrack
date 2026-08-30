@@ -1,4 +1,5 @@
 import type { TagView } from "../tags/tag.types.js";
+import type { WeeklyGameplayCharacterView } from "../weekly-gameplay/weekly-gameplay.types.js";
 import type { OverviewGearCharacterInput } from "./overview-gear-state.mapper.js";
 import type { OverviewProfessionCharacterInput } from "./overview-profession-state.mapper.js";
 import type { OverviewProfessionKnowledgeTreasureCharacterInput } from "./overview-profession-knowledge-treasure-state.mapper.js";
@@ -54,6 +55,7 @@ export type OverviewAggregationInput = {
    */
   trackerStatesByCharacterId: Map<string, CharacterTrackerState[]>;
   tagsByCharacterId?: Map<string, TagView[]>;
+  weeklyGameplayByCharacterId?: Map<string, WeeklyGameplayCharacterView>;
 };
 
 /*

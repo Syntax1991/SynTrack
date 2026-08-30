@@ -37,6 +37,7 @@ const mockChecklist: WeeklyChecklistResponse =
         className: "Mage",
         level: 80,
         trackingProfile: "FULL",
+        weeklyGameplay: null,
         completedTaskKeys: [],
         professionWeekly: {
           state: "NOT_TRACKED",

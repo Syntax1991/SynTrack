@@ -200,9 +200,19 @@ export function resolveWeeklySummaryOverviewState(
   let unknownCount = 0;
   let incompleteKnown = 0;
 
+  const gameplayKeys = new Set(["vault", "mythic-plus", "raid", "delves"]);
+
   for (const domain of tracked) {
     if (domain.state === "UNKNOWN") {
       unknownCount += 1;
+      continue;
+    }
+
+    if (gameplayKeys.has(domain.key)) {
+      if (domain.state === "ATTENTION" || domain.state === "IN_PROGRESS") {
+        incompleteKnown += 1;
+      }
+
       continue;
     }
 

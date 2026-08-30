@@ -23,6 +23,7 @@ function buildCharacter(
     className: "Shaman",
     level: 80,
     trackingProfile: "FULL",
+    weeklyGameplay: null,
     completedTaskKeys: [],
     professionWeekly: {
       state: "NOT_TRACKED",

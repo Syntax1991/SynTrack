@@ -41,6 +41,7 @@ model Character {
   resourceSnapshots CharacterResourceSnapshot[]
   professionWeeklySnapshots CharacterProfessionWeeklySnapshot[]
   professionKnowledgeTreasureSnapshots CharacterProfessionKnowledgeTreasureSnapshot[]
+  weeklyGameplaySnapshots CharacterWeeklyGameplaySnapshot[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
@@ -365,6 +366,85 @@ model CharacterProfessionWeeklySnapshot {
   @@unique([characterId, sourceDefinitionId, periodKey])
   @@index([sourceDefinitionId])
   @@index([periodKey])
+}
+
+model CharacterWeeklyGameplaySnapshot {
+  id          String   @id @default(cuid())
+  characterId String
+  periodKey   String
+  capturedAt  DateTime
+  source      String   @default("ADDON")
+
+  vaultCaptured      Boolean
+  vaultGenerated     Boolean?
+  vaultCurrentPeriod Boolean?
+  vaultCanClaim      Boolean?
+  vaultHasAvailable  Boolean?
+
+  mythicPlusCaptured Boolean
+  raidCaptured       Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  character  Character                        @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  vaultActivities CharacterWeeklyVaultActivity[]
+  mythicPlusRuns  CharacterWeeklyMythicPlusCapture[]
+  raidLockouts    CharacterWeeklyRaidLockout[]
+
+  @@unique([characterId, periodKey])
+  @@index([periodKey])
+}
+
+model CharacterWeeklyVaultActivity {
+  id         String @id @default(cuid())
+  snapshotId String
+
+  type           Int
+  typeName       String?
+  index          Int?
+  threshold      Int?
+  progress       Int?
+  activityId     Int?
+  level          Int?
+  activityTierId Int?
+  claimId        Int?
+
+  snapshot CharacterWeeklyGameplaySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([snapshotId, type])
+}
+
+model CharacterWeeklyMythicPlusCapture {
+  id         String @id @default(cuid())
+  snapshotId String
+
+  mapChallengeModeId Int?
+  keyLevel           Int
+  completed          Boolean?
+  thisWeek           Boolean?
+  durationSec        Int?
+  dungeonScore       Int?
+
+  snapshot CharacterWeeklyGameplaySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([snapshotId])
+}
+
+model CharacterWeeklyRaidLockout {
+  id         String @id @default(cuid())
+  snapshotId String
+
+  instanceName       String
+  difficulty         Int?
+  difficultyName     String?
+  encounterProgress  Int?
+  numEncounters      Int?
+  encountersJson     String
+
+  snapshot CharacterWeeklyGameplaySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@index([snapshotId])
 }
 
 enum ProfessionKnowledgeTreasureState {

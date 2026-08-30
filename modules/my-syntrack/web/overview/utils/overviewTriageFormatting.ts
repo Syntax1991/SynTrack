@@ -100,7 +100,7 @@ export function formatWeeklySummaryToken(summary: {
   if (summary.state === "ATTENTION") {
     return {
       symbol:
-        summary.applicableKnown > 0
+        summary.unknownCount > 0 && summary.applicableKnown > 0
           ? formatKnownWeeklyProgressSymbol({
               completedKnown: summary.completedKnown,
               applicableKnown: summary.applicableKnown,

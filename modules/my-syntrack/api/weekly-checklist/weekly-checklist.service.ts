@@ -8,6 +8,8 @@ import { TagRepository } from "../tags/tag.repository.js";
 import { TagService } from "../tags/tag.service.js";
 import { buildTagsByCharacterId } from "../overview/overview-character-extras.js";
 import { getWeeklyPeriod } from "../shared/weekly-period.js";
+import { WeeklyGameplayRepository } from "../weekly-gameplay/weekly-gameplay.repository.js";
+import { WeeklyGameplayService } from "../weekly-gameplay/weekly-gameplay.service.js";
 import { WeeklyChecklistRepository } from "./weekly-checklist.repository.js";
 import type {
   WeeklyChecklistTaskDefinition,
@@ -83,6 +85,10 @@ export class WeeklyChecklistService {
 
   private readonly tagService = new TagService(new TagRepository());
 
+  private readonly weeklyGameplayService = new WeeklyGameplayService(
+    new WeeklyGameplayRepository()
+  );
+
   constructor(
     private readonly repository:
       WeeklyChecklistRepository
@@ -94,7 +100,14 @@ export class WeeklyChecklistService {
 
     const period =
       getWeeklyPeriod();
-    const [tasks, characters, professionWeeklyOverview, tags, tagAssignments] =
+    const [
+      tasks,
+      characters,
+      professionWeeklyOverview,
+      tags,
+      tagAssignments,
+      weeklyGameplayOverview
+    ] =
       await Promise.all([
         this.repository.findTasks(),
         this.repository.findCharacters(
@@ -102,7 +115,8 @@ export class WeeklyChecklistService {
         ),
         this.professionWeeklyStatusService.getOverview(),
         this.tagService.list(),
-        this.tagService.listAllAssignments()
+        this.tagService.listAllAssignments(),
+        this.weeklyGameplayService.getOverview()
       ]);
 
     /*
@@ -122,6 +136,12 @@ export class WeeklyChecklistService {
     );
 
     const tagsByCharacterId = buildTagsByCharacterId(tags, tagAssignments);
+    const weeklyGameplayByCharacterId = new Map(
+      weeklyGameplayOverview.characters.map((character) => [
+        character.characterId,
+        character
+      ])
+    );
 
     const characterItems = characters.map(
       (character) => ({
@@ -142,7 +162,9 @@ export class WeeklyChecklistService {
         professionWeekly:
           professionWeeklyByCharacterId.get(
             character.id
-          ) ?? emptyProfessionWeeklyState()
+          ) ?? emptyProfessionWeeklyState(),
+        weeklyGameplay:
+          weeklyGameplayByCharacterId.get(character.id) ?? null
       })
     );
     const completedTaskCount =

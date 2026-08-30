@@ -20,10 +20,32 @@ const unknownActivityToken = {
   title: "Not automatically tracked yet"
 };
 
-function gameplayActivityToken(character: WeeklyChecklistCharacter) {
-  return isWeeklyGameplayEnabled(character.trackingProfile)
-    ? unknownActivityToken
-    : disabledActivityToken;
+function gameplayDomainToken(
+  character: WeeklyChecklistCharacter,
+  domain: "vault" | "mythicPlus" | "raid" | "delves"
+) {
+  if (!isWeeklyGameplayEnabled(character.trackingProfile)) {
+    return disabledActivityToken;
+  }
+
+  const view = character.weeklyGameplay?.[domain];
+
+  if (!view || view.state === "UNKNOWN") {
+    return unknownActivityToken;
+  }
+
+  if (view.applicableTotal <= 0) {
+    return unknownActivityToken;
+  }
+
+  return {
+    symbol: `${view.completeCount}/${view.applicableTotal}`,
+    tone:
+      view.state === "READY"
+        ? ("ready" as const)
+        : ("attention" as const),
+    title: `${view.label} ${view.completeCount}/${view.applicableTotal}`
+  };
 }
 
 function aggregateToken(
@@ -98,9 +120,23 @@ function progressToken(character: WeeklyChecklistCharacter) {
     incomplete += aggregate.incompleteCount;
   }
 
-  // Vault/M+/Raid/Delves remain UNKNOWN placeholders for gameplay-enabled chars.
   if (isWeeklyGameplayEnabled(character.trackingProfile)) {
-    unknownCount += 4;
+    const gameplay = character.weeklyGameplay;
+
+    if (!gameplay) {
+      unknownCount += 4;
+    } else {
+      for (const domain of [
+        gameplay.vault,
+        gameplay.mythicPlus,
+        gameplay.raid,
+        gameplay.delves
+      ]) {
+        if (domain.state === "UNKNOWN") {
+          unknownCount += 1;
+        }
+      }
+    }
   }
 
   if (applicableKnown === 0 && incomplete === 0) {
@@ -149,7 +185,11 @@ function weeklyActionLabel(character: WeeklyChecklistCharacter): string | null {
     }
   }
 
-  return null;
+  return (
+    character.weeklyGameplay?.mythicPlusAction ??
+    character.weeklyGameplay?.raidAction ??
+    null
+  );
 }
 
 type WeeklyChecklistMatrixProps = {
@@ -225,16 +265,24 @@ export function WeeklyChecklistMatrix({
                 </td>
 
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "vault")}
+                  />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "mythicPlus")}
+                  />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "raid")}
+                  />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "delves")}
+                  />
                 </td>
 
                 <td className="matrix-col-narrow">

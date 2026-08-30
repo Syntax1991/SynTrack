@@ -97,14 +97,64 @@ export function resolveCharacterState(
 
   const characterTags =
     input.tagsByCharacterId?.get(character.id) ?? [];
+  const weeklyGameplay =
+    input.weeklyGameplayByCharacterId?.get(character.id) ?? null;
+
+  const vault =
+    weeklyGameplay && weeklyGameplay.vault.state !== "UNKNOWN"
+      ? {
+          state: weeklyGameplay.vault.state,
+          unlockedSlots: weeklyGameplay.vault.completeCount,
+          slotsTotal: weeklyGameplay.vault.applicableTotal,
+          highestKeyLevel: vaultResult.vault.highestKeyLevel,
+          source: "ADDON" as const
+        }
+      : vaultResult.vault;
 
   const weeklySummaryResult = resolveWeeklySummaryOverviewState({
     characterId: character.id,
     characterName: character.name,
     trackingProfile: resolveCharacterTrackingProfile(characterTags),
-    vault: vaultResult.vault,
-    professionWeekly: professionWeeklyResult.professionWeekly
+    vault,
+    professionWeekly: professionWeeklyResult.professionWeekly,
+    ...(weeklyGameplay
+      ? {
+          mythicPlusState: weeklyGameplay.mythicPlus.state,
+          raidState: weeklyGameplay.raid.state,
+          delvesState: weeklyGameplay.delves.state
+        }
+      : {})
   });
+
+  const gameplayAction: AttentionItem | null =
+    weeklySummaryResult.weeklyAction
+      ? null
+      : weeklyGameplay?.mythicPlusAction
+        ? {
+            id: `${character.id}:weekly-action`,
+            characterId: character.id,
+            characterName: character.name,
+            domain: "weekly",
+            severity: "this-week",
+            label: weeklyGameplay.mythicPlusAction,
+            detail: null,
+            path: "/weekly-checklist"
+          }
+        : weeklyGameplay?.raidAction
+          ? {
+              id: `${character.id}:weekly-action`,
+              characterId: character.id,
+              characterName: character.name,
+              domain: "weekly",
+              severity: "this-week",
+              label: weeklyGameplay.raidAction,
+              detail: null,
+              path: "/weekly-checklist"
+            }
+          : null;
+
+  const weeklyAction =
+    weeklySummaryResult.weeklyAction ?? gameplayAction;
 
   /*
    * Overview ACTION considers all character attention. Treasure
@@ -112,7 +162,7 @@ export function resolveCharacterState(
    * duplicate treasure attention item.
    */
   const attentionItems = [
-    weeklySummaryResult.weeklyAction,
+    weeklyAction,
     professionSetupResult.attentionItem,
     resourceResult.attentionItem
   ].filter((item): item is AttentionItem => item !== null);
@@ -134,16 +184,16 @@ export function resolveCharacterState(
     character,
     weekly: weeklyResult.weekly,
     weeklySummary: weeklySummaryResult.weeklySummary,
-    weeklyAction: weeklySummaryResult.weeklyAction
+    weeklyAction: weeklyAction
       ? {
-          domain: weeklySummaryResult.weeklyAction.domain,
-          label: weeklySummaryResult.weeklyAction.label,
-          detail: weeklySummaryResult.weeklyAction.detail,
-          path: weeklySummaryResult.weeklyAction.path,
-          severity: weeklySummaryResult.weeklyAction.severity
+          domain: weeklyAction.domain,
+          label: weeklyAction.label,
+          detail: weeklyAction.detail,
+          path: weeklyAction.path,
+          severity: weeklyAction.severity
         }
       : null,
-    vault: vaultResult.vault,
+    vault,
     professions: professionResult.professions,
     professionSetup: professionSetupResult.professionSetup,
     gear: gearResult.gear,
