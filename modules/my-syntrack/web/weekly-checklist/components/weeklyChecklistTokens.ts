@@ -11,7 +11,7 @@ const disabledActivityToken = {
 const unknownActivityToken = {
   symbol: "?",
   tone: "unknown" as const,
-  title: "Not automatically tracked yet"
+  title: "Progress unresolved"
 };
 
 export function gameplayDomainToken(

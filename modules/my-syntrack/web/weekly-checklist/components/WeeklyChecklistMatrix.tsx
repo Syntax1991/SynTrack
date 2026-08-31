@@ -146,9 +146,14 @@ function weeklyActionLabel(character: WeeklyChecklistCharacter): string | null {
     }
   }
 
+  if (!isWeeklyGameplayEnabled(character.trackingProfile)) {
+    return null;
+  }
+
   return (
     character.weeklyGameplay?.mythicPlusAction ??
     character.weeklyGameplay?.raidAction ??
+    character.weeklyGameplay?.delvesAction ??
     null
   );
 }
@@ -179,18 +184,10 @@ export function WeeklyChecklistMatrix({
         <thead>
           <tr>
             <th>Character</th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              Vault
-            </th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              M+
-            </th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              Raid
-            </th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              Delves
-            </th>
+            <th className="matrix-col-narrow">Vault</th>
+            <th className="matrix-col-narrow">M+</th>
+            <th className="matrix-col-narrow">Raid</th>
+            <th className="matrix-col-narrow">Delves</th>
             <th className="matrix-col-narrow">Quest</th>
             <th className="matrix-col-narrow">Treat.</th>
             <th className="matrix-col-narrow">Drops</th>

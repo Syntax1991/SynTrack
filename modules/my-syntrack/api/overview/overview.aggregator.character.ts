@@ -151,7 +151,18 @@ export function resolveCharacterState(
               detail: null,
               path: "/weekly-checklist"
             }
-          : null;
+          : weeklyGameplay?.delvesAction
+            ? {
+                id: `${character.id}:weekly-action`,
+                characterId: character.id,
+                characterName: character.name,
+                domain: "weekly",
+                severity: "this-week",
+                label: weeklyGameplay.delvesAction,
+                detail: null,
+                path: "/weekly-checklist"
+              }
+            : null;
 
   const weeklyAction =
     weeklySummaryResult.weeklyAction ?? gameplayAction;

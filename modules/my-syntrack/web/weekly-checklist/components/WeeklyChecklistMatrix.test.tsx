@@ -92,7 +92,7 @@ describe("WeeklyChecklistMatrix", () => {
     );
 
     const unknowns = screen.getAllByTitle(
-      "Not automatically tracked yet"
+      "Progress unresolved"
     );
     expect(unknowns.length).toBeGreaterThanOrEqual(4);
   });
@@ -129,7 +129,8 @@ describe("WeeklyChecklistMatrix", () => {
               }),
               delves: gameplayDomain({ label: "Delves" }),
               mythicPlusAction: null,
-              raidAction: null
+              raidAction: null,
+              delvesAction: null
             }
           })
         ]}
@@ -176,7 +177,8 @@ describe("WeeklyChecklistMatrix", () => {
               }),
               delves: gameplayDomain({ label: "Delves" }),
               mythicPlusAction: null,
-              raidAction: null
+              raidAction: null,
+              delvesAction: null
             }
           })
         ]}
@@ -190,6 +192,35 @@ describe("WeeklyChecklistMatrix", () => {
     expect(
       screen.getByTitle("Vault 6/9 · 1 category unresolved")
     ).toBeInTheDocument();
+  });
+
+  it("does not surface gameplay action for profession-only characters", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            trackingProfile: "PROFESSION",
+            weeklyGameplay: {
+              characterId: "char-1",
+              vault: gameplayDomain({ label: "Vault" }),
+              mythicPlus: gameplayDomain({ label: "M+" }),
+              raid: gameplayDomain({ label: "Raid" }),
+              delves: gameplayDomain({ label: "Delves" }),
+              mythicPlusAction: "Mythic+ progress unresolved",
+              raidAction: null,
+              delvesAction: "Delves Vault progress unresolved"
+            }
+          })
+        ]}
+      />
+    );
+
+    expect(
+      screen.queryByText("Mythic+ progress unresolved")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Delves Vault progress unresolved")
+    ).not.toBeInTheDocument();
   });
 
   it("surfaces weekly-only action from Treatise incompleteness", () => {

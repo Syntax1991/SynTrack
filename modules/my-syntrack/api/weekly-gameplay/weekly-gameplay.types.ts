@@ -21,6 +21,7 @@ export type WeeklyGameplayCharacterView = {
   delves: WeeklyGameplayDomainView;
   mythicPlusAction: string | null;
   raidAction: string | null;
+  delvesAction: string | null;
 };
 
 export type WeeklyGameplaySnapshotInput = {

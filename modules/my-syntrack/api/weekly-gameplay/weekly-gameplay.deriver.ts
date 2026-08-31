@@ -70,31 +70,38 @@ function deriveRaid(
   snapshot: WeeklyGameplaySnapshotInput
 ): WeeklyGameplayDomainView {
   const raid = thisWeekRaidKills(snapshot);
-
-  if (!raid) {
-    return unknownDomain("Raid");
-  }
-
   const raidThresholds = capturedThresholds(snapshot, "raid");
 
-  if (raidThresholds.length > 0) {
-    return thresholdDomain("Raid", raid.killed, raidThresholds);
+  if (raid) {
+    if (raidThresholds.length > 0) {
+      return thresholdDomain("Raid", raid.killed, raidThresholds);
+    }
+
+    const completeCount = Math.min(raid.killed, raid.total);
+
+    return {
+      state: completeCount < raid.total ? "ATTENTION" : "READY",
+      completeCount,
+      applicableTotal: raid.total,
+      unknownCount: 0,
+      label: "Raid",
+      rawCompleteCount: raid.killed,
+      knownUnlockedSlots: completeCount,
+      maxSlots: raid.total,
+      hasUnknownCategories: false,
+      unknownCategoryCount: 0
+    };
   }
 
-  const completeCount = Math.min(raid.killed, raid.total);
+  /*
+   * Successful capture with no current lockout is known zero when Vault
+   * raid thresholds exist. Without a threshold, 0/N cannot be proven.
+   */
+  if (snapshot.raidCaptured && raidThresholds.length > 0) {
+    return thresholdDomain("Raid", 0, raidThresholds);
+  }
 
-  return {
-    state: completeCount < raid.total ? "ATTENTION" : "READY",
-    completeCount,
-    applicableTotal: raid.total,
-    unknownCount: 0,
-    label: "Raid",
-    rawCompleteCount: raid.killed,
-    knownUnlockedSlots: completeCount,
-    maxSlots: raid.total,
-    hasUnknownCategories: false,
-    unknownCategoryCount: 0
-  };
+  return unknownDomain("Raid");
 }
 
 function deriveDelves(
@@ -150,29 +157,47 @@ function deriveVault(
   };
 }
 
+function mythicPlusActionLabel(
+  snapshot: WeeklyGameplaySnapshotInput,
+  mythicPlus: WeeklyGameplayDomainView
+): string | null {
+  if (mythicPlus.state === "UNKNOWN") {
+    return "Mythic+ progress unresolved";
+  }
+
+  const remainingRuns = Math.max(
+    0,
+    mythicPlus.applicableTotal - mythicPlus.completeCount
+  );
+
+  if (mythicPlus.state === "ATTENTION" && remainingRuns > 0) {
+    return `${remainingRuns} more M+ run${remainingRuns === 1 ? "" : "s"} for Vault slot ${mythicPlusThresholds(snapshot).length}`;
+  }
+
+  return null;
+}
+
 export function deriveWeeklyGameplay(
   snapshot: WeeklyGameplaySnapshotInput
 ): WeeklyGameplayCharacterView {
   const mythicPlus = deriveMythicPlus(snapshot);
   const raid = deriveRaid(snapshot);
-  const remainingRuns = Math.max(
-    0,
-    mythicPlus.applicableTotal - mythicPlus.completeCount
-  );
+  const delves = deriveDelves(snapshot);
 
   return {
     characterId: snapshot.characterId,
     vault: deriveVault(snapshot),
     mythicPlus,
     raid,
-    delves: deriveDelves(snapshot),
-    mythicPlusAction:
-      mythicPlus.state === "ATTENTION" && remainingRuns > 0
-        ? `${remainingRuns} more M+ run${remainingRuns === 1 ? "" : "s"} for Vault slot ${mythicPlusThresholds(snapshot).length}`
-        : null,
+    delves,
+    mythicPlusAction: mythicPlusActionLabel(snapshot, mythicPlus),
     raidAction:
       raid.state === "ATTENTION"
         ? `${Math.max(0, raid.applicableTotal - raid.completeCount)} raid bosses remaining`
+        : null,
+    delvesAction:
+      delves.state === "UNKNOWN"
+        ? "Delves Vault progress unresolved"
         : null
   };
 }

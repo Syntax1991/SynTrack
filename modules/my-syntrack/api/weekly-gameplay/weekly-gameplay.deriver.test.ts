@@ -98,6 +98,7 @@ describe("deriveWeeklyGameplay", () => {
     expect(view.mythicPlusAction).toBe(
       "8 more M+ runs for Vault slot 3"
     );
+    expect(view.delvesAction).toBe("Delves Vault progress unresolved");
   });
 
   it("counts this-week completed keys toward the 8-run vault cap", () => {
@@ -243,6 +244,23 @@ describe("deriveWeeklyGameplay", () => {
     expect(view.raid.state).toBe("UNKNOWN");
   });
 
+  it("treats successful empty raid lockout as known 0 when vault raid thresholds exist", () => {
+    const view = deriveWeeklyGameplay(
+      snapshot({
+        raidCaptured: true,
+        raidLockouts: [],
+        vaultActivities: vaultActivities("raid", [2, 4, 6], [0, 0, 0])
+      })
+    );
+
+    expect(view.raid).toMatchObject({
+      state: "ATTENTION",
+      completeCount: 0,
+      applicableTotal: 6,
+      rawCompleteCount: 0
+    });
+  });
+
   it("clamps raid display to captured vault raid thresholds", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
@@ -287,5 +305,7 @@ describe("deriveWeeklyGameplay", () => {
 
     expect(view.delves.state).toBe("UNKNOWN");
     expect(view.vault.state).toBe("UNKNOWN");
+    expect(view.mythicPlusAction).toBe("Mythic+ progress unresolved");
+    expect(view.delvesAction).toBe("Delves Vault progress unresolved");
   });
 });

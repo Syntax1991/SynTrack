@@ -1,5 +1,4 @@
 import type { CellToken } from "../../../../../apps/web/src/shared/types/cellToken";
-import { formatKnownWeeklyProgressSymbol } from "../../../api/weekly-progress/weekly-progress-display.js";
 
 type TreasureCounts = {
   completeCount: number;
@@ -99,14 +98,7 @@ export function formatWeeklySummaryToken(summary: {
 
   if (summary.state === "ATTENTION") {
     return {
-      symbol:
-        summary.unknownCount > 0 && summary.applicableKnown > 0
-          ? formatKnownWeeklyProgressSymbol({
-              completedKnown: summary.completedKnown,
-              applicableKnown: summary.applicableKnown,
-              unknownCount: summary.unknownCount
-            })
-          : "!",
+      symbol: "!",
       tone: "attention",
       title: detail || "Weekly work remaining"
     };
@@ -114,14 +106,7 @@ export function formatWeeklySummaryToken(summary: {
 
   if (summary.state === "UNKNOWN") {
     return {
-      symbol:
-        summary.applicableKnown > 0
-          ? formatKnownWeeklyProgressSymbol({
-              completedKnown: summary.completedKnown,
-              applicableKnown: summary.applicableKnown,
-              unknownCount: summary.unknownCount
-            })
-          : "?",
+      symbol: "?",
       tone: "unknown",
       title: detail || "Weekly state unresolved"
     };
