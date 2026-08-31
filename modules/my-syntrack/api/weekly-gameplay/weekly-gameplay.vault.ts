@@ -10,75 +10,178 @@ export const VAULT_CATEGORIES: VaultActivityFamily[] = [
 
 export const SLOTS_PER_VAULT_CATEGORY = 3;
 
+export const VAULT_FAMILY_LABEL: Record<VaultActivityFamily, string> = {
+  "mythic-plus": "Dungeon",
+  raid: "Raid",
+  world: "World"
+};
+
 /*
- * Used only when this-week M+ capture exists but vault activity
- * threshold rows were not captured. Great Vault M+ has used 1/4/8
- * for years; season-specific raid/delve thresholds are not invented.
+ * Live Enum.WeeklyRewardChestThresholdType:
+ * 1 Activities (M+), 3 Raid, 6 World.
+ * 4 is AlsoReceive — never World.
  */
-export const FALLBACK_MYTHIC_PLUS_THRESHOLDS = [1, 4, 8];
+const NUMERIC_FAMILY: Record<number, VaultActivityFamily> = {
+  1: "mythic-plus",
+  3: "raid",
+  6: "world"
+};
+
+export type VaultActivitySlot = {
+  family: VaultActivityFamily;
+  index: number | null;
+  threshold: number;
+  progress: number;
+  unlocked: boolean;
+  level: number | null;
+};
+
+export type VaultCategoryResult = {
+  family: VaultActivityFamily;
+  known: boolean;
+  unlocked: number;
+  slots: number;
+  progress: number | null;
+  finalThreshold: number | null;
+  activities: VaultActivitySlot[];
+};
+
+function normalizeTypeName(typeName: string | null): string {
+  return (typeName ?? "").toLowerCase().replace(/[^a-z]/g, "");
+}
 
 export function vaultFamily(
   typeName: string | null,
   type: number | null = null
 ): VaultActivityFamily | null {
-  const name = typeName?.toLowerCase() ?? "";
+  const name = normalizeTypeName(typeName);
+
+  if (name.includes("raid")) {
+    return "raid";
+  }
+
+  if (name.includes("world") || name.includes("delve")) {
+    return "world";
+  }
 
   if (
-    name === "activities" ||
-    name === "mythicplus" ||
-    name === "dungeon"
+    name.includes("activit") ||
+    name.includes("mythic") ||
+    name.includes("dungeon")
   ) {
     return "mythic-plus";
   }
 
-  if (name === "raid") {
-    return "raid";
-  }
-
-  if (name === "world") {
-    return "world";
-  }
-
-  if (type === 1) {
-    return "mythic-plus";
-  }
-
-  if (type === 3) {
-    return "raid";
-  }
-
-  if (type === 4) {
-    return "world";
+  if (type !== null && NUMERIC_FAMILY[type]) {
+    return NUMERIC_FAMILY[type];
   }
 
   return null;
+}
+
+export function vaultActivitiesAreCurrent(
+  snapshot: WeeklyGameplaySnapshotInput
+): boolean {
+  return snapshot.vaultCaptured && snapshot.vaultCurrentPeriod !== false;
+}
+
+export function vaultSlotsForFamily(
+  snapshot: WeeklyGameplaySnapshotInput,
+  family: VaultActivityFamily
+): VaultActivitySlot[] {
+  return snapshot.vaultActivities
+    .filter(
+      (activity) => vaultFamily(activity.typeName, activity.type) === family
+    )
+    .filter(
+      (
+        activity
+      ): activity is typeof activity & {
+        threshold: number;
+        progress: number;
+      } =>
+        activity.threshold !== null &&
+        activity.threshold > 0 &&
+        activity.progress !== null
+    )
+    .map((activity) => ({
+      family,
+      index: activity.index ?? null,
+      threshold: activity.threshold,
+      progress: activity.progress,
+      unlocked: activity.progress >= activity.threshold,
+      level: activity.level ?? null
+    }))
+    .sort((left, right) => left.threshold - right.threshold);
+}
+
+export function resolveVaultCategory(
+  snapshot: WeeklyGameplaySnapshotInput,
+  family: VaultActivityFamily
+): VaultCategoryResult {
+  const empty: VaultCategoryResult = {
+    family,
+    known: false,
+    unlocked: 0,
+    slots: SLOTS_PER_VAULT_CATEGORY,
+    progress: null,
+    finalThreshold: null,
+    activities: []
+  };
+
+  if (!vaultActivitiesAreCurrent(snapshot)) {
+    return empty;
+  }
+
+  const activities = vaultSlotsForFamily(snapshot, family);
+
+  if (activities.length === 0) {
+    return empty;
+  }
+
+  return {
+    family,
+    known: true,
+    unlocked: activities.filter((slot) => slot.unlocked).length,
+    slots: activities.length,
+    progress: Math.max(...activities.map((slot) => slot.progress)),
+    finalThreshold: Math.max(...activities.map((slot) => slot.threshold)),
+    activities
+  };
+}
+
+export function resolveVaultAggregate(snapshot: WeeklyGameplaySnapshotInput): {
+  knownUnlockedSlots: number;
+  maxSlots: number;
+  unknownCategoryCount: number;
+  hasUnknownCategories: boolean;
+  unresolvedCategoryLabels: string[];
+} {
+  const categories = VAULT_CATEGORIES.map((family) =>
+    resolveVaultCategory(snapshot, family)
+  );
+  const known = categories.filter((category) => category.known);
+  const unknown = categories.filter((category) => !category.known);
+
+  return {
+    knownUnlockedSlots: known.reduce(
+      (total, category) => total + category.unlocked,
+      0
+    ),
+    maxSlots: VAULT_CATEGORIES.length * SLOTS_PER_VAULT_CATEGORY,
+    unknownCategoryCount: unknown.length,
+    hasUnknownCategories: unknown.length > 0,
+    unresolvedCategoryLabels: unknown.map(
+      (category) => VAULT_FAMILY_LABEL[category.family]
+    )
+  };
 }
 
 export function capturedThresholds(
   snapshot: WeeklyGameplaySnapshotInput,
   family: VaultActivityFamily
 ): number[] {
-  return snapshot.vaultActivities
-    .filter(
-      (activity) =>
-        vaultFamily(activity.typeName, activity.type) === family &&
-        activity.threshold !== null &&
-        activity.threshold > 0
-    )
-    .map((activity) => activity.threshold as number)
-    .sort((left, right) => left - right);
-}
-
-export function mythicPlusThresholds(
-  snapshot: WeeklyGameplaySnapshotInput
-): number[] {
-  const captured = capturedThresholds(snapshot, "mythic-plus");
-
-  if (captured.length > 0) {
-    return captured;
-  }
-
-  return [...FALLBACK_MYTHIC_PLUS_THRESHOLDS];
+  return vaultSlotsForFamily(snapshot, family).map((slot) => slot.threshold);
 }
 
 export function thisWeekMythicPlusRuns(
@@ -137,150 +240,4 @@ export function thisWeekRaidKills(
   }
 
   return null;
-}
-
-export function slotsUnlockedForProgress(
-  progress: number,
-  thresholds: number[]
-): number {
-  return thresholds.filter((threshold) => progress >= threshold).length;
-}
-
-export type VaultCategoryResult = {
-  family: VaultActivityFamily;
-  known: boolean;
-  unlocked: number;
-  slots: number;
-};
-
-function slotsForFamily(thresholds: number[]): number {
-  return thresholds.length > 0
-    ? thresholds.length
-    : SLOTS_PER_VAULT_CATEGORY;
-}
-
-function currentPeriodActivitiesUsable(
-  snapshot: WeeklyGameplaySnapshotInput
-): boolean {
-  return snapshot.vaultCaptured && snapshot.vaultCurrentPeriod === true;
-}
-
-function apiUnlockedForFamily(
-  snapshot: WeeklyGameplaySnapshotInput,
-  family: VaultActivityFamily
-): number {
-  return snapshot.vaultActivities.filter((activity) => {
-    if (vaultFamily(activity.typeName, activity.type) !== family) {
-      return false;
-    }
-
-    return (
-      activity.threshold !== null &&
-      activity.progress !== null &&
-      activity.progress >= activity.threshold
-    );
-  }).length;
-}
-
-export function resolveVaultCategory(
-  snapshot: WeeklyGameplaySnapshotInput,
-  family: VaultActivityFamily
-): VaultCategoryResult {
-  const thresholds = capturedThresholds(snapshot, family);
-  const slots = slotsForFamily(thresholds);
-  const useApiProgress = currentPeriodActivitiesUsable(snapshot);
-
-  if (family === "mythic-plus") {
-    const runs = thisWeekMythicPlusRuns(snapshot);
-
-    if (runs !== null) {
-      const defs =
-        thresholds.length > 0 ? thresholds : FALLBACK_MYTHIC_PLUS_THRESHOLDS;
-
-      return {
-        family,
-        known: true,
-        unlocked: slotsUnlockedForProgress(runs, defs),
-        slots: defs.length
-      };
-    }
-
-    if (useApiProgress && thresholds.length > 0) {
-      return {
-        family,
-        known: true,
-        unlocked: apiUnlockedForFamily(snapshot, family),
-        slots
-      };
-    }
-
-    return { family, known: false, unlocked: 0, slots };
-  }
-
-  if (family === "raid") {
-    const raid = thisWeekRaidKills(snapshot);
-
-    if (raid && thresholds.length > 0) {
-      return {
-        family,
-        known: true,
-        unlocked: slotsUnlockedForProgress(raid.killed, thresholds),
-        slots
-      };
-    }
-
-    if (raid && raid.total > 0 && raid.killed >= raid.total) {
-      return {
-        family,
-        known: true,
-        unlocked: SLOTS_PER_VAULT_CATEGORY,
-        slots: SLOTS_PER_VAULT_CATEGORY
-      };
-    }
-
-    if (useApiProgress && thresholds.length > 0) {
-      return {
-        family,
-        known: true,
-        unlocked: apiUnlockedForFamily(snapshot, family),
-        slots
-      };
-    }
-
-    return { family, known: false, unlocked: 0, slots };
-  }
-
-  if (useApiProgress && thresholds.length > 0) {
-    return {
-      family,
-      known: true,
-      unlocked: apiUnlockedForFamily(snapshot, family),
-      slots
-    };
-  }
-
-  return { family, known: false, unlocked: 0, slots };
-}
-
-export function resolveVaultAggregate(snapshot: WeeklyGameplaySnapshotInput): {
-  knownUnlockedSlots: number;
-  maxSlots: number;
-  unknownCategoryCount: number;
-  hasUnknownCategories: boolean;
-} {
-  const categories = VAULT_CATEGORIES.map((family) =>
-    resolveVaultCategory(snapshot, family)
-  );
-  const known = categories.filter((category) => category.known);
-  const unknown = categories.filter((category) => !category.known);
-
-  return {
-    knownUnlockedSlots: known.reduce(
-      (total, category) => total + category.unlocked,
-      0
-    ),
-    maxSlots: categories.reduce((total, category) => total + category.slots, 0),
-    unknownCategoryCount: unknown.length,
-    hasUnknownCategories: unknown.length > 0
-  };
 }

@@ -11,6 +11,7 @@ export type WeeklyGameplayDomainView = {
   maxSlots: number;
   hasUnknownCategories: boolean;
   unknownCategoryCount: number;
+  unresolvedCategoryLabels?: string[];
 };
 
 export type WeeklyGameplayCharacterView = {
@@ -33,8 +34,10 @@ export type WeeklyGameplaySnapshotInput = {
   vaultActivities: Array<{
     type: number | null;
     typeName: string | null;
+    index: number | null;
     threshold: number | null;
     progress: number | null;
+    level: number | null;
   }>;
   mythicPlusRuns: Array<{
     keyLevel: number;

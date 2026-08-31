@@ -45,10 +45,12 @@ function raidLockout(killed: number, total: number) {
 function vaultActivities(
   family: "mythic-plus" | "raid" | "world",
   thresholds: number[],
-  progress: number[]
+  progress: number[],
+  typeOverride?: number
 ) {
   const type =
-    family === "mythic-plus" ? 1 : family === "raid" ? 3 : 4;
+    typeOverride ??
+    (family === "mythic-plus" ? 1 : family === "raid" ? 3 : 6);
   const typeName =
     family === "mythic-plus"
       ? "Activities"
@@ -59,8 +61,10 @@ function vaultActivities(
   return thresholds.map((threshold, index) => ({
     type,
     typeName,
+    index: index + 1,
     threshold,
-    progress: progress[index] ?? 0
+    progress: progress[index] ?? 0,
+    level: null
   }));
 }
 
@@ -81,42 +85,7 @@ describe("deriveWeeklyGameplay", () => {
     ).toBe("?");
   });
 
-  it("treats successful empty M+ history as known 0/8", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        mythicPlusCaptured: true,
-        mythicPlusRuns: []
-      })
-    );
-
-    expect(view.mythicPlus).toMatchObject({
-      state: "ATTENTION",
-      completeCount: 0,
-      applicableTotal: 8,
-      rawCompleteCount: 0
-    });
-    expect(view.mythicPlusAction).toBe(
-      "8 more M+ runs for Vault slot 3"
-    );
-    expect(view.delvesAction).toBe("Delves Vault progress unresolved");
-  });
-
-  it("counts this-week completed keys toward the 8-run vault cap", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        mythicPlusCaptured: true,
-        mythicPlusRuns: runs(6)
-      })
-    );
-
-    expect(view.mythicPlus.completeCount).toBe(6);
-    expect(view.mythicPlus.applicableTotal).toBe(8);
-    expect(view.mythicPlusAction).toBe(
-      "2 more M+ runs for Vault slot 3"
-    );
-  });
-
-  it("Synblast: raw M+ 16 clamps to 8/8 and keeps rawCompleteCount 16", () => {
+  it("does not treat M+ run history alone as Vault progress", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
         mythicPlusCaptured: true,
@@ -124,99 +93,11 @@ describe("deriveWeeklyGameplay", () => {
       })
     );
 
-    expect(view.mythicPlus).toMatchObject({
-      state: "READY",
-      completeCount: 8,
-      applicableTotal: 8,
-      rawCompleteCount: 16
-    });
-    expect(view.mythicPlusAction).toBeNull();
+    expect(view.mythicPlus.state).toBe("UNKNOWN");
+    expect(view.mythicPlusAction).toBe("Mythic+ progress unresolved");
   });
 
-  it("Synblast: M+ complete + raid complete + Delves UNKNOWN is 6/9 cell, not ?", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        mythicPlusCaptured: true,
-        mythicPlusRuns: runs(16),
-        raidCaptured: true,
-        raidLockouts: raidLockout(8, 8)
-      })
-    );
-
-    expect(view.mythicPlus.completeCount).toBe(8);
-    expect(view.raid).toMatchObject({
-      state: "READY",
-      completeCount: 8,
-      applicableTotal: 8
-    });
-    expect(view.delves.state).toBe("UNKNOWN");
-    expect(view.vault).toMatchObject({
-      state: "IN_PROGRESS",
-      knownUnlockedSlots: 6,
-      maxSlots: 9,
-      hasUnknownCategories: true,
-      unknownCategoryCount: 1
-    });
-    expect(
-      formatVaultSlotSymbol({
-        knownUnlockedSlots: view.vault.knownUnlockedSlots,
-        maxSlots: view.vault.maxSlots
-      })
-    ).toBe("6/9");
-  });
-
-  it("does not treat unknown Delves as zero unlocked vault slots", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        mythicPlusCaptured: true,
-        mythicPlusRuns: runs(16),
-        raidCaptured: true,
-        raidLockouts: raidLockout(8, 8)
-      })
-    );
-
-    expect(view.vault.knownUnlockedSlots).toBe(6);
-    expect(view.vault.hasUnknownCategories).toBe(true);
-    expect(view.vault.state).not.toBe("READY");
-    expect(view.vault.state).toBe("IN_PROGRESS");
-  });
-
-  it("uses exact Vault unlocked/maximum when every category is known", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        vaultCaptured: true,
-        vaultCurrentPeriod: true,
-        mythicPlusCaptured: true,
-        mythicPlusRuns: runs(8),
-        raidCaptured: true,
-        raidLockouts: raidLockout(6, 8),
-        vaultActivities: [
-          ...vaultActivities("mythic-plus", [1, 4, 8], [8, 8, 8]),
-          ...vaultActivities("raid", [2, 4, 6], [6, 6, 6]),
-          ...vaultActivities("world", [2, 4, 8], [8, 8, 8])
-        ]
-      })
-    );
-
-    expect(view.vault).toMatchObject({
-      state: "READY",
-      knownUnlockedSlots: 9,
-      maxSlots: 9,
-      hasUnknownCategories: false
-    });
-    expect(
-      formatVaultSlotSymbol({
-        knownUnlockedSlots: view.vault.knownUnlockedSlots,
-        maxSlots: view.vault.maxSlots
-      })
-    ).toBe("9/9");
-    expect(view.delves).toMatchObject({
-      completeCount: 3,
-      applicableTotal: 3
-    });
-  });
-
-  it("derives raid 6/8 from captured encounter kills", () => {
+  it("does not treat raid lockouts alone as Vault Raid progress", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
         raidCaptured: true,
@@ -224,61 +105,29 @@ describe("deriveWeeklyGameplay", () => {
       })
     );
 
-    expect(view.raid).toMatchObject({
-      state: "ATTENTION",
-      completeCount: 6,
-      applicableTotal: 8,
-      rawCompleteCount: 6
-    });
-    expect(view.raidAction).toBe("2 raid bosses remaining");
-  });
-
-  it("keeps raid UNKNOWN when capture succeeded but no lockout exists", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        raidCaptured: true,
-        raidLockouts: []
-      })
-    );
-
     expect(view.raid.state).toBe("UNKNOWN");
+    expect(view.raidAction).toBeNull();
   });
 
-  it("treats successful empty raid lockout as known 0 when vault raid thresholds exist", () => {
+  it("treats successful current-period World progress 0 as known zero", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
-        raidCaptured: true,
-        raidLockouts: [],
-        vaultActivities: vaultActivities("raid", [2, 4, 6], [0, 0, 0])
+        vaultCaptured: true,
+        vaultCurrentPeriod: true,
+        vaultActivities: vaultActivities("world", [2, 4, 8], [0, 0, 0])
       })
     );
 
-    expect(view.raid).toMatchObject({
+    expect(view.delves).toMatchObject({
       state: "ATTENTION",
       completeCount: 0,
-      applicableTotal: 6,
+      applicableTotal: 8,
       rawCompleteCount: 0
     });
+    expect(view.delvesAction).toBe("2 World activities for Vault slot 1");
   });
 
-  it("clamps raid display to captured vault raid thresholds", () => {
-    const view = deriveWeeklyGameplay(
-      snapshot({
-        raidCaptured: true,
-        raidLockouts: raidLockout(8, 8),
-        vaultActivities: vaultActivities("raid", [2, 4, 6], [0, 0, 0])
-      })
-    );
-
-    expect(view.raid).toMatchObject({
-      state: "READY",
-      completeCount: 6,
-      applicableTotal: 6,
-      rawCompleteCount: 8
-    });
-  });
-
-  it("derives Delves from current-period World activities without inventing 0", () => {
+  it("derives Delves from World Great Vault progress / final threshold", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
         vaultCaptured: true,
@@ -289,9 +138,14 @@ describe("deriveWeeklyGameplay", () => {
 
     expect(view.delves).toMatchObject({
       state: "ATTENTION",
-      completeCount: 2,
-      applicableTotal: 3
+      completeCount: 4,
+      applicableTotal: 8,
+      knownUnlockedSlots: 2,
+      maxSlots: 3
     });
+    expect(view.delvesAction).toBe(
+      "4 more World activities for Vault slot 3"
+    );
   });
 
   it("does not trust stale World progress from a previous reward period", () => {
@@ -307,5 +161,29 @@ describe("deriveWeeklyGameplay", () => {
     expect(view.vault.state).toBe("UNKNOWN");
     expect(view.mythicPlusAction).toBe("Mythic+ progress unresolved");
     expect(view.delvesAction).toBe("Delves Vault progress unresolved");
+  });
+
+  it("uses next unmet Dungeon threshold for the M+ action", () => {
+    const view = deriveWeeklyGameplay(
+      snapshot({
+        vaultCaptured: true,
+        vaultCurrentPeriod: true,
+        vaultActivities: vaultActivities("mythic-plus", [1, 4, 8], [0, 0, 0])
+      })
+    );
+
+    expect(view.mythicPlusAction).toBe("1 M+ run for Vault slot 1");
+  });
+
+  it("uses next unmet Raid threshold for the Raid action", () => {
+    const view = deriveWeeklyGameplay(
+      snapshot({
+        vaultCaptured: true,
+        vaultCurrentPeriod: true,
+        vaultActivities: vaultActivities("raid", [2, 4, 6], [2, 2, 2])
+      })
+    );
+
+    expect(view.raidAction).toBe("2 more Raid bosses for Vault slot 2");
   });
 });

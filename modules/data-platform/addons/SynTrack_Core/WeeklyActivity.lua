@@ -2,97 +2,12 @@ local _, private = ...
 local API = private.API
 
 --[[
-    Weekly Activity V1 - raw this-week facts only.
-    UNKNOWN > WRONG: a failed API lookup is omitted (never a fabricated
-    zero). A successful empty result (0 M+ runs, no raid lockout) is
-    captured as captured=true with empty lists.
+    Weekly Activity - raw this-week facts.
+
+    Great Vault objectives come from C_WeeklyRewards.GetActivities,
+    including a per-type fetch so World (Delves) is not omitted.
+    M+ run history and raid lockouts are retained as raw detail only.
 ]]
-
-local function pcallResult(api, ...)
-    if type(api) ~= "function" then
-        return nil
-    end
-
-    local succeeded, result = pcall(api, ...)
-
-    if not succeeded then
-        return nil
-    end
-
-    return result
-end
-
-local function vaultTypeName(typeId)
-    local enum = Enum
-        and Enum.WeeklyRewardChestThresholdType
-
-    if type(enum) ~= "table" or type(typeId) ~= "number" then
-        return nil
-    end
-
-    for name, value in pairs(enum) do
-        if value == typeId then
-            return name
-        end
-    end
-
-    return nil
-end
-
-local function captureVault()
-    if not C_WeeklyRewards then
-        return { captured = false }
-    end
-
-    local generated =
-        pcallResult(C_WeeklyRewards.HasGeneratedRewards)
-    local currentPeriod =
-        pcallResult(C_WeeklyRewards.AreRewardsForCurrentRewardPeriod)
-    local canClaim =
-        pcallResult(C_WeeklyRewards.CanClaimRewards)
-    local hasAvailable =
-        pcallResult(C_WeeklyRewards.HasAvailableRewards)
-    local list =
-        pcallResult(C_WeeklyRewards.GetActivities)
-
-    if type(generated) ~= "boolean"
-        and type(currentPeriod) ~= "boolean"
-        and type(list) ~= "table"
-    then
-        return { captured = false }
-    end
-
-    local activities = {}
-
-    if type(list) == "table" then
-        for _, activity in ipairs(list) do
-            if type(activity) == "table"
-                and type(activity.type) == "number"
-            then
-                table.insert(activities, {
-                    type = activity.type,
-                    typeName = vaultTypeName(activity.type),
-                    index = activity.index,
-                    threshold = activity.threshold,
-                    progress = activity.progress,
-                    id = activity.id,
-                    level = activity.level,
-                    activityTierID = activity.activityTierID,
-                    claimID = activity.claimID
-                })
-            end
-        end
-    end
-
-    return {
-        captured = true,
-        generated = generated,
-        currentPeriod = currentPeriod,
-        canClaim = canClaim,
-        hasAvailable = hasAvailable,
-        activities = activities
-    }
-end
 
 local function captureMythicPlus()
     if not C_MythicPlus or not C_MythicPlus.GetRunHistory then
@@ -202,7 +117,7 @@ end
 
 local function captureWeeklyActivity()
     return {
-        vault = captureVault(),
+        vault = private.CaptureWeeklyVault(),
         mythicPlus = captureMythicPlus(),
         raids = captureRaids()
     }
@@ -213,7 +128,7 @@ local function registerWeeklyActivityModule()
         API.RegisterModule({
             id = "weekly-activity",
             name = "Weekly Activity",
-            version = "0.1.0",
+            version = "0.1.1",
             schemaVersion = 1,
             scope = "character",
             capture = captureWeeklyActivity
@@ -245,13 +160,13 @@ API.Subscribe(
 
 local recaptureTimer = nil
 
-local function scheduleRecapture(reason)
+local function scheduleRecapture(reason, delaySec)
     if recaptureTimer then
         recaptureTimer:Cancel()
     end
 
     recaptureTimer = C_Timer.NewTimer(
-        0.5,
+        delaySec or 0.5,
         function()
             recaptureTimer = nil
             API.CaptureModule("weekly-activity", reason)
@@ -261,12 +176,24 @@ end
 
 local frame = CreateFrame("Frame")
 
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("WEEKLY_REWARDS_UPDATE")
 frame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+frame:RegisterEvent("ENCOUNTER_END")
 frame:RegisterEvent("UPDATE_INSTANCE_INFO")
 
 frame:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_ENTERING_WORLD" then
+        if type(RequestRaidInfo) == "function" then
+            pcall(RequestRaidInfo)
+        end
+
+        scheduleRecapture("player-entering-world", 2)
+        return
+    end
+
     scheduleRecapture(
-        string.lower(string.gsub(event, "_", "-"))
+        string.lower(string.gsub(event, "_", "-")),
+        0.5
     )
 end)

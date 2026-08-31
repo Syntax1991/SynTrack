@@ -23,8 +23,10 @@ export class WeeklyGameplayRepository {
       vaultActivities: row.vaultActivities.map((activity) => ({
         type: activity.type,
         typeName: activity.typeName,
+        index: activity.index,
         threshold: activity.threshold,
-        progress: activity.progress
+        progress: activity.progress,
+        level: activity.level
       })),
       mythicPlusRuns: row.mythicPlusRuns.map((run) => ({
         keyLevel: run.keyLevel,

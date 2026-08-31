@@ -37,12 +37,17 @@ export function gameplayDomainToken(
       knownUnlockedSlots: view.knownUnlockedSlots,
       maxSlots: view.maxSlots
     });
+    const unresolved = view.unresolvedCategoryLabels ?? [];
     const unknownNote =
-      view.hasUnknownCategories && view.unknownCategoryCount > 0
-        ? ` · ${view.unknownCategoryCount} category unresolved`
-        : view.hasUnknownCategories
-          ? " · some categories unresolved"
-          : "";
+      unresolved.length === 1
+        ? ` · ${unresolved[0]} category unresolved`
+        : unresolved.length > 1
+          ? ` · ${unresolved.join(", ")} categories unresolved`
+          : view.hasUnknownCategories && view.unknownCategoryCount > 0
+            ? ` · ${view.unknownCategoryCount} category unresolved`
+            : view.hasUnknownCategories
+              ? " · some categories unresolved"
+              : "";
 
     return {
       symbol,
@@ -56,12 +61,18 @@ export function gameplayDomainToken(
     };
   }
 
+  const fraction = `${view.completeCount}/${view.applicableTotal}`;
+  const slotNote =
+    view.maxSlots > 0 && view.maxSlots !== view.applicableTotal
+      ? ` · Vault slots ${view.knownUnlockedSlots}/${view.maxSlots}`
+      : "";
+
   return {
-    symbol: `${view.completeCount}/${view.applicableTotal}`,
+    symbol: fraction,
     tone:
       view.state === "READY"
         ? ("ready" as const)
         : ("attention" as const),
-    title: `${view.label} ${view.completeCount}/${view.applicableTotal}`
+    title: `${view.label} ${fraction}${slotNote}`
   };
 }

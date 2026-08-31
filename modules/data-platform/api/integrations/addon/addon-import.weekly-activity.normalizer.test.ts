@@ -52,6 +52,13 @@ describe("normalizeWeeklyActivitySnapshot", () => {
               threshold: 1,
               progress: 1,
               id: 10
+            },
+            "2": {
+              type: 6,
+              typeName: "World",
+              index: 1,
+              threshold: 2,
+              progress: 4
             }
           }
         },
@@ -71,6 +78,8 @@ describe("normalizeWeeklyActivitySnapshot", () => {
     );
 
     expect(snapshot?.vaultActivities[0]?.threshold).toBe(1);
+    expect(snapshot?.vaultActivities[1]?.type).toBe(6);
+    expect(snapshot?.vaultActivities[1]?.typeName).toBe("World");
     expect(snapshot?.mythicPlusRuns[0]?.keyLevel).toBe(8);
     expect(snapshot?.raidCaptured).toBe(false);
   });

@@ -1,15 +1,13 @@
+import { nextUnmetVaultSlotAction } from "./weekly-gameplay.actions.js";
 import type {
   WeeklyGameplayCharacterView,
   WeeklyGameplayDomainView,
   WeeklyGameplaySnapshotInput
 } from "./weekly-gameplay.types.js";
 import {
-  capturedThresholds,
-  mythicPlusThresholds,
   resolveVaultAggregate,
   resolveVaultCategory,
-  thisWeekMythicPlusRuns,
-  thisWeekRaidKills
+  type VaultCategoryResult
 } from "./weekly-gameplay.vault.js";
 
 function unknownDomain(label: string): WeeklyGameplayDomainView {
@@ -23,108 +21,37 @@ function unknownDomain(label: string): WeeklyGameplayDomainView {
     knownUnlockedSlots: 0,
     maxSlots: 0,
     hasUnknownCategories: false,
-    unknownCategoryCount: 0
+    unknownCategoryCount: 0,
+    unresolvedCategoryLabels: []
   };
 }
 
-function thresholdDomain(
+function domainFromCategory(
   label: string,
-  rawCompleteCount: number,
-  thresholds: number[]
+  category: VaultCategoryResult
 ): WeeklyGameplayDomainView {
-  if (thresholds.length === 0) {
+  if (
+    !category.known ||
+    category.finalThreshold === null ||
+    category.progress === null
+  ) {
     return unknownDomain(label);
   }
 
-  const applicableTotal = Math.max(...thresholds);
-  const completeCount = Math.min(rawCompleteCount, applicableTotal);
-  const incomplete = completeCount < applicableTotal;
+  const completeCount = Math.min(category.progress, category.finalThreshold);
 
   return {
-    state: incomplete ? "ATTENTION" : "READY",
+    state: completeCount < category.finalThreshold ? "ATTENTION" : "READY",
     completeCount,
-    applicableTotal,
+    applicableTotal: category.finalThreshold,
     unknownCount: 0,
     label,
-    rawCompleteCount,
-    knownUnlockedSlots: completeCount,
-    maxSlots: applicableTotal,
-    hasUnknownCategories: false,
-    unknownCategoryCount: 0
-  };
-}
-
-function deriveMythicPlus(
-  snapshot: WeeklyGameplaySnapshotInput
-): WeeklyGameplayDomainView {
-  const runs = thisWeekMythicPlusRuns(snapshot);
-
-  if (runs === null) {
-    return unknownDomain("M+");
-  }
-
-  return thresholdDomain("M+", runs, mythicPlusThresholds(snapshot));
-}
-
-function deriveRaid(
-  snapshot: WeeklyGameplaySnapshotInput
-): WeeklyGameplayDomainView {
-  const raid = thisWeekRaidKills(snapshot);
-  const raidThresholds = capturedThresholds(snapshot, "raid");
-
-  if (raid) {
-    if (raidThresholds.length > 0) {
-      return thresholdDomain("Raid", raid.killed, raidThresholds);
-    }
-
-    const completeCount = Math.min(raid.killed, raid.total);
-
-    return {
-      state: completeCount < raid.total ? "ATTENTION" : "READY",
-      completeCount,
-      applicableTotal: raid.total,
-      unknownCount: 0,
-      label: "Raid",
-      rawCompleteCount: raid.killed,
-      knownUnlockedSlots: completeCount,
-      maxSlots: raid.total,
-      hasUnknownCategories: false,
-      unknownCategoryCount: 0
-    };
-  }
-
-  /*
-   * Successful capture with no current lockout is known zero when Vault
-   * raid thresholds exist. Without a threshold, 0/N cannot be proven.
-   */
-  if (snapshot.raidCaptured && raidThresholds.length > 0) {
-    return thresholdDomain("Raid", 0, raidThresholds);
-  }
-
-  return unknownDomain("Raid");
-}
-
-function deriveDelves(
-  snapshot: WeeklyGameplaySnapshotInput
-): WeeklyGameplayDomainView {
-  const category = resolveVaultCategory(snapshot, "world");
-
-  if (!category.known) {
-    return unknownDomain("Delves");
-  }
-
-  return {
-    state:
-      category.unlocked < category.slots ? "ATTENTION" : "READY",
-    completeCount: category.unlocked,
-    applicableTotal: category.slots,
-    unknownCount: 0,
-    label: "Delves",
-    rawCompleteCount: category.unlocked,
+    rawCompleteCount: category.progress,
     knownUnlockedSlots: category.unlocked,
     maxSlots: category.slots,
     hasUnknownCategories: false,
-    unknownCategoryCount: 0
+    unknownCategoryCount: 0,
+    unresolvedCategoryLabels: []
   };
 }
 
@@ -133,7 +60,7 @@ function deriveVault(
 ): WeeklyGameplayDomainView {
   const aggregate = resolveVaultAggregate(snapshot);
 
-  if (aggregate.maxSlots <= 0 || aggregate.unknownCategoryCount === 3) {
+  if (aggregate.unknownCategoryCount === 3) {
     return unknownDomain("Vault");
   }
 
@@ -153,36 +80,20 @@ function deriveVault(
     knownUnlockedSlots: aggregate.knownUnlockedSlots,
     maxSlots: aggregate.maxSlots,
     hasUnknownCategories: aggregate.hasUnknownCategories,
-    unknownCategoryCount: aggregate.unknownCategoryCount
+    unknownCategoryCount: aggregate.unknownCategoryCount,
+    unresolvedCategoryLabels: aggregate.unresolvedCategoryLabels
   };
-}
-
-function mythicPlusActionLabel(
-  snapshot: WeeklyGameplaySnapshotInput,
-  mythicPlus: WeeklyGameplayDomainView
-): string | null {
-  if (mythicPlus.state === "UNKNOWN") {
-    return "Mythic+ progress unresolved";
-  }
-
-  const remainingRuns = Math.max(
-    0,
-    mythicPlus.applicableTotal - mythicPlus.completeCount
-  );
-
-  if (mythicPlus.state === "ATTENTION" && remainingRuns > 0) {
-    return `${remainingRuns} more M+ run${remainingRuns === 1 ? "" : "s"} for Vault slot ${mythicPlusThresholds(snapshot).length}`;
-  }
-
-  return null;
 }
 
 export function deriveWeeklyGameplay(
   snapshot: WeeklyGameplaySnapshotInput
 ): WeeklyGameplayCharacterView {
-  const mythicPlus = deriveMythicPlus(snapshot);
-  const raid = deriveRaid(snapshot);
-  const delves = deriveDelves(snapshot);
+  const mythicPlusCategory = resolveVaultCategory(snapshot, "mythic-plus");
+  const raidCategory = resolveVaultCategory(snapshot, "raid");
+  const worldCategory = resolveVaultCategory(snapshot, "world");
+  const mythicPlus = domainFromCategory("M+", mythicPlusCategory);
+  const raid = domainFromCategory("Raid", raidCategory);
+  const delves = domainFromCategory("Delves", worldCategory);
 
   return {
     characterId: snapshot.characterId,
@@ -190,14 +101,26 @@ export function deriveWeeklyGameplay(
     mythicPlus,
     raid,
     delves,
-    mythicPlusAction: mythicPlusActionLabel(snapshot, mythicPlus),
+    mythicPlusAction:
+      mythicPlus.state === "UNKNOWN"
+        ? "Mythic+ progress unresolved"
+        : nextUnmetVaultSlotAction(mythicPlusCategory.activities, {
+            unitSingular: "M+ run",
+            unitPlural: "M+ runs"
+          }),
     raidAction:
-      raid.state === "ATTENTION"
-        ? `${Math.max(0, raid.applicableTotal - raid.completeCount)} raid bosses remaining`
-        : null,
+      raid.state === "UNKNOWN"
+        ? null
+        : nextUnmetVaultSlotAction(raidCategory.activities, {
+            unitSingular: "Raid boss",
+            unitPlural: "Raid bosses"
+          }),
     delvesAction:
       delves.state === "UNKNOWN"
         ? "Delves Vault progress unresolved"
-        : null
+        : nextUnmetVaultSlotAction(worldCategory.activities, {
+            unitSingular: "World activity",
+            unitPlural: "World activities"
+          })
   };
 }
