@@ -19,9 +19,10 @@ CREATE TABLE "new_DeviceLinkRequest" (
     "expiresAt" DATETIME NOT NULL,
     "approvedAt" DATETIME,
     "consumedAt" DATETIME,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "DeviceLinkRequest_raiderAccountId_fkey" FOREIGN KEY ("raiderAccountId") REFERENCES "RaiderAccount" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-INSERT INTO "new_DeviceLinkRequest" ("id", "userCode", "deviceCodeHash", "status", "clientName", "expiresAt", "approvedAt", "consumedAt", "createdAt") SELECT "id", "userCode", "deviceCodeHash", "status", "clientName", "expiresAt", "approvedAt", "consumedAt", "createdAt" FROM "DeviceLinkRequest";
+INSERT INTO "new_DeviceLinkRequest" ("id", "userCode", "deviceCodeHash", "status", "clientName", "raiderAccountId", "expiresAt", "approvedAt", "consumedAt", "createdAt") SELECT "id", "userCode", "deviceCodeHash", "status", "clientName", "raiderAccountId", "expiresAt", "approvedAt", "consumedAt", "createdAt" FROM "DeviceLinkRequest";
 DROP TABLE "DeviceLinkRequest";
 ALTER TABLE "new_DeviceLinkRequest" RENAME TO "DeviceLinkRequest";
 CREATE UNIQUE INDEX "DeviceLinkRequest_userCode_key" ON "DeviceLinkRequest"("userCode");

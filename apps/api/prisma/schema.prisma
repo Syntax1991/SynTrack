@@ -18,8 +18,17 @@ model Character {
   level        Int       @default(80)
   source       String    @default("MANUAL")
   lastSyncedAt DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  /*
+   * Canonical SynTrack account that owns this character. Nullable for
+   * pre-ownership rows and non-device (web/manual) creates until an
+   * owned DeviceCredential import proves association. One character
+   * maps to at most one RaiderAccount; never guessed from BattleTag.
+   */
+  raiderAccountId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  raiderAccount RaiderAccount? @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
 
   professions       CharacterProfession[]
   weeklyCompletions WeeklyChecklistCompletion[]
@@ -36,6 +45,7 @@ model Character {
   @@unique([name, realm, region])
   @@index([battleNetId, region])
   @@index([source])
+  @@index([raiderAccountId])
 }
 
 model CharacterTag {
@@ -870,7 +880,10 @@ model RaiderAccount {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  sessions RaiderSession[]
+  sessions           RaiderSession[]
+  deviceLinkRequests DeviceLinkRequest[]
+  deviceCredentials  DeviceCredential[]
+  characters         Character[]
 
   @@index([battleTag])
 }
@@ -950,22 +963,26 @@ model DeviceLinkRequest {
   consumedAt       DateTime?
   createdAt        DateTime         @default(now())
 
-  device DeviceCredential?
+  raiderAccount RaiderAccount?    @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
+  device        DeviceCredential?
 
   @@index([status, expiresAt])
   @@index([raiderAccountId])
 }
 
 model DeviceCredential {
-  id            String    @id @default(cuid())
-  name          String
-  tokenHash     String    @unique
-  linkRequestId String?   @unique
-  createdAt     DateTime  @default(now())
-  lastSeenAt    DateTime?
-  revokedAt     DateTime?
+  id              String    @id @default(cuid())
+  name            String
+  tokenHash       String    @unique
+  linkRequestId   String?   @unique
+  raiderAccountId String?
+  createdAt       DateTime  @default(now())
+  lastSeenAt      DateTime?
+  revokedAt       DateTime?
 
-  linkRequest DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+  linkRequest   DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+  raiderAccount RaiderAccount?     @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
 
   @@index([revokedAt])
+  @@index([raiderAccountId])
 }
