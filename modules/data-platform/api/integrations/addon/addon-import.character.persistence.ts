@@ -1,3 +1,4 @@
+import { resolveCharacterOwnerUpdate } from "./addon-import.character-ownership.js";
 import { AddonGearPersistence } from "./addon-import.gear.persistence.js";
 import { AddonProfessionPersistence } from "./addon-import.profession.persistence.js";
 import { AddonProfessionKnowledgeTreasurePersistence } from "./addon-import.profession-knowledge-treasure.persistence.js";
@@ -14,6 +15,10 @@ import type {
   AddonCharacter,
   AddonSnapshot
 } from "./addon-import.types.js";
+
+export type CharacterOwnershipContext = {
+  ownerRaiderAccountId?: string | null;
+};
 
 export class AddonCharacterPersistence {
   private readonly gearPersistence =
@@ -35,7 +40,8 @@ export class AddonCharacterPersistence {
     transaction: AddonImportTransaction,
     snapshot: AddonSnapshot,
     professionIds: ProfessionIdMap,
-    nodeIds: AddonNodeIdMap
+    nodeIds: AddonNodeIdMap,
+    ownership: CharacterOwnershipContext = {}
   ): Promise<CharacterPersistenceResult> {
     const result: CharacterPersistenceResult = {
       characters: 0,
@@ -56,7 +62,8 @@ export class AddonCharacterPersistence {
         character,
         professionIds,
         nodeIds,
-        result
+        result,
+        ownership
       );
 
       result.characters += 1;
@@ -70,52 +77,80 @@ export class AddonCharacterPersistence {
     character: AddonCharacter,
     professionIds: ProfessionIdMap,
     nodeIds: AddonNodeIdMap,
-    result: CharacterPersistenceResult
+    result: CharacterPersistenceResult,
+    ownership: CharacterOwnershipContext
   ): Promise<void> {
     const syncDate =
       getSyncDate(
         character.lastUpdatedAt
       );
 
-    const storedCharacter =
-      await transaction.character.upsert({
-        where: {
-          name_realm_region: {
-            name:
-              character.name,
-            realm:
-              character.realm,
-            region:
-              character.region
-          }
-        },
+    const identityWhere = {
+      name_realm_region: {
+        name: character.name,
+        realm: character.realm,
+        region: character.region
+      }
+    } as const;
 
-        create: {
-          name:
-            character.name,
-          realm:
-            character.realm,
-          region:
-            character.region,
-          className:
-            character.className,
-          level:
-            character.level,
-          source:
-            "ADDON",
-          lastSyncedAt:
-            syncDate
-        },
-
-        update: {
-          className:
-            character.className,
-          level:
-            character.level,
-          lastSyncedAt:
-            syncDate
+    const existing =
+      await transaction.character.findUnique({
+        where: identityWhere,
+        select: {
+          id: true,
+          raiderAccountId: true
         }
       });
+
+    const ownerUpdate =
+      resolveCharacterOwnerUpdate({
+        existingOwnerId:
+          existing?.raiderAccountId ??
+          null,
+        incomingOwnerId:
+          ownership.ownerRaiderAccountId,
+        characterLabel: `${character.name}-${character.realm}-${character.region}`
+      });
+
+    let storedCharacter: { id: string };
+
+    if (existing) {
+      storedCharacter =
+        await transaction.character.update({
+          where: { id: existing.id },
+          data: {
+            className:
+              character.className,
+            level: character.level,
+            lastSyncedAt: syncDate,
+            source: "ADDON",
+            ...(ownerUpdate !==
+            undefined
+              ? {
+                  raiderAccountId:
+                    ownerUpdate
+                }
+              : {})
+          }
+        });
+    } else {
+      storedCharacter =
+        await transaction.character.create({
+          data: {
+            name: character.name,
+            realm: character.realm,
+            region: character.region,
+            className:
+              character.className,
+            level: character.level,
+            source: "ADDON",
+            lastSyncedAt: syncDate,
+            raiderAccountId:
+              ownership.ownerRaiderAccountId ??
+              null
+          }
+        });
+    }
 
     for (
       const profession of

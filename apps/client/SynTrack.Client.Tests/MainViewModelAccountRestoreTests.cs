@@ -47,6 +47,11 @@ public class MainViewModelAccountRestoreTests
         }
     }
 
+    private sealed class OpenBrowserLauncher : IBrowserLauncher
+    {
+        public bool TryOpen(string url) => true;
+    }
+
     private sealed class FakeCredentialService : ICredentialService
     {
         public void Store(string rawToken)
@@ -68,6 +73,18 @@ public class MainViewModelAccountRestoreTests
         public Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
+        public Task<DeviceConnectStartResponse> StartConnectAsync(string? deviceName, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<DeviceConnectPollResult> PollConnectStatusAsync(string pollToken, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientProfileFetchResult { Health = AccountHealth.SignedOut });
+
+        public Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.Ok });
+
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,
             string fileModifiedAt, string contentSha256, string rawBody, CancellationToken cancellationToken) =>
@@ -80,6 +97,11 @@ public class MainViewModelAccountRestoreTests
         var credentialService = new FakeCredentialService();
         var apiClient = new FakeApiClient();
         var deviceLinkService = new DeviceLinkService(apiClient, credentialService, "https://app.syntrack.example");
+        var deviceConnectionService = new DeviceConnectionService(
+            apiClient,
+            credentialService,
+            new OpenBrowserLauncher(),
+            TimeSpan.FromMilliseconds(20));
         var syncEngine = new SyncEngine(credentialService, apiClient, settingsService, new SyncGate(), "0.0.0-test");
         var logger = new ClientLogger(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
 
@@ -88,7 +110,9 @@ public class MainViewModelAccountRestoreTests
             new FakeWowAccountDiscoveryService(),
             settingsService,
             credentialService,
+            apiClient,
             deviceLinkService,
+            deviceConnectionService,
             syncEngine,
             new SavedVariablesWatcherService(),
             new AutoStartService(),

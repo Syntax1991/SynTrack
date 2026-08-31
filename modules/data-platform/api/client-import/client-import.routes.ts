@@ -16,9 +16,10 @@ const addonImportService =
   );
 
 const service = new ClientImportService(
-  (source) =>
+  (source, ownership) =>
     addonImportService.importSavedVariables(
-      source
+      source,
+      ownership
     )
 );
 
@@ -29,6 +30,8 @@ const controller =
  * Deliberately not requireBearerToken (raider-auth/bearerToken.ts) -
  * that helper's error message is RaiderSession-specific. A device
  * credential is a distinct bearer secret and gets its own message.
+ * Stamps request.syntrackOwnerRaiderAccountId from the credential so
+ * import persistence can prove Character ownership in the domain layer.
  */
 const requireDeviceCredential: RequestHandler =
   async (request, _response, next) => {
@@ -51,9 +54,17 @@ const requireDeviceCredential: RequestHandler =
         );
       }
 
-      await deviceCredentialAuthService.requireValidCredential(
-        token
-      );
+      const credential =
+        await deviceCredentialAuthService.requireValidCredential(
+          token
+        );
+
+      (
+        request as {
+          syntrackOwnerRaiderAccountId?: string | null;
+        }
+      ).syntrackOwnerRaiderAccountId =
+        credential.raiderAccountId;
 
       next();
     }

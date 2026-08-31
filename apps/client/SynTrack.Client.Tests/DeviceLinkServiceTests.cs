@@ -25,6 +25,22 @@ public class DeviceLinkServiceTests
                 : new DeviceLinkStatusResponse { Status = "PENDING" });
         }
 
+        public Task<DeviceConnectStartResponse> StartConnectAsync(string? deviceName, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<DeviceConnectPollResult> PollConnectStatusAsync(string pollToken, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientProfileFetchResult
+            {
+                Health = AccountHealth.FullyConnected,
+                BattleTag = "Syntax#21715"
+            });
+
+        public Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken) =>
+            Task.FromResult(new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.Ok });
+
         public Task<SyncStatus> SendImportAsync(
             string deviceToken, string addon, string clientVersion, string observedAt,
             string fileModifiedAt, string contentSha256, string rawBody, CancellationToken cancellationToken) =>

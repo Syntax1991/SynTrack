@@ -170,6 +170,7 @@ export class FakeDeviceLinkRepository
     credential: {
       name: string;
       tokenHash: string;
+      raiderAccountId: string | null;
     }
   ) {
     const existingLink =
@@ -194,6 +195,8 @@ export class FakeDeviceLinkRepository
       name: credential.name,
       tokenHash: credential.tokenHash,
       linkRequestId,
+      raiderAccountId:
+        credential.raiderAccountId,
       createdAt: new Date(),
       lastSeenAt: null,
       revokedAt: null

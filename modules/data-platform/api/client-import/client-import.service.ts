@@ -41,21 +41,24 @@ function requireTimestampHeader(
 /*
  * The raw SavedVariables body is dispatched unchanged to the existing
  * AddonImportService - this route only validates transport metadata
- * (protocol/addon/timestamps/optional content hash) and never parses
- * Lua itself. observedAt/fileModifiedAt are filesystem-observed
- * timestamps and are never written over the gameplay capture time that
- * comes from inside the parsed payload.
+ * and forwards proven DeviceCredential ownership into persistence so
+ * Character.raiderAccountId is established/verified in the domain layer
+ * (never from Lua/client claims).
  */
 export class ClientImportService {
   constructor(
     private readonly importSavedVariables: (
-      source: string
+      source: string,
+      ownership?: {
+        ownerRaiderAccountId?: string | null;
+      }
     ) => Promise<AddonImportResult>
   ) {}
 
   async importFromDevice(input: {
     rawBody: string;
     headers: ClientImportHeaders;
+    ownerRaiderAccountId?: string | null;
   }): Promise<ClientImportResult> {
     const { rawBody, headers } = input;
 
@@ -125,7 +128,12 @@ export class ClientImportService {
 
     const result =
       await this.importSavedVariables(
-        rawBody
+        rawBody,
+        {
+          ownerRaiderAccountId:
+            input.ownerRaiderAccountId ??
+            null
+        }
       );
 
     return {

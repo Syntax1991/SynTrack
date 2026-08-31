@@ -68,7 +68,10 @@ export class AddonImportService {
   }
 
   async importSavedVariables(
-    source: string
+    source: string,
+    ownership: {
+      ownerRaiderAccountId?: string | null;
+    } = {}
   ) {
     const snapshot =
       this.readSnapshot(
@@ -76,7 +79,8 @@ export class AddonImportService {
       );
 
     return this.persistence.persist(
-      snapshot
+      snapshot,
+      ownership
     );
   }
 

@@ -131,4 +131,113 @@ public class SynTrackApiClientTests
         Assert.Contains("deadbeef", handler.LastRequestBody);
         Assert.EndsWith("/client/link/status", handler.LastRequest!.RequestUri!.ToString());
     }
+
+    [Fact]
+    public async Task GetMeSendsTheDeviceCredentialAsABearerTokenAndReturnsTheBattleTag()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"identityStatus\":\"connected\",\"battleTag\":\"Syntax#21715\"}",
+                System.Text.Encoding.UTF8,
+                "application/json")
+        });
+
+        var client = CreateClient(handler);
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Equal("Bearer", handler.LastRequest!.Headers.Authorization!.Scheme);
+        Assert.Equal("dvc_token", handler.LastRequest.Headers.Authorization.Parameter);
+        Assert.EndsWith("/client/me", handler.LastRequest.RequestUri!.ToString());
+        Assert.Equal("Syntax#21715", profile.BattleTag);
+        Assert.Equal(AccountHealth.FullyConnected, profile.Health);
+    }
+
+    [Fact]
+    public async Task GetMeReturnsReconnectRequiredWhenCredentialPredatesRaiderAccountLinkage()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"identityStatus\":\"legacy_reconnect_required\",\"battleTag\":null}",
+                System.Text.Encoding.UTF8,
+                "application/json")
+        });
+
+        var client = CreateClient(handler);
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Equal(AccountHealth.ReconnectRequired, profile.Health);
+        Assert.Null(profile.BattleTag);
+    }
+
+    [Fact]
+    public async Task GetMeReturnsSignedOutInsteadOfThrowingOn401()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        var client = CreateClient(handler);
+
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Equal(AccountHealth.SignedOut, profile.Health);
+        Assert.Null(profile.BattleTag);
+    }
+
+    [Fact]
+    public async Task GetMeReturnsConnectionIssueInsteadOfThrowingOnANetworkFailure()
+    {
+        var handler = new FakeHttpMessageHandler(_ => throw new HttpRequestException("connect failed"));
+        var client = CreateClient(handler);
+
+        var profile = await client.GetMeAsync("dvc_token", CancellationToken.None);
+
+        Assert.Equal(AccountHealth.ConnectionIssue, profile.Health);
+        Assert.Null(profile.BattleTag);
+    }
+
+    [Fact]
+    public async Task StartConnectPostsDeviceNameAndReturnsBrowserUrlAndPollToken()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"browserUrl\":\"https://app.syntrack.example/connect/abc\",\"pollToken\":\"poll-secret\",\"expiresAt\":\"2026-08-31T12:00:00Z\"}",
+                System.Text.Encoding.UTF8,
+                "application/json")
+        });
+        var client = CreateClient(handler);
+
+        var started = await client.StartConnectAsync("DESKTOP-TEST", CancellationToken.None);
+
+        Assert.EndsWith("/client/connect", handler.LastRequest!.RequestUri!.ToString());
+        Assert.Contains("DESKTOP-TEST", handler.LastRequestBody);
+        Assert.Equal("https://app.syntrack.example/connect/abc", started.BrowserUrl);
+        Assert.Equal("poll-secret", started.PollToken);
+    }
+
+    [Fact]
+    public async Task PollConnectStatusMapsConsumedCredentialAnd404()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"status\":\"CONSUMED\",\"credential\":\"dvc_once\"}",
+                System.Text.Encoding.UTF8,
+                "application/json")
+        });
+        var client = CreateClient(handler);
+
+        var consumed = await client.PollConnectStatusAsync("poll-secret", CancellationToken.None);
+
+        Assert.EndsWith("/client/connect/status", handler.LastRequest!.RequestUri!.ToString());
+        Assert.Contains("poll-secret", handler.LastRequestBody);
+        Assert.Equal(DeviceConnectPollKind.Consumed, consumed.Kind);
+        Assert.Equal("dvc_once", consumed.Credential);
+
+        var notFoundHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        var notFoundClient = CreateClient(notFoundHandler);
+        var missing = await notFoundClient.PollConnectStatusAsync("nope", CancellationToken.None);
+        Assert.Equal(DeviceConnectPollKind.NotFound, missing.Kind);
+        Assert.Null(missing.Credential);
+    }
 }

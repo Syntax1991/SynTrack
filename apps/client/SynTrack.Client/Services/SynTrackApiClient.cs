@@ -1,5 +1,6 @@
 namespace SynTrack.Client.Services;
 
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -12,6 +13,34 @@ public interface ISynTrackApiClient
     Task<DeviceLinkCreateResponse> CreateLinkAsync(CancellationToken cancellationToken);
 
     Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Codeless START (PR #19). Returns browserUrl + in-memory pollToken.
+    /// </summary>
+    Task<DeviceConnectStartResponse> StartConnectAsync(
+        string? deviceName,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Codeless POLL. 404 becomes <see cref="DeviceConnectPollKind.NotFound"/>.
+    /// Credential is present only on the first CONSUMED response.
+    /// </summary>
+    Task<DeviceConnectPollResult> PollConnectStatusAsync(
+        string pollToken,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Distinguishes fully connected identity, legacy reconnect-required,
+    /// unauthorized/revoked, and temporary network failures - never collapses
+    /// those into a single nullable BattleTag.
+    /// </summary>
+    Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Roster fetch that never throws into the sync/watcher pipeline.
+    /// Distinguishes ok / legacy / unauthorized / temporary failure.
+    /// </summary>
+    Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken);
 
     Task<SyncStatus> SendImportAsync(
         string deviceToken,
@@ -72,6 +101,154 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         response.EnsureSuccessStatusCode();
 
         return (await response.Content.ReadFromJsonAsync<DeviceLinkStatusResponse>(JsonOptions, cancellationToken))!;
+    }
+
+    public async Task<DeviceConnectStartResponse> StartConnectAsync(
+        string? deviceName,
+        CancellationToken cancellationToken)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"{_apiBaseUrl}/client/connect",
+            new { deviceName },
+            JsonOptions,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        return (await response.Content.ReadFromJsonAsync<DeviceConnectStartResponse>(JsonOptions, cancellationToken))!;
+    }
+
+    public async Task<DeviceConnectPollResult> PollConnectStatusAsync(
+        string pollToken,
+        CancellationToken cancellationToken)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"{_apiBaseUrl}/client/connect/status",
+            new { pollToken },
+            JsonOptions,
+            cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new DeviceConnectPollResult { Kind = DeviceConnectPollKind.NotFound };
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<DeviceLinkStatusResponse>(JsonOptions, cancellationToken);
+
+        if (body is null)
+        {
+            return new DeviceConnectPollResult { Kind = DeviceConnectPollKind.NotFound };
+        }
+
+        return body.Status switch
+        {
+            "PENDING" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Pending },
+            "EXPIRED" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Expired },
+            "CONSUMED" when body.Credential is not null =>
+                new DeviceConnectPollResult
+                {
+                    Kind = DeviceConnectPollKind.Consumed,
+                    Credential = body.Credential
+                },
+            "CONSUMED" => new DeviceConnectPollResult
+            {
+                Kind = DeviceConnectPollKind.ConsumedWithoutCredential
+            },
+            _ => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.NotFound }
+        };
+    }
+
+    public async Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/client/me");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", deviceToken);
+
+        try
+        {
+            var response = await _http.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return new ClientProfileFetchResult { Health = AccountHealth.SignedOut };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
+            }
+
+            var body = await response.Content.ReadFromJsonAsync<ClientProfileResponse>(JsonOptions, cancellationToken);
+
+            if (string.Equals(body?.IdentityStatus, "legacy_reconnect_required", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ClientProfileFetchResult { Health = AccountHealth.ReconnectRequired };
+            }
+
+            return new ClientProfileFetchResult
+            {
+                Health = AccountHealth.FullyConnected,
+                BattleTag = body?.BattleTag
+            };
+        }
+        catch (HttpRequestException)
+        {
+            return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
+        }
+        catch (JsonException)
+        {
+            return new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
+        }
+    }
+
+    public async Task<ClientCharactersFetchResult> GetCharactersAsync(string deviceToken, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"{_apiBaseUrl}/client/characters");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", deviceToken);
+
+        try
+        {
+            var response = await _http.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.Unauthorized };
+            }
+
+            if (response.StatusCode == HttpStatusCode.Conflict)
+            {
+                return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.LegacyReconnectRequired };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
+            }
+
+            var parsed = await response.Content.ReadFromJsonAsync<ClientCharactersResponse>(JsonOptions, cancellationToken);
+            return new ClientCharactersFetchResult
+            {
+                Status = ClientCharactersFetchStatus.Ok,
+                Items = parsed?.Items ?? new List<ClientCharacterSummary>()
+            };
+        }
+        catch (HttpRequestException)
+        {
+            return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
+        }
+        catch (JsonException)
+        {
+            return new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
+        }
     }
 
     public async Task<SyncStatus> SendImportAsync(

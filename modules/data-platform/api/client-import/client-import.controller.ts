@@ -42,11 +42,19 @@ export class ClientImportController {
         ? request.body
         : "";
 
+    const ownerRaiderAccountId =
+      (
+        request as {
+          syntrackOwnerRaiderAccountId?: string | null;
+        }
+      ).syntrackOwnerRaiderAccountId ?? null;
+
     const result =
       await this.service.importFromDevice(
         {
           rawBody,
-          headers: readHeaders(request)
+          headers: readHeaders(request),
+          ownerRaiderAccountId
         }
       );
 
