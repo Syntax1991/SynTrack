@@ -1,233 +1,338 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  within
-} from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import {
-  describe,
-  expect,
-  it,
-  vi
-} from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { VaultMythicPlusResponse } from "../types/vaultMythicPlus.types";
 
-const addRun = vi
-  .fn()
-  .mockResolvedValue(true);
-
-const deleteRun = vi
-  .fn()
-  .mockResolvedValue(undefined);
-
-const mockOverview: VaultMythicPlusResponse =
-  {
-    period: {
-      key: "2026-08-26",
-      startsAt:
-        "2026-08-26T07:00:00.000Z",
-      endsAt:
-        "2026-09-02T07:00:00.000Z"
-    },
-    thresholds: [1, 4, 8],
-    characters: [
-      {
-        id: "char-1",
-        name: "Synblast",
-        realm: "Antonidas",
-        region: "eu",
-        className: "Shaman",
-        level: 80,
-        runs: [
-          {
-            id: "run-1",
-            dungeonName:
-              "Necrotic Wake",
-            keyLevel: 10,
-            completedAt:
-              "2026-08-26T10:00:00.000Z"
-          }
-        ],
-        vaultSlots: [
-          {
-            threshold: 1,
-            unlocked: true,
-            keyLevel: 10
-          },
-          {
-            threshold: 4,
-            unlocked: false,
-            keyLevel: null
-          },
-          {
-            threshold: 8,
-            unlocked: false,
-            keyLevel: null
-          }
-        ],
-        highestKeyLevel: 10
+const mockOverview: VaultMythicPlusResponse = {
+  period: {
+    key: "2026-08-26",
+    startsAt: "2026-08-26T07:00:00.000Z",
+    endsAt: "2026-09-02T07:00:00.000Z"
+  },
+  characters: [
+    {
+      id: "char-1",
+      name: "Synblast",
+      realm: "Antonidas",
+      region: "eu",
+      className: "Shaman",
+      level: 90,
+      trackingProfile: "FULL",
+      vault: {
+        state: "ATTENTION",
+        completeCount: 6,
+        applicableTotal: 9,
+        knownUnlockedSlots: 6,
+        maxSlots: 9,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
       },
-      {
-        id: "char-2",
-        name: "Synbloom",
-        realm: "Antonidas",
-        region: "eu",
-        className: "Druid",
-        level: 80,
-        runs: [],
-        vaultSlots: [
-          {
-            threshold: 1,
-            unlocked: false,
-            keyLevel: null
-          },
-          {
-            threshold: 4,
-            unlocked: false,
-            keyLevel: null
-          },
-          {
-            threshold: 8,
-            unlocked: false,
-            keyLevel: null
-          }
-        ],
-        highestKeyLevel: null
-      }
-    ],
-    summary: {
-      runCount: 1,
-      unlockedSlotCount: 1,
-      charactersWithVault: 1
+      mythicPlus: {
+        state: "READY",
+        completeCount: 8,
+        applicableTotal: 8,
+        knownUnlockedSlots: 3,
+        maxSlots: 3,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      raid: {
+        state: "READY",
+        completeCount: 6,
+        applicableTotal: 6,
+        knownUnlockedSlots: 3,
+        maxSlots: 3,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      delves: {
+        state: "ATTENTION",
+        completeCount: 0,
+        applicableTotal: 8,
+        knownUnlockedSlots: 0,
+        maxSlots: 3,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      mythicPlusSlots: [
+        {
+          slot: 1,
+          state: "UNLOCKED",
+          threshold: 1,
+          progress: 8,
+          level: 15,
+          rewardLabel: "+15"
+        },
+        {
+          slot: 2,
+          state: "UNLOCKED",
+          threshold: 4,
+          progress: 8,
+          level: 14,
+          rewardLabel: "+14"
+        },
+        {
+          slot: 3,
+          state: "UNLOCKED",
+          threshold: 8,
+          progress: 8,
+          level: 13,
+          rewardLabel: "+13"
+        }
+      ],
+      raidSlots: [
+        {
+          slot: 1,
+          state: "UNLOCKED",
+          threshold: 2,
+          progress: 6,
+          level: 15,
+          rewardLabel: "Heroic"
+        },
+        {
+          slot: 2,
+          state: "UNLOCKED",
+          threshold: 4,
+          progress: 6,
+          level: 15,
+          rewardLabel: "Heroic"
+        },
+        {
+          slot: 3,
+          state: "UNLOCKED",
+          threshold: 6,
+          progress: 6,
+          level: 15,
+          rewardLabel: "Heroic"
+        }
+      ],
+      worldSlots: [
+        {
+          slot: 1,
+          state: "LOCKED",
+          threshold: 2,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        },
+        {
+          slot: 2,
+          state: "LOCKED",
+          threshold: 4,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        },
+        {
+          slot: 3,
+          state: "LOCKED",
+          threshold: 8,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        }
+      ],
+      highestKeyLevel: 15,
+      mythicPlusRunCount: 2,
+      mythicPlusRuns: [
+        {
+          mapChallengeModeId: 503,
+          keyLevel: 15,
+          completed: true,
+          thisWeek: true,
+          durationSec: 1800
+        }
+      ],
+      action: "2 World activities for Vault slot 1",
+      vaultCaptured: true,
+      vaultCurrent: true
+    },
+    {
+      id: "char-2",
+      name: "Syndraco",
+      realm: "Antonidas",
+      region: "eu",
+      className: "Evoker",
+      level: 90,
+      trackingProfile: "FULL",
+      vault: {
+        state: "ATTENTION",
+        completeCount: 2,
+        applicableTotal: 9,
+        knownUnlockedSlots: 2,
+        maxSlots: 9,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      mythicPlus: {
+        state: "ATTENTION",
+        completeCount: 4,
+        applicableTotal: 8,
+        knownUnlockedSlots: 2,
+        maxSlots: 3,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      raid: {
+        state: "ATTENTION",
+        completeCount: 0,
+        applicableTotal: 6,
+        knownUnlockedSlots: 0,
+        maxSlots: 3,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      delves: {
+        state: "ATTENTION",
+        completeCount: 0,
+        applicableTotal: 8,
+        knownUnlockedSlots: 0,
+        maxSlots: 3,
+        hasUnknownCategories: false,
+        unresolvedCategoryLabels: []
+      },
+      mythicPlusSlots: [
+        {
+          slot: 1,
+          state: "UNLOCKED",
+          threshold: 1,
+          progress: 4,
+          level: 10,
+          rewardLabel: "+10"
+        },
+        {
+          slot: 2,
+          state: "UNLOCKED",
+          threshold: 4,
+          progress: 4,
+          level: 8,
+          rewardLabel: "+8"
+        },
+        {
+          slot: 3,
+          state: "LOCKED",
+          threshold: 8,
+          progress: 4,
+          level: null,
+          rewardLabel: null
+        }
+      ],
+      raidSlots: [
+        {
+          slot: 1,
+          state: "LOCKED",
+          threshold: 2,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        },
+        {
+          slot: 2,
+          state: "LOCKED",
+          threshold: 4,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        },
+        {
+          slot: 3,
+          state: "LOCKED",
+          threshold: 6,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        }
+      ],
+      worldSlots: [
+        {
+          slot: 1,
+          state: "LOCKED",
+          threshold: 2,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        },
+        {
+          slot: 2,
+          state: "LOCKED",
+          threshold: 4,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        },
+        {
+          slot: 3,
+          state: "LOCKED",
+          threshold: 8,
+          progress: 0,
+          level: 0,
+          rewardLabel: null
+        }
+      ],
+      highestKeyLevel: 10,
+      mythicPlusRunCount: 4,
+      mythicPlusRuns: [],
+      action: "4 more M+ runs for Vault slot 3",
+      vaultCaptured: true,
+      vaultCurrent: true
     }
-  };
+  ],
+  summary: {
+    characterCount: 2,
+    attentionCount: 2,
+    readyCount: 0
+  }
+};
 
-vi.mock(
-  "../hooks/useVaultMythicPlus",
-  () => ({
-    useVaultMythicPlus: () => ({
-      overview: mockOverview,
-      isLoading: false,
-      error: null,
-      pendingAction: null,
-      addRun,
-      deleteRun
-    })
+vi.mock("../hooks/useVaultMythicPlus", () => ({
+  useVaultMythicPlus: () => ({
+    overview: mockOverview,
+    isLoading: false,
+    error: null
   })
-);
+}));
 
-const { VaultMythicPlusPage } =
-  await import(
-    "./VaultMythicPlusPage"
-  );
+import { VaultMythicPlusPage } from "./VaultMythicPlusPage";
 
-function renderPage() {
-  return render(
-    <MemoryRouter>
-      <VaultMythicPlusPage />
-    </MemoryRouter>
-  );
-}
+describe("VaultMythicPlusPage automatic gameplay", () => {
+  it("shows automatic roster values and hides legacy Log run controls", () => {
+    render(
+      <MemoryRouter>
+        <VaultMythicPlusPage />
+      </MemoryRouter>
+    );
 
-describe("VaultMythicPlusPage", () => {
-  it("never renders the old four KPI cards, replacing them with one compact summary line", () => {
-    renderPage();
-
+    expect(screen.queryByText("Log run")).not.toBeInTheDocument();
+    expect(screen.queryByText(/logged runs/i)).not.toBeInTheDocument();
     expect(
-      screen.getByText(
-        /1 logged runs · 1 tracked Vaults · Reset/
-      )
+      screen.getByText(/Automatic Great Vault and Mythic\+ progress/i)
     ).toBeInTheDocument();
 
-    expect(
-      screen.queryByText(
-        "Dungeon runs"
-      )
-    ).not.toBeInTheDocument();
+    const tables = screen.getAllByRole("table");
+    expect(tables[0]).toBeTruthy();
+    expect(within(tables[0]!).getByText("Synblast")).toBeInTheDocument();
+    expect(within(tables[0]!).getByText("6/9")).toBeInTheDocument();
+    expect(within(tables[0]!).getAllByText("8/8").length).toBeGreaterThan(0);
+    expect(within(tables[0]!).getByText("+15")).toBeInTheDocument();
+    expect(screen.queryByText("Synbeast")).not.toBeInTheDocument();
   });
 
-  it("renders the account-wide matrix directly, without a separate character roster selection step", () => {
-    renderPage();
+  it("shows selected character slot detail from automatic capture", () => {
+    render(
+      <MemoryRouter>
+        <VaultMythicPlusPage />
+      </MemoryRouter>
+    );
 
+    fireEvent.click(screen.getByRole("button", { name: "Syndraco" }));
+
+    expect(screen.getByText("SELECTED CHARACTER")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Syndraco" })).toBeInTheDocument();
     expect(
-      screen.getAllByText("Synblast")
-        .length
+      screen.getAllByText(/4 more M\+ runs for Vault slot 3/i).length
     ).toBeGreaterThan(0);
-
-    expect(
-      screen.getAllByText("Synbloom")
-        .length
-    ).toBeGreaterThan(0);
-
-    expect(
-      screen.queryByText(
-        "VAULT ROSTER"
-      )
-    ).not.toBeInTheDocument();
-  });
-
-  it("opens the run log drawer for the correct character, and only that character's run history is shown", () => {
-    renderPage();
-
-    const rows = screen.getAllByRole("row");
-    const synbloomRow = within(rows[2]!);
-
-    fireEvent.click(
-      synbloomRow.getByRole("button", {
-        name: "Log run"
-      })
-    );
-
-    expect(
-      screen.getByRole("heading", {
-        name: "Log run · Synbloom"
-      })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(
-        "No runs logged yet"
-      )
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        "Necrotic Wake"
-      )
-    ).not.toBeInTheDocument();
-  });
-
-  it("adding a run in the drawer targets the correct character, not another one", async () => {
-    renderPage();
-
-    const rows = screen.getAllByRole("row");
-    const synblastRow = within(rows[1]!);
-
-    fireEvent.click(
-      synblastRow.getByRole("button", {
-        name: "Log run"
-      })
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Add run"
-      })
-    );
-
-    await vi.waitFor(() => {
-      expect(addRun).toHaveBeenCalledWith(
-        "char-1",
-        expect.objectContaining({
-          keyLevel: 2
-        })
-      );
-    });
-
-    expect(addRun).not.toHaveBeenCalledWith(
-      "char-2",
-      expect.anything()
-    );
+    expect(screen.getAllByText("Mythic+").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Raid").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Delves").length).toBeGreaterThan(0);
   });
 });

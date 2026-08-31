@@ -1,8 +1,5 @@
-import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { WeeklyChecklistRepository } from "../weekly-checklist/weekly-checklist.repository.js";
 import { WeeklyChecklistService } from "../weekly-checklist/weekly-checklist.service.js";
-import { VaultMythicPlusRepository } from "../vault-mythic-plus/vault-mythic-plus.repository.js";
-import { VaultMythicPlusService } from "../vault-mythic-plus/vault-mythic-plus.service.js";
 import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
 import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
 import { ResourceReadinessRepository } from "../resources/resource-readiness.repository.js";
@@ -45,6 +42,7 @@ import type {
   CharacterControlDetailResponse,
   OverviewResponse
 } from "./overview.types.js";
+import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 
 /*
  * Read-model orchestrator for the "My SynTrack" Overview. It owns no
@@ -55,10 +53,6 @@ import type {
 export class OverviewService {
   private readonly weeklyChecklistService = new WeeklyChecklistService(
     new WeeklyChecklistRepository()
-  );
-
-  private readonly vaultMythicPlusService = new VaultMythicPlusService(
-    new VaultMythicPlusRepository()
   );
 
   private readonly gearReadinessService = new GearReadinessService(
@@ -108,7 +102,6 @@ export class OverviewService {
 
     const [
       weeklyChecklist,
-      vaultOverview,
       gearOverview,
       resourceOverview,
       professionWeeklyOverview,
@@ -121,7 +114,6 @@ export class OverviewService {
       weeklyGameplayOverview
     ] = await Promise.all([
       this.weeklyChecklistService.getChecklist(),
-      this.vaultMythicPlusService.getOverview(),
       this.gearReadinessService.getOverview(),
       this.resourceReadinessService.getOverview(),
       this.professionWeeklyStatusService.getOverview(),
@@ -174,7 +166,7 @@ export class OverviewService {
         level: character.level
       })),
       weeklyByCharacterId,
-      vaultByCharacterId: buildCharacterIdMap(vaultOverview.characters),
+      vaultByCharacterId: new Map(),
       gearByCharacterId: buildCharacterIdMap(gearOverview.characters),
       professionByCharacterId: buildProfessionByCharacterId(
         professionIssuesByCharacter,

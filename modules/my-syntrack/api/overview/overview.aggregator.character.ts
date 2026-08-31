@@ -106,7 +106,7 @@ export function resolveCharacterState(
           state: weeklyGameplay.vault.state,
           unlockedSlots: weeklyGameplay.vault.completeCount,
           slotsTotal: weeklyGameplay.vault.applicableTotal,
-          highestKeyLevel: vaultResult.vault.highestKeyLevel,
+          highestKeyLevel: weeklyGameplay.highestKeyLevel,
           source: "ADDON" as const
         }
       : vaultResult.vault;

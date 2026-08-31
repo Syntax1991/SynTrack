@@ -34,7 +34,9 @@ export class WeeklyGameplayRepository {
       mythicPlusRuns: row.mythicPlusRuns.map((run) => ({
         keyLevel: run.keyLevel,
         completed: run.completed,
-        thisWeek: run.thisWeek
+        thisWeek: run.thisWeek,
+        mapChallengeModeId: run.mapChallengeModeId,
+        durationSec: run.durationSec
       })),
       raidLockouts: row.raidLockouts.map((lockout) => ({
         instanceName: lockout.instanceName,

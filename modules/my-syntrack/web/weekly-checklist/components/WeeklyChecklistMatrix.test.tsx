@@ -130,7 +130,8 @@ describe("WeeklyChecklistMatrix", () => {
               delves: gameplayDomain({ label: "Delves" }),
               mythicPlusAction: null,
               raidAction: null,
-              delvesAction: null
+              delvesAction: null,
+              highestKeyLevel: null
             }
           })
         ]}
@@ -178,7 +179,8 @@ describe("WeeklyChecklistMatrix", () => {
               delves: gameplayDomain({ label: "Delves" }),
               mythicPlusAction: null,
               raidAction: null,
-              delvesAction: null
+              delvesAction: null,
+              highestKeyLevel: null
             }
           })
         ]}
@@ -208,7 +210,8 @@ describe("WeeklyChecklistMatrix", () => {
               delves: gameplayDomain({ label: "Delves" }),
               mythicPlusAction: "Mythic+ progress unresolved",
               raidAction: null,
-              delvesAction: "Delves Vault progress unresolved"
+              delvesAction: "Delves Vault progress unresolved",
+              highestKeyLevel: null
             }
           })
         ]}

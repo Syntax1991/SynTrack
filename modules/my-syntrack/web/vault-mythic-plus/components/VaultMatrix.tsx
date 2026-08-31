@@ -1,35 +1,25 @@
-import { Link } from "react-router-dom";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
-import type { VaultCharacter } from "../types/vaultMythicPlus.types";
+import type { VaultGameplayCharacter } from "../types/vaultMythicPlus.types";
 import {
-  formatHighestKeyToken,
-  formatRunsLoggedToken,
-  formatVaultSlotToken
+  formatDomainFraction,
+  formatHighestKeyToken
 } from "../utils/vaultCellFormatting";
 
 type VaultMatrixProps = {
-  characters: VaultCharacter[];
-  onOpenRunLog: (
-    characterId: string
-  ) => void;
+  characters: VaultGameplayCharacter[];
+  selectedCharacterId: string | null;
+  onSelectCharacter: (characterId: string) => void;
 };
 
-/*
- * Account-wide Vault view - one character = one row, so unlocked
- * slots and unknown-vs-tracked state are answerable without clicking
- * through every character. Logging a run is a secondary interaction
- * (opens a drawer) rather than a permanently reserved half-page panel.
- */
 export function VaultMatrix({
   characters,
-  onOpenRunLog
+  selectedCharacterId,
+  onSelectCharacter
 }: VaultMatrixProps) {
   if (characters.length === 0) {
     return (
-      <div className="empty-state">
-        No characters match this filter.
-      </div>
+      <div className="empty-state">No gameplay-tracked characters.</div>
     );
   }
 
@@ -39,53 +29,33 @@ export function VaultMatrix({
         <thead>
           <tr>
             <th>Character</th>
-
-            <th className="matrix-col-narrow">
-              Runs
-            </th>
-
-            <th className="matrix-col-narrow">
-              Slot 1
-            </th>
-
-            <th className="matrix-col-narrow">
-              Slot 2
-            </th>
-
-            <th className="matrix-col-narrow">
-              Slot 3
-            </th>
-
-            <th className="matrix-col-narrow">
-              Highest
-            </th>
-
-            <th
-              aria-label="Actions"
-              className="matrix-col-action"
-            />
+            <th className="matrix-col-narrow">Vault</th>
+            <th className="matrix-col-narrow">M+</th>
+            <th className="matrix-col-narrow">Raid</th>
+            <th className="matrix-col-narrow">Delves</th>
+            <th className="matrix-col-narrow">Highest</th>
+            <th className="matrix-col-action">Action</th>
           </tr>
         </thead>
-
         <tbody>
-          {characters.map(
-            (character) => (
-              <tr key={character.id}>
+          {characters.map((character) => {
+            const selected = character.id === selectedCharacterId;
+
+            return (
+              <tr
+                className={selected ? "matrix-row-selected" : undefined}
+                key={character.id}
+              >
                 <td>
                   <div className="matrix-identity">
-                    <Link
-                      className="matrix-character-link"
-                      style={{
-                        color:
-                          getClassColor(
-                            character.className
-                          )
-                      }}
-                      to={`/characters/${character.id}`}
+                    <button
+                      className="matrix-character-link text-button"
+                      onClick={() => onSelectCharacter(character.id)}
+                      style={{ color: getClassColor(character.className) }}
+                      type="button"
                     >
                       {character.name}
-                    </Link>
-
+                    </button>
                     <span>
                       {character.className}
                       {" · "}
@@ -93,57 +63,35 @@ export function VaultMatrix({
                     </span>
                   </div>
                 </td>
-
+                <td className="matrix-col-narrow">
+                  <StatusToken token={formatDomainFraction(character.vault)} />
+                </td>
                 <td className="matrix-col-narrow">
                   <StatusToken
-                    token={formatRunsLoggedToken(
-                      character
-                    )}
+                    token={formatDomainFraction(character.mythicPlus)}
                   />
                 </td>
-
-                {character.vaultSlots.map(
-                  (slot) => (
-                    <td
-                      className="matrix-col-narrow"
-                      key={
-                        slot.threshold
-                      }
-                    >
-                      <StatusToken
-                        token={formatVaultSlotToken(
-                          character,
-                          slot
-                        )}
-                      />
-                    </td>
-                  )
-                )}
-
                 <td className="matrix-col-narrow">
-                  <StatusToken
-                    token={formatHighestKeyToken(
-                      character
-                    )}
-                  />
+                  <StatusToken token={formatDomainFraction(character.raid)} />
                 </td>
-
+                <td className="matrix-col-narrow">
+                  <StatusToken token={formatDomainFraction(character.delves)} />
+                </td>
+                <td className="matrix-col-narrow">
+                  <StatusToken token={formatHighestKeyToken(character)} />
+                </td>
                 <td className="matrix-col-action">
                   <button
                     className="text-button"
-                    onClick={() =>
-                      onOpenRunLog(
-                        character.id
-                      )
-                    }
+                    onClick={() => onSelectCharacter(character.id)}
                     type="button"
                   >
-                    Log run
+                    {character.action}
                   </button>
                 </td>
               </tr>
-            )
-          )}
+            );
+          })}
         </tbody>
       </table>
     </div>

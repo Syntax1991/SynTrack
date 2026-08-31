@@ -136,6 +136,57 @@
   color: var(--text-secondary);
 }
 
+.matrix-row-selected {
+  background: var(--primary-soft);
+}
+
+.vault-character-detail {
+  margin-top: 12px;
+}
+
+.vault-detail-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.vault-detail-header h2 {
+  margin: 4px 0 6px;
+}
+
+.vault-detail-activity,
+.vault-detail-meta {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.vault-detail-action {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.vault-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vault-detail-section h3 {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+}
+
+.vault-slot-table {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1100px) {
+  .vault-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 460px) {
   .vault-run-form {
     grid-template-columns: 1fr 80px;
