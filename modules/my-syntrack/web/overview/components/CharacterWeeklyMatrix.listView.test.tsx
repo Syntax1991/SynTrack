@@ -75,10 +75,10 @@ describe("CharacterWeeklyMatrix list view", () => {
     ]);
 
     const scopeGroup = screen.getByRole("group", {
-      name: "Character roster scope"
+      name: "Characters"
     });
     const statusGroup = screen.getByRole("group", {
-      name: "Filter by status"
+      name: "Status"
     });
 
     expect(
@@ -132,7 +132,7 @@ describe("CharacterWeeklyMatrix list view", () => {
 
     fireEvent.click(
       within(
-        screen.getByRole("group", { name: "Character roster scope" })
+        screen.getByRole("group", { name: "Characters" })
       ).getByRole("button", { name: "Professions" })
     );
 
@@ -153,7 +153,7 @@ describe("CharacterWeeklyMatrix list view", () => {
 
     fireEvent.click(
       within(
-        screen.getByRole("group", { name: "Character roster scope" })
+        screen.getByRole("group", { name: "Characters" })
       ).getByRole("button", { name: "Gameplay" })
     );
 

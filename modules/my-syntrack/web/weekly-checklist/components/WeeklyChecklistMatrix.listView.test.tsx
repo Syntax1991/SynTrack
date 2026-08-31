@@ -96,7 +96,7 @@ describe("WeeklyChecklistMatrix list view", () => {
     );
 
     const scope = screen.getByRole("group", {
-      name: "Character roster scope"
+      name: "Characters"
     });
 
     expect(screen.getByText("Vault")).toBeInTheDocument();

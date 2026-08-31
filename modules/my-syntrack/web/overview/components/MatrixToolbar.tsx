@@ -56,26 +56,31 @@ export function MatrixToolbar({
         value={listView}
       />
 
-      <div
-        className="overview-matrix-filter-group"
-        role="group"
-        aria-label="Filter by status"
-      >
-        {readinessFilters.map((filter) => (
-          <button
-            aria-pressed={readinessFilter === filter.value}
-            className={
-              readinessFilter === filter.value
-                ? "overview-matrix-filter active"
-                : "overview-matrix-filter"
-            }
-            key={filter.value}
-            onClick={() => onReadinessFilterChange(filter.value)}
-            type="button"
-          >
-            {filter.label}
-          </button>
-        ))}
+      <div className="overview-matrix-labeled-control">
+        <span className="overview-matrix-control-label" id="overview-status-filter-label">
+          Status
+        </span>
+        <div
+          aria-labelledby="overview-status-filter-label"
+          className="overview-matrix-filter-group"
+          role="group"
+        >
+          {readinessFilters.map((filter) => (
+            <button
+              aria-pressed={readinessFilter === filter.value}
+              className={
+                readinessFilter === filter.value
+                  ? "overview-matrix-filter active"
+                  : "overview-matrix-filter"
+              }
+              key={filter.value}
+              onClick={() => onReadinessFilterChange(filter.value)}
+              type="button"
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <input
