@@ -7,6 +7,7 @@ export type OAuthStateIntent = "login" | "register";
 export type ConsumedOAuthState = {
   intent: OAuthStateIntent;
   returnTo: string | null;
+  deviceLinkRequestId: string | null;
 };
 
 function toIntent(
@@ -46,7 +47,8 @@ export class BattleNetRepository {
     state: string,
     expiresAt: Date,
     intent: OAuthStateIntent = "login",
-    returnTo: string | null = null
+    returnTo: string | null = null,
+    deviceLinkRequestId: string | null = null
   ) {
     await this.db.battleNetOAuthState.deleteMany({
       where: {
@@ -62,6 +64,7 @@ export class BattleNetRepository {
           id: state,
           intent,
           returnTo,
+          deviceLinkRequestId,
           expiresAt
         }
       });
@@ -129,7 +132,9 @@ export class BattleNetRepository {
         storedState.intent
       ),
       returnTo:
-        storedState.returnTo
+        storedState.returnTo,
+      deviceLinkRequestId:
+        storedState.deviceLinkRequestId
     };
   }
 }

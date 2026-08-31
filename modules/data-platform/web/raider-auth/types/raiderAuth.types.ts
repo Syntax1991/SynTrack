@@ -16,4 +16,5 @@ export type RaiderSessionResult = {
   token: string;
   raiderAccountId: string;
   characters: unknown[];
+  returnTo: string | null;
 };

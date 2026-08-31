@@ -18,6 +18,11 @@ export function LoginPage() {
     ? rawReturnTo
     : null;
 
+  const deviceConnectionToken =
+    searchParams.get(
+      "deviceConnectionToken"
+    );
+
   const outcome =
     searchParams.get("outcome");
 
@@ -116,7 +121,8 @@ export function LoginPage() {
           className="button button-primary"
           href={getRaiderLoginUrl({
             intent: "login",
-            returnTo
+            returnTo,
+            deviceConnectionToken
           })}
         >
           Continue with Battle.net

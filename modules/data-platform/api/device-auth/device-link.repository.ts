@@ -29,6 +29,27 @@ export class DeviceLinkRepository
     );
   }
 
+  createConnection(input: {
+    browserTokenHash: string;
+    deviceCodeHash: string;
+    clientName: string | null;
+    expiresAt: Date;
+  }): Promise<DeviceLinkRequestRow> {
+    return prisma.deviceLinkRequest.create(
+      {
+        data: {
+          browserTokenHash:
+            input.browserTokenHash,
+          deviceCodeHash:
+            input.deviceCodeHash,
+          clientName:
+            input.clientName,
+          expiresAt: input.expiresAt
+        }
+      }
+    );
+  }
+
   findByUserCode(
     userCode: string
   ): Promise<DeviceLinkRequestRow | null> {
@@ -45,15 +66,33 @@ export class DeviceLinkRepository
     );
   }
 
-  markApproved(
+  findByBrowserTokenHash(
+    browserTokenHash: string
+  ): Promise<DeviceLinkRequestRow | null> {
+    return prisma.deviceLinkRequest.findUnique(
+      { where: { browserTokenHash } }
+    );
+  }
+
+  findById(
     id: string
+  ): Promise<DeviceLinkRequestRow | null> {
+    return prisma.deviceLinkRequest.findUnique(
+      { where: { id } }
+    );
+  }
+
+  markApproved(
+    id: string,
+    raiderAccountId: string | null
   ): Promise<DeviceLinkRequestRow> {
     return prisma.deviceLinkRequest.update(
       {
         where: { id },
         data: {
           status: "APPROVED",
-          approvedAt: new Date()
+          approvedAt: new Date(),
+          raiderAccountId
         }
       }
     );

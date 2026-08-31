@@ -153,6 +153,29 @@
   margin-top: 0;
 }
 
+/*
+ * Wraps the legacy manual-code device-link flow (see
+ * AdvancedManualDeviceLinkPanel) - deliberately understated relative to
+ * .panel, since it must never read as the primary way to connect a
+ * device.
+ */
+.advanced-disclosure {
+  margin-top: 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+}
+
+.advanced-disclosure summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.advanced-disclosure[open] summary {
+  margin-bottom: 12px;
+}
+
 .panel-header {
   min-height: 82px;
   display: flex;

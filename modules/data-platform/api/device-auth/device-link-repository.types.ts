@@ -2,10 +2,12 @@ import type { DeviceLinkStatus } from "./device-auth.types.js";
 
 export type DeviceLinkRequestRow = {
   id: string;
-  userCode: string;
+  userCode: string | null;
   deviceCodeHash: string;
+  browserTokenHash: string | null;
   status: DeviceLinkStatus;
   clientName: string | null;
+  raiderAccountId: string | null;
   expiresAt: Date;
   approvedAt: Date | null;
   consumedAt: Date | null;
@@ -30,6 +32,19 @@ export interface DeviceLinkRepositoryContract {
     expiresAt: Date;
   }): Promise<DeviceLinkRequestRow>;
 
+  /*
+   * The codeless flow's equivalent of create() - userCode is never set
+   * (null), browserTokenHash is set instead. Still shares deviceCodeHash/
+   * pollStatus with the legacy flow, since the client-polling mechanism
+   * is identical either way.
+   */
+  createConnection(input: {
+    browserTokenHash: string;
+    deviceCodeHash: string;
+    clientName: string | null;
+    expiresAt: Date;
+  }): Promise<DeviceLinkRequestRow>;
+
   findByUserCode(
     userCode: string
   ): Promise<DeviceLinkRequestRow | null>;
@@ -38,8 +53,21 @@ export interface DeviceLinkRepositoryContract {
     deviceCodeHash: string
   ): Promise<DeviceLinkRequestRow | null>;
 
-  markApproved(
+  findByBrowserTokenHash(
+    browserTokenHash: string
+  ): Promise<DeviceLinkRequestRow | null>;
+
+  findById(
     id: string
+  ): Promise<DeviceLinkRequestRow | null>;
+
+  /*
+   * raiderAccountId is recorded here, at PENDING -> APPROVED time - the
+   * one and only moment a connection request is bound to an account.
+   */
+  markApproved(
+    id: string,
+    raiderAccountId: string | null
   ): Promise<DeviceLinkRequestRow>;
 
   markExpired(

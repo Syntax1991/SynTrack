@@ -2,11 +2,26 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { getRaiderLoginUrl } from "../api/raiderAuthApi";
 import { useRaiderSessionStatus } from "../hooks/useRaiderSessionStatus";
 import { getAuthErrorCopy } from "../utils/authErrorCopy";
+import { isSafeInternalPath } from "../utils/internalPath";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 
 export function RegisterPage() {
   const status = useRaiderSessionStatus();
   const [searchParams] = useSearchParams();
+
+  const rawReturnTo =
+    searchParams.get("returnTo");
+
+  const returnTo = isSafeInternalPath(
+    rawReturnTo
+  )
+    ? rawReturnTo
+    : null;
+
+  const deviceConnectionToken =
+    searchParams.get(
+      "deviceConnectionToken"
+    );
 
   const errorCopy = getAuthErrorCopy(
     searchParams.get("error")
@@ -21,7 +36,12 @@ export function RegisterPage() {
   }
 
   if (status === "authenticated") {
-    return <Navigate replace to="/" />;
+    return (
+      <Navigate
+        replace
+        to={returnTo ?? "/"}
+      />
+    );
   }
 
   if (errorCopy) {
@@ -68,7 +88,9 @@ export function RegisterPage() {
         <a
           className="button button-primary"
           href={getRaiderLoginUrl({
-            intent: "register"
+            intent: "register",
+            returnTo,
+            deviceConnectionToken
           })}
         >
           Register with Battle.net

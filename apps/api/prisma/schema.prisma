@@ -18,8 +18,17 @@ model Character {
   level        Int       @default(80)
   source       String    @default("MANUAL")
   lastSyncedAt DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  /*
+   * Canonical SynTrack account that owns this character. Nullable for
+   * pre-ownership rows and non-device (web/manual) creates until an
+   * owned DeviceCredential import proves association. One character
+   * maps to at most one RaiderAccount; never guessed from BattleTag.
+   */
+  raiderAccountId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  raiderAccount RaiderAccount? @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
 
   professions       CharacterProfession[]
   weeklyCompletions WeeklyChecklistCompletion[]
@@ -36,6 +45,7 @@ model Character {
   @@unique([name, realm, region])
   @@index([battleNetId, region])
   @@index([source])
+  @@index([raiderAccountId])
 }
 
 model CharacterTag {
@@ -835,12 +845,20 @@ model GuildVerification {
   updatedAt           DateTime @updatedAt
 }
 
+// deviceLinkRequestId is a server-verified reference to a pending codeless
+// desktop connection (see DeviceLinkRequest below) - it is only ever set
+// after the /connect handler independently validated the raw browser
+// capability the client supplied against a real, unexpired, unbound
+// DeviceLinkRequest row. From this point on the callback trusts only this
+// server-stored id, never re-reading any client-supplied identifier, the
+// same principle already applied to intent/returnTo.
 model BattleNetOAuthState {
-  id        String   @id
-  intent    String   @default("login")
-  returnTo  String?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id                  String   @id
+  intent              String   @default("login")
+  returnTo            String?
+  deviceLinkRequestId String?
+  expiresAt           DateTime
+  createdAt           DateTime @default(now())
 
   @@index([expiresAt])
 }
@@ -862,7 +880,10 @@ model RaiderAccount {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  sessions RaiderSession[]
+  sessions           RaiderSession[]
+  deviceLinkRequests DeviceLinkRequest[]
+  deviceCredentials  DeviceCredential[]
+  characters         Character[]
 
   @@index([battleTag])
 }
@@ -875,16 +896,23 @@ model RaiderAccount {
 // DeviceLinkRequest's PENDING -> CONSUMED shape, scoped down to what
 // registration confirmation actually needs.
 model RaiderPendingRegistration {
-  id                 String   @id
-  battleNetAccountId String
-  battleTag          String?
-  accessToken        String
-  tokenType          String
-  scope              String?
-  tokenExpiresAt     DateTime
-  charactersJson     String
-  expiresAt          DateTime
-  createdAt          DateTime @default(now())
+  id                  String   @id
+  battleNetAccountId  String
+  battleTag           String?
+  accessToken         String
+  tokenType           String
+  scope               String?
+  tokenExpiresAt      DateTime
+  charactersJson      String
+  // Carried through from the BattleNetOAuthState row that produced this
+  // pending registration, so a device-connect journey survives the full
+  // OAuth -> explicit "Create account" round trip (see
+  // RaiderAuthCallbackService.confirmRegistration) without a client-
+  // supplied query param ever being trusted a second time.
+  returnTo            String?
+  deviceLinkRequestId String?
+  expiresAt           DateTime
+  createdAt           DateTime @default(now())
 
   @@index([expiresAt])
 }
@@ -908,32 +936,53 @@ enum DeviceLinkStatus {
   EXPIRED
 }
 
+// userCode/deviceCodeHash back the legacy human-typed manual-code flow
+// (kept for Advanced/diagnostic use only). browserTokenHash backs the
+// codeless flow: a high-entropy, single-use, short-lived secret that is
+// safe to put in a URL - opening it plus being authenticated in that
+// browser is itself the authorization, so no separate userCode/approval
+// step is required for a normal connection. Exactly one of
+// userCode/browserTokenHash is set per row, matching which flow created
+// it; deviceCodeHash (the client-only polling secret) is always set and
+// is intentionally never derivable from browserTokenHash - see
+// device-auth.crypto.ts. raiderAccountId is a plain, unenforced reference
+// (mirrors GuildMember.linkedRaiderAccountId) recording which account
+// authorized this connection - set once, at PENDING -> APPROVED time, and
+// never overwritten by a later bind attempt from a different account (see
+// DeviceLinkService.bindConnection/bindConnectionInternal).
 model DeviceLinkRequest {
-  id             String           @id @default(cuid())
-  userCode       String           @unique
-  deviceCodeHash String           @unique
-  status         DeviceLinkStatus @default(PENDING)
-  clientName     String?
-  expiresAt      DateTime
-  approvedAt     DateTime?
-  consumedAt     DateTime?
-  createdAt      DateTime         @default(now())
+  id               String           @id @default(cuid())
+  userCode         String?          @unique
+  deviceCodeHash   String           @unique
+  browserTokenHash String?          @unique
+  status           DeviceLinkStatus @default(PENDING)
+  clientName       String?
+  raiderAccountId  String?
+  expiresAt        DateTime
+  approvedAt       DateTime?
+  consumedAt       DateTime?
+  createdAt        DateTime         @default(now())
 
-  device DeviceCredential?
+  raiderAccount RaiderAccount?    @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
+  device        DeviceCredential?
 
   @@index([status, expiresAt])
+  @@index([raiderAccountId])
 }
 
 model DeviceCredential {
-  id            String    @id @default(cuid())
-  name          String
-  tokenHash     String    @unique
-  linkRequestId String?   @unique
-  createdAt     DateTime  @default(now())
-  lastSeenAt    DateTime?
-  revokedAt     DateTime?
+  id              String    @id @default(cuid())
+  name            String
+  tokenHash       String    @unique
+  linkRequestId   String?   @unique
+  raiderAccountId String?
+  createdAt       DateTime  @default(now())
+  lastSeenAt      DateTime?
+  revokedAt       DateTime?
 
-  linkRequest DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+  linkRequest   DeviceLinkRequest? @relation(fields: [linkRequestId], references: [id], onDelete: SetNull)
+  raiderAccount RaiderAccount?     @relation(fields: [raiderAccountId], references: [id], onDelete: SetNull)
 
   @@index([revokedAt])
+  @@index([raiderAccountId])
 }

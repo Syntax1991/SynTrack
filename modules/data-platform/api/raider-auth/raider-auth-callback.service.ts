@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { env } from "../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { bindDeviceConnection } from "../device-auth/device-connection-bridge.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import type { BattleNetRepository } from "../integrations/battlenet/battlenet.repository.js";
 import { isSafeInternalPath } from "./internal-path.js";
@@ -41,7 +42,8 @@ export class RaiderAuthCallbackService {
 
   async createAuthorizationUrl(
     intent: RaiderAuthIntent,
-    returnTo: string | null
+    returnTo: string | null,
+    deviceLinkRequestId: string | null = null
   ): Promise<string> {
     this.assertConfigured();
 
@@ -60,7 +62,8 @@ export class RaiderAuthCallbackService {
           oauthStateLifetimeMilliseconds
       ),
       intent,
-      safeReturnTo
+      safeReturnTo,
+      deviceLinkRequestId
     );
 
     return this.battleNetClient.createAuthorizationUrl(
@@ -107,8 +110,11 @@ export class RaiderAuthCallbackService {
       };
     }
 
-    const { intent, returnTo } =
-      consumedState;
+    const {
+      intent,
+      returnTo,
+      deviceLinkRequestId
+    } = consumedState;
 
     try {
       return await resolveRaiderAuthCallback(
@@ -116,7 +122,8 @@ export class RaiderAuthCallbackService {
         this.battleNetClient,
         code,
         intent,
-        returnTo
+        returnTo,
+        deviceLinkRequestId
       );
     }
     catch (error) {
@@ -207,6 +214,18 @@ export class RaiderAuthCallbackService {
       }
     );
 
+    // The account has only just been created, at this exact call - safe
+    // to bind a pending codeless device connection now (unlike the
+    // existing-account paths in raider-auth-callback.resolver.ts, which
+    // can bind immediately because the account was already known).
+    // bindDeviceConnection is a no-op when deviceLinkRequestId is null.
+    if (pending.deviceLinkRequestId) {
+      await bindDeviceConnection(
+        pending.deviceLinkRequestId,
+        account.id
+      );
+    }
+
     const characters = JSON.parse(
       pending.charactersJson
     );
@@ -221,7 +240,8 @@ export class RaiderAuthCallbackService {
     return {
       token: sessionToken,
       raiderAccountId: account.id,
-      characters
+      characters,
+      returnTo: pending.returnTo ?? null
     };
   }
 

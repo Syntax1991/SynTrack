@@ -98,7 +98,8 @@ describe("RegisterConfirmPage — new identity (pendingToken)", () => {
     ).mockResolvedValue({
       token: "session-token",
       raiderAccountId: "account-1",
-      characters: []
+      characters: [],
+      returnTo: null
     });
 
     renderConfirm("#pendingToken=abc123");

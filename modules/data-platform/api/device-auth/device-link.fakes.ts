@@ -34,8 +34,40 @@ export class FakeDeviceLinkRepository
       userCode: input.userCode,
       deviceCodeHash:
         input.deviceCodeHash,
+      browserTokenHash: null,
       status: "PENDING",
       clientName: input.clientName,
+      raiderAccountId: null,
+      expiresAt: input.expiresAt,
+      approvedAt: null,
+      consumedAt: null,
+      createdAt: now
+    };
+
+    this.links.set(id, row);
+
+    return row;
+  }
+
+  async createConnection(input: {
+    browserTokenHash: string;
+    deviceCodeHash: string;
+    clientName: string | null;
+    expiresAt: Date;
+  }) {
+    const id = `link-${this.nextId++}`;
+    const now = new Date();
+
+    const row: DeviceLinkRequestRow = {
+      id,
+      userCode: null,
+      deviceCodeHash:
+        input.deviceCodeHash,
+      browserTokenHash:
+        input.browserTokenHash,
+      status: "PENDING",
+      clientName: input.clientName,
+      raiderAccountId: null,
       expiresAt: input.expiresAt,
       approvedAt: null,
       consumedAt: null,
@@ -70,7 +102,26 @@ export class FakeDeviceLinkRepository
     );
   }
 
-  async markApproved(id: string) {
+  async findByBrowserTokenHash(
+    browserTokenHash: string
+  ) {
+    return (
+      [...this.links.values()].find(
+        (row) =>
+          row.browserTokenHash ===
+          browserTokenHash
+      ) ?? null
+    );
+  }
+
+  async findById(id: string) {
+    return this.links.get(id) ?? null;
+  }
+
+  async markApproved(
+    id: string,
+    raiderAccountId: string | null
+  ) {
     const existing =
       this.links.get(id);
 
@@ -84,7 +135,8 @@ export class FakeDeviceLinkRepository
       {
         ...existing,
         status: "APPROVED",
-        approvedAt: new Date()
+        approvedAt: new Date(),
+        raiderAccountId
       };
 
     this.links.set(id, updated);
