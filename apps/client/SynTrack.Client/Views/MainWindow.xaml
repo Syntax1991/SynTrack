@@ -17,7 +17,7 @@
         <Style x:Key="SidebarSeparator" TargetType="Border">
             <Setter Property="Height" Value="1" />
             <Setter Property="Background" Value="{StaticResource BorderBrush}" />
-            <Setter Property="Margin" Value="0,16" />
+            <Setter Property="Margin" Value="0,10" />
         </Style>
     </Window.Resources>
 
@@ -147,7 +147,7 @@
             <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="20,18">
+                    <StackPanel Margin="16,12,16,14">
 
                         <!-- CLIENT STATUS -->
                         <TextBlock Text="CLIENT STATUS" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,8" />
@@ -230,8 +230,8 @@
                         <Border Style="{StaticResource SidebarSeparator}" />
 
                         <!-- SETTINGS -->
-                        <TextBlock Text="SETTINGS" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,10" />
-                        <CheckBox Content="Start minimized" IsChecked="{Binding StartMinimized}" Margin="0,0,0,10" />
+                        <TextBlock Text="SETTINGS" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,8" />
+                        <CheckBox Content="Start minimized" IsChecked="{Binding StartMinimized}" Margin="0,0,0,8" />
                         <CheckBox Content="Start with Windows" IsChecked="{Binding Autostart}" />
 
                         <Border Style="{StaticResource SidebarSeparator}" />

@@ -114,6 +114,7 @@ export class DeviceLinkRepository
     credential: {
       name: string;
       tokenHash: string;
+      raiderAccountId: string | null;
     }
   ): Promise<DeviceCredentialRow> {
     const [, created] =
@@ -135,7 +136,9 @@ export class DeviceLinkRepository
               name: credential.name,
               tokenHash:
                 credential.tokenHash,
-              linkRequestId
+              linkRequestId,
+              raiderAccountId:
+                credential.raiderAccountId
             }
           }
         )

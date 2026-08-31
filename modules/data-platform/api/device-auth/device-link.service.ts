@@ -193,7 +193,9 @@ export class DeviceLinkService {
             "SynTrack Client",
           tokenHash: hashSecret(
             rawToken
-          )
+          ),
+          raiderAccountId:
+            link.raiderAccountId
         }
       );
 
