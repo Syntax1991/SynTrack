@@ -1,3 +1,5 @@
+import type { CharacterListView } from "../../../api/character-tracking/character-list-view.js";
+import { CharacterListViewSwitcher } from "../../shared/components/CharacterListViewSwitcher";
 import type {
   MatrixReadinessFilter,
   MatrixSortBy
@@ -9,46 +11,31 @@ const readinessFilters: {
   label: string;
 }[] = [
   { value: "all", label: "All" },
-  {
-    value: "attention",
-    label: "Attention"
-  },
+  { value: "attention", label: "Attention" },
   { value: "ready", label: "Ready" },
-  {
-    value: "not-tracked",
-    label: "Not tracked"
-  }
+  { value: "not-tracked", label: "Not tracked" }
 ];
 
 type MatrixToolbarProps = {
   summaryText: string;
+  listView: CharacterListView;
+  onListViewChange: (value: CharacterListView) => void;
   readinessFilter: MatrixReadinessFilter;
-  onReadinessFilterChange: (
-    value: MatrixReadinessFilter
-  ) => void;
+  onReadinessFilterChange: (value: MatrixReadinessFilter) => void;
   searchTerm: string;
-  onSearchTermChange: (
-    value: string
-  ) => void;
+  onSearchTermChange: (value: string) => void;
   sortBy: MatrixSortBy;
-  onSortByChange: (
-    value: MatrixSortBy
-  ) => void;
+  onSortByChange: (value: MatrixSortBy) => void;
   tagFilter: string;
   tagOptions: TagView[];
-  onTagFilterChange: (
-    value: string
-  ) => void;
+  onTagFilterChange: (value: string) => void;
   onOpenTrackerManager: () => void;
 };
 
-/*
- * The compact toolbar replaces the old four-KPI-card row entirely - the
- * account-level summary is a single text line here, not a dedicated
- * row of the viewport.
- */
 export function MatrixToolbar({
   summaryText,
+  listView,
+  onListViewChange,
   readinessFilter,
   onReadinessFilterChange,
   searchTerm,
@@ -62,50 +49,39 @@ export function MatrixToolbar({
 }: MatrixToolbarProps) {
   return (
     <div className="overview-matrix-toolbar">
-      <span className="overview-matrix-summary">
-        {summaryText}
-      </span>
+      <span className="overview-matrix-summary">{summaryText}</span>
+
+      <CharacterListViewSwitcher
+        onChange={onListViewChange}
+        value={listView}
+      />
 
       <div
         className="overview-matrix-filter-group"
         role="group"
-        aria-label="Filter characters"
+        aria-label="Filter by status"
       >
-        {readinessFilters.map(
-          (filter) => (
-            <button
-              aria-pressed={
-                readinessFilter ===
-                filter.value
-              }
-              className={
-                readinessFilter ===
-                filter.value
-                  ? "overview-matrix-filter active"
-                  : "overview-matrix-filter"
-              }
-              key={filter.value}
-              onClick={() =>
-                onReadinessFilterChange(
-                  filter.value
-                )
-              }
-              type="button"
-            >
-              {filter.label}
-            </button>
-          )
-        )}
+        {readinessFilters.map((filter) => (
+          <button
+            aria-pressed={readinessFilter === filter.value}
+            className={
+              readinessFilter === filter.value
+                ? "overview-matrix-filter active"
+                : "overview-matrix-filter"
+            }
+            key={filter.value}
+            onClick={() => onReadinessFilterChange(filter.value)}
+            type="button"
+          >
+            {filter.label}
+          </button>
+        ))}
       </div>
 
       <input
         aria-label="Search characters"
         className="overview-matrix-search"
-        onChange={(event) =>
-          onSearchTermChange(
-            event.target.value
-          )
-        }
+        onChange={(event) => onSearchTermChange(event.target.value)}
         placeholder="Search characters..."
         type="text"
         value={searchTerm}
@@ -115,22 +91,12 @@ export function MatrixToolbar({
         <select
           aria-label="Filter by tag"
           className="matrix-select"
-          onChange={(event) =>
-            onTagFilterChange(
-              event.target.value
-            )
-          }
+          onChange={(event) => onTagFilterChange(event.target.value)}
           value={tagFilter}
         >
-          <option value="">
-            All tags
-          </option>
-
+          <option value="">All tags</option>
           {tagOptions.map((tag) => (
-            <option
-              key={tag.id}
-              value={tag.id}
-            >
+            <option key={tag.id} value={tag.id}>
               {tag.name}
             </option>
           ))}
@@ -139,25 +105,15 @@ export function MatrixToolbar({
 
       <label className="overview-matrix-sort">
         <span>Sort</span>
-
         <select
           onChange={(event) =>
-            onSortByChange(
-              event.target
-                .value as MatrixSortBy
-            )
+            onSortByChange(event.target.value as MatrixSortBy)
           }
           value={sortBy}
         >
-          <option value="default">
-            Needs attention first
-          </option>
-          <option value="name">
-            Character name
-          </option>
-          <option value="item-level">
-            Item level
-          </option>
+          <option value="default">Needs attention first</option>
+          <option value="name">Character name</option>
+          <option value="item-level">Item level</option>
         </select>
       </label>
 

@@ -1,4 +1,11 @@
 import { useMemo, useState } from "react";
+import {
+  formatCharacterListViewCount,
+  matchesCharacterListView,
+  resolveCharacterListViewFlags,
+  type CharacterListView,
+  type CharacterListViewFlags
+} from "../../../api/character-tracking/character-list-view.js";
 import type {
   CharacterOverviewRow,
   TagView
@@ -15,6 +22,23 @@ export type MatrixSortBy =
   | "name"
   | "item-level";
 
+function overviewListViewFlags(
+  state: CharacterOverviewRow
+): CharacterListViewFlags {
+  return resolveCharacterListViewFlags({
+    trackingProfile: state.trackingProfile,
+    professions: {
+      setupState: state.professionSetup.state,
+      professionItemCount: state.professions.items.length,
+      weeklyProfessionCount: state.professionWeekly.professions.length,
+      weeklyQuestApplicable: state.professionWeekly.quest.applicableTotal,
+      weeklyTreatiseApplicable:
+        state.professionWeekly.treatise.applicableTotal,
+      weeklyDropsApplicable: state.professionWeekly.drops.applicableTotal
+    }
+  });
+}
+
 function matchesReadinessFilter(
   state: CharacterOverviewRow,
   filter: MatrixReadinessFilter
@@ -24,45 +48,56 @@ function matchesReadinessFilter(
   }
 
   if (filter === "not-tracked") {
-    /*
-     * readinessState has no dedicated "not tracked" value - "unknown"
-     * (nothing proven ready, nothing flagged) is the closest honest
-     * character-level equivalent, so the filter reuses it rather than
-     * inventing a new classification.
-     */
-    return (
-      state.readinessState === "unknown"
-    );
+    return state.readinessState === "unknown";
   }
 
   return state.readinessState === filter;
 }
 
-export function useMatrixFilters(
-  characters: CharacterOverviewRow[]
+function sortCharacters(
+  characters: CharacterOverviewRow[],
+  sortBy: MatrixSortBy
 ) {
-  const [
-    readinessFilter,
-    setReadinessFilter
-  ] =
-    useState<MatrixReadinessFilter>(
-      "all"
+  if (sortBy === "default") {
+    return characters;
+  }
+
+  if (sortBy === "name") {
+    return [...characters].sort((left, right) =>
+      left.character.name.localeCompare(right.character.name, "en")
     );
+  }
 
-  const [searchTerm, setSearchTerm] =
-    useState("");
+  return [...characters].sort((left, right) => {
+    const leftLevel = left.gear.itemLevel;
+    const rightLevel = right.gear.itemLevel;
 
-  const [tagFilter, setTagFilter] =
-    useState("");
+    if (leftLevel === null && rightLevel === null) {
+      return 0;
+    }
 
-  const [sortBy, setSortBy] =
-    useState<MatrixSortBy>("default");
+    if (leftLevel === null) {
+      return 1;
+    }
+
+    if (rightLevel === null) {
+      return -1;
+    }
+
+    return rightLevel - leftLevel;
+  });
+}
+
+export function useMatrixFilters(characters: CharacterOverviewRow[]) {
+  const [listView, setListView] = useState<CharacterListView>("all");
+  const [readinessFilter, setReadinessFilter] =
+    useState<MatrixReadinessFilter>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+  const [sortBy, setSortBy] = useState<MatrixSortBy>("default");
 
   const tagOptions = useMemo(() => {
-    const byId = new Map<
-      string,
-      TagView
-    >();
+    const byId = new Map<string, TagView>();
 
     for (const state of characters) {
       for (const tag of state.tags) {
@@ -70,94 +105,76 @@ export function useMatrixFilters(
       }
     }
 
-    return [...byId.values()].sort(
-      (left, right) =>
-        left.name.localeCompare(
-          right.name,
-          "en"
-        )
+    return [...byId.values()].sort((left, right) =>
+      left.name.localeCompare(right.name, "en")
     );
   }, [characters]);
 
-  const visibleCharacters = useMemo(
-    () => {
-      const normalizedSearch =
-        searchTerm.trim().toLowerCase();
+  const scopeCounts = useMemo(() => {
+    let gameplayCount = 0;
+    let professionCount = 0;
 
-      const filtered =
-        characters.filter(
-          (state) =>
-            matchesReadinessFilter(
-              state,
-              readinessFilter
-            ) &&
-            (tagFilter === ""
-              ? true
-              : state.tags.some(
-                  (tag) =>
-                    tag.id === tagFilter
-                )) &&
-            (normalizedSearch === ""
-              ? true
-              : state.character.name
-                  .toLowerCase()
-                  .includes(
-                    normalizedSearch
-                  ))
-        );
+    for (const state of characters) {
+      const flags = overviewListViewFlags(state);
 
-      if (sortBy === "default") {
-        return filtered;
+      if (flags.hasGameplayTracking) {
+        gameplayCount += 1;
       }
 
-      if (sortBy === "name") {
-        return [...filtered].sort(
-          (left, right) =>
-            left.character.name.localeCompare(
-              right.character.name,
-              "en"
-            )
-        );
+      if (flags.hasProfessionTracking) {
+        professionCount += 1;
       }
+    }
 
-      return [...filtered].sort(
-        (left, right) => {
-          const leftLevel =
-            left.gear.itemLevel;
-          const rightLevel =
-            right.gear.itemLevel;
+    return {
+      totalCount: characters.length,
+      gameplayCount,
+      professionCount
+    };
+  }, [characters]);
 
-          if (
-            leftLevel === null &&
-            rightLevel === null
-          ) {
-            return 0;
-          }
+  const visibleCharacters = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
 
-          if (leftLevel === null) {
-            return 1;
-          }
+    const filtered = characters.filter((state) => {
+      const flags = overviewListViewFlags(state);
 
-          if (rightLevel === null) {
-            return -1;
-          }
-
-          return (
-            rightLevel - leftLevel
-          );
-        }
+      return (
+        matchesCharacterListView(listView, flags) &&
+        matchesReadinessFilter(state, readinessFilter) &&
+        (tagFilter === "" ||
+          state.tags.some((tag) => tag.id === tagFilter)) &&
+        (normalizedSearch === "" ||
+          state.character.name.toLowerCase().includes(normalizedSearch))
       );
-    },
-    [
-      characters,
-      readinessFilter,
-      searchTerm,
-      tagFilter,
-      sortBy
-    ]
+    });
+
+    return sortCharacters(filtered, sortBy);
+  }, [
+    characters,
+    listView,
+    readinessFilter,
+    searchTerm,
+    tagFilter,
+    sortBy
+  ]);
+
+  const hasOtherFilters =
+    readinessFilter !== "all" ||
+    searchTerm.trim() !== "" ||
+    tagFilter !== "";
+
+  const scopeSummaryText = formatCharacterListViewCount(
+    listView,
+    visibleCharacters.length,
+    scopeCounts.totalCount,
+    scopeCounts.gameplayCount,
+    scopeCounts.professionCount
   );
 
   return {
+    listView,
+    setListView,
     readinessFilter,
     setReadinessFilter,
     searchTerm,
@@ -167,6 +184,9 @@ export function useMatrixFilters(
     tagOptions,
     sortBy,
     setSortBy,
-    visibleCharacters
+    visibleCharacters,
+    hasOtherFilters,
+    scopeSummaryText,
+    scopeCounts
   };
 }
