@@ -82,7 +82,23 @@ export function vaultFamily(
 export function vaultActivitiesAreCurrent(
   snapshot: WeeklyGameplaySnapshotInput
 ): boolean {
-  return snapshot.vaultCaptured && snapshot.vaultCurrentPeriod !== false;
+  if (!snapshot.vaultCaptured || snapshot.vaultActivities.length === 0) {
+    return false;
+  }
+
+  /*
+   * Live Midnight: AreRewardsForCurrentRewardPeriod() is false while
+   * this week's Great Vault is still accumulating (nothing to claim).
+   * That is current progress, not a stale chest.
+   *
+   * Stale = previous-period rewards sitting unclaimed
+   * (CanClaim / HasAvailable) while currentPeriod is explicitly false.
+   */
+  const unclaimedPreviousChest =
+    snapshot.vaultCurrentPeriod === false &&
+    (snapshot.vaultCanClaim === true || snapshot.vaultHasAvailable === true);
+
+  return !unclaimedPreviousChest;
 }
 
 export function vaultSlotsForFamily(

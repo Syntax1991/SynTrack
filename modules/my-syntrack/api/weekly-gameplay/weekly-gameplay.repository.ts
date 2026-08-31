@@ -18,6 +18,9 @@ export class WeeklyGameplayRepository {
       characterId: row.characterId,
       vaultCaptured: row.vaultCaptured,
       vaultCurrentPeriod: row.vaultCurrentPeriod,
+      vaultGenerated: row.vaultGenerated,
+      vaultCanClaim: row.vaultCanClaim,
+      vaultHasAvailable: row.vaultHasAvailable,
       mythicPlusCaptured: row.mythicPlusCaptured,
       raidCaptured: row.raidCaptured,
       vaultActivities: row.vaultActivities.map((activity) => ({

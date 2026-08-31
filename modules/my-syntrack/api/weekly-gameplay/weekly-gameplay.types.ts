@@ -29,6 +29,9 @@ export type WeeklyGameplaySnapshotInput = {
   characterId: string;
   vaultCaptured: boolean;
   vaultCurrentPeriod: boolean | null;
+  vaultGenerated: boolean | null;
+  vaultCanClaim: boolean | null;
+  vaultHasAvailable: boolean | null;
   mythicPlusCaptured: boolean;
   raidCaptured: boolean;
   vaultActivities: Array<{

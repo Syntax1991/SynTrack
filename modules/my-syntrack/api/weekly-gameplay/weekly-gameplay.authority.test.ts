@@ -14,6 +14,9 @@ function snapshot(
     characterId: "char-1",
     vaultCaptured: true,
     vaultCurrentPeriod: true,
+    vaultGenerated: false,
+    vaultCanClaim: false,
+    vaultHasAvailable: false,
     mythicPlusCaptured: true,
     raidCaptured: true,
     vaultActivities: [],
@@ -216,5 +219,70 @@ describe("Great Vault authority", () => {
     expect(view.vault.maxSlots).toBe(9);
     expect(view.vault.hasUnknownCategories).toBe(true);
     expect(view.vault.state).toBe("IN_PROGRESS");
+  });
+
+  it("Synblast live shape: currentPeriod false is in-week progress, Vault 6/9", () => {
+    const view = deriveWeeklyGameplay(
+      snapshot({
+        vaultCurrentPeriod: false,
+        vaultGenerated: false,
+        vaultCanClaim: false,
+        vaultHasAvailable: false,
+        vaultActivities: [
+          ...activities("mythic-plus", [1, 4, 8], [2, 7, 11]),
+          ...activities("raid", [2, 4, 6], [9, 9, 9]),
+          ...activities("world", [2, 4, 8], [0, 0, 0])
+        ]
+      })
+    );
+
+    expect(
+      formatVaultSlotSymbol({
+        knownUnlockedSlots: view.vault.knownUnlockedSlots,
+        maxSlots: view.vault.maxSlots
+      })
+    ).toBe("6/9");
+    expect(view.mythicPlus).toMatchObject({
+      completeCount: 8,
+      applicableTotal: 8,
+      knownUnlockedSlots: 3
+    });
+    expect(view.raid).toMatchObject({
+      completeCount: 6,
+      applicableTotal: 6,
+      knownUnlockedSlots: 3
+    });
+    expect(view.delves).toMatchObject({
+      completeCount: 0,
+      applicableTotal: 8,
+      knownUnlockedSlots: 0
+    });
+  });
+
+  it("Synlight live shape: currentPeriod false still yields Vault 8/9", () => {
+    const view = deriveWeeklyGameplay(
+      snapshot({
+        vaultCurrentPeriod: false,
+        vaultCanClaim: false,
+        vaultHasAvailable: false,
+        vaultActivities: [
+          ...activities("mythic-plus", [1, 4, 8], [6, 6, 11]),
+          ...activities("raid", [2, 4, 6], [6, 6, 6]),
+          ...activities("world", [2, 4, 8], [2, 4, 7])
+        ]
+      })
+    );
+
+    expect(
+      formatVaultSlotSymbol({
+        knownUnlockedSlots: view.vault.knownUnlockedSlots,
+        maxSlots: view.vault.maxSlots
+      })
+    ).toBe("8/9");
+    expect(view.delves).toMatchObject({
+      completeCount: 7,
+      applicableTotal: 8,
+      knownUnlockedSlots: 2
+    });
   });
 });

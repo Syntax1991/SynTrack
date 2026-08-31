@@ -127,6 +127,18 @@ local function fetchTypeList()
     }
 end
 
+local function countType(activities, activityType)
+    local count = 0
+
+    for index = 1, #activities do
+        if activities[index].type == activityType then
+            count = count + 1
+        end
+    end
+
+    return count
+end
+
 function private.CaptureWeeklyVault()
     if not C_WeeklyRewards then
         return { captured = false }
@@ -190,6 +202,17 @@ function private.CaptureWeeklyVault()
         canClaim = canClaim,
         hasAvailable = hasAvailable,
         enumTypes = types,
+        debug = {
+            refreshedAt = time(),
+            weeklyRewardsAvailable = hasAvailable,
+            generatedRewards = generated,
+            currentPeriod = currentPeriod,
+            canClaim = canClaim,
+            aggregateActivityCount = #activities,
+            raidActivityCount = countType(activities, 3),
+            dungeonActivityCount = countType(activities, 1),
+            worldActivityCount = countType(activities, 6)
+        },
         activities = activities
     }
 end

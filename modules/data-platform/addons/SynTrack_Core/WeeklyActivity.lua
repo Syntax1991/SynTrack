@@ -159,6 +159,15 @@ API.Subscribe(
 )
 
 local recaptureTimer = nil
+local retryTimers = {}
+
+local function cancelRetryTimers()
+    for index = 1, #retryTimers do
+        retryTimers[index]:Cancel()
+    end
+
+    retryTimers = {}
+end
 
 local function scheduleRecapture(reason, delaySec)
     if recaptureTimer then
@@ -172,6 +181,26 @@ local function scheduleRecapture(reason, delaySec)
             API.CaptureModule("weekly-activity", reason)
         end
     )
+end
+
+local function scheduleBoundedRetries()
+    cancelRetryTimers()
+
+    local delays = { 1, 3, 5 }
+
+    for index = 1, #delays do
+        local delay = delays[index]
+        retryTimers[index] = C_Timer.NewTimer(
+            delay,
+            function()
+                retryTimers[index] = nil
+                API.CaptureModule(
+                    "weekly-activity",
+                    "weekly-rewards-retry-" .. delay
+                )
+            end
+        )
+    end
 end
 
 local frame = CreateFrame("Frame")
@@ -188,7 +217,8 @@ frame:SetScript("OnEvent", function(_, event)
             pcall(RequestRaidInfo)
         end
 
-        scheduleRecapture("player-entering-world", 2)
+        scheduleRecapture("player-entering-world", 1)
+        scheduleBoundedRetries()
         return
     end
 

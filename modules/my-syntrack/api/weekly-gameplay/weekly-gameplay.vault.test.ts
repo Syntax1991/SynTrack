@@ -12,6 +12,9 @@ function snapshot(
     characterId: "char-1",
     vaultCaptured: true,
     vaultCurrentPeriod: true,
+    vaultGenerated: null,
+    vaultCanClaim: null,
+    vaultHasAvailable: null,
     mythicPlusCaptured: false,
     raidCaptured: false,
     vaultActivities: [],
@@ -130,5 +133,45 @@ describe("resolveVaultCategory", () => {
     expect(mythicPlus.known).toBe(true);
     expect(mythicPlus.unlocked).toBe(1);
     expect(mythicPlus.progress).toBe(1);
+  });
+
+  it("treats currentPeriod false with nothing to claim as in-week current data", () => {
+    const mythicPlus = resolveVaultCategory(
+      snapshot({
+        vaultCurrentPeriod: false,
+        vaultCanClaim: false,
+        vaultHasAvailable: false,
+        vaultActivities: [
+          {
+            type: 1,
+            typeName: "Activities",
+            index: 1,
+            threshold: 1,
+            progress: 8,
+            level: 15
+          },
+          {
+            type: 1,
+            typeName: "Activities",
+            index: 2,
+            threshold: 4,
+            progress: 8,
+            level: 14
+          },
+          {
+            type: 1,
+            typeName: "Activities",
+            index: 3,
+            threshold: 8,
+            progress: 8,
+            level: 13
+          }
+        ]
+      }),
+      "mythic-plus"
+    );
+
+    expect(mythicPlus.known).toBe(true);
+    expect(mythicPlus.unlocked).toBe(3);
   });
 });

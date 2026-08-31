@@ -10,6 +10,9 @@ function snapshot(
     characterId: "char-1",
     vaultCaptured: false,
     vaultCurrentPeriod: null,
+    vaultGenerated: null,
+    vaultCanClaim: null,
+    vaultHasAvailable: null,
     mythicPlusCaptured: false,
     raidCaptured: false,
     vaultActivities: [],
@@ -148,11 +151,13 @@ describe("deriveWeeklyGameplay", () => {
     );
   });
 
-  it("does not trust stale World progress from a previous reward period", () => {
+  it("does not trust unclaimed previous-period chest activities", () => {
     const view = deriveWeeklyGameplay(
       snapshot({
         vaultCaptured: true,
         vaultCurrentPeriod: false,
+        vaultCanClaim: true,
+        vaultHasAvailable: true,
         vaultActivities: vaultActivities("world", [2, 4, 8], [8, 8, 8])
       })
     );
