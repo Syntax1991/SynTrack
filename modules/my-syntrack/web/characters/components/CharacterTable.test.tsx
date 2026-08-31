@@ -103,7 +103,7 @@ describe("CharacterTable", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps Edit and Delete available behind the row overflow menu, and routes them to the correct character", () => {
+  it("keeps Edit and Remove from SynTrack behind the row overflow menu, and routes them to the correct character", () => {
     const { onEdit, onDelete } = renderTable(
       [
         buildCharacter({
@@ -143,7 +143,7 @@ describe("CharacterTable", () => {
 
     fireEvent.click(
       screen.getByRole("menuitem", {
-        name: "Delete"
+        name: "Remove from SynTrack"
       })
     );
 

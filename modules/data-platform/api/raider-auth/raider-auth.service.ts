@@ -111,6 +111,7 @@ export class RaiderAuthService {
     token: string
   ): Promise<{
     accessToken: string;
+    raiderAccountId: string;
   }> {
     const session =
       await this.repository.findValidSession(
@@ -146,7 +147,9 @@ export class RaiderAuthService {
 
     return {
       accessToken:
-        account.accessToken
+        account.accessToken,
+      raiderAccountId:
+        session.raiderAccountId
     };
   }
 

@@ -113,7 +113,7 @@ export function CharacterRowActions({
             role="menuitem"
             type="button"
           >
-            Delete
+            Remove from SynTrack
           </button>
         </div>
       )}

@@ -62,6 +62,9 @@ export function createTransaction() {
   }) => JSON.stringify(identity);
 
   const transaction = {
+    removedCharacter: {
+      findFirst: async () => null
+    },
     character: {
       findUnique: async (args: {
         where: {

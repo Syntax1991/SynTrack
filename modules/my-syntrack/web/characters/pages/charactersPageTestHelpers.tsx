@@ -81,6 +81,17 @@ vi.mock(
   })
 );
 
+vi.mock("../hooks/useRemovedCharacters", () => ({
+  useRemovedCharacters: () => ({
+    items: [],
+    isLoading: false,
+    error: null,
+    restoringId: null,
+    reload: vi.fn().mockResolvedValue(undefined),
+    restoreCharacter: vi.fn().mockResolvedValue(undefined)
+  })
+}));
+
 vi.mock(
   "../../../../professions/web/hooks/useProfessions",
   () => ({

@@ -138,6 +138,31 @@
   background: var(--surface-elevated);
 }
 
+.button-danger {
+  color: white;
+  border-color: #9f3a3a;
+  background: #8b2e2e;
+}
+
+.button-danger:hover {
+  background: #a33838;
+}
+
+.button-compact {
+  padding: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.character-remove-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.removed-characters-panel {
+  margin-top: 16px;
+}
+
 .panel {
   margin-top: 24px;
   overflow: hidden;
