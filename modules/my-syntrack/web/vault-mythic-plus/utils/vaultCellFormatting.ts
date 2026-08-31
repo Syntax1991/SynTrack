@@ -26,6 +26,20 @@ export function formatDomainFraction(domain: VaultDomainProgress): {
   };
 }
 
+/** Progress fraction for selected-character summary; never collapses UNKNOWN to 0. */
+export function formatDomainProgressText(domain: VaultDomainProgress): string {
+  return formatDomainFraction(domain).symbol;
+}
+
+/** Slot unlock fraction for selected-character summary; UNKNOWN stays "?". */
+export function formatDomainSlotUnlockText(domain: VaultDomainProgress): string {
+  if (domain.state === "UNKNOWN" || domain.maxSlots <= 0) {
+    return "?";
+  }
+
+  return `${domain.knownUnlockedSlots}/${domain.maxSlots}`;
+}
+
 export function formatHighestKeyToken(character: VaultGameplayCharacter): {
   symbol: string;
   tone: "ready" | "attention" | "unknown" | "not-tracked";

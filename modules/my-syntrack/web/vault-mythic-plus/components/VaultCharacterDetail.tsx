@@ -3,7 +3,11 @@ import type {
   VaultGameplayCharacter,
   VaultSlotDetail
 } from "../types/vaultMythicPlus.types";
-import { formatSlotToken } from "../utils/vaultCellFormatting";
+import {
+  formatDomainProgressText,
+  formatDomainSlotUnlockText,
+  formatSlotToken
+} from "../utils/vaultCellFormatting";
 
 type VaultCharacterDetailProps = {
   character: VaultGameplayCharacter;
@@ -71,6 +75,7 @@ export function VaultCharacterDetail({
     : character.vaultCurrent
       ? "Current-week Great Vault capture"
       : "Vault period unresolved";
+  const showActionSeparately = character.action !== freshness;
 
   return (
     <section className="panel vault-character-detail">
@@ -79,32 +84,27 @@ export function VaultCharacterDetail({
           <p className="eyebrow">SELECTED CHARACTER</p>
           <h2>{character.name}</h2>
           <p>
-            Vault {character.vault.completeCount}/
-            {character.vault.applicableTotal || 9}
+            Vault {formatDomainProgressText(character.vault)}
             {" · "}
-            M+ {character.mythicPlus.knownUnlockedSlots}/
-            {character.mythicPlus.maxSlots || 3} slots
+            M+ {formatDomainSlotUnlockText(character.mythicPlus)} slots
             {" · "}
-            Raid {character.raid.knownUnlockedSlots}/
-            {character.raid.maxSlots || 3} slots
+            Raid {formatDomainSlotUnlockText(character.raid)} slots
             {" · "}
-            Delves {character.delves.knownUnlockedSlots}/
-            {character.delves.maxSlots || 3} slots
+            Delves {formatDomainSlotUnlockText(character.delves)} slots
           </p>
           <p className="vault-detail-activity">
-            M+ {character.mythicPlus.completeCount}/
-            {character.mythicPlus.applicableTotal || 8}
+            M+ {formatDomainProgressText(character.mythicPlus)}
             {" · "}
-            Raid {character.raid.completeCount}/
-            {character.raid.applicableTotal || 6}
+            Raid {formatDomainProgressText(character.raid)}
             {" · "}
-            Delves {character.delves.completeCount}/
-            {character.delves.applicableTotal || 8}
+            Delves {formatDomainProgressText(character.delves)}
           </p>
         </div>
         <div className="vault-detail-meta">
           <p>{freshness}</p>
-          <p className="vault-detail-action">{character.action}</p>
+          {showActionSeparately ? (
+            <p className="vault-detail-action">{character.action}</p>
+          ) : null}
           {character.mythicPlusRunCount !== null ? (
             <p>{character.mythicPlusRunCount} M+ runs this week</p>
           ) : null}
