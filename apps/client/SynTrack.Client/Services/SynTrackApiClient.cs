@@ -15,6 +15,21 @@ public interface ISynTrackApiClient
     Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Codeless START (PR #19). Returns browserUrl + in-memory pollToken.
+    /// </summary>
+    Task<DeviceConnectStartResponse> StartConnectAsync(
+        string? deviceName,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Codeless POLL. 404 becomes <see cref="DeviceConnectPollKind.NotFound"/>.
+    /// Credential is present only on the first CONSUMED response.
+    /// </summary>
+    Task<DeviceConnectPollResult> PollConnectStatusAsync(
+        string pollToken,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Distinguishes fully connected identity, legacy reconnect-required,
     /// unauthorized/revoked, and temporary network failures - never collapses
     /// those into a single nullable BattleTag.
@@ -86,6 +101,63 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         response.EnsureSuccessStatusCode();
 
         return (await response.Content.ReadFromJsonAsync<DeviceLinkStatusResponse>(JsonOptions, cancellationToken))!;
+    }
+
+    public async Task<DeviceConnectStartResponse> StartConnectAsync(
+        string? deviceName,
+        CancellationToken cancellationToken)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"{_apiBaseUrl}/client/connect",
+            new { deviceName },
+            JsonOptions,
+            cancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        return (await response.Content.ReadFromJsonAsync<DeviceConnectStartResponse>(JsonOptions, cancellationToken))!;
+    }
+
+    public async Task<DeviceConnectPollResult> PollConnectStatusAsync(
+        string pollToken,
+        CancellationToken cancellationToken)
+    {
+        var response = await _http.PostAsJsonAsync(
+            $"{_apiBaseUrl}/client/connect/status",
+            new { pollToken },
+            JsonOptions,
+            cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new DeviceConnectPollResult { Kind = DeviceConnectPollKind.NotFound };
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadFromJsonAsync<DeviceLinkStatusResponse>(JsonOptions, cancellationToken);
+
+        if (body is null)
+        {
+            return new DeviceConnectPollResult { Kind = DeviceConnectPollKind.NotFound };
+        }
+
+        return body.Status switch
+        {
+            "PENDING" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Pending },
+            "EXPIRED" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Expired },
+            "CONSUMED" when body.Credential is not null =>
+                new DeviceConnectPollResult
+                {
+                    Kind = DeviceConnectPollKind.Consumed,
+                    Credential = body.Credential
+                },
+            "CONSUMED" => new DeviceConnectPollResult
+            {
+                Kind = DeviceConnectPollKind.ConsumedWithoutCredential
+            },
+            _ => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.NotFound }
+        };
     }
 
     public async Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken)

@@ -41,6 +41,11 @@ public class MainViewModelCharactersTests
         }
     }
 
+    private sealed class OpenBrowserLauncher : IBrowserLauncher
+    {
+        public bool TryOpen(string url) => true;
+    }
+
     private sealed class FakeCredentialService : ICredentialService
     {
         private string? _stored;
@@ -70,6 +75,12 @@ public class MainViewModelCharactersTests
             throw new NotSupportedException();
 
         public Task<DeviceLinkStatusResponse> PollStatusAsync(string deviceCode, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<DeviceConnectStartResponse> StartConnectAsync(string? deviceName, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<DeviceConnectPollResult> PollConnectStatusAsync(string pollToken, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
         public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
@@ -121,6 +132,11 @@ public class MainViewModelCharactersTests
         var api = new FakeApiClient();
         configureApi?.Invoke(api);
         var deviceLinkService = new DeviceLinkService(api, credentials, "https://app.syntrack.example");
+        var deviceConnectionService = new DeviceConnectionService(
+            api,
+            credentials,
+            new OpenBrowserLauncher(),
+            TimeSpan.FromMilliseconds(20));
         var syncEngine = new SyncEngine(credentials, api, settingsService, new SyncGate(), "0.0.0-test");
         var logger = new ClientLogger(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
 
@@ -131,6 +147,7 @@ public class MainViewModelCharactersTests
             credentials,
             api,
             deviceLinkService,
+            deviceConnectionService,
             syncEngine,
             new SavedVariablesWatcherService(),
             new AutoStartService(),
@@ -249,6 +266,83 @@ public class MainViewModelCharactersTests
         Assert.True(api.GetCharactersCallCount > 0);
         Assert.False(viewModel.ShowEmptyRosterMessage);
         Assert.False(viewModel.ShowRosterOwnershipBlocked);
+    }
+
+    [Fact]
+    public void ATransientRosterFailureKeepsTheLastKnownGoodRoster()
+    {
+        var (viewModel, api) = Build(
+            existingCredential: "dvc_existing",
+            configureApi: fake =>
+            {
+                fake.NextCharacters = new ClientCharactersFetchResult
+                {
+                    Status = ClientCharactersFetchStatus.Ok,
+                    Items = new[]
+                    {
+                        new ClientCharacterSummary
+                        {
+                            Id = "char-1",
+                            Name = "Synblast",
+                            Realm = "Antonidas",
+                            ClassName = "Mage",
+                            Level = 80
+                        }
+                    }
+                };
+            });
+
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+        Assert.Single(viewModel.Characters);
+
+        api.NextCharacters = new ClientCharactersFetchResult
+        {
+            Status = ClientCharactersFetchStatus.TemporaryFailure
+        };
+
+        viewModel.RetryProfileCommand.Execute(null);
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+
+        Assert.Single(viewModel.Characters);
+        Assert.Equal("Synblast", viewModel.Characters[0].Name);
+        Assert.NotNull(viewModel.CharactersError);
+        Assert.Equal(AccountHealth.FullyConnected, viewModel.AccountHealth);
+        Assert.False(viewModel.ShowEmptyRosterMessage);
+    }
+
+    [Fact]
+    public void ASyncCompletedRefreshThatFailsDoesNotClearALoadedRoster()
+    {
+        var (viewModel, api) = Build(
+            existingCredential: "dvc_existing",
+            configureApi: fake =>
+            {
+                fake.NextCharacters = new ClientCharactersFetchResult
+                {
+                    Status = ClientCharactersFetchStatus.Ok,
+                    Items = new[]
+                    {
+                        new ClientCharacterSummary
+                        {
+                            Id = "char-1",
+                            Name = "Synblast",
+                            Realm = "Antonidas",
+                            ClassName = "Mage",
+                            Level = 80
+                        }
+                    }
+                };
+            });
+
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+        Assert.Single(viewModel.Characters);
+
+        api.ThrowOnGetCharacters = true;
+        viewModel.RetryProfileCommand.Execute(null);
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+
+        Assert.Single(viewModel.Characters);
+        Assert.NotNull(viewModel.CharactersError);
     }
 
     [Fact]

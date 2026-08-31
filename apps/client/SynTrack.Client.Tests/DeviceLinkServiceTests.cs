@@ -25,6 +25,12 @@ public class DeviceLinkServiceTests
                 : new DeviceLinkStatusResponse { Status = "PENDING" });
         }
 
+        public Task<DeviceConnectStartResponse> StartConnectAsync(string? deviceName, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<DeviceConnectPollResult> PollConnectStatusAsync(string pollToken, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken) =>
             Task.FromResult(new ClientProfileFetchResult
             {

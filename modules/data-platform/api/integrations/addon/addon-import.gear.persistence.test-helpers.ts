@@ -192,7 +192,7 @@ export function createTransaction() {
     }
   };
 
-  return { transaction, gearSlots, bagPieces };
+  return { transaction, characters, gearSlots, bagPieces };
 }
 
 export function emptySlot(slotKey: string) {

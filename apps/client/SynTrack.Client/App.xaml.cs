@@ -66,6 +66,10 @@ public partial class App : Application
         _httpClient = new HttpClient();
         var apiClient = new SynTrackApiClient(_httpClient, ApiBaseUrl);
         var deviceLinkService = new DeviceLinkService(apiClient, credentialService, WebBaseUrl);
+        var deviceConnectionService = new DeviceConnectionService(
+            apiClient,
+            credentialService,
+            new SystemBrowserLauncher());
 
         var syncGate = settingsService.LoadSyncGate();
         var syncEngine = new SyncEngine(credentialService, apiClient, settingsService, syncGate, clientVersion);
@@ -79,6 +83,7 @@ public partial class App : Application
             credentialService,
             apiClient,
             deviceLinkService,
+            deviceConnectionService,
             syncEngine,
             _watcher,
             autoStartService,

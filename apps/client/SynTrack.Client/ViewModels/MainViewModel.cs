@@ -20,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ICredentialService _credentialService;
     private readonly ISynTrackApiClient _apiClient;
     private readonly DeviceLinkService _deviceLinkService;
+    private readonly DeviceConnectionService _deviceConnectionService;
     private readonly SyncEngine _syncEngine;
     private readonly SavedVariablesWatcherService _watcher;
     private readonly AutoStartService _autoStartService;
@@ -59,6 +60,12 @@ public sealed partial class MainViewModel : ObservableObject
     private string? _pendingUserCode;
 
     [ObservableProperty]
+    private string? _connectError;
+
+    [ObservableProperty]
+    private string? _signInBrowserUrl;
+
+    [ObservableProperty]
     private bool _isLinking;
 
     [ObservableProperty]
@@ -89,7 +96,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     public string ConnectionStatusLabel => AccountHealth switch
     {
-        AccountHealth.SigningIn => "Signing in...",
+        AccountHealth.SigningIn => "Waiting for Battle.net...",
         AccountHealth.FullyConnected => "Connected",
         AccountHealth.ReconnectRequired => "Reconnect required",
         AccountHealth.ConnectionIssue => "Connection issue",
@@ -117,8 +124,9 @@ public sealed partial class MainViewModel : ObservableObject
             or AccountHealth.ReconnectRequired
             or AccountHealth.ConnectionIssue;
 
-    public bool ShowSignedOutShell =>
-        AccountHealth is AccountHealth.SignedOut or AccountHealth.SigningIn;
+    public bool ShowConnectingShell => AccountHealth == AccountHealth.SigningIn;
+
+    public bool ShowSignedOutShell => AccountHealth == AccountHealth.SignedOut;
 
     public string WowDetectionLabel => WowPath is null
         ? "World of Warcraft not found"
@@ -159,6 +167,7 @@ public sealed partial class MainViewModel : ObservableObject
         ICredentialService credentialService,
         ISynTrackApiClient apiClient,
         DeviceLinkService deviceLinkService,
+        DeviceConnectionService deviceConnectionService,
         SyncEngine syncEngine,
         SavedVariablesWatcherService watcher,
         AutoStartService autoStartService,
@@ -171,6 +180,7 @@ public sealed partial class MainViewModel : ObservableObject
         _credentialService = credentialService;
         _apiClient = apiClient;
         _deviceLinkService = deviceLinkService;
+        _deviceConnectionService = deviceConnectionService;
         _syncEngine = syncEngine;
         _watcher = watcher;
         _autoStartService = autoStartService;
@@ -188,6 +198,11 @@ public sealed partial class MainViewModel : ObservableObject
 
         _deviceLinkService.LinkApproved += OnLinkApproved;
         _deviceLinkService.LinkExpired += OnLinkExpired;
+        _deviceConnectionService.Completed += OnCodelessCompleted;
+        _deviceConnectionService.Expired += OnCodelessExpired;
+        _deviceConnectionService.ConsumedWithoutCredential += OnCodelessConsumedWithoutCredential;
+        _deviceConnectionService.Invalid += OnCodelessInvalid;
+        _deviceConnectionService.StorageFailed += OnCodelessStorageFailed;
         _syncEngine.SyncStatusChanged += HandleSyncEngineStatusChanged;
         _syncEngine.SyncCompleted += OnSyncCompleted;
 
@@ -227,6 +242,7 @@ public sealed partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowConnectionIssue));
         OnPropertyChanged(nameof(ShowConnectedShell));
         OnPropertyChanged(nameof(ShowSignedOutShell));
+        OnPropertyChanged(nameof(ShowConnectingShell));
         OnPropertyChanged(nameof(ShowEmptyRosterMessage));
         OnPropertyChanged(nameof(ShowRosterOwnershipBlocked));
     }
@@ -383,18 +399,28 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         IsLinking = true;
+        ConnectError = null;
         AccountHealth = AccountHealth.SigningIn;
 
         try
         {
-            var (userCode, verificationUrl) = await _deviceLinkService.StartLinkAsync(CancellationToken.None);
-            PendingUserCode = userCode;
-            Process.Start(new ProcessStartInfo(verificationUrl) { UseShellExecute = true });
-            _logger.Info("Device link requested; verification page opened.");
+            var deviceName = Environment.MachineName;
+            var outcome = await _deviceConnectionService.StartAsync(deviceName, CancellationToken.None);
+            SignInBrowserUrl = outcome.BrowserUrl;
+
+            if (!outcome.BrowserOpened)
+            {
+                ConnectError = "Could not open your browser.";
+            }
+
+            _logger.Info("Codeless Battle.net connect started.");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.Warn($"Device link failed to start: {ex.Message}");
+            _logger.Warn($"Codeless connect failed to start: {ex.Message}");
+            _deviceConnectionService.Cancel();
+            SignInBrowserUrl = null;
+            ConnectError = "Could not connect this client.";
             AccountHealth = _credentialService.Load() is null
                 ? AccountHealth.SignedOut
                 : AccountHealth.ConnectionIssue;
@@ -402,6 +428,48 @@ public sealed partial class MainViewModel : ObservableObject
         finally
         {
             IsLinking = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CancelConnect()
+    {
+        _deviceConnectionService.Cancel();
+        SignInBrowserUrl = null;
+        ConnectError = null;
+        IsLinking = false;
+        if (_credentialService.Load() is null)
+        {
+            AccountHealth = AccountHealth.SignedOut;
+        }
+
+        _logger.Info("Codeless connect cancelled.");
+    }
+
+    [RelayCommand]
+    private void OpenBrowserAgain()
+    {
+        if (!_deviceConnectionService.TryOpenBrowserAgain())
+        {
+            ConnectError = "Could not open your browser.";
+        }
+    }
+
+    [RelayCommand]
+    private void CopySignInLink()
+    {
+        if (SignInBrowserUrl is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Clipboard.SetText(SignInBrowserUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warn($"Could not copy sign-in link: {ex.Message}");
         }
     }
 
@@ -432,10 +500,13 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Disconnect()
     {
+        _deviceConnectionService.Cancel();
         _credentialService.Clear();
         Connected = false;
         AccountHealth = AccountHealth.SignedOut;
         PendingUserCode = null;
+        SignInBrowserUrl = null;
+        ConnectError = null;
         BattleTag = null;
         Characters.Clear();
         CharactersError = null;
@@ -554,7 +625,13 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
-        _dispatcher.Invoke(() => IsLoadingCharacters = true);
+        _dispatcher.Invoke(() =>
+        {
+            if (Characters.Count == 0)
+            {
+                IsLoadingCharacters = true;
+            }
+        });
 
         ClientCharactersFetchResult fetch;
         string? error = null;
@@ -605,7 +682,13 @@ public sealed partial class MainViewModel : ObservableObject
 
             case ClientCharactersFetchStatus.TemporaryFailure:
                 error = "Could not load character roster. Automatic SavedVariables sync continues if device authentication remains valid.";
-                break;
+                _dispatcher.Invoke(() =>
+                {
+                    CharactersError = error;
+                    IsLoadingCharacters = false;
+                    OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+                });
+                return;
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -625,6 +708,52 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(ShowEmptyRosterMessage));
         });
     }
+
+    private void OnCodelessCompleted() => _dispatcher.Invoke(() =>
+    {
+        ConnectError = null;
+        SignInBrowserUrl = null;
+        IsLinking = false;
+        _logger.Info("Codeless connect completed; credential stored.");
+        _ = RefreshProfileAsync();
+        ScheduleRosterRefresh();
+    });
+
+    private void OnCodelessExpired() => _dispatcher.Invoke(() =>
+    {
+        IsLinking = false;
+        ConnectError = "Connection expired.";
+        AccountHealth = AccountHealth.SignedOut;
+        _logger.Warn("Codeless connect expired.");
+    });
+
+    private void OnCodelessConsumedWithoutCredential() => _dispatcher.Invoke(() =>
+    {
+        IsLinking = false;
+        ConnectError = "Could not connect this client.";
+        if (_credentialService.Load() is null)
+        {
+            AccountHealth = AccountHealth.SignedOut;
+        }
+
+        _logger.Warn("Codeless connect consumed without a credential.");
+    });
+
+    private void OnCodelessInvalid() => _dispatcher.Invoke(() =>
+    {
+        IsLinking = false;
+        ConnectError = "Could not connect this client.";
+        AccountHealth = AccountHealth.SignedOut;
+        _logger.Warn("Codeless connect poll token was invalid.");
+    });
+
+    private void OnCodelessStorageFailed() => _dispatcher.Invoke(() =>
+    {
+        IsLinking = false;
+        ConnectError = "Could not connect this client.";
+        AccountHealth = AccountHealth.SignedOut;
+        _logger.Warn("Codeless connect credential could not be stored; polling stopped.");
+    });
 
     private void OnLinkExpired() => _dispatcher.Invoke(() =>
     {

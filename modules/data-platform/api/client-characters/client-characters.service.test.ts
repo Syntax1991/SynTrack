@@ -66,6 +66,31 @@ describe("ClientCharactersService", () => {
     expect(result[0]!.lastSyncedAt).toBeNull();
   });
 
+  it("returns all 22 owned characters even when most have never been recaptured", async () => {
+    const rows = Array.from({ length: 22 }, (_, index) => ({
+      id: `char-${index}`,
+      name: `Char${index}`,
+      realm: "Antonidas",
+      className: "Mage",
+      level: 80
+    }));
+    const listCharactersForAccount = vi.fn().mockResolvedValue(rows);
+    const findItemLevels = vi.fn().mockResolvedValue(new Map());
+    const findLastCapturedAt = vi.fn().mockResolvedValue(new Map());
+
+    const service = new ClientCharactersService(
+      listCharactersForAccount,
+      findItemLevels,
+      findLastCapturedAt
+    );
+
+    const result = await service.listForAccount("account-a");
+
+    expect(listCharactersForAccount).toHaveBeenCalledWith("account-a");
+    expect(result).toHaveLength(22);
+    expect(result.every((row) => row.lastSyncedAt === null)).toBe(true);
+  });
+
   it("returns an empty roster for an owned account with no characters", async () => {
     const listCharactersForAccount = vi.fn().mockResolvedValue([]);
     const findItemLevels = vi.fn().mockResolvedValue(new Map());

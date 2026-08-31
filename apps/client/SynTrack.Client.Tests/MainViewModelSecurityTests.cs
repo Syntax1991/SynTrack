@@ -29,6 +29,14 @@ public class MainViewModelSecurityTests
     }
 
     [Fact]
+    public void NoPublicPropertyExposesThePollToken()
+    {
+        var properties = typeof(MainViewModel).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.DoesNotContain(properties, p => p.Name.Contains("PollToken", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void OnlyTheShortUserCodeIsExposedForDisplay()
     {
         var property = typeof(MainViewModel).GetProperty("PendingUserCode", BindingFlags.Public | BindingFlags.Instance);

@@ -194,4 +194,50 @@ public class SynTrackApiClientTests
         Assert.Equal(AccountHealth.ConnectionIssue, profile.Health);
         Assert.Null(profile.BattleTag);
     }
+
+    [Fact]
+    public async Task StartConnectPostsDeviceNameAndReturnsBrowserUrlAndPollToken()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"browserUrl\":\"https://app.syntrack.example/connect/abc\",\"pollToken\":\"poll-secret\",\"expiresAt\":\"2026-08-31T12:00:00Z\"}",
+                System.Text.Encoding.UTF8,
+                "application/json")
+        });
+        var client = CreateClient(handler);
+
+        var started = await client.StartConnectAsync("DESKTOP-TEST", CancellationToken.None);
+
+        Assert.EndsWith("/client/connect", handler.LastRequest!.RequestUri!.ToString());
+        Assert.Contains("DESKTOP-TEST", handler.LastRequestBody);
+        Assert.Equal("https://app.syntrack.example/connect/abc", started.BrowserUrl);
+        Assert.Equal("poll-secret", started.PollToken);
+    }
+
+    [Fact]
+    public async Task PollConnectStatusMapsConsumedCredentialAnd404()
+    {
+        var handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "{\"status\":\"CONSUMED\",\"credential\":\"dvc_once\"}",
+                System.Text.Encoding.UTF8,
+                "application/json")
+        });
+        var client = CreateClient(handler);
+
+        var consumed = await client.PollConnectStatusAsync("poll-secret", CancellationToken.None);
+
+        Assert.EndsWith("/client/connect/status", handler.LastRequest!.RequestUri!.ToString());
+        Assert.Contains("poll-secret", handler.LastRequestBody);
+        Assert.Equal(DeviceConnectPollKind.Consumed, consumed.Kind);
+        Assert.Equal("dvc_once", consumed.Credential);
+
+        var notFoundHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        var notFoundClient = CreateClient(notFoundHandler);
+        var missing = await notFoundClient.PollConnectStatusAsync("nope", CancellationToken.None);
+        Assert.Equal(DeviceConnectPollKind.NotFound, missing.Kind);
+        Assert.Null(missing.Credential);
+    }
 }

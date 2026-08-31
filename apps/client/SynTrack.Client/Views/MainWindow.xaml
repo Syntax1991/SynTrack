@@ -82,32 +82,57 @@
             <TextBlock Text="SynTrack" Style="{StaticResource TitleText}" FontSize="20"
                        Margin="0,16,0,4" HorizontalAlignment="Center" />
 
-            <TextBlock Text="Connect your Battle.net account to automatically sync your WoW data."
+            <TextBlock Text="Connect your SynTrack account to sync your World of Warcraft characters."
                        Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"
-                       MaxWidth="300" Margin="0,0,0,20" />
+                       MaxWidth="360" Margin="0,0,0,20" />
 
-            <StackPanel Visibility="{Binding IsLinking, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}"
-                        HorizontalAlignment="Center">
-                <Button Content="Sign in with Battle.net" Style="{StaticResource PrimaryButton}"
-                        Command="{Binding ConnectCommand}" Padding="20,10" HorizontalAlignment="Center" />
-                <TextBlock Text="Secure sign-in opens in your browser" Style="{StaticResource MutedText}"
-                           Margin="0,10,0,0" HorizontalAlignment="Center" />
+            <Button Content="Continue with Battle.net" Style="{StaticResource PrimaryButton}"
+                    Command="{Binding ConnectCommand}" Padding="20,10" HorizontalAlignment="Center" />
+            <TextBlock Text="Opens securely in your browser" Style="{StaticResource MutedText}"
+                       Margin="0,10,0,0" HorizontalAlignment="Center" />
+
+            <TextBlock Margin="0,16,0,0" Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                       TextAlignment="Center" MaxWidth="360"
+                       Text="{Binding ConnectError}"
+                       Visibility="{Binding ConnectError, Converter={StaticResource NullToVisibility}}" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0"
+                        Visibility="{Binding ConnectError, Converter={StaticResource NullToVisibility}}">
+                <Button Content="Try again" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding ConnectCommand}" Margin="0,0,8,0" />
+                <Button Content="Copy sign-in link" Style="{StaticResource GhostButton}"
+                        Command="{Binding CopySignInLinkCommand}"
+                        Visibility="{Binding SignInBrowserUrl, Converter={StaticResource NullToVisibility}}" />
             </StackPanel>
+        </StackPanel>
 
-            <StackPanel Visibility="{Binding IsLinking, Converter={StaticResource BoolToVisibility}}"
-                        HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Ellipse Style="{StaticResource StatusDot}" Margin="0,0,7,0"
-                             Fill="{Binding ConnectionStatusTone, Converter={StaticResource ToneToBrush}}" />
-                    <TextBlock Text="Signing in..." Style="{StaticResource BodyText}" FontWeight="SemiBold" />
-                </StackPanel>
-                <TextBlock Text="Waiting for Battle.net authorization..." Style="{StaticResource MutedText}"
-                           Margin="0,6,0,0" HorizontalAlignment="Center" />
+        <!-- ===================== Connecting (codeless poll) ===================== -->
+        <StackPanel Grid.Row="1" Visibility="{Binding ShowConnectingShell, Converter={StaticResource BoolToVisibility}}"
+                    Margin="0,60,0,0" HorizontalAlignment="Center">
 
-                <TextBlock Margin="0,14,0,0" HorizontalAlignment="Center" Opacity="0.55"
-                           Visibility="{Binding PendingUserCode, Converter={StaticResource NullToVisibility}}"
-                           Text="{Binding PendingUserCode, StringFormat='Diagnostic code: {0}'}"
-                           FontSize="10" Foreground="{StaticResource TextMutedBrush}" />
+            <TextBlock Text="Connecting to SynTrack" Style="{StaticResource TitleText}" FontSize="20"
+                       HorizontalAlignment="Center" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+                <Ellipse Style="{StaticResource StatusDot}" Margin="0,0,7,0"
+                         Fill="{Binding ConnectionStatusTone, Converter={StaticResource ToneToBrush}}" />
+                <TextBlock Text="Waiting for Battle.net..." Style="{StaticResource BodyText}" FontWeight="SemiBold" />
+            </StackPanel>
+            <TextBlock Text="Complete sign-in in your browser." Style="{StaticResource MutedText}"
+                       Margin="0,6,0,16" HorizontalAlignment="Center" />
+
+            <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"
+                       MaxWidth="360" Text="{Binding ConnectError}"
+                       Visibility="{Binding ConnectError, Converter={StaticResource NullToVisibility}}" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                <Button Content="Cancel" Style="{StaticResource SecondaryButton}"
+                        Command="{Binding CancelConnectCommand}" Margin="0,0,8,0" />
+                <Button Content="Open browser again" Style="{StaticResource GhostButton}"
+                        Command="{Binding OpenBrowserAgainCommand}" Margin="0,0,8,0" />
+                <Button Content="Copy sign-in link" Style="{StaticResource GhostButton}"
+                        Command="{Binding CopySignInLinkCommand}"
+                        Visibility="{Binding SignInBrowserUrl, Converter={StaticResource NullToVisibility}}" />
             </StackPanel>
         </StackPanel>
 

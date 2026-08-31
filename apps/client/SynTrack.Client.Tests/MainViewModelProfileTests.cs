@@ -42,6 +42,11 @@ public class MainViewModelProfileTests
         }
     }
 
+    private sealed class OpenBrowserLauncher : IBrowserLauncher
+    {
+        public bool TryOpen(string url) => true;
+    }
+
     private sealed class FakeCredentialService : ICredentialService
     {
         private string? _stored;
@@ -78,6 +83,24 @@ public class MainViewModelProfileTests
             Task.FromResult(StatusResponses.Count > 0
                 ? StatusResponses.Dequeue()
                 : new DeviceLinkStatusResponse { Status = "PENDING" });
+
+        public DeviceConnectStartResponse ConnectStart { get; set; } =
+            new()
+            {
+                BrowserUrl = "https://app.syntrack.example/connect/abc",
+                PollToken = "poll-secret",
+                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10).ToString("O")
+            };
+
+        public Queue<DeviceConnectPollResult> ConnectPolls { get; } = new();
+
+        public Task<DeviceConnectStartResponse> StartConnectAsync(string? deviceName, CancellationToken cancellationToken) =>
+            Task.FromResult(ConnectStart);
+
+        public Task<DeviceConnectPollResult> PollConnectStatusAsync(string pollToken, CancellationToken cancellationToken) =>
+            Task.FromResult(ConnectPolls.Count > 0
+                ? ConnectPolls.Dequeue()
+                : new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Pending });
 
         public Task<ClientProfileFetchResult> GetMeAsync(string deviceToken, CancellationToken cancellationToken)
         {
@@ -118,6 +141,11 @@ public class MainViewModelProfileTests
         var api = new FakeApiClient();
         configureApi?.Invoke(api);
         var deviceLinkService = new DeviceLinkService(api, credentials, "https://app.syntrack.example");
+        var deviceConnectionService = new DeviceConnectionService(
+            api,
+            credentials,
+            new OpenBrowserLauncher(),
+            TimeSpan.FromMilliseconds(20));
         var syncEngine = new SyncEngine(credentials, api, settingsService, new SyncGate(), "0.0.0-test");
         var logger = new ClientLogger(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
 
@@ -128,6 +156,7 @@ public class MainViewModelProfileTests
             credentials,
             api,
             deviceLinkService,
+            deviceConnectionService,
             syncEngine,
             new SavedVariablesWatcherService(),
             new AutoStartService(),
