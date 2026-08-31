@@ -57,6 +57,19 @@ export class RaiderAuthRepository {
   }
 
   /*
+   * Read-only lookup by internal id, used only for display (e.g. the
+   * device-connect success page's "Connected to <BattleTag>") - never
+   * part of any authorization decision.
+   */
+  findAccountById(id: string) {
+    return this.db.raiderAccount.findUnique(
+      {
+        where: { id }
+      }
+    );
+  }
+
+  /*
    * See raider-auth.legacy-backfill.ts for the full rationale (why this
    * is safe, why it never merges two already-bound accounts, and why the
    * concurrent-callback race can't create a duplicate).
@@ -146,6 +159,8 @@ export class RaiderAuthRepository {
     scope: string | null;
     tokenExpiresAt: Date;
     charactersJson: string;
+    returnTo?: string | null;
+    deviceLinkRequestId?: string | null;
     expiresAt: Date;
   }) {
     await this.db.raiderPendingRegistration.deleteMany(
@@ -175,6 +190,11 @@ export class RaiderAuthRepository {
             input.tokenExpiresAt,
           charactersJson:
             input.charactersJson,
+          returnTo:
+            input.returnTo ?? null,
+          deviceLinkRequestId:
+            input.deviceLinkRequestId ??
+            null,
           expiresAt:
             input.expiresAt
         }

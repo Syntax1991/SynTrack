@@ -5,6 +5,7 @@ import {
   generateUserCode,
   hashSecret
 } from "./device-auth.crypto.js";
+import { sanitizeDeviceName } from "./device-name.js";
 import type {
   DeviceCredentialRepositoryContract,
   DeviceLinkRepositoryContract,
@@ -54,7 +55,9 @@ export class DeviceLinkService {
     private readonly credentialRepository: DeviceCredentialRepositoryContract,
     private readonly requireRaiderSession: (
       token: string
-    ) => Promise<unknown>
+    ) => Promise<{
+      raiderAccountId: string;
+    }>
   ) {}
 
   async createLink(
@@ -74,7 +77,10 @@ export class DeviceLinkService {
       deviceCodeHash: hashSecret(
         deviceCode
       ),
-      clientName,
+      clientName:
+        sanitizeDeviceName(
+          clientName
+        ),
       expiresAt
     });
 
@@ -97,9 +103,10 @@ export class DeviceLinkService {
     userCode: string,
     raiderSessionToken: string
   ): Promise<void> {
-    await this.requireRaiderSession(
-      raiderSessionToken
-    );
+    const session =
+      await this.requireRaiderSession(
+        raiderSessionToken
+      );
 
     const link =
       await this.linkRepository.findByUserCode(
@@ -130,7 +137,8 @@ export class DeviceLinkService {
     }
 
     await this.linkRepository.markApproved(
-      link.id
+      link.id,
+      session.raiderAccountId
     );
   }
 

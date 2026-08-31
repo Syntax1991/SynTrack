@@ -1,6 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RaiderAuthController } from "./raider-auth.controller.js";
 import type { RaiderAuthService } from "./raider-auth.service.js";
+
+const resolvePendingDeviceConnection =
+  vi.fn();
+
+vi.mock(
+  "../device-auth/device-connection-bridge.js",
+  () => ({
+    resolvePendingDeviceConnection:
+      (
+        ...args: unknown[]
+      ) =>
+        resolvePendingDeviceConnection(
+          ...args
+        )
+  })
+);
 
 /*
  * Covers RaiderAuthController's redirect-building - specifically that
@@ -191,6 +207,137 @@ describe("RaiderAuthController.callback — redirect targets", () => {
       response.redirectedTo
     ).toBe(
       "http://localhost:5273/login?outcome=unknown-account"
+    );
+  });
+});
+
+describe("RaiderAuthController.connect — device-connect token handling", () => {
+  beforeEach(() => {
+    resolvePendingDeviceConnection.mockReset();
+  });
+
+  it("fails fast (never starts OAuth) when deviceConnectionToken does not resolve to a real pending request", async () => {
+    resolvePendingDeviceConnection.mockResolvedValueOnce(
+      null
+    );
+
+    const createAuthorizationUrl =
+      vi.fn();
+
+    const service = {
+      createAuthorizationUrl
+    } as unknown as RaiderAuthService;
+
+    const controller =
+      new RaiderAuthController(
+        service
+      );
+
+    const response = createResponse();
+
+    await controller.connect(
+      createRequest({
+        deviceConnectionToken:
+          "not-a-real-token"
+      }),
+      response as never,
+      undefined as never
+    );
+
+    expect(
+      createAuthorizationUrl
+    ).not.toHaveBeenCalled();
+
+    expect(
+      response.redirectedTo
+    ).toBe(
+      "http://localhost:5273/client/connect?token=not-a-real-token"
+    );
+  });
+
+  it("resolves a valid deviceConnectionToken to its internal id and forwards only that id, not the raw token, to createAuthorizationUrl", async () => {
+    resolvePendingDeviceConnection.mockResolvedValueOnce(
+      { id: "link-internal-id" }
+    );
+
+    const createAuthorizationUrl = vi
+      .fn()
+      .mockResolvedValue(
+        "https://oauth.battle.net/authorize"
+      );
+
+    const service = {
+      createAuthorizationUrl
+    } as unknown as RaiderAuthService;
+
+    const controller =
+      new RaiderAuthController(
+        service
+      );
+
+    const response = createResponse();
+
+    await controller.connect(
+      createRequest({
+        intent: "register",
+        deviceConnectionToken:
+          "a-real-browser-token"
+      }),
+      response as never,
+      undefined as never
+    );
+
+    expect(
+      createAuthorizationUrl
+    ).toHaveBeenCalledWith(
+      "register",
+      null,
+      "link-internal-id"
+    );
+
+    expect(
+      response.redirectedTo
+    ).toBe(
+      "https://oauth.battle.net/authorize"
+    );
+  });
+
+  it("an ordinary connect with no deviceConnectionToken never calls the resolver and passes null through", async () => {
+    const createAuthorizationUrl = vi
+      .fn()
+      .mockResolvedValue(
+        "https://oauth.battle.net/authorize"
+      );
+
+    const service = {
+      createAuthorizationUrl
+    } as unknown as RaiderAuthService;
+
+    const controller =
+      new RaiderAuthController(
+        service
+      );
+
+    const response = createResponse();
+
+    await controller.connect(
+      createRequest({
+        intent: "login"
+      }),
+      response as never,
+      undefined as never
+    );
+
+    expect(
+      resolvePendingDeviceConnection
+    ).not.toHaveBeenCalled();
+
+    expect(
+      createAuthorizationUrl
+    ).toHaveBeenCalledWith(
+      "login",
+      null,
+      null
     );
   });
 });

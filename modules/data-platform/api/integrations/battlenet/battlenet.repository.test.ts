@@ -137,10 +137,7 @@ describe("BattleNetRepository OAuth state — real SQLite database", () => {
         state
       );
 
-    expect(consumed).toEqual({
-      intent: "login",
-      returnTo: null
-    });
+    expect(consumed).toEqual({ intent: "login", returnTo: null, deviceLinkRequestId: null });
   });
 
   it("a fresh register state is consumed successfully on the first callback", async () => {
@@ -160,10 +157,7 @@ describe("BattleNetRepository OAuth state — real SQLite database", () => {
         state
       );
 
-    expect(consumed).toEqual({
-      intent: "register",
-      returnTo: null
-    });
+    expect(consumed).toEqual({ intent: "register", returnTo: null, deviceLinkRequestId: null });
   });
 
   it("preserves the correct returnTo value across the round trip", async () => {
@@ -306,15 +300,8 @@ describe("BattleNetRepository OAuth state — real SQLite database", () => {
       )
     ]);
 
-    expect(consumedLogin).toEqual({
-      intent: "login",
-      returnTo: "/weekly-checklist"
-    });
-
-    expect(consumedRegister).toEqual({
-      intent: "register",
-      returnTo: null
-    });
+    expect(consumedLogin).toEqual({ intent: "login", returnTo: "/weekly-checklist", deviceLinkRequestId: null });
+    expect(consumedRegister).toEqual({ intent: "register", returnTo: null, deviceLinkRequestId: null });
   });
 
   it("creating a new state never consumes or expires an unrelated, still-valid earlier state", async () => {

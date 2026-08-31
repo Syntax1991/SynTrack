@@ -13,6 +13,13 @@ import type {
 type RaiderLoginUrlOptions = {
   intent?: RaiderAuthIntent;
   returnTo?: string | null;
+  /*
+   * Opaque codeless device-connection capability (see
+   * modules/data-platform/web/device-auth) - forwarded as-is to
+   * /auth/raider/connect, which independently re-validates it server-side
+   * before ever storing it anywhere. Never trusted on its own.
+   */
+  deviceConnectionToken?: string | null;
 };
 
 export function getRaiderLoginUrl(
@@ -39,6 +46,13 @@ export function getRaiderLoginUrl(
     url.searchParams.set(
       "returnTo",
       options.returnTo
+    );
+  }
+
+  if (options?.deviceConnectionToken) {
+    url.searchParams.set(
+      "deviceConnectionToken",
+      options.deviceConnectionToken
     );
   }
 

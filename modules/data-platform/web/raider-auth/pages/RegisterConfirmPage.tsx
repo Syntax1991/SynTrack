@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  useNavigate,
+  useSearchParams
+} from "react-router-dom";
 import { setRaiderSessionToken } from "../../../../../apps/web/src/shared/api/raiderSession";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import {
   confirmRegistration,
   getPendingRegistration
 } from "../api/raiderAuthApi";
+import { isSafeInternalPath } from "../utils/internalPath";
 
 function extractHashValue(
   hash: string,
@@ -43,6 +48,22 @@ type ViewState =
  */
 export function RegisterConfirmPage() {
   const navigate = useNavigate();
+  const [searchParams] =
+    useSearchParams();
+
+  const rawReturnTo =
+    searchParams.get("returnTo");
+
+  // Only meaningful for the "existing" branch (an account already
+  // existed, so the outcome URL itself carries returnTo as a normal
+  // query param - see raider-auth.controller.ts). The "pending" branch's
+  // returnTo instead travels through RaiderPendingRegistration and comes
+  // back on confirmRegistration()'s response.
+  const existingAccountReturnTo =
+    isSafeInternalPath(rawReturnTo)
+      ? rawReturnTo
+      : null;
+
   const [view, setView] =
     useState<ViewState>({
       kind: "loading"
@@ -141,7 +162,16 @@ export function RegisterConfirmPage() {
         result.token
       );
 
-      navigate("/", { replace: true });
+      const destination =
+        isSafeInternalPath(
+          result.returnTo
+        )
+          ? result.returnTo
+          : "/";
+
+      navigate(destination, {
+        replace: true
+      });
     }
     catch {
       setView({ kind: "error" });
@@ -149,7 +179,15 @@ export function RegisterConfirmPage() {
   }
 
   if (redirectNow) {
-    return <Navigate replace to="/" />;
+    return (
+      <Navigate
+        replace
+        to={
+          existingAccountReturnTo ??
+          "/"
+        }
+      />
+    );
   }
 
   if (

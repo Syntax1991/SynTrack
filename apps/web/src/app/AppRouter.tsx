@@ -22,6 +22,7 @@ import { RaiderLoginCallbackPage } from "../../../../modules/data-platform/web/r
 import { LoginPage } from "../../../../modules/data-platform/web/raider-auth/pages/LoginPage";
 import { RegisterPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterPage";
 import { RegisterConfirmPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterConfirmPage";
+import { ClientConnectPage } from "../../../../modules/data-platform/web/device-auth/pages/ClientConnectPage";
 import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTablePage";
 import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
 import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
@@ -259,6 +260,11 @@ export function AppRouter() {
       <Route
         element={<RegisterConfirmPage />}
         path="register/confirm"
+      />
+
+      <Route
+        element={<ClientConnectPage />}
+        path="client/connect"
       />
 
       <Route

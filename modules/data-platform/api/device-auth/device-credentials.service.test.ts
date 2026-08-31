@@ -12,7 +12,7 @@ let requireRaiderSession: ReturnType<
   typeof vi.fn<
     (
       token: string
-    ) => Promise<unknown>
+    ) => Promise<{ raiderAccountId: string }>
   >
 >;
 
@@ -31,7 +31,7 @@ beforeEach(() => {
     .fn<
       (
         token: string
-      ) => Promise<unknown>
+      ) => Promise<{ raiderAccountId: string }>
     >()
     .mockResolvedValue({
       raiderAccountId: "raider-1"

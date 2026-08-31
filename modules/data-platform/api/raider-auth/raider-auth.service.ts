@@ -45,11 +45,13 @@ export class RaiderAuthService {
 
   createAuthorizationUrl(
     intent: RaiderAuthIntent,
-    returnTo: string | null
+    returnTo: string | null,
+    deviceLinkRequestId: string | null = null
   ): Promise<string> {
     return this.callbackService.createAuthorizationUrl(
       intent,
-      returnTo
+      returnTo,
+      deviceLinkRequestId
     );
   }
 
@@ -100,7 +102,8 @@ export class RaiderAuthService {
         session.raiderAccountId,
       characters: JSON.parse(
         session.charactersJson
-      )
+      ),
+      returnTo: null
     };
   }
 
@@ -176,5 +179,29 @@ export class RaiderAuthService {
     await this.repository.deleteSession(
       token
     );
+  }
+
+  /*
+   * Display-only lookup for device-auth (DeviceConnectionService) so the
+   * connect success page can show "Connected to <BattleTag>" without
+   * device-auth ever touching RaiderAuthRepository directly.
+   */
+  async getAccountDisplay(
+    raiderAccountId: string
+  ): Promise<{
+    battleTag: string | null;
+  } | null> {
+    const account =
+      await this.repository.findAccountById(
+        raiderAccountId
+      );
+
+    if (!account) {
+      return null;
+    }
+
+    return {
+      battleTag: account.battleTag
+    };
   }
 }

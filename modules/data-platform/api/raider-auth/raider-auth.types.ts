@@ -6,6 +6,16 @@ export type RaiderSessionResult = {
   token: string;
   raiderAccountId: string;
   characters: ImportableBattleNetCharacter[];
+  /*
+   * Where the frontend should navigate after this session is established -
+   * carried through from the OAuth round trip's returnTo (see
+   * BattleNetOAuthState/RaiderPendingRegistration). Used by the
+   * device-connect journey to land the browser back on
+   * /client/connect?token=... after a brand-new account finishes
+   * registration; null for an ordinary login/register with no pending
+   * destination.
+   */
+  returnTo: string | null;
 };
 
 export type RaiderSessionGuard = {
@@ -48,6 +58,7 @@ export type RaiderAuthCallbackOutcome =
   | {
       outcome: "register-existing-account";
       token: string;
+      returnTo: string | null;
     }
   | {
       outcome: "register-pending";

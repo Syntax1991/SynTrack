@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { env } from "../../../../apps/api/src/config/env.js";
+import { bindDeviceConnection } from "../device-auth/device-connection-bridge.js";
 import { normalizeBattleNetCharacters } from "../integrations/battlenet/battlenet-import.mapper.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import { resolveCanonicalBattleNetAccountId } from "./raider-auth.identity.js";
@@ -26,7 +27,8 @@ export async function resolveRaiderAuthCallback(
   battleNetClient: BattleNetClient,
   code: string,
   intent: RaiderAuthIntent,
-  returnTo: string | null
+  returnTo: string | null,
+  deviceLinkRequestId: string | null = null
 ): Promise<RaiderAuthCallbackOutcome> {
   const token =
     await battleNetClient.exchangeAuthorizationCode(
@@ -113,6 +115,8 @@ export async function resolveRaiderAuthCallback(
         tokenExpiresAt,
         charactersJson:
           JSON.stringify(characters),
+        returnTo,
+        deviceLinkRequestId,
         expiresAt: new Date(
           Date.now() +
             pendingRegistrationLifetimeMilliseconds
@@ -141,6 +145,19 @@ export async function resolveRaiderAuthCallback(
     }
   );
 
+  // The account is already concretely known at this point (unlike the
+  // new-account register-pending branch above, which has to wait for the
+  // explicit "Create account" confirm) - so a pending codeless device
+  // connection binds immediately here, covering both the plain login path
+  // and the "register intent, but the account already existed" path.
+  // bindDeviceConnection is a no-op when deviceLinkRequestId is null.
+  if (deviceLinkRequestId) {
+    await bindDeviceConnection(
+      deviceLinkRequestId,
+      account.id
+    );
+  }
+
   const sessionToken =
     await issueRaiderSession(
       repository,
@@ -152,7 +169,8 @@ export async function resolveRaiderAuthCallback(
     ? {
         outcome:
           "register-existing-account",
-        token: sessionToken
+        token: sessionToken,
+        returnTo
       }
     : {
         outcome: "login-success",

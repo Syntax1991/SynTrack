@@ -3,6 +3,7 @@ import type {
 } from "express";
 import { env } from "../../../../apps/api/src/config/env.js";
 import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
+import { resolvePendingDeviceConnection } from "../device-auth/device-connection-bridge.js";
 import { isSafeInternalPath } from "./internal-path.js";
 import { RaiderAuthService } from "./raider-auth.service.js";
 import type { RaiderAuthIntent } from "./raider-auth.types.js";
@@ -49,11 +50,45 @@ export class RaiderAuthController {
         ? rawReturnTo
         : null;
 
+    const rawDeviceConnectionToken =
+      getQueryValue(
+        request.query
+          .deviceConnectionToken
+      );
+
+    let deviceLinkRequestId:
+      | string
+      | null = null;
+
+    if (rawDeviceConnectionToken) {
+      const pending =
+        await resolvePendingDeviceConnection(
+          rawDeviceConnectionToken
+        );
+
+      if (!pending) {
+        // Fail fast rather than wasting a Battle.net round trip on a
+        // dead/invalid connection token - send the browser straight back
+        // to the connect page, which will independently re-fetch the
+        // token's status and render EXPIRED/INVALID itself.
+        response.redirect(
+          this.deviceConnectRedirect(
+            rawDeviceConnectionToken
+          )
+        );
+
+        return;
+      }
+
+      deviceLinkRequestId = pending.id;
+    }
+
     const authorizationUrl =
       await this.service
         .createAuthorizationUrl(
           intent,
-          returnTo
+          returnTo,
+          deviceLinkRequestId
         );
 
     response.redirect(
@@ -214,6 +249,13 @@ export class RaiderAuthController {
           "existing"
         );
 
+        if (outcome.returnTo) {
+          target.searchParams.set(
+            "returnTo",
+            outcome.returnTo
+          );
+        }
+
         target.hash = `token=${outcome.token}`;
 
         return target.toString();
@@ -257,6 +299,22 @@ export class RaiderAuthController {
    * "Try again" always starts a brand-new OAuth attempt rather than
    * retrying the dead state.
    */
+  private deviceConnectRedirect(
+    rawDeviceConnectionToken: string
+  ): string {
+    const target = new URL(
+      "/client/connect",
+      env.FRONTEND_ORIGIN
+    );
+
+    target.searchParams.set(
+      "token",
+      rawDeviceConnectionToken
+    );
+
+    return target.toString();
+  }
+
   private errorRedirect(
     intent: RaiderAuthIntent,
     reason?: "state_expired"
