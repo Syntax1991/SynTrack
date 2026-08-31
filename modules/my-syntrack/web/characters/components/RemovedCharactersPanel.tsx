@@ -26,53 +26,50 @@ function formatRemovedDate(value: string): string {
   });
 }
 
+function formatSummary(count: number): string {
+  return `Removed from SynTrack (${count})`;
+}
+
 export function RemovedCharactersPanel({
   items,
   isLoading,
   restoringId,
   onRestore
 }: RemovedCharactersPanelProps) {
-  return (
-    <section className="panel matrix-panel removed-characters-panel">
-      <div className="matrix-toolbar">
-        <span className="eyebrow">REMOVED CHARACTERS</span>
-      </div>
+  if (isLoading || items.length === 0) {
+    return null;
+  }
 
-      {isLoading ? (
-        <p className="muted">Loading…</p>
-      ) : items.length === 0 ? (
-        <p className="muted">No removed characters.</p>
-      ) : (
-        <table className="dense-matrix">
-          <thead>
-            <tr>
-              <th>Character</th>
-              <th>Realm</th>
-              <th>Removed</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.characterName}</td>
-                <td>{item.realmName}</td>
-                <td>{formatRemovedDate(item.removedAt)}</td>
-                <td>
-                  <button
-                    className="button button-secondary button-compact"
-                    disabled={restoringId === item.id}
-                    onClick={() => onRestore(item.id)}
-                    type="button"
-                  >
-                    {restoringId === item.id ? "Restoring…" : "Restore"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </section>
+  return (
+    <details className="advanced-disclosure removed-characters-disclosure">
+      <summary>{formatSummary(items.length)}</summary>
+
+      <p className="removed-characters-disclosure-hint">
+        Sync suppressed until restored
+      </p>
+
+      <ul className="removed-characters-list">
+        {items.map((item) => (
+          <li className="removed-characters-row" key={item.id}>
+            <span className="removed-characters-row-main">
+              <span className="removed-characters-identity">
+                {item.characterName} · {item.realmName}
+              </span>
+              <span className="removed-characters-date">
+                Removed {formatRemovedDate(item.removedAt)}
+              </span>
+            </span>
+            <button
+              className="button button-secondary button-compact"
+              disabled={restoringId === item.id}
+              onClick={() => onRestore(item.id)}
+              type="button"
+            >
+              {restoringId === item.id ? "Restoring…" : "Restore"}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
