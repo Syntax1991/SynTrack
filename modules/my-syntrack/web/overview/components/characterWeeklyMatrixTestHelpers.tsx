@@ -121,7 +121,7 @@ export function renderMatrix(
         characters={characters}
         onOpenTrackerManager={() => {}}
         onTrackerChanged={() => {}}
-        summaryText="2 characters · 1 attention · 0 ready · Reset in 6d 8h"
+        resetLabel="Reset in 6d 8h"
         trackerColumns={trackerColumns}
       />
     </MemoryRouter>

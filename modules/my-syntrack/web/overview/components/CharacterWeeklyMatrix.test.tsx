@@ -72,7 +72,7 @@ describe("CharacterWeeklyMatrix", () => {
 
     expect(
       screen.getByText(
-        "2 characters · 1 attention · 0 ready · Reset in 6d 8h"
+        "1 total · 1 gameplay · 0 professions · 0 attention · 0 ready · Reset in 6d 8h"
       )
     ).toBeInTheDocument();
   });

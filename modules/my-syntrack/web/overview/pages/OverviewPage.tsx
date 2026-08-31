@@ -8,7 +8,6 @@ import { AttentionStrip } from "../components/AttentionStrip";
 import { CharacterWeeklyMatrix } from "../components/CharacterWeeklyMatrix";
 import { useOverview } from "../hooks/useOverview";
 import { formatResetCountdown } from "../utils/resetContext";
-import { formatOverviewSummaryText } from "../utils/summaryText";
 
 /*
  * The Character Control Matrix is the primary product surface here -
@@ -79,8 +78,9 @@ export function OverviewPage() {
             onTrackerChanged={
               refetch
             }
-            summaryText={formatOverviewSummaryText(
-              overview.summary
+            resetLabel={formatResetCountdown(
+              overview.summary.period.endsAt,
+              new Date()
             )}
             trackerColumns={
               overview.trackerColumns

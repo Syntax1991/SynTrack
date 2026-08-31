@@ -3,6 +3,7 @@ import type {
   CharacterOverviewRow,
   TrackerDefinitionView
 } from "../types/overview.types";
+import type { OverviewMatrixColumn } from "../utils/overviewMatrixColumns";
 import { getClassColor } from "../utils/classColors";
 import {
   formatEmbellishmentToken,
@@ -45,28 +46,23 @@ function NextActionCell({
   return <span className="overview-next-action ready">✓</span>;
 }
 
-function professionSetupTitle(
-  state: CharacterOverviewRow
-): string {
-  const lines = state.professionSetup.professions.map(
-    (profession) => {
-      const treasure =
-        profession.treasures.applicableTotal === 0
-          ? "—"
-          : `${profession.treasures.completeCount}/${profession.treasures.applicableTotal}`;
-      const dataOk =
-        profession.dataStatus === "TRACKED" ? "✓" : "!";
-      const treasureOk =
-        profession.treasures.incompleteCount > 0
-          ? "!"
-          : profession.treasures.unknownCount > 0
-            ? "?"
-            : profession.treasures.applicableTotal > 0
-              ? "✓"
-              : "—";
-      return `${profession.name}\n  Data ${dataOk}\n  Treasures ${treasure} ${treasureOk}`;
-    }
-  );
+function professionSetupTitle(state: CharacterOverviewRow): string {
+  const lines = state.professionSetup.professions.map((profession) => {
+    const treasure =
+      profession.treasures.applicableTotal === 0
+        ? "—"
+        : `${profession.treasures.completeCount}/${profession.treasures.applicableTotal}`;
+    const dataOk = profession.dataStatus === "TRACKED" ? "✓" : "!";
+    const treasureOk =
+      profession.treasures.incompleteCount > 0
+        ? "!"
+        : profession.treasures.unknownCount > 0
+          ? "?"
+          : profession.treasures.applicableTotal > 0
+            ? "✓"
+            : "—";
+    return `${profession.name}\n  Data ${dataOk}\n  Treasures ${treasure} ${treasureOk}`;
+  });
 
   return lines.length > 0
     ? `Profession setup\n\n${lines.join("\n\n")}`
@@ -76,126 +72,144 @@ function professionSetupTitle(
 export function CharacterMatrixRow({
   state,
   trackerColumns,
+  visibleColumns,
   onTrackerChanged
 }: {
   state: CharacterOverviewRow;
   trackerColumns: TrackerDefinitionView[];
+  visibleColumns: OverviewMatrixColumn[];
   onTrackerChanged: () => void;
 }) {
+  const show = (column: OverviewMatrixColumn) =>
+    visibleColumns.includes(column);
+
   const trackerStateById = new Map(
-    state.trackers.map((entry) => [
-      entry.trackerDefinitionId,
-      entry
-    ])
+    state.trackers.map((entry) => [entry.trackerDefinitionId, entry])
   );
 
   const weeklyToken = formatWeeklySummaryToken(state.weeklySummary);
-  const professionToken = formatProfessionSetupToken(
-    state.professionSetup
-  );
+  const professionToken = formatProfessionSetupToken(state.professionSetup);
 
   return (
     <tr>
-      <td>
-        <div className="overview-character-identity">
-          <Link
-            className="matrix-character-link"
-            style={{
-              color: getClassColor(state.character.className)
-            }}
-            to={`/characters/${state.character.id}`}
-          >
-            {state.character.name}
-          </Link>
+      {show("character") && (
+        <td>
+          <div className="overview-character-identity">
+            <Link
+              className="matrix-character-link"
+              style={{
+                color: getClassColor(state.character.className)
+              }}
+              to={`/characters/${state.character.id}`}
+            >
+              {state.character.name}
+            </Link>
+            <span>
+              {state.character.className}
+              {state.tags.length > 0 &&
+                ` · ${state.tags.map((tag) => tag.name).join(", ")}`}
+            </span>
+          </div>
+        </td>
+      )}
 
-          <span>
-            {state.character.className}
-            {state.tags.length > 0 &&
-              ` · ${state.tags.map((tag) => tag.name).join(", ")}`}
-          </span>
-        </div>
-      </td>
+      {show("ilvl") && (
+        <td className="overview-col-narrow">
+          <StatusToken token={formatItemLevelToken(state.gear)} />
+        </td>
+      )}
 
-      <td className="overview-col-narrow">
-        <StatusToken token={formatItemLevelToken(state.gear)} />
-      </td>
+      {show("set") && (
+        <td className="overview-col-narrow">
+          <StatusToken token={formatTierToken(state.tier)} />
+        </td>
+      )}
 
-      <td className="overview-col-narrow">
-        <StatusToken token={formatTierToken(state.tier)} />
-      </td>
-
-      <td className="overview-col-narrow">
-        <StatusToken
-          token={formatEmbellishmentToken(state.embellishments)}
-        />
-      </td>
-
-      <td className="overview-col-narrow">
-        <Link
-          className="overview-token-link"
-          title={weeklyToken.title}
-          to="/weekly-checklist"
-        >
-          <StatusToken token={weeklyToken} />
-        </Link>
-      </td>
-
-      {trackerColumns.map((definition) => (
-        <td
-          className={
-            definition.valueType === "TEXT"
-              ? "overview-col-medium"
-              : "overview-col-narrow"
-          }
-          key={definition.id}
-        >
-          <TrackerCell
-            characterId={state.character.id}
-            definition={definition}
-            onChanged={onTrackerChanged}
-            trackerState={trackerStateById.get(definition.id)}
+      {show("emb") && (
+        <td className="overview-col-narrow">
+          <StatusToken
+            token={formatEmbellishmentToken(state.embellishments)}
           />
         </td>
-      ))}
+      )}
 
-      <td className="overview-col-narrow">
-        <Link
-          className="overview-token-link"
-          title={professionSetupTitle(state)}
-          to={`/characters/${state.character.id}`}
-        >
+      {show("weeklies") && (
+        <td className="overview-col-narrow">
+          <Link
+            className="overview-token-link"
+            title={weeklyToken.title}
+            to="/weekly-checklist"
+          >
+            <StatusToken token={weeklyToken} />
+          </Link>
+        </td>
+      )}
+
+      {show("trackers") &&
+        trackerColumns.map((definition) => (
+          <td
+            className={
+              definition.valueType === "TEXT"
+                ? "overview-col-medium"
+                : "overview-col-narrow"
+            }
+            key={definition.id}
+          >
+            <TrackerCell
+              characterId={state.character.id}
+              definition={definition}
+              onChanged={onTrackerChanged}
+              trackerState={trackerStateById.get(definition.id)}
+            />
+          </td>
+        ))}
+
+      {show("prof") && (
+        <td className="overview-col-narrow">
+          <Link
+            className="overview-token-link"
+            title={professionSetupTitle(state)}
+            to={`/characters/${state.character.id}`}
+          >
+            <StatusToken
+              token={{
+                ...professionToken,
+                title: professionSetupTitle(state)
+              }}
+            />
+          </Link>
+        </td>
+      )}
+
+      {show("spark") && (
+        <td className="overview-col-narrow">
           <StatusToken
-            token={{
-              ...professionToken,
-              title: professionSetupTitle(state)
-            }}
+            token={formatResourceCountToken(
+              state.resources,
+              "tidal-spark-dust",
+              "Spark"
+            )}
           />
-        </Link>
-      </td>
+        </td>
+      )}
 
-      <td className="overview-col-narrow">
-        <StatusToken
-          token={formatResourceCountToken(
-            state.resources,
-            "tidal-spark-dust",
-            "Spark"
-          )}
-        />
-      </td>
+      {show("cata") && (
+        <td className="overview-col-narrow">
+          <StatusToken
+            token={formatResourceCountToken(
+              state.resources,
+              "venomblight-manaflux",
+              "Cata"
+            )}
+          />
+        </td>
+      )}
 
-      <td className="overview-col-narrow">
-        <StatusToken
-          token={formatResourceCountToken(
-            state.resources,
-            "venomblight-manaflux",
-            "Cata"
-          )}
-        />
-      </td>
-
-      <td className="overview-col-action">
-        <NextActionCell state={state} />
-      </td>
+      {show("action") && (
+        <td className="overview-col-action">
+          <NextActionCell state={state} />
+        </td>
+      )}
     </tr>
   );
 }

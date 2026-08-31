@@ -33,8 +33,8 @@ export function WeeklyChecklistPage() {
           <p className="eyebrow">ROSTER REQUIRED</p>
           <h2>Add your first character</h2>
           <p>
-            Weekly progress is tracked per character. Add or sync a
-            character to begin.
+            Weekly progress is tracked per character. Add or sync a character
+            to begin.
           </p>
           <Link className="button button-primary" to="/characters">
             Open character roster
@@ -42,14 +42,6 @@ export function WeeklyChecklistPage() {
         </section>
       ) : (
         <section className="panel matrix-panel">
-          <div className="matrix-toolbar">
-            <span className="matrix-summary">
-              {checklist.characters.length} characters · Quest / Treatise /
-              Drops automatic · Vault / M+ / Raid / Delves from this-week
-              capture
-            </span>
-          </div>
-
           <WeeklyChecklistMatrix characters={checklist.characters} />
         </section>
       )}

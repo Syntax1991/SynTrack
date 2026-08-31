@@ -101,7 +101,7 @@ describe("WeeklyChecklistPage", () => {
 
     expect(
       screen.getByText(
-        /characters · Quest \/ Treatise \/ Drops automatic/
+        /total · .* gameplay · .* professions · Quest \/ Treatise \/ Drops automatic/
       )
     ).toBeInTheDocument();
 

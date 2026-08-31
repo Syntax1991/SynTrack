@@ -80,4 +80,109 @@ describe("useMatrixFilters", () => {
       )
     ).toEqual(["char-1"]);
   });
+
+  it("composes roster scope with search and preserves sort selection", () => {
+    const dual = buildCharacter({
+      character: {
+        id: "char-1",
+        name: "Synblast",
+        realm: "Antonidas",
+        region: "eu",
+        className: "Shaman",
+        level: 80
+      },
+      trackingProfile: "FULL",
+      professionSetup: {
+        state: "READY",
+        professions: [
+          {
+            professionId: "alchemy",
+            key: "alchemy",
+            name: "Alchemy",
+            dataStatus: "TRACKED",
+            treasures: {
+              completeCount: 8,
+              incompleteCount: 0,
+              unknownCount: 0,
+              applicableTotal: 8
+            }
+          }
+        ],
+        dataIssues: []
+      },
+      gear: {
+        state: "READY",
+        readinessPercent: 100,
+        trackedSlots: 16,
+        totalRelevantSlots: 16,
+        missingEnchantCount: 0,
+        emptySocketCount: 0,
+        itemLevel: 700
+      }
+    });
+
+    const professionOnly = buildCharacter({
+      character: {
+        id: "char-2",
+        name: "Synbloom",
+        realm: "Antonidas",
+        region: "eu",
+        className: "Druid",
+        level: 80
+      },
+      trackingProfile: "PROFESSION",
+      professionSetup: {
+        state: "READY",
+        professions: [
+          {
+            professionId: "herbalism",
+            key: "herbalism",
+            name: "Herbalism",
+            dataStatus: "TRACKED",
+            treasures: {
+              completeCount: 8,
+              incompleteCount: 0,
+              unknownCount: 0,
+              applicableTotal: 8
+            }
+          }
+        ],
+        dataIssues: []
+      },
+      gear: {
+        state: "READY",
+        readinessPercent: 100,
+        trackedSlots: 16,
+        totalRelevantSlots: 16,
+        missingEnchantCount: 0,
+        emptySocketCount: 0,
+        itemLevel: 680
+      }
+    });
+
+    const { result } = renderHook(() =>
+      useMatrixFilters([dual, professionOnly])
+    );
+
+    act(() => {
+      result.current.setSortBy("item-level");
+      result.current.setListView("professions");
+      result.current.setSearchTerm("Syn");
+    });
+
+    expect(result.current.sortBy).toBe("item-level");
+    expect(
+      result.current.visibleCharacters.map((entry) => entry.character.id)
+    ).toEqual(["char-1", "char-2"]);
+
+    act(() => {
+      result.current.setListView("gameplay");
+    });
+
+    expect(result.current.sortBy).toBe("item-level");
+    expect(result.current.searchTerm).toBe("Syn");
+    expect(
+      result.current.visibleCharacters.map((entry) => entry.character.id)
+    ).toEqual(["char-1"]);
+  });
 });

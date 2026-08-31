@@ -305,7 +305,7 @@ describe("OverviewPage", () => {
 
       expect(
         screen.getByText(
-          "1 characters · 1 attention · 0 ready · Reset in 6d 8h"
+          "1 total · 1 gameplay · 0 professions · 1 attention · 0 ready · Reset in 6d 8h"
         )
       ).toBeInTheDocument();
     }
