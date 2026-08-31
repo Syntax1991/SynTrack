@@ -1,55 +1,127 @@
-import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
+import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
 import { getWeeklyPeriod } from "../shared/weekly-period.js";
+import { deriveWeeklyGameplayDetail } from "../weekly-gameplay/weekly-gameplay.detail.js";
+import { WeeklyGameplayRepository } from "../weekly-gameplay/weekly-gameplay.repository.js";
+import type { WeeklyGameplayDomainView } from "../weekly-gameplay/weekly-gameplay.types.js";
 import { VaultMythicPlusRepository } from "./vault-mythic-plus.repository.js";
 import type {
-  MythicPlusRunInput,
-  MythicPlusVaultSlot
+  VaultDomainProgress,
+  VaultGameplayCharacter,
+  VaultMythicPlusResponse
 } from "./vault-mythic-plus.types.js";
 
-const vaultThresholds = [1, 4, 8];
+function unknownDomain(label: string): WeeklyGameplayDomainView {
+  return {
+    state: "UNKNOWN",
+    completeCount: 0,
+    applicableTotal: 0,
+    unknownCount: 1,
+    label,
+    rawCompleteCount: 0,
+    knownUnlockedSlots: 0,
+    maxSlots: 0,
+    hasUnknownCategories: false,
+    unknownCategoryCount: 0,
+    unresolvedCategoryLabels: []
+  };
+}
 
-function getVaultSlots(
-  keyLevels: number[]
-): MythicPlusVaultSlot[] {
-  return vaultThresholds.map(
-    (threshold) => ({
-      threshold,
-      unlocked:
-        keyLevels.length >= threshold,
-      keyLevel:
-        keyLevels[threshold - 1] ?? null
-    })
-  );
+function toProgress(view: WeeklyGameplayDomainView): VaultDomainProgress {
+  return {
+    state: view.state,
+    completeCount: view.completeCount,
+    applicableTotal: view.applicableTotal,
+    knownUnlockedSlots: view.knownUnlockedSlots,
+    maxSlots: view.maxSlots,
+    hasUnknownCategories: view.hasUnknownCategories,
+    unresolvedCategoryLabels: view.unresolvedCategoryLabels ?? []
+  };
+}
+
+function emptySlots() {
+  return [1, 2, 3].map((slot) => ({
+    slot: slot as 1 | 2 | 3,
+    state: "UNKNOWN" as const,
+    threshold: null,
+    progress: null,
+    level: null,
+    rewardLabel: null
+  }));
+}
+
+function unresolvedCharacter(
+  character: {
+    id: string;
+    name: string;
+    realm: string;
+    region: string;
+    className: string;
+    level: number;
+  },
+  trackingProfile: ReturnType<typeof resolveCharacterTrackingProfile>
+): VaultGameplayCharacter {
+  return {
+    id: character.id,
+    name: character.name,
+    realm: character.realm,
+    region: character.region,
+    className: character.className,
+    level: character.level,
+    trackingProfile,
+    vault: toProgress(unknownDomain("Vault")),
+    mythicPlus: toProgress(unknownDomain("M+")),
+    raid: toProgress(unknownDomain("Raid")),
+    delves: toProgress(unknownDomain("Delves")),
+    mythicPlusSlots: emptySlots(),
+    raidSlots: emptySlots(),
+    worldSlots: emptySlots(),
+    highestKeyLevel: null,
+    mythicPlusRunCount: null,
+    mythicPlusRuns: [],
+    action: "Not captured this week",
+    vaultCaptured: false,
+    vaultCurrent: false
+  };
 }
 
 export class VaultMythicPlusService {
-  constructor(
-    private readonly repository:
-      VaultMythicPlusRepository
-  ) {}
+  private readonly weeklyGameplayRepository = new WeeklyGameplayRepository();
 
-  async getOverview() {
+  constructor(private readonly repository: VaultMythicPlusRepository) {}
+
+  async getOverview(): Promise<VaultMythicPlusResponse> {
     const period = getWeeklyPeriod();
-    const characters =
-      await this.repository.findCharacters(
-        period.key
-      );
+    const [characters, snapshots] = await Promise.all([
+      this.repository.findCharactersWithTags(),
+      this.weeklyGameplayRepository.findSnapshotsForPeriod(period.key)
+    ]);
 
-    const characterItems = characters.map(
-      (character) => {
-        const runs =
-          character.weeklyMythicRuns.map(
-            (run) => ({
-              id: run.id,
-              dungeonName: run.dungeonName,
-              keyLevel: run.keyLevel,
-              completedAt:
-                run.completedAt.toISOString()
-            })
-          );
-        const vaultSlots = getVaultSlots(
-          runs.map((run) => run.keyLevel)
-        );
+    const detailByCharacterId = new Map(
+      snapshots.map((snapshot) => [
+        snapshot.characterId,
+        deriveWeeklyGameplayDetail(snapshot)
+      ])
+    );
+
+    const gameplayCharacters = characters
+      .map((character) => {
+        const tags = character.tagAssignments.map((assignment) => ({
+          id: assignment.tag.id,
+          name: assignment.tag.name,
+          color: assignment.tag.color
+        }));
+        const trackingProfile = resolveCharacterTrackingProfile(tags);
+
+        if (!isWeeklyGameplayEnabled(trackingProfile)) {
+          return null;
+        }
+
+        const detail = detailByCharacterId.get(character.id);
+
+        if (!detail) {
+          return unresolvedCharacter(character, trackingProfile);
+        }
 
         return {
           id: character.id,
@@ -58,88 +130,43 @@ export class VaultMythicPlusService {
           region: character.region,
           className: character.className,
           level: character.level,
-          runs,
-          vaultSlots,
-          highestKeyLevel:
-            runs[0]?.keyLevel ?? null
-        };
-      }
-    );
+          trackingProfile,
+          vault: toProgress(detail.gameplay.vault),
+          mythicPlus: toProgress(detail.gameplay.mythicPlus),
+          raid: toProgress(detail.gameplay.raid),
+          delves: toProgress(detail.gameplay.delves),
+          mythicPlusSlots: detail.mythicPlusSlots,
+          raidSlots: detail.raidSlots,
+          worldSlots: detail.worldSlots,
+          highestKeyLevel: detail.highestKeyLevel,
+          mythicPlusRunCount: detail.mythicPlusRunCount,
+          mythicPlusRuns: detail.mythicPlusRuns,
+          action: detail.action,
+          vaultCaptured: detail.vaultCaptured,
+          vaultCurrent: detail.vaultCurrent
+        } satisfies VaultGameplayCharacter;
+      })
+      .filter((character): character is VaultGameplayCharacter => character !== null);
+
+    const attentionCount = gameplayCharacters.filter(
+      (character) =>
+        character.vault.state === "ATTENTION" ||
+        character.vault.state === "IN_PROGRESS" ||
+        character.action !== "Vault complete"
+    ).length;
+
+    const readyCount = gameplayCharacters.filter(
+      (character) => character.action === "Vault complete"
+    ).length;
 
     return {
       period,
-      thresholds: vaultThresholds,
-      characters: characterItems,
+      characters: gameplayCharacters,
       summary: {
-        runCount: characterItems.reduce(
-          (total, character) =>
-            total + character.runs.length,
-          0
-        ),
-        unlockedSlotCount:
-          characterItems.reduce(
-            (total, character) =>
-              total +
-              character.vaultSlots.filter(
-                (slot) => slot.unlocked
-              ).length,
-            0
-          ),
-        charactersWithVault:
-          characterItems.filter(
-            (character) =>
-              character.vaultSlots[0]
-                ?.unlocked === true
-          ).length
+        characterCount: gameplayCharacters.length,
+        attentionCount,
+        readyCount
       }
     };
-  }
-
-  async addRun(
-    characterId: string,
-    input: MythicPlusRunInput
-  ) {
-    const character =
-      await this.repository
-        .findCharacterById(characterId);
-
-    if (!character) {
-      throw new AppError(
-        404,
-        "Character not found."
-      );
-    }
-
-    const period = getWeeklyPeriod();
-
-    await this.repository.createRun(
-      characterId,
-      period.key,
-      input
-    );
-
-    return this.getOverview();
-  }
-
-  async deleteRun(runId: string) {
-    const run =
-      await this.repository.findRunById(
-        runId
-      );
-    const period = getWeeklyPeriod();
-
-    if (
-      !run ||
-      run.periodKey !== period.key
-    ) {
-      throw new AppError(
-        404,
-        "Current Mythic+ run not found."
-      );
-    }
-
-    await this.repository.deleteRun(runId);
-
-    return this.getOverview();
   }
 }

@@ -23,6 +23,7 @@ export type WeeklyGameplayCharacterView = {
   mythicPlusAction: string | null;
   raidAction: string | null;
   delvesAction: string | null;
+  highestKeyLevel: number | null;
 };
 
 export type WeeklyGameplaySnapshotInput = {
@@ -46,6 +47,8 @@ export type WeeklyGameplaySnapshotInput = {
     keyLevel: number;
     completed: boolean | null;
     thisWeek: boolean | null;
+    mapChallengeModeId?: number | null;
+    durationSec?: number | null;
   }>;
   raidLockouts: Array<{
     instanceName: string;

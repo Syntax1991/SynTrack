@@ -1,100 +1,97 @@
-import type { CellToken } from "../../../../../apps/web/src/shared/types/cellToken";
 import type {
-  MythicPlusVaultSlot,
-  VaultCharacter
+  VaultDomainProgress,
+  VaultGameplayCharacter,
+  VaultSlotDetail
 } from "../types/vaultMythicPlus.types";
 
-function formatKeyLevel(
-  keyLevel: number
-): string {
-  return keyLevel === 0
-    ? "M0"
-    : `+${keyLevel}`;
-}
-
-/*
- * No logged run data cannot distinguish "hasn't run a dungeon yet this
- * week" from "doesn't use this feature at all" - so zero runs renders
- * every slot as UNKNOWN ("?"), never a fake "0 done"/countdown. The
- * 1/4/8 threshold math itself (slot.threshold/unlocked/keyLevel) is
- * untouched and comes straight from the server.
- */
-export function formatVaultSlotToken(
-  character: VaultCharacter,
-  slot: MythicPlusVaultSlot
-): CellToken {
-  if (character.runs.length === 0) {
+export function formatDomainFraction(domain: VaultDomainProgress): {
+  symbol: string;
+  tone: "ready" | "attention" | "unknown" | "not-tracked";
+  title: string;
+} {
+  if (domain.state === "UNKNOWN" || domain.applicableTotal <= 0) {
     return {
       symbol: "?",
       tone: "unknown",
-      title:
-        "No Vault run history logged for this period"
+      title: "Progress unresolved"
     };
   }
 
-  if (slot.unlocked) {
-    return {
-      symbol: `✓ ${formatKeyLevel(
-        slot.keyLevel ?? 0
-      )}`,
-      tone: "ready",
-      title: `Unlocked with ${slot.threshold} ${slot.threshold === 1 ? "run" : "runs"} logged`
-    };
-  }
-
-  const remaining = Math.max(
-    0,
-    slot.threshold -
-      character.runs.length
-  );
+  const symbol = `${domain.completeCount}/${domain.applicableTotal}`;
 
   return {
-    symbol: `${remaining} more`,
-    tone: "progress",
-    title: `Unlocks at ${slot.threshold} ${slot.threshold === 1 ? "run" : "runs"} (${remaining} more needed)`
+    symbol,
+    tone: domain.state === "READY" ? "ready" : "attention",
+    title: symbol
   };
 }
 
-export function formatRunsLoggedToken(
-  character: VaultCharacter
-): CellToken {
-  if (character.runs.length === 0) {
-    return {
-      symbol: "0",
-      tone: "not-tracked",
-      title:
-        "No runs logged this period"
-    };
-  }
-
-  return {
-    symbol: String(
-      character.runs.length
-    ),
-    tone: "progress",
-    title: `${character.runs.length} ${character.runs.length === 1 ? "run" : "runs"} logged this period`
-  };
+/** Progress fraction for selected-character summary; never collapses UNKNOWN to 0. */
+export function formatDomainProgressText(domain: VaultDomainProgress): string {
+  return formatDomainFraction(domain).symbol;
 }
 
-export function formatHighestKeyToken(
-  character: VaultCharacter
-): CellToken {
-  if (
-    character.highestKeyLevel === null
-  ) {
+/** Slot unlock fraction for selected-character summary; UNKNOWN stays "?". */
+export function formatDomainSlotUnlockText(domain: VaultDomainProgress): string {
+  if (domain.state === "UNKNOWN" || domain.maxSlots <= 0) {
+    return "?";
+  }
+
+  return `${domain.knownUnlockedSlots}/${domain.maxSlots}`;
+}
+
+export function formatHighestKeyToken(character: VaultGameplayCharacter): {
+  symbol: string;
+  tone: "ready" | "attention" | "unknown" | "not-tracked";
+  title: string;
+} {
+  if (character.highestKeyLevel === null) {
     return {
       symbol: "—",
       tone: "not-tracked",
-      title:
-        "No runs logged this period"
+      title: "No automatic M+ history this week"
     };
   }
 
   return {
-    symbol: formatKeyLevel(
-      character.highestKeyLevel
-    ),
+    symbol: `+${character.highestKeyLevel}`,
     tone: "ready",
-    title: `Highest logged key this period: ${formatKeyLevel(character.highestKeyLevel)}`
+    title: `Highest completed key +${character.highestKeyLevel}`
+  };
+}
+
+export function formatSlotToken(slot: VaultSlotDetail): {
+  symbol: string;
+  tone: "ready" | "attention" | "unknown" | "not-tracked";
+  title: string;
+} {
+  if (slot.state === "UNKNOWN") {
+    return {
+      symbol: "?",
+      tone: "unknown",
+      title: "Slot unresolved"
+    };
+  }
+
+  if (slot.state === "UNLOCKED") {
+    return {
+      symbol: slot.rewardLabel ?? "Unlocked",
+      tone: "ready",
+      title: slot.rewardLabel
+        ? `Unlocked · ${slot.rewardLabel}`
+        : `Unlocked · ${slot.progress}/${slot.threshold}`
+    };
+  }
+
+  return {
+    symbol:
+      slot.progress !== null && slot.threshold !== null
+        ? `${slot.progress}/${slot.threshold}`
+        : "Locked",
+    tone: "attention",
+    title:
+      slot.progress !== null && slot.threshold !== null
+        ? `Locked · ${slot.progress}/${slot.threshold}`
+        : "Locked"
   };
 }

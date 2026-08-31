@@ -9,6 +9,7 @@ import {
   resolveVaultCategory,
   type VaultCategoryResult
 } from "./weekly-gameplay.vault.js";
+import { highestCompletedKeyLevel } from "./weekly-gameplay.highest.js";
 
 function unknownDomain(label: string): WeeklyGameplayDomainView {
   return {
@@ -121,6 +122,7 @@ export function deriveWeeklyGameplay(
         : nextUnmetVaultSlotAction(worldCategory.activities, {
             unitSingular: "World activity",
             unitPlural: "World activities"
-          })
+          }),
+    highestKeyLevel: highestCompletedKeyLevel(snapshot)
   };
 }
