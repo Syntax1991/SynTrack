@@ -1,5 +1,6 @@
 import type { ProfessionWeeklyOverviewState } from "../../overview/types/professionWeekly.types";
 import type { CharacterTrackingProfile } from "../../../api/character-tracking/character-tracking-profile.js";
+import type { WeeklyGameplayCharacterView } from "../../../api/weekly-gameplay/weekly-gameplay.types.js";
 
 export type WeeklyChecklistPeriod = {
   key: string;
@@ -25,6 +26,7 @@ export type WeeklyChecklistCharacter = {
   trackingProfile: CharacterTrackingProfile;
   completedTaskKeys: string[];
   professionWeekly: ProfessionWeeklyOverviewState;
+  weeklyGameplay: WeeklyGameplayCharacterView | null;
 };
 
 export type {

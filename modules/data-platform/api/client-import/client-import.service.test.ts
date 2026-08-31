@@ -32,7 +32,8 @@ const fakeImportResult: AddonImportResult =
       gearSlots: 0,
       resourceSnapshots: 0,
       professionWeeklySnapshots: 0,
-      professionKnowledgeTreasureSnapshots: 0
+      professionKnowledgeTreasureSnapshots: 0,
+      weeklyGameplaySnapshots: 0
     }
   };
 

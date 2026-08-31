@@ -18,4 +18,6 @@ GearEvidence.lua
 Gear.lua
 ResourceCatalog.lua
 Resources.lua
+WeeklyActivityVault.lua
+WeeklyActivity.lua
 Events.lua

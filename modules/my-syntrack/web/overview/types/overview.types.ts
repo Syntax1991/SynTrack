@@ -57,7 +57,7 @@ export type VaultOverviewState = {
   unlockedSlots: number;
   slotsTotal: number;
   highestKeyLevel: number | null;
-  source: "MANUAL_LOG";
+  source: "MANUAL_LOG" | "ADDON";
 };
 
 export type ProfessionOverviewState = {

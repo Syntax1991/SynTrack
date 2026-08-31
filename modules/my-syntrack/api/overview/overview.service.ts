@@ -23,6 +23,8 @@ import { TagRepository } from "../tags/tag.repository.js";
 import { TagService } from "../tags/tag.service.js";
 import { DataHealthRepository } from "../data-health/data-health.repository.js";
 import { DataHealthService } from "../data-health/data-health.service.js";
+import { WeeklyGameplayRepository } from "../weekly-gameplay/weekly-gameplay.repository.js";
+import { WeeklyGameplayService } from "../weekly-gameplay/weekly-gameplay.service.js";
 import {
   attachCharacterExtras,
   buildTagsByCharacterId
@@ -95,6 +97,10 @@ export class OverviewService {
     new DataHealthRepository()
   );
 
+  private readonly weeklyGameplayService = new WeeklyGameplayService(
+    new WeeklyGameplayRepository()
+  );
+
   async getOverview(): Promise<OverviewResponse> {
     const activeScope =
       await this.trackerScopeProfileService.getActive();
@@ -111,7 +117,8 @@ export class OverviewService {
       seasonalTrackerDefinitions,
       globalTrackerDefinitions,
       tags,
-      tagAssignments
+      tagAssignments,
+      weeklyGameplayOverview
     ] = await Promise.all([
       this.weeklyChecklistService.getChecklist(),
       this.vaultMythicPlusService.getOverview(),
@@ -125,7 +132,8 @@ export class OverviewService {
         : Promise.resolve<TrackerDefinitionView[]>([]),
       this.trackerDefinitionService.listByScope(GLOBAL_TRACKER_SCOPE_KEY),
       this.tagService.list(),
-      this.tagService.listAllAssignments()
+      this.tagService.listAllAssignments(),
+      this.weeklyGameplayService.getOverview()
     ]);
 
     const trackerColumns = combinePinnedTrackerColumns(
@@ -183,7 +191,13 @@ export class OverviewService {
           professionKnowledgeTreasureOverview.characters
         ),
       trackerStatesByCharacterId,
-      tagsByCharacterId
+      tagsByCharacterId,
+      weeklyGameplayByCharacterId: new Map(
+        weeklyGameplayOverview.characters.map((character) => [
+          character.characterId,
+          character
+        ])
+      )
     });
 
     const healthByCharacterId =

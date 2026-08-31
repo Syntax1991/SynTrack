@@ -3,6 +3,7 @@ import { normalizeGearSnapshot } from "./addon-import.gear.normalizer.js";
 import { normalizeResourceSnapshot } from "./addon-import.resource.normalizer.js";
 import { normalizeProfessionKnowledgeTreasureSnapshot } from "./addon-import.profession-knowledge-treasure.normalizer.js";
 import { normalizeProfessionWeeklySnapshot } from "./addon-import.profession-weekly.normalizer.js";
+import { normalizeWeeklyActivitySnapshot } from "./addon-import.weekly-activity.normalizer.js";
 import type {
   AddonCharacter,
   AddonExpansion,
@@ -202,6 +203,10 @@ export function normalizeCharacter(
       character.professionKnowledgeTreasures
     );
 
+  const weeklyActivity = normalizeWeeklyActivitySnapshot(
+    modules?.["weekly-activity"]
+  );
+
   return {
     key,
 
@@ -251,6 +256,7 @@ export function normalizeCharacter(
     gear,
     resources,
     professionWeekly,
-    professionKnowledgeTreasures
+    professionKnowledgeTreasures,
+    weeklyActivity
   };
 }

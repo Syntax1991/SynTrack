@@ -249,4 +249,47 @@ describe("resolveWeeklySummaryOverviewState", () => {
     expect(weeklySummary.applicableKnown).not.toBe(14);
     expect(weeklySummary.applicableKnown).toBe(10);
   });
+
+  it("does not add known M+/Raid/Delves units into the profession fraction", () => {
+    const { weeklySummary } = resolveWeeklySummaryOverviewState({
+      characterId: "char-e",
+      characterName: "Synblast",
+      trackingProfile: "FULL",
+      vault: {
+        state: "ATTENTION",
+        unlockedSlots: 2,
+        slotsTotal: 3,
+        highestKeyLevel: null,
+        source: "ADDON"
+      },
+      mythicPlusState: "ATTENTION",
+      raidState: "ATTENTION",
+      delvesState: "READY",
+      professionWeekly: professionWeekly({
+        quest: {
+          completeCount: 2,
+          incompleteCount: 0,
+          unknownCount: 0,
+          applicableTotal: 2
+        },
+        treatise: {
+          completeCount: 2,
+          incompleteCount: 0,
+          unknownCount: 0,
+          applicableTotal: 2
+        },
+        drops: {
+          completeCount: 0,
+          incompleteCount: 4,
+          unknownCount: 0,
+          applicableTotal: 4
+        }
+      })
+    });
+
+    expect(weeklySummary.completedKnown).toBe(4);
+    expect(weeklySummary.applicableKnown).toBe(8);
+    expect(weeklySummary.unknownCount).toBe(0);
+    expect(weeklySummary.state).toBe("ATTENTION");
+  });
 });

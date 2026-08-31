@@ -45,7 +45,8 @@ export function WeeklyChecklistPage() {
           <div className="matrix-toolbar">
             <span className="matrix-summary">
               {checklist.characters.length} characters · Quest / Treatise /
-              Drops automatic · Vault / M+ / Raid / Delves not tracked yet
+              Drops automatic · Vault / M+ / Raid / Delves from this-week
+              capture
             </span>
           </div>
 

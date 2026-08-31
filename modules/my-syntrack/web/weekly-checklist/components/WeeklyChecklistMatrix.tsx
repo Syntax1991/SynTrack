@@ -7,24 +7,7 @@ import type {
   ProfessionWeeklyAggregate,
   WeeklyChecklistCharacter
 } from "../types/weeklyChecklist.types";
-
-const disabledActivityToken = {
-  symbol: "—",
-  tone: "not-tracked" as const,
-  title: "Not applicable for this character profile"
-};
-
-const unknownActivityToken = {
-  symbol: "?",
-  tone: "unknown" as const,
-  title: "Not automatically tracked yet"
-};
-
-function gameplayActivityToken(character: WeeklyChecklistCharacter) {
-  return isWeeklyGameplayEnabled(character.trackingProfile)
-    ? unknownActivityToken
-    : disabledActivityToken;
-}
+import { gameplayDomainToken } from "./weeklyChecklistTokens";
 
 function aggregateToken(
   aggregate: ProfessionWeeklyAggregate,
@@ -98,9 +81,23 @@ function progressToken(character: WeeklyChecklistCharacter) {
     incomplete += aggregate.incompleteCount;
   }
 
-  // Vault/M+/Raid/Delves remain UNKNOWN placeholders for gameplay-enabled chars.
   if (isWeeklyGameplayEnabled(character.trackingProfile)) {
-    unknownCount += 4;
+    const gameplay = character.weeklyGameplay;
+
+    if (!gameplay) {
+      unknownCount += 4;
+    } else {
+      for (const domain of [
+        gameplay.vault,
+        gameplay.mythicPlus,
+        gameplay.raid,
+        gameplay.delves
+      ]) {
+        if (domain.state === "UNKNOWN") {
+          unknownCount += 1;
+        }
+      }
+    }
   }
 
   if (applicableKnown === 0 && incomplete === 0) {
@@ -149,7 +146,16 @@ function weeklyActionLabel(character: WeeklyChecklistCharacter): string | null {
     }
   }
 
-  return null;
+  if (!isWeeklyGameplayEnabled(character.trackingProfile)) {
+    return null;
+  }
+
+  return (
+    character.weeklyGameplay?.mythicPlusAction ??
+    character.weeklyGameplay?.raidAction ??
+    character.weeklyGameplay?.delvesAction ??
+    null
+  );
 }
 
 type WeeklyChecklistMatrixProps = {
@@ -178,18 +184,10 @@ export function WeeklyChecklistMatrix({
         <thead>
           <tr>
             <th>Character</th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              Vault
-            </th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              M+
-            </th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              Raid
-            </th>
-            <th className="matrix-col-narrow" title="Not automatically tracked yet">
-              Delves
-            </th>
+            <th className="matrix-col-narrow">Vault</th>
+            <th className="matrix-col-narrow">M+</th>
+            <th className="matrix-col-narrow">Raid</th>
+            <th className="matrix-col-narrow">Delves</th>
             <th className="matrix-col-narrow">Quest</th>
             <th className="matrix-col-narrow">Treat.</th>
             <th className="matrix-col-narrow">Drops</th>
@@ -225,16 +223,24 @@ export function WeeklyChecklistMatrix({
                 </td>
 
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "vault")}
+                  />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "mythicPlus")}
+                  />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "raid")}
+                  />
                 </td>
                 <td className="matrix-col-narrow">
-                  <StatusToken token={gameplayActivityToken(character)} />
+                  <StatusToken
+                    token={gameplayDomainToken(character, "delves")}
+                  />
                 </td>
 
                 <td className="matrix-col-narrow">
