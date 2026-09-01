@@ -39,27 +39,12 @@ const mockChecklist: WeeklyChecklistResponse =
         trackingProfile: "FULL",
         weeklyGameplay: null,
         completedTaskKeys: [],
-        professionWeekly: {
-          state: "NOT_TRACKED",
-          quest: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          treatise: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          drops: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          professions: []
+        professionWeeklySummary: {
+          state: "NOT_APPLICABLE",
+          label: "—",
+          openProfessionCount: 0,
+          unknownProfessionCount: 0,
+          path: "/professions"
         }
       }
     ],
@@ -87,21 +72,21 @@ vi.mock(
 const { WeeklyChecklistPage } =
   await import("./WeeklyChecklistPage");
 
-function renderPage() {
+function renderPage(initialEntry = "/weekly-checklist") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <WeeklyChecklistPage />
     </MemoryRouter>
   );
 }
 
 describe("WeeklyChecklistPage", () => {
-  it("shows a compact Weeklies summary without KPI cards", () => {
+  it("shows a compact gameplay-first Weeklies summary", () => {
     renderPage();
 
     expect(
       screen.getByText(
-        /total · .* gameplay · .* professions · Quest \/ Treatise \/ Drops automatic/
+        /1 gameplay character · Vault \/ M\+ \/ Raid \/ Delves from this-week capture · Prof\. links to \/professions/
       )
     ).toBeInTheDocument();
 
@@ -110,7 +95,7 @@ describe("WeeklyChecklistPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders the account-wide Weeklies matrix directly", () => {
+  it("renders the gameplay Weeklies matrix directly", () => {
     renderPage();
 
     expect(
@@ -118,7 +103,16 @@ describe("WeeklyChecklistPage", () => {
     ).toBeGreaterThan(0);
 
     expect(screen.getByText("Vault")).toBeInTheDocument();
-    expect(screen.getByText("Quest")).toBeInTheDocument();
+    expect(screen.getByText("Prof.")).toBeInTheDocument();
+    expect(screen.queryByText("Quest")).not.toBeInTheDocument();
     expect(screen.queryByText("Complete all")).not.toBeInTheDocument();
+  });
+
+  it("falls back safely when legacy scope=professions is present", () => {
+    renderPage("/weekly-checklist?scope=professions");
+
+    expect(screen.getByText("Synspin")).toBeInTheDocument();
+    expect(screen.getByText("Vault")).toBeInTheDocument();
+    expect(screen.queryByText("Professions")).not.toBeInTheDocument();
   });
 });

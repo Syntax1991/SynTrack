@@ -1,44 +1,18 @@
-import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  characterListViewEmptyMessage,
-  formatCharacterListViewCount,
-  matchesCharacterListView,
-  resolveCharacterListViewFlags,
-  type CharacterListView
-} from "../../../api/character-tracking/character-list-view.js";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
-import { CharacterListViewSwitcher } from "../../shared/components/CharacterListViewSwitcher";
 import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
 import {
   WEEKLIES_COLUMN_LABELS,
-  weekliesColumnsForView,
+  weekliesColumns,
   type WeekliesMatrixColumn
 } from "../utils/weekliesMatrixColumns";
 import {
-  aggregateToken,
   gameplayDomainToken,
+  professionSummaryToken,
   progressToken,
   weeklyActionLabel
 } from "./weeklyChecklistCells";
-
-function weekliesFlags(character: WeeklyChecklistCharacter) {
-  return resolveCharacterListViewFlags({
-    trackingProfile: character.trackingProfile,
-    professions: {
-      weeklyProfessionCount: character.professionWeekly.professions.length,
-      weeklyQuestApplicable: character.professionWeekly.quest.applicableTotal,
-      weeklyTreatiseApplicable:
-        character.professionWeekly.treatise.applicableTotal,
-      weeklyDropsApplicable: character.professionWeekly.drops.applicableTotal,
-      setupState:
-        character.professionWeekly.state === "NOT_TRACKED"
-          ? "NOT_TRACKED"
-          : character.professionWeekly.state
-    }
-  });
-}
 
 function cellForColumn(
   character: WeeklyChecklistCharacter,
@@ -60,19 +34,8 @@ function cellForColumn(
     return gameplayDomainToken(character, "delves");
   }
 
-  if (column === "quest") {
-    return aggregateToken(character.professionWeekly.quest, "Weekly Quest");
-  }
-
-  if (column === "treatise") {
-    return aggregateToken(character.professionWeekly.treatise, "Treatise");
-  }
-
-  if (column === "drops") {
-    return aggregateToken(
-      character.professionWeekly.drops,
-      "Knowledge Drops"
-    );
+  if (column === "professions") {
+    return professionSummaryToken(character);
   }
 
   return progressToken(character);
@@ -85,48 +48,16 @@ type WeeklyChecklistMatrixProps = {
 export function WeeklyChecklistMatrix({
   characters
 }: WeeklyChecklistMatrixProps) {
-  const [listView, setListView] = useState<CharacterListView>("all");
-
-  const scopeCounts = useMemo(() => {
-    let gameplayCount = 0;
-    let professionCount = 0;
-
-    for (const character of characters) {
-      const flags = weekliesFlags(character);
-
-      if (flags.hasGameplayTracking) {
-        gameplayCount += 1;
-      }
-
-      if (flags.hasProfessionTracking) {
-        professionCount += 1;
-      }
-    }
-
-    return { gameplayCount, professionCount };
-  }, [characters]);
-
-  const visibleCharacters = useMemo(
-    () =>
-      characters.filter((character) =>
-        matchesCharacterListView(listView, weekliesFlags(character))
-      ),
-    [characters, listView]
-  );
-
-  const columns = weekliesColumnsForView(listView);
-  const emptyMessage = characterListViewEmptyMessage(listView, false);
-  const summaryText = `${formatCharacterListViewCount(
-    listView,
-    visibleCharacters.length,
-    characters.length,
-    scopeCounts.gameplayCount,
-    scopeCounts.professionCount
-  )} · Quest / Treatise / Drops automatic · Vault / M+ / Raid / Delves from this-week capture`;
+  const columns = weekliesColumns();
+  const summaryText = `${characters.length} gameplay character${
+    characters.length === 1 ? "" : "s"
+  } · Vault / M+ / Raid / Delves from this-week capture · Prof. links to /professions`;
 
   if (characters.length === 0) {
     return (
-      <div className="empty-state">No characters match this filter.</div>
+      <div className="empty-state">
+        No gameplay-tracked characters.
+      </div>
     );
   }
 
@@ -134,110 +65,124 @@ export function WeeklyChecklistMatrix({
     <>
       <div className="matrix-toolbar">
         <span className="matrix-summary">{summaryText}</span>
-        <CharacterListViewSwitcher
-          onChange={setListView}
-          value={listView}
-        />
       </div>
 
-      {visibleCharacters.length === 0 ? (
-        <div className="empty-state">{emptyMessage}</div>
-      ) : (
-        <div className="table-scroll matrix-scroll">
-          <table className="dense-matrix">
-            <thead>
-              <tr>
-                {columns.map((column) => {
-                  if (column === "character") {
-                    return <th key={column}>Character</th>;
-                  }
+      <div className="table-scroll matrix-scroll">
+        <table className="dense-matrix">
+          <thead>
+            <tr>
+              {columns.map((column) => {
+                if (column === "character") {
+                  return <th key={column}>Character</th>;
+                }
 
-                  if (column === "action") {
-                    return (
-                      <th className="matrix-col-action" key={column}>
-                        Action
-                      </th>
-                    );
-                  }
-
-                  const meta = WEEKLIES_COLUMN_LABELS[column];
+                if (column === "action") {
                   return (
-                    <th
-                      className="matrix-col-narrow"
-                      key={column}
-                      title={meta.title}
-                    >
-                      {meta.label}
+                    <th className="matrix-col-action" key={column}>
+                      Action
                     </th>
                   );
-                })}
-              </tr>
-            </thead>
+                }
 
-            <tbody>
-              {visibleCharacters.map((character) => {
-                const action = weeklyActionLabel(character);
-
+                const meta = WEEKLIES_COLUMN_LABELS[column];
                 return (
-                  <tr key={character.id}>
-                    {columns.map((column) => {
-                      if (column === "character") {
-                        return (
-                          <td key={column}>
-                            <div className="matrix-identity">
-                              <Link
-                                className="matrix-character-link"
-                                style={{
-                                  color: getClassColor(character.className)
-                                }}
-                                to={`/characters/${character.id}`}
-                              >
-                                {character.name}
-                              </Link>
-                              <span>
-                                {character.className}
-                                {" · "}
-                                {character.realm}
-                              </span>
-                            </div>
-                          </td>
-                        );
-                      }
+                  <th
+                    className="matrix-col-narrow"
+                    key={column}
+                    title={meta.title}
+                  >
+                    {meta.label}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
 
-                      if (column === "action") {
-                        return (
-                          <td className="matrix-col-action" key={column}>
-                            {action ? (
-                              <Link
-                                className="overview-next-action"
-                                to={`/characters/${character.id}`}
-                              >
-                                {action}
-                              </Link>
-                            ) : (
-                              <span className="overview-next-action ready">
-                                ✓
-                              </span>
-                            )}
-                          </td>
-                        );
-                      }
+          <tbody>
+            {characters.map((character) => {
+              const action = weeklyActionLabel(character);
+
+              return (
+                <tr key={character.id}>
+                  {columns.map((column) => {
+                    if (column === "character") {
+                      return (
+                        <td key={column}>
+                          <div className="matrix-identity">
+                            <Link
+                              className="matrix-character-link"
+                              style={{
+                                color: getClassColor(
+                                  character.className
+                                )
+                              }}
+                              to={`/characters/${character.id}`}
+                            >
+                              {character.name}
+                            </Link>
+                            <span>
+                              {character.className}
+                              {" · "}
+                              {character.realm}
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    }
+
+                    if (column === "action") {
+                      return (
+                        <td className="matrix-col-action" key={column}>
+                          {action ? (
+                            <Link
+                              className="overview-next-action"
+                              to={`/characters/${character.id}`}
+                            >
+                              {action}
+                            </Link>
+                          ) : (
+                            <span className="overview-next-action ready">
+                              ✓
+                            </span>
+                          )}
+                        </td>
+                      );
+                    }
+
+                    if (column === "professions") {
+                      const token = cellForColumn(
+                        character,
+                        column
+                      );
 
                       return (
                         <td className="matrix-col-narrow" key={column}>
-                          <StatusToken
-                            token={cellForColumn(character, column)}
-                          />
+                          <Link
+                            className="weeklies-profession-link"
+                            to={
+                              character.professionWeeklySummary.path
+                            }
+                          >
+                            <StatusToken token={token} />
+                          </Link>
                         </td>
                       );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    }
+
+                    return (
+                      <td className="matrix-col-narrow" key={column}>
+                        <StatusToken
+                          token={cellForColumn(character, column)}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

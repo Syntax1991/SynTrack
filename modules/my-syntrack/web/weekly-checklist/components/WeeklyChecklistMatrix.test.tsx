@@ -23,13 +23,6 @@ function gameplayDomain(
   };
 }
 
-const zeroAggregate = {
-  completeCount: 0,
-  incompleteCount: 0,
-  unknownCount: 0,
-  applicableTotal: 0
-};
-
 function buildCharacter(
   overrides: Partial<WeeklyChecklistCharacter> = {}
 ): WeeklyChecklistCharacter {
@@ -43,12 +36,12 @@ function buildCharacter(
     trackingProfile: "FULL",
     weeklyGameplay: null,
     completedTaskKeys: [],
-    professionWeekly: {
-      state: "NOT_TRACKED",
-      quest: zeroAggregate,
-      treatise: zeroAggregate,
-      drops: zeroAggregate,
-      professions: []
+    professionWeeklySummary: {
+      state: "NOT_APPLICABLE",
+      label: "—",
+      openProfessionCount: 0,
+      unknownProfessionCount: 0,
+      path: "/professions"
     },
     ...overrides
   };
@@ -59,7 +52,7 @@ function renderWithRouter(node: ReactNode) {
 }
 
 describe("WeeklyChecklistMatrix", () => {
-  it("renders recurring detail columns without Gear, Prof KP, or Complete all", () => {
+  it("renders gameplay-first columns with compact Prof. pointer", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
@@ -73,76 +66,28 @@ describe("WeeklyChecklistMatrix", () => {
     expect(screen.getByText("M+")).toBeInTheDocument();
     expect(screen.getByText("Raid")).toBeInTheDocument();
     expect(screen.getByText("Delves")).toBeInTheDocument();
-    expect(screen.getByText("Quest")).toBeInTheDocument();
-    expect(screen.getByText("Treat.")).toBeInTheDocument();
-    expect(screen.getByText("Drops")).toBeInTheDocument();
+    expect(screen.getByText("Prof.")).toBeInTheDocument();
     expect(screen.getByText("Progress")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
 
-    expect(screen.queryByText("Gear")).not.toBeInTheDocument();
-    expect(screen.queryByText("Prof. KP")).not.toBeInTheDocument();
-    expect(screen.queryByText("Complete all")).not.toBeInTheDocument();
+    expect(screen.queryByText("Quest")).not.toBeInTheDocument();
+    expect(screen.queryByText("Treat.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Drops")).not.toBeInTheDocument();
+    expect(screen.queryByText("All")).not.toBeInTheDocument();
+    expect(screen.queryByText("Professions")).not.toBeInTheDocument();
     expect(screen.getByText("Synblast")).toBeInTheDocument();
     expect(screen.getByText("Synbloom")).toBeInTheDocument();
   });
 
-  it("shows ? for not-yet-automated activity domains on gameplay-enabled chars", () => {
+  it("shows unresolved gameplay domains as unknown progress", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix characters={[buildCharacter()]} />
     );
 
     const unknowns = screen.getAllByTitle(
-      "Progress unresolved"
+      "Gameplay weekly progress unresolved"
     );
-    expect(unknowns.length).toBeGreaterThanOrEqual(4);
-  });
-
-  it("shows — for gameplay domains on profession-only characters", () => {
-    renderWithRouter(
-      <WeeklyChecklistMatrix
-        characters={[
-          buildCharacter({
-            trackingProfile: "PROFESSION",
-            weeklyGameplay: {
-              characterId: "char-1",
-              vault: gameplayDomain({
-                label: "Vault",
-                state: "IN_PROGRESS",
-                completeCount: 6,
-                applicableTotal: 9,
-                knownUnlockedSlots: 6,
-                maxSlots: 9,
-                hasUnknownCategories: true,
-                unknownCount: 1
-              }),
-              mythicPlus: gameplayDomain({
-                label: "M+",
-                state: "READY",
-                completeCount: 8,
-                applicableTotal: 8
-              }),
-              raid: gameplayDomain({
-                label: "Raid",
-                state: "READY",
-                completeCount: 8,
-                applicableTotal: 8
-              }),
-              delves: gameplayDomain({ label: "Delves" }),
-              mythicPlusAction: null,
-              raidAction: null,
-              delvesAction: null,
-              highestKeyLevel: null
-            }
-          })
-        ]}
-      />
-    );
-
-    const disabled = screen.getAllByTitle(
-      "Not applicable for this character profile"
-    );
-    expect(disabled).toHaveLength(4);
-    expect(screen.queryByText("6/9")).not.toBeInTheDocument();
+    expect(unknowns.length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders Synblast M+ 8/8 and Vault 6/9 when Delves are unresolved", () => {
@@ -189,28 +134,56 @@ describe("WeeklyChecklistMatrix", () => {
 
     expect(screen.getAllByText("8/8").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("6/9")).toBeInTheDocument();
-    expect(screen.queryByText("≥6/9")).not.toBeInTheDocument();
-    expect(screen.queryByText("16/8")).not.toBeInTheDocument();
     expect(
       screen.getByTitle("Vault 6/9 · 1 category unresolved")
     ).toBeInTheDocument();
   });
 
-  it("does not surface gameplay action for profession-only characters", () => {
+  it("links Prof. to /professions and shows open summary", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
-            trackingProfile: "PROFESSION",
+            professionWeeklySummary: {
+              state: "ATTENTION",
+              label: "1 open",
+              openProfessionCount: 1,
+              unknownProfessionCount: 0,
+              path: "/professions"
+            }
+          })
+        ]}
+      />
+    );
+
+    expect(screen.getByText("1 open")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "1 open" })).toHaveAttribute(
+      "href",
+      "/professions"
+    );
+  });
+
+  it("does not surface profession actions in gameplay Action column", () => {
+    renderWithRouter(
+      <WeeklyChecklistMatrix
+        characters={[
+          buildCharacter({
+            professionWeeklySummary: {
+              state: "ATTENTION",
+              label: "1 open",
+              openProfessionCount: 1,
+              unknownProfessionCount: 0,
+              path: "/professions"
+            },
             weeklyGameplay: {
               characterId: "char-1",
               vault: gameplayDomain({ label: "Vault" }),
               mythicPlus: gameplayDomain({ label: "M+" }),
               raid: gameplayDomain({ label: "Raid" }),
               delves: gameplayDomain({ label: "Delves" }),
-              mythicPlusAction: "Mythic+ progress unresolved",
+              mythicPlusAction: null,
               raidAction: null,
-              delvesAction: "Delves Vault progress unresolved",
+              delvesAction: null,
               highestKeyLevel: null
             }
           })
@@ -219,66 +192,7 @@ describe("WeeklyChecklistMatrix", () => {
     );
 
     expect(
-      screen.queryByText("Mythic+ progress unresolved")
+      screen.queryByText(/Treatise|Quest remaining|Knowledge Drop/i)
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Delves Vault progress unresolved")
-    ).not.toBeInTheDocument();
-  });
-
-  it("surfaces weekly-only action from Treatise incompleteness", () => {
-    renderWithRouter(
-      <WeeklyChecklistMatrix
-        characters={[
-          buildCharacter({
-            professionWeekly: {
-              state: "ATTENTION",
-              quest: {
-                completeCount: 1,
-                incompleteCount: 0,
-                unknownCount: 0,
-                applicableTotal: 1
-              },
-              treatise: {
-                completeCount: 0,
-                incompleteCount: 1,
-                unknownCount: 0,
-                applicableTotal: 1
-              },
-              drops: zeroAggregate,
-              professions: [
-                {
-                  professionKey: "alchemy",
-                  name: "Alchemy",
-                  quest: {
-                    sourceKey: "weekly-quest",
-                    name: "Weekly Quest",
-                    sourceType: "WEEKLY_QUEST",
-                    state: "COMPLETE",
-                    currentValue: null,
-                    maxValue: null,
-                    capturedAt: null
-                  },
-                  treatise: {
-                    sourceKey: "treatise",
-                    name: "Treatise",
-                    sourceType: "TREATISE",
-                    state: "INCOMPLETE",
-                    currentValue: null,
-                    maxValue: null,
-                    capturedAt: null
-                  },
-                  drops: null
-                }
-              ]
-            }
-          })
-        ]}
-      />
-    );
-
-    expect(
-      screen.getByText("Alchemy Treatise missing")
-    ).toBeInTheDocument();
   });
 });

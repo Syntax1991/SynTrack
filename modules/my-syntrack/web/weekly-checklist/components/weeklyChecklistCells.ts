@@ -1,82 +1,51 @@
 import { isWeeklyGameplayEnabled } from "../../../api/character-tracking/domain-applicability.js";
+import { weekliesProfessionSummaryTitle } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
 import { formatKnownWeeklyProgressSymbol } from "../../../api/weekly-progress/weekly-progress-display.js";
-import type {
-  ProfessionWeeklyAggregate,
-  WeeklyChecklistCharacter
-} from "../types/weeklyChecklist.types";
+import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
 import { gameplayDomainToken } from "./weeklyChecklistTokens";
 
-export function aggregateToken(
-  aggregate: ProfessionWeeklyAggregate,
-  label: string
+export function professionSummaryToken(
+  character: WeeklyChecklistCharacter
 ) {
-  if (aggregate.applicableTotal === 0) {
+  const summary = character.professionWeeklySummary;
+  const title = weekliesProfessionSummaryTitle(summary);
+
+  if (summary.state === "NOT_APPLICABLE") {
     return {
-      symbol: "—",
+      symbol: summary.label,
       tone: "not-tracked" as const,
-      title: `${label} - not tracked`
+      title
     };
   }
 
-  if (aggregate.incompleteCount > 0) {
+  if (summary.state === "COMPLETE") {
     return {
-      symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
-      tone: "attention" as const,
-      title: `${label} - ${aggregate.incompleteCount} incomplete`
+      symbol: summary.label,
+      tone: "ready" as const,
+      title
     };
   }
 
-  if (aggregate.unknownCount > 0) {
+  if (summary.state === "UNKNOWN") {
     return {
-      symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
+      symbol: summary.label,
       tone: "unknown" as const,
-      title: `${label} - ${aggregate.unknownCount} unknown`
+      title
     };
   }
 
   return {
-    symbol: `${aggregate.completeCount}/${aggregate.applicableTotal}`,
-    tone: "ready" as const,
-    title: `${label} - complete`
+    symbol: summary.label,
+    tone: "attention" as const,
+    title
   };
 }
 
 export function progressToken(character: WeeklyChecklistCharacter) {
-  const aggregates = [
-    character.professionWeekly.quest,
-    character.professionWeekly.treatise,
-    character.professionWeekly.drops
-  ];
-
   let completedKnown = 0;
   let applicableKnown = 0;
   let unknownCount = 0;
   let incomplete = 0;
-
-  for (const aggregate of aggregates) {
-    if (aggregate.applicableTotal === 0) {
-      continue;
-    }
-
-    if (
-      aggregate.incompleteCount === 0 &&
-      aggregate.unknownCount === aggregate.applicableTotal
-    ) {
-      unknownCount += 1;
-      continue;
-    }
-
-    if (aggregate.unknownCount > 0 && aggregate.incompleteCount === 0) {
-      unknownCount += 1;
-      applicableKnown += aggregate.completeCount;
-      completedKnown += aggregate.completeCount;
-      continue;
-    }
-
-    applicableKnown += aggregate.applicableTotal;
-    completedKnown += aggregate.completeCount;
-    incomplete += aggregate.incompleteCount;
-  }
 
   if (isWeeklyGameplayEnabled(character.trackingProfile)) {
     const gameplay = character.weeklyGameplay;
@@ -90,9 +59,18 @@ export function progressToken(character: WeeklyChecklistCharacter) {
         gameplay.raid,
         gameplay.delves
       ]) {
-        if (domain.state === "UNKNOWN") {
+        if (
+          domain.state === "UNKNOWN" ||
+          domain.applicableTotal <= 0
+        ) {
           unknownCount += 1;
+          continue;
         }
+
+        applicableKnown += domain.applicableTotal;
+        completedKnown += domain.completeCount;
+        incomplete +=
+          domain.applicableTotal - domain.completeCount;
       }
     }
   }
@@ -101,7 +79,7 @@ export function progressToken(character: WeeklyChecklistCharacter) {
     return {
       symbol: unknownCount > 0 ? `0 · ${unknownCount}?` : "—",
       tone: "unknown" as const,
-      title: "Weekly progress unresolved"
+      title: "Gameplay weekly progress unresolved"
     };
   }
 
@@ -117,32 +95,13 @@ export function progressToken(character: WeeklyChecklistCharacter) {
         : unknownCount > 0
           ? ("unknown" as const)
           : ("ready" as const),
-    title: `Known automatic weekly progress ${completedKnown}/${applicableKnown}`
+    title: `Known gameplay weekly progress ${completedKnown}/${applicableKnown}`
   };
 }
 
 export function weeklyActionLabel(
   character: WeeklyChecklistCharacter
 ): string | null {
-  for (const profession of character.professionWeekly.professions) {
-    if (profession.treatise?.state === "INCOMPLETE") {
-      return `${profession.name} Treatise missing`;
-    }
-
-    if (profession.quest?.state === "INCOMPLETE") {
-      return `${profession.name} Quest remaining`;
-    }
-
-    if (profession.drops?.state === "INCOMPLETE") {
-      const remaining =
-        (profession.drops.maxValue ?? 0) -
-        (profession.drops.currentValue ?? 0);
-      return remaining > 0
-        ? `${remaining} Knowledge Drop${remaining === 1 ? "" : "s"} remaining`
-        : "Knowledge Drops remaining";
-    }
-  }
-
   if (!isWeeklyGameplayEnabled(character.trackingProfile)) {
     return null;
   }
