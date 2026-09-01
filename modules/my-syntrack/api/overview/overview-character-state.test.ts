@@ -6,6 +6,7 @@ import {
   baseInput,
   period
 } from "./overview.aggregator.fixtures.js";
+import { computeAccountPriorities } from "./overview-priority-engine.js";
 import type { OverviewResponse } from "./overview.types.js";
 
 function buildOverview(): OverviewResponse {
@@ -80,12 +81,18 @@ function buildOverview(): OverviewResponse {
       })
     );
 
+  const priorities = computeAccountPriorities({
+    characters,
+    attentionItems
+  });
+
   return {
     summary: {
       ...summary,
       refreshNeededCount: 0
     },
     attentionItems,
+    priorities,
     characters: characters.map(
       (state) => ({
         ...state,

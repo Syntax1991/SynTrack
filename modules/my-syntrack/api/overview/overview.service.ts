@@ -28,6 +28,7 @@ import {
 } from "./overview-character-extras.js";
 import { findCharacterControlDetail } from "./overview-character-state.js";
 import { aggregateCharacterWeeklyStates } from "./overview.aggregator.js";
+import { computeAccountPriorities } from "./overview-priority-engine.js";
 import { loadProfessionIssuesByCharacter } from "./overview.profession-issues.js";
 import {
   buildCharacterIdMap,
@@ -204,12 +205,18 @@ export class OverviewService {
       healthByCharacterId
     );
 
+    const priorities = computeAccountPriorities({
+      characters,
+      attentionItems
+    });
+
     return {
       summary: {
         ...summary,
         refreshNeededCount
       },
       attentionItems,
+      priorities,
       characters: charactersWithExtras,
       trackerColumns,
       activeScope,

@@ -45,6 +45,30 @@ const mockOverview: OverviewResponse =
         path: "/weekly-checklist"
       }
     ],
+    priorities: {
+      topActions: [
+        {
+          id: "char-1:weekly",
+          characterId: "char-1",
+          characterName: "Synspin",
+          domain: "weekly",
+          domainLabel: "WEEKLIES",
+          severity: "this-week",
+          label: "Weekly tasks remaining",
+          detail: "3 of 5 tasks left",
+          path: "/weekly-checklist",
+          score: 4200,
+          bucket: "this-week",
+          effort: "medium"
+        }
+      ],
+      buckets: {
+        needsAttention: [],
+        quickWins: [],
+        thisWeek: []
+      },
+      readyCharacterCount: 0
+    },
     characters: [
       {
         character: {
@@ -270,6 +294,10 @@ describe("OverviewPage", () => {
 
   it("renders the compact attention strip and character matrix, with the matrix as the primary surface (no large panel above it)", () => {
     renderPage();
+
+    expect(
+      screen.getByText("Worth doing next")
+    ).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", {
