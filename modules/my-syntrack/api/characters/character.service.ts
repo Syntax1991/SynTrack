@@ -1,41 +1,55 @@
+import { prisma } from "../../../../apps/api/src/infrastructure/database/prismaClient.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { ProfessionRepository } from "../../../professions/api/profession.repository.js";
 import { CharacterRepository } from "./character.repository.js";
 import type { CharacterInput } from "./character.types.js";
+import { RemovedCharacterRepository } from "./removed-character.repository.js";
 
 export class CharacterService {
   constructor(
-    private readonly characterRepository:
-      CharacterRepository,
-
-    private readonly professionRepository:
-      ProfessionRepository
+    private readonly characterRepository: CharacterRepository,
+    private readonly professionRepository: ProfessionRepository,
+    private readonly removedCharacterRepository = new RemovedCharacterRepository()
   ) {}
 
   list() {
-    return this
-      .characterRepository
-      .findAll();
+    return this.characterRepository.findAll();
   }
 
-  async create(
-    input: CharacterInput
-  ) {
-    const normalizedInput =
-      this.normalize(input);
+  listRemoved(raiderAccountId: string) {
+    return this.removedCharacterRepository.listForAccount(raiderAccountId);
+  }
 
-    await this.validateProfessionIds(
-      normalizedInput.professionIds
-    );
+  async create(input: CharacterInput, raiderAccountId?: string) {
+    const normalizedInput = this.normalize(input);
 
-    const existingCharacter =
-      await this
-        .characterRepository
-        .findByIdentity(
-          normalizedInput.name,
-          normalizedInput.realm,
-          normalizedInput.region
+    await this.validateProfessionIds(normalizedInput.professionIds);
+
+    if (raiderAccountId) {
+      const suppressed =
+        await this.removedCharacterRepository.isSuppressed(raiderAccountId, {
+          name: normalizedInput.name,
+          realm: normalizedInput.realm,
+          region: normalizedInput.region
+        });
+
+      if (suppressed) {
+        await this.removedCharacterRepository.clearIdentityForAccount(
+          raiderAccountId,
+          {
+            name: normalizedInput.name,
+            realm: normalizedInput.realm,
+            region: normalizedInput.region
+          }
         );
+      }
+    }
+
+    const existingCharacter = await this.characterRepository.findByIdentity(
+      normalizedInput.name,
+      normalizedInput.realm,
+      normalizedInput.region
+    );
 
     if (existingCharacter) {
       throw new AppError(
@@ -44,103 +58,99 @@ export class CharacterService {
       );
     }
 
-    return this
-      .characterRepository
-      .create(normalizedInput);
+    return this.characterRepository.create(normalizedInput);
   }
 
-  async update(
-    characterId: string,
-    input: CharacterInput
-  ) {
+  async update(characterId: string, input: CharacterInput) {
     const currentCharacter =
-      await this
-        .characterRepository
-        .findById(characterId);
+      await this.characterRepository.findById(characterId);
 
     if (!currentCharacter) {
-      throw new AppError(
-        404,
-        "Charakter nicht gefunden."
-      );
+      throw new AppError(404, "Charakter nicht gefunden.");
     }
 
-    const normalizedInput =
-      this.normalize(input);
+    const normalizedInput = this.normalize(input);
 
-    await this.validateProfessionIds(
-      normalizedInput.professionIds
+    await this.validateProfessionIds(normalizedInput.professionIds);
+
+    const duplicate = await this.characterRepository.findByIdentity(
+      normalizedInput.name,
+      normalizedInput.realm,
+      normalizedInput.region
     );
 
-    const duplicate =
-      await this
-        .characterRepository
-        .findByIdentity(
-          normalizedInput.name,
-          normalizedInput.realm,
-          normalizedInput.region
-        );
-
-    if (
-      duplicate &&
-      duplicate.id !== characterId
-    ) {
+    if (duplicate && duplicate.id !== characterId) {
       throw new AppError(
         409,
         "Ein anderer Charakter verwendet bereits diese Identität."
       );
     }
 
-    return this
-      .characterRepository
-      .update(
-        characterId,
-        normalizedInput
-      );
+    return this.characterRepository.update(characterId, normalizedInput);
   }
 
-  async delete(
-    characterId: string
-  ) {
-    const character =
-      await this
-        .characterRepository
-        .findById(characterId);
+  /**
+   * Safe removal: upsert account-scoped suppression, then delete Character
+   * (child rows cascade via schema). Never deletes Character before
+   * suppression is written.
+   */
+  async remove(characterId: string, raiderAccountId: string): Promise<void> {
+    const character = await this.characterRepository.findById(characterId);
 
-    if (!character) {
-      throw new AppError(
-        404,
-        "Charakter nicht gefunden."
-      );
+    if (!character || character.raiderAccountId !== raiderAccountId) {
+      throw new AppError(404, "Charakter nicht gefunden.");
     }
 
-    await this
-      .characterRepository
-      .delete(characterId);
+    await prisma.$transaction(async (transaction) => {
+      await this.removedCharacterRepository.upsertSuppression(
+        raiderAccountId,
+        {
+          name: character.name,
+          realm: character.realm,
+          region: character.region,
+          battleNetId: character.battleNetId
+        },
+        transaction
+      );
+
+      await transaction.character.delete({
+        where: { id: characterId }
+      });
+    });
   }
 
-  private normalize(
-    input: CharacterInput
-  ): CharacterInput {
+  async restore(
+    removedId: string,
+    raiderAccountId: string
+  ): Promise<{ restored: true; message: string }> {
+    const count =
+      await this.removedCharacterRepository.deleteByIdForAccount(
+        removedId,
+        raiderAccountId
+      );
+
+    if (count === 0) {
+      throw new AppError(404, "Charakter nicht gefunden.");
+    }
+
+    return {
+      restored: true,
+      message: "Character will return after the next WoW sync."
+    };
+  }
+
+  private normalize(input: CharacterInput): CharacterInput {
     return {
       ...input,
       name: input.name.trim(),
       realm: input.realm.trim(),
-      region:
-        input.region.toLowerCase(),
-      className:
-        input.className.trim(),
-      professionIds: [
-        ...new Set(
-          input.professionIds
-        )
-      ]
+      region: input.region.toLowerCase(),
+      className: input.className.trim(),
+      professionIds: [...new Set(input.professionIds)]
     };
   }
 
-  private async validateProfessionIds(
-    professionIds: string[]
-  ) {
+  private async validateProfessionIds(professionIds: string[]) {
     if (professionIds.length > 2) {
       throw new AppError(
         400,
@@ -149,16 +159,9 @@ export class CharacterService {
     }
 
     const professionCount =
-      await this
-        .professionRepository
-        .countByIds(
-          professionIds
-        );
+      await this.professionRepository.countByIds(professionIds);
 
-    if (
-      professionCount !==
-      professionIds.length
-    ) {
+    if (professionCount !== professionIds.length) {
       throw new AppError(
         400,
         "Mindestens eine Berufs-ID ist ungültig."

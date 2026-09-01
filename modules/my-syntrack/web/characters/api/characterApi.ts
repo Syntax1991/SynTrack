@@ -47,3 +47,29 @@ export function deleteCharacter(
     }
   );
 }
+
+export type RemovedCharacter = {
+  id: string;
+  raiderAccountId: string;
+  stableCharacterKey: string;
+  characterName: string;
+  realmName: string;
+  region: string;
+  battleNetId: string | null;
+  removedAt: string;
+};
+
+export function getRemovedCharacters(): Promise<{
+  items: RemovedCharacter[];
+  total: number;
+}> {
+  return apiRequest("/characters/removed");
+}
+
+export function restoreRemovedCharacter(
+  removedId: string
+): Promise<{ restored: true; message: string }> {
+  return apiRequest(`/characters/removed/${removedId}/restore`, {
+    method: "POST"
+  });
+}

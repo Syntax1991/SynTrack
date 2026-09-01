@@ -159,10 +159,9 @@ export class AddonCharacterRecipeOperationPersistence {
         });
 
     if (!storedCharacter) {
-      throw new AppError(
-        400,
-        `Charakter "${character.name}-${character.realm}" fehlt nach dem Addon-Import.`
-      );
+      // Character persistence may intentionally skip account-removed
+      // identities; operation captures for those characters are ignored.
+      return 0;
     }
 
     const assignment =

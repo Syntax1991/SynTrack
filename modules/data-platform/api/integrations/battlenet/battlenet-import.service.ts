@@ -2,6 +2,7 @@ import { env } from "../../../../../apps/api/src/config/env.js";
 import { mapWithConcurrency } from "../../../../../apps/api/src/shared/async/mapWithConcurrency.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
 import { CharacterRepository } from "../../../../my-syntrack/api/characters/character.repository.js";
+import { RemovedCharacterRepository } from "../../../../my-syntrack/api/characters/removed-character.repository.js";
 import { ProfessionRepository } from "../../../../professions/api/profession.repository.js";
 import type { RaiderAccessTokenGuard } from "../../raider-auth/raider-auth.types.js";
 import { BattleNetClient } from "./battlenet.client.js";
@@ -25,6 +26,9 @@ type ImportOutcome = {
 };
 
 export class BattleNetImportService {
+  private readonly removedCharacterRepository =
+    new RemovedCharacterRepository();
+
   constructor(
     private readonly client:
       BattleNetClient,
@@ -125,7 +129,7 @@ export class BattleNetImportService {
     token: string,
     characterKeys: string[]
   ): Promise<BattleNetImportResult> {
-    const { accessToken } =
+    const { accessToken, raiderAccountId } =
       await this.raiderAuth.requireUsableAccessToken(
         token
       );
@@ -174,7 +178,8 @@ export class BattleNetImportService {
           this.importCharacter(
             character,
             accessToken,
-            professionIdByKey
+            professionIdByKey,
+            raiderAccountId
           )
       );
 
@@ -206,9 +211,28 @@ export class BattleNetImportService {
       ImportableBattleNetCharacter,
     accessToken: string,
     professionIdByKey:
-      Map<string, string>
+      Map<string, string>,
+    raiderAccountId: string
   ): Promise<ImportOutcome> {
     try {
+      const suppressed =
+        await this.removedCharacterRepository.isSuppressed(
+          raiderAccountId,
+          {
+            name: character.name,
+            realm: character.realm,
+            region: env.BATTLENET_REGION,
+            battleNetId: character.battleNetId
+          }
+        );
+
+      if (suppressed) {
+        return {
+          imported: false,
+          failure: null
+        };
+      }
+
       const professionData =
         await this.client
           .getCharacterProfessions(

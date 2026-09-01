@@ -16,6 +16,7 @@ import "./styles/raider-auth.css";
 import "./styles/character-detail-summary.css";
 import "./styles/character-detail-coverage.css";
 import "./styles/my-syntrack-overview.css";
+import "./styles/my-syntrack-characters.css";
 import "./styles/my-syntrack-tracker-cell.css";
 import "./styles/my-syntrack-tracker-manager.css";
 import "./styles/dense-matrix.css";

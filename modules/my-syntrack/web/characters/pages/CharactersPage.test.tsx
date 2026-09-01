@@ -127,11 +127,7 @@ describe("CharactersPage", () => {
     ).toHaveValue("Synblast");
   });
 
-  it("still deletes a character when Delete is chosen and confirmed", () => {
-    const confirmSpy = vi
-      .spyOn(window, "confirm")
-      .mockReturnValue(true);
-
+  it("removes a character when Remove from SynTrack is chosen and confirmed", async () => {
     renderPage();
 
     fireEvent.click(
@@ -142,15 +138,21 @@ describe("CharactersPage", () => {
 
     fireEvent.click(
       screen.getByRole("menuitem", {
-        name: "Delete"
+        name: "Remove from SynTrack"
       })
     );
 
-    expect(
-      deleteCharacter
-    ).toHaveBeenCalledWith("char-1");
+    expect(deleteCharacter).not.toHaveBeenCalled();
 
-    confirmSpy.mockRestore();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Remove character"
+      })
+    );
+
+    await vi.waitFor(() => {
+      expect(deleteCharacter).toHaveBeenCalledWith("char-1");
+    });
   });
 
   it("shows each character's tags and filters the roster by tag", () => {

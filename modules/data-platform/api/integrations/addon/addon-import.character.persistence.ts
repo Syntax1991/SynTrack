@@ -1,3 +1,4 @@
+import { RemovedCharacterRepository } from "../../../../my-syntrack/api/characters/removed-character.repository.js";
 import { resolveCharacterOwnerUpdate } from "./addon-import.character-ownership.js";
 import { AddonGearPersistence } from "./addon-import.gear.persistence.js";
 import { AddonProfessionPersistence } from "./addon-import.profession.persistence.js";
@@ -40,6 +41,9 @@ export class AddonCharacterPersistence {
   private readonly weeklyActivityPersistence =
     new AddonWeeklyActivityPersistence();
 
+  private readonly removedCharacterRepository =
+    new RemovedCharacterRepository();
+
   async persist(
     transaction: AddonImportTransaction,
     snapshot: AddonSnapshot,
@@ -62,7 +66,7 @@ export class AddonCharacterPersistence {
       const character of
       snapshot.characters
     ) {
-      await this.persistCharacter(
+      const didPersist = await this.persistCharacter(
         transaction,
         character,
         professionIds,
@@ -71,7 +75,9 @@ export class AddonCharacterPersistence {
         ownership
       );
 
-      result.characters += 1;
+      if (didPersist) {
+        result.characters += 1;
+      }
     }
 
     return result;
@@ -84,7 +90,29 @@ export class AddonCharacterPersistence {
     nodeIds: AddonNodeIdMap,
     result: CharacterPersistenceResult,
     ownership: CharacterOwnershipContext
-  ): Promise<void> {
+  ): Promise<boolean> {
+    const ownerRaiderAccountId =
+      ownership.ownerRaiderAccountId ?? null;
+
+    if (ownerRaiderAccountId) {
+      const suppressed =
+        await this.removedCharacterRepository.isSuppressed(
+          ownerRaiderAccountId,
+          {
+            name: character.name,
+            realm: character.realm,
+            region: character.region
+          },
+          transaction
+        );
+
+      if (suppressed) {
+        // Account intentionally removed this WoW identity - skip only
+        // this character; other snapshot characters continue normally.
+        return false;
+      }
+    }
+
     const syncDate =
       getSyncDate(
         character.lastUpdatedAt
@@ -209,5 +237,7 @@ export class AddonCharacterPersistence {
       character.weeklyActivity,
       result
     );
+
+    return true;
   }
 }

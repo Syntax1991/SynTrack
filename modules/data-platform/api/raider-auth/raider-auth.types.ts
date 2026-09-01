@@ -29,6 +29,7 @@ export type RaiderAccessTokenGuard = {
     token: string
   ): Promise<{
     accessToken: string;
+    raiderAccountId: string;
   }>;
 };
 

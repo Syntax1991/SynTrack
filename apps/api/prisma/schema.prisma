@@ -964,8 +964,30 @@ model RaiderAccount {
   deviceLinkRequests DeviceLinkRequest[]
   deviceCredentials  DeviceCredential[]
   characters         Character[]
+  removedCharacters  RemovedCharacter[]
 
   @@index([battleTag])
+}
+
+/*
+ * Account-scoped suppression for characters intentionally removed from
+ * SynTrack. Automatic addon/desktop/Battle.net import must skip matching
+ * identities until the user restores. Does not store a full Character copy.
+ */
+model RemovedCharacter {
+  id                   String   @id @default(cuid())
+  raiderAccountId      String
+  stableCharacterKey   String
+  characterName        String
+  realmName            String
+  region               String   @default("eu")
+  battleNetId          String?
+  removedAt            DateTime @default(now())
+
+  raiderAccount RaiderAccount @relation(fields: [raiderAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([raiderAccountId, stableCharacterKey])
+  @@index([raiderAccountId, battleNetId])
 }
 
 // A short-lived, single-use record bridging "Battle.net OAuth succeeded"
