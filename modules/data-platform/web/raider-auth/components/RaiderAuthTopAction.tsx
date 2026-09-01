@@ -95,7 +95,7 @@ export function RaiderAuthTopAction() {
         to="/settings"
       >
         {status.battleTag ??
-          "My Raider Login"}
+          "Account"}
       </NavLink>
 
       <button

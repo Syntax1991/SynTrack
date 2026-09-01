@@ -1,0 +1,41 @@
+.settings-trust-panel .panel-header {
+  align-items: flex-start;
+}
+
+.settings-trust-lead {
+  margin-top: 8px;
+  line-height: 1.55;
+}
+
+.settings-trust-note {
+  margin-top: 20px;
+  line-height: 1.55;
+}
+
+.settings-trust-details {
+  margin-top: 8px;
+}
+
+.settings-advanced-disclosure {
+  margin-top: 20px;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: var(--surface-elevated);
+}
+
+.settings-advanced-disclosure summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.settings-advanced-disclosure[open] summary {
+  margin-bottom: 18px;
+}
+
+.settings-manual-import {
+  display: grid;
+  gap: 16px;
+}

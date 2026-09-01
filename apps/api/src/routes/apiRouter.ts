@@ -26,6 +26,7 @@ import { deviceLinkRouter } from "../../../../modules/data-platform/api/device-a
 import { clientImportRouter } from "../../../../modules/data-platform/api/client-import/client-import.routes.js";
 import { clientProfileRouter } from "../../../../modules/data-platform/api/client-profile/client-profile.routes.js";
 import { clientCharactersRouter } from "../../../../modules/data-platform/api/client-characters/client-characters.routes.js";
+import { settingsTrustRouter } from "../../../../modules/data-platform/api/settings-trust/settings-trust.routes.js";
 import { guildRaiderLinkRouter } from "../../../../modules/guild/api/raider-link/raider-link.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
 import { professionRouter } from "../../../../modules/professions/api/profession.routes.js";
@@ -204,4 +205,9 @@ apiRouter.use(
 apiRouter.use(
   "/client",
   clientCharactersRouter
+);
+
+apiRouter.use(
+  "/settings",
+  settingsTrustRouter
 );

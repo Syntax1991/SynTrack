@@ -10,6 +10,7 @@ import "./styles/tooltip.css";
 import "./styles/module-navigation.css";
 import "./styles/module-navigation-responsive.css";
 import "./styles/integration.css";
+import "./styles/settings-trust.css";
 import "./styles/addon-integration.css";
 import "./styles/battlenet-characters.css";
 import "./styles/raider-auth.css";
