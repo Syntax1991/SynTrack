@@ -9,8 +9,8 @@ import {
 } from "../utils/weekliesMatrixColumns";
 import {
   gameplayDomainToken,
+  gameplaySignalToken,
   professionSummaryToken,
-  progressToken,
   weeklyActionLabel
 } from "./weeklyChecklistCells";
 
@@ -34,11 +34,23 @@ function cellForColumn(
     return gameplayDomainToken(character, "delves");
   }
 
+  if (column === "twoKRio") {
+    return gameplaySignalToken(character.gameplaySignals.twoKRio);
+  }
+
+  if (column === "map") {
+    return gameplaySignalToken(character.gameplaySignals.map);
+  }
+
+  if (column === "meta") {
+    return gameplaySignalToken(character.gameplaySignals.meta);
+  }
+
   if (column === "professions") {
     return professionSummaryToken(character);
   }
 
-  return progressToken(character);
+  throw new Error(`Unhandled Weeklies column: ${column}`);
 }
 
 type WeeklyChecklistMatrixProps = {
@@ -51,7 +63,7 @@ export function WeeklyChecklistMatrix({
   const columns = weekliesColumns();
   const summaryText = `${characters.length} gameplay character${
     characters.length === 1 ? "" : "s"
-  } · Vault / M+ / Raid / Delves from this-week capture · Prof. links to /professions`;
+  } · Vault / M+ / Raid / Delves from this-week capture · 2K / MAP / META from trackers · Prof. links to /professions`;
 
   if (characters.length === 0) {
     return (
@@ -68,7 +80,7 @@ export function WeeklyChecklistMatrix({
       </div>
 
       <div className="table-scroll matrix-scroll">
-        <table className="dense-matrix">
+        <table className="dense-matrix weeklies-matrix">
           <thead>
             <tr>
               {columns.map((column) => {
@@ -85,11 +97,24 @@ export function WeeklyChecklistMatrix({
                 }
 
                 const meta = WEEKLIES_COLUMN_LABELS[column];
+                const headerTitle =
+                  column === "meta" &&
+                  characters[0]?.gameplaySignals.sources.meta
+                    .trackerName
+                    ? characters[0].gameplaySignals.sources.meta
+                        .trackerName
+                    : column === "map" &&
+                        characters[0]?.gameplaySignals.sources.map
+                          .trackerName
+                      ? characters[0].gameplaySignals.sources.map
+                          .trackerName
+                      : meta.title;
+
                 return (
                   <th
                     className="matrix-col-narrow"
                     key={column}
-                    title={meta.title}
+                    title={headerTitle}
                   >
                     {meta.label}
                   </th>

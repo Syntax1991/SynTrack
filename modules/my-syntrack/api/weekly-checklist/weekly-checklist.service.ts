@@ -14,6 +14,13 @@ import type {
   WeeklyChecklistTaskDefinition,
   WeeklyTaskUpdateInput
 } from "./weekly-checklist.types.js";
+import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
+import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile.repository.js";
+import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
+import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
+import { TrackerValueService } from "../trackers/tracker-value.service.js";
+import { loadWeekliesGameplaySignalsByCharacterId } from "./weeklies-gameplay-signals.loader.js";
+import { createDefaultWeekliesGameplaySignals } from "./weeklies-gameplay-signals.mapper.js";
 import { resolveWeekliesProfessionWeeklySummary } from "./weeklies-profession-summary.mapper.js";
 
 const taskCatalog:
@@ -72,6 +79,19 @@ export class WeeklyChecklistService {
     new WeeklyGameplayRepository()
   );
 
+  private readonly trackerScopeProfileService =
+    new TrackerScopeProfileService(
+      new TrackerScopeProfileRepository()
+    );
+
+  private readonly trackerDefinitionRepository =
+    new TrackerDefinitionRepository();
+
+  private readonly trackerValueService = new TrackerValueService(
+    new TrackerValueRepository(),
+    new TrackerDefinitionRepository()
+  );
+
   constructor(
     private readonly repository:
       WeeklyChecklistRepository
@@ -117,7 +137,7 @@ export class WeeklyChecklistService {
       ])
     );
 
-    const characterItems = characters
+    const gameplayCharacters = characters
       .map((character) => {
         const trackingProfile = resolveCharacterTrackingProfile(
           tagsByCharacterId.get(character.id) ?? []
@@ -147,6 +167,25 @@ export class WeeklyChecklistService {
       .filter((character) =>
         isWeeklyGameplayEnabled(character.trackingProfile)
       );
+
+    const gameplaySignalsByCharacterId =
+      await loadWeekliesGameplaySignalsByCharacterId(
+        gameplayCharacters.map((character) => character.id),
+        {
+          trackerScopeProfileService:
+            this.trackerScopeProfileService,
+          trackerDefinitionRepository:
+            this.trackerDefinitionRepository,
+          trackerValueService: this.trackerValueService
+        }
+      );
+
+    const characterItems = gameplayCharacters.map((character) => ({
+      ...character,
+      gameplaySignals:
+        gameplaySignalsByCharacterId.get(character.id) ??
+        createDefaultWeekliesGameplaySignals()
+    }));
     const completedTaskCount =
       characterItems.reduce(
         (total, character) =>

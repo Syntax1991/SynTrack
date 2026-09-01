@@ -1,6 +1,7 @@
 import { isWeeklyGameplayEnabled } from "../../../api/character-tracking/domain-applicability.js";
 import { weekliesProfessionSummaryTitle } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
-import { formatKnownWeeklyProgressSymbol } from "../../../api/weekly-progress/weekly-progress-display.js";
+import { weekliesSignalTone } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
+import type { WeekliesGameplaySignal } from "../../../api/weekly-checklist/weeklies-gameplay-signals.types.js";
 import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
 import { gameplayDomainToken } from "./weeklyChecklistTokens";
 
@@ -41,61 +42,11 @@ export function professionSummaryToken(
   };
 }
 
-export function progressToken(character: WeeklyChecklistCharacter) {
-  let completedKnown = 0;
-  let applicableKnown = 0;
-  let unknownCount = 0;
-  let incomplete = 0;
-
-  if (isWeeklyGameplayEnabled(character.trackingProfile)) {
-    const gameplay = character.weeklyGameplay;
-
-    if (!gameplay) {
-      unknownCount += 4;
-    } else {
-      for (const domain of [
-        gameplay.vault,
-        gameplay.mythicPlus,
-        gameplay.raid,
-        gameplay.delves
-      ]) {
-        if (
-          domain.state === "UNKNOWN" ||
-          domain.applicableTotal <= 0
-        ) {
-          unknownCount += 1;
-          continue;
-        }
-
-        applicableKnown += domain.applicableTotal;
-        completedKnown += domain.completeCount;
-        incomplete +=
-          domain.applicableTotal - domain.completeCount;
-      }
-    }
-  }
-
-  if (applicableKnown === 0 && incomplete === 0) {
-    return {
-      symbol: unknownCount > 0 ? `0 · ${unknownCount}?` : "—",
-      tone: "unknown" as const,
-      title: "Gameplay weekly progress unresolved"
-    };
-  }
-
+export function gameplaySignalToken(signal: WeekliesGameplaySignal) {
   return {
-    symbol: formatKnownWeeklyProgressSymbol({
-      completedKnown,
-      applicableKnown,
-      unknownCount
-    }),
-    tone:
-      incomplete > 0
-        ? ("attention" as const)
-        : unknownCount > 0
-          ? ("unknown" as const)
-          : ("ready" as const),
-    title: `Known gameplay weekly progress ${completedKnown}/${applicableKnown}`
+    symbol: signal.label,
+    tone: weekliesSignalTone(signal.state),
+    title: signal.title
   };
 }
 
@@ -110,6 +61,8 @@ export function weeklyActionLabel(
     character.weeklyGameplay?.mythicPlusAction ??
     character.weeklyGameplay?.raidAction ??
     character.weeklyGameplay?.delvesAction ??
+    character.gameplaySignals.map.actionLabel ??
+    character.gameplaySignals.meta.actionLabel ??
     null
   );
 }

@@ -7,6 +7,7 @@ import {
   vi
 } from "vitest";
 import type { WeeklyChecklistResponse } from "../types/weeklyChecklist.types";
+import { createDefaultWeekliesGameplaySignals } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
 
 const mockChecklist: WeeklyChecklistResponse =
   {
@@ -45,7 +46,8 @@ const mockChecklist: WeeklyChecklistResponse =
           openProfessionCount: 0,
           unknownProfessionCount: 0,
           path: "/professions"
-        }
+        },
+        gameplaySignals: createDefaultWeekliesGameplaySignals()
       }
     ],
     summary: {
@@ -86,7 +88,7 @@ describe("WeeklyChecklistPage", () => {
 
     expect(
       screen.getByText(
-        /1 gameplay character · Vault \/ M\+ \/ Raid \/ Delves from this-week capture · Prof\. links to \/professions/
+        /1 gameplay character · Vault \/ M\+ \/ Raid \/ Delves from this-week capture · 2K \/ MAP \/ META from trackers · Prof\. links to \/professions/
       )
     ).toBeInTheDocument();
 
