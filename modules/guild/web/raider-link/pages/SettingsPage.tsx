@@ -1,19 +1,17 @@
-import { useState } from "react";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
-import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { Tabs } from "../../../../../apps/web/src/shared/components/Tabs";
-import { AddonSyncTab } from "../../../../data-platform/web/integrations/components/AddonSyncTab";
-import { BattleNetSyncTab } from "../../../../data-platform/web/integrations/components/BattleNetSyncTab";
 import { AdvancedManualDeviceLinkPanel } from "../../../../data-platform/web/device-auth/components/AdvancedManualDeviceLinkPanel";
 import { ConnectedDevicesPanel } from "../../../../data-platform/web/device-auth/components/ConnectedDevicesPanel";
+import { AccountSettingsPanel } from "../../../../data-platform/web/settings/components/AccountSettingsPanel";
+import { BattleNetSettingsPanel } from "../../../../data-platform/web/settings/components/BattleNetSettingsPanel";
+import { WoWSyncTab } from "../../../../data-platform/web/settings/components/WoWSyncTab";
 import { TagManagerPanel } from "../../../../my-syntrack/web/tags/components/TagManagerPanel";
 import { SeasonSwitchPanel } from "../../../../my-syntrack/web/season/components/SeasonSwitchPanel";
-import { RaiderLinkPanel } from "../components/RaiderLinkPanel";
-import { useRaiderLink } from "../hooks/useRaiderLink";
+import { useState } from "react";
 
 type SettingsPageTab =
   | "account"
-  | "addon"
+  | "wow-sync"
   | "battlenet"
   | "devices"
   | "tags-season";
@@ -27,8 +25,8 @@ const tabs: Array<{
     label: "Account"
   },
   {
-    id: "addon",
-    label: "WoW Addon"
+    id: "wow-sync",
+    label: "WoW Sync"
   },
   {
     id: "battlenet",
@@ -45,8 +43,6 @@ const tabs: Array<{
 ];
 
 export function SettingsPage() {
-  const raiderLink = useRaiderLink();
-
   const [activeTab, setActiveTab] =
     useState<SettingsPageTab>(
       "account"
@@ -55,8 +51,8 @@ export function SettingsPage() {
   return (
     <div className="guild-page guild-page-narrow">
       <PageHeader
-        description="Your Battle.net identity, character data and personal account preferences."
-        eyebrow="ACCOUNT"
+        description="Account identity, WoW sync trust, Battle.net connection, and personal preferences."
+        eyebrow="CONTROL"
         title="Settings"
       />
 
@@ -69,43 +65,15 @@ export function SettingsPage() {
 
       <div className="app-tab-content">
         {activeTab === "account" && (
-          <>
-            {raiderLink.error && (
-              <StatusMessage type="error">
-                {raiderLink.error}
-              </StatusMessage>
-            )}
-
-            <RaiderLinkPanel
-              isClaiming={
-                raiderLink.isClaiming
-              }
-              isLoading={
-                raiderLink.isLoading
-              }
-              onClaim={(
-                memberId
-              ) => {
-                void raiderLink.claim(
-                  memberId
-                );
-              }}
-              onLogout={() => {
-                void raiderLink.logout();
-              }}
-              resolution={
-                raiderLink.resolution
-              }
-            />
-          </>
+          <AccountSettingsPanel />
         )}
 
-        {activeTab === "addon" && (
-          <AddonSyncTab />
+        {activeTab === "wow-sync" && (
+          <WoWSyncTab />
         )}
 
         {activeTab === "battlenet" && (
-          <BattleNetSyncTab />
+          <BattleNetSettingsPanel />
         )}
 
         {activeTab === "devices" && (

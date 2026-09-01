@@ -70,28 +70,9 @@ export function AddonFilePanel({
           </p>
 
           <h2>
-            SynTrack_Professions.lua
+            Manual file import
           </h2>
         </div>
-
-        <span className="integration-badge configured">
-          Schema 4–10
-        </span>
-      </div>
-
-      <div className="instruction-box">
-        <strong>
-          Where is the file?
-        </strong>
-
-        <p>
-          Open your WoW folder and select
-          the file under WTF → Account →
-          your account → SavedVariables →
-          SynTrack_Professions.lua. Legacy
-          ProfessionTracker.lua exports are
-          also supported.
-        </p>
       </div>
 
       <div className="addon-file-picker">
