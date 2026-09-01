@@ -142,3 +142,124 @@
     border-top: 1px solid var(--border);
   }
 }
+
+.profession-work-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 8px 0 18px;
+}
+
+.profession-work-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
+}
+
+.profession-work-summary-item span {
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profession-work-summary-item strong {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.profession-work-panel,
+.profession-overview-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.profession-section-heading h2 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.profession-section-heading p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.profession-work-profession-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.profession-work-profession-link:hover {
+  color: #c4a7ff;
+}
+
+.profession-work-matrix .matrix-col-narrow {
+  white-space: nowrap;
+}
+
+.profession-work-matrix {
+  table-layout: fixed;
+}
+
+.profession-work-col-character {
+  width: 15%;
+}
+
+.profession-work-col-profession {
+  width: 12%;
+}
+
+.profession-work-col-compact {
+  width: 5.5%;
+}
+
+.profession-work-col-action {
+  width: 18%;
+}
+
+.profession-work-character-cell,
+.profession-work-profession-cell {
+  overflow: hidden;
+}
+
+.profession-work-identity {
+  min-width: 0;
+}
+
+.profession-work-identity span,
+.profession-work-profession-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profession-work-action-header,
+.profession-work-action-cell {
+  text-align: left;
+}
+
+.profession-work-action-cell {
+  white-space: normal;
+}
+
+.profession-work-matrix .profession-work-action-link {
+  display: inline-block;
+  max-width: 100%;
+  text-align: left;
+}
+
+@media (max-width: 960px) {
+  .profession-work-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
