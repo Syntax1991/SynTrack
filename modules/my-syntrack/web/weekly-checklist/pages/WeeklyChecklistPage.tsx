@@ -19,7 +19,7 @@ export function WeeklyChecklistPage() {
             Manage characters
           </Link>
         }
-        description="Recurring reset-aware work across the roster. Permanent Knowledge Treasures and Gear live elsewhere."
+        description="Gameplay recurring work across the roster. Detailed profession weekly work lives in Professions."
         eyebrow="WEEKLY RESET"
         title="Weeklies"
       />

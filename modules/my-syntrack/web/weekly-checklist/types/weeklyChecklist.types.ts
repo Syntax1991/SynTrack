@@ -1,5 +1,5 @@
-import type { ProfessionWeeklyOverviewState } from "../../overview/types/professionWeekly.types";
 import type { CharacterTrackingProfile } from "../../../api/character-tracking/character-tracking-profile.js";
+import type { WeekliesProfessionWeeklySummary } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
 import type { WeeklyGameplayCharacterView } from "../../../api/weekly-gameplay/weekly-gameplay.types.js";
 
 export type WeeklyChecklistPeriod = {
@@ -25,14 +25,9 @@ export type WeeklyChecklistCharacter = {
   level: number;
   trackingProfile: CharacterTrackingProfile;
   completedTaskKeys: string[];
-  professionWeekly: ProfessionWeeklyOverviewState;
+  professionWeeklySummary: WeekliesProfessionWeeklySummary;
   weeklyGameplay: WeeklyGameplayCharacterView | null;
 };
-
-export type {
-  ProfessionWeeklyAggregate,
-  ProfessionWeeklyOverviewState
-} from "../../overview/types/professionWeekly.types";
 
 export type WeeklyChecklistResponse = {
   period: WeeklyChecklistPeriod;
