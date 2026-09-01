@@ -42,8 +42,9 @@ export type ProfessionOverviewWorkRow = {
     current: number | null;
     display: string;
   };
-  knowledgePoints: {
-    available: number | null;
+  investedKnowledge: {
+    meaning: "INVESTED";
+    invested: number;
     display: string;
   };
   weekly: {

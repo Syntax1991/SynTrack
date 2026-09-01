@@ -87,6 +87,19 @@ export function ProfessionWorkMatrix({
       ) : (
         <div className="table-scroll matrix-scroll">
           <table className="dense-matrix profession-work-matrix">
+            <colgroup>
+              <col className="profession-work-col-character" />
+              <col className="profession-work-col-profession" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-compact" />
+              <col className="profession-work-col-action" />
+            </colgroup>
+
             <thead>
               <tr>
                 <th>Character</th>
@@ -96,9 +109,16 @@ export function ProfessionWorkMatrix({
                 <th className="matrix-col-narrow">Quest</th>
                 <th className="matrix-col-narrow">Treat.</th>
                 <th className="matrix-col-narrow">Drops</th>
-                <th className="matrix-col-narrow">KP</th>
+                <th
+                  className="matrix-col-narrow"
+                  title="Knowledge invested in specialization (not unspent)"
+                >
+                  Invest.
+                </th>
                 <th className="matrix-col-narrow">Treas.</th>
-                <th className="matrix-col-action">Action</th>
+                <th className="profession-work-action-header">
+                  Action
+                </th>
               </tr>
             </thead>
 
@@ -109,12 +129,12 @@ export function ProfessionWorkMatrix({
                 return (
                   <tr
                     className={
-                      row.sortRank >= 4 ? "is-complete" : undefined
+                      row.sortRank >= 3 ? "is-complete" : undefined
                     }
                     key={rowKey}
                   >
-                    <td>
-                      <div className="matrix-identity">
+                    <td className="profession-work-character-cell">
+                      <div className="matrix-identity profession-work-identity">
                         <Link
                           className="matrix-character-link"
                           style={{
@@ -135,7 +155,7 @@ export function ProfessionWorkMatrix({
                       </div>
                     </td>
 
-                    <td>
+                    <td className="profession-work-profession-cell">
                       <Link
                         className="profession-work-profession-link"
                         to={`/professions/${row.profession.id}`}
@@ -184,13 +204,9 @@ export function ProfessionWorkMatrix({
 
                     <td
                       className="matrix-col-narrow"
-                      title={
-                        row.knowledgePoints.available === null
-                          ? "Knowledge points unavailable"
-                          : `${row.knowledgePoints.available} Knowledge Points available`
-                      }
+                      title={`${row.investedKnowledge.invested} Knowledge invested`}
                     >
-                      {row.knowledgePoints.display}
+                      {row.investedKnowledge.display}
                     </td>
 
                     <td className="matrix-col-narrow">
@@ -199,10 +215,10 @@ export function ProfessionWorkMatrix({
                       />
                     </td>
 
-                    <td className="matrix-col-action">
+                    <td className="profession-work-action-cell">
                       {row.nextAction ? (
                         <Link
-                          className="overview-next-action"
+                          className="overview-next-action profession-work-action-link"
                           to={`/characters/${row.character.id}`}
                         >
                           {row.nextAction}

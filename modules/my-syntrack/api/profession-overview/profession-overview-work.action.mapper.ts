@@ -46,7 +46,6 @@ export function deriveProfessionNextAction(input: {
   treatise: ProfessionOverviewWorkSource;
   drops: ProfessionOverviewWorkSource;
   treasures: ProfessionOverviewWorkTreasures;
-  knowledgePoints: number | null;
   weeklyState: ProfessionWorkWeeklyState;
 }): string | null {
   if (input.treatise.state === "INCOMPLETE") {
@@ -89,10 +88,6 @@ export function deriveProfessionNextAction(input: {
     return `${missing} Knowledge Treasures missing`;
   }
 
-  if ((input.knowledgePoints ?? 0) > 0) {
-    return `${input.knowledgePoints} KP unspent`;
-  }
-
   if (input.weeklyState === "COMPLETE") {
     return "Weekly complete";
   }
@@ -103,7 +98,6 @@ export function deriveProfessionNextAction(input: {
 export function deriveProfessionSortRank(input: {
   weeklyState: ProfessionWorkWeeklyState;
   treasures: ProfessionOverviewWorkTreasures;
-  knowledgePoints: number | null;
 }): number {
   if (input.weeklyState === "ATTENTION") {
     return 0;
@@ -113,16 +107,12 @@ export function deriveProfessionSortRank(input: {
     return 1;
   }
 
-  if ((input.knowledgePoints ?? 0) > 0) {
-    return 2;
-  }
-
   if (
     input.weeklyState === "UNKNOWN" ||
     input.treasures.state === "UNKNOWN"
   ) {
-    return 3;
+    return 2;
   }
 
-  return 4;
+  return 3;
 }

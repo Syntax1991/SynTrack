@@ -29,8 +29,9 @@ function row(
       current: 100,
       display: "100"
     },
-    knowledgePoints: {
-      available: 0,
+    investedKnowledge: {
+      meaning: "INVESTED",
+      invested: 0,
       display: "0"
     },
     weekly: {
@@ -58,7 +59,7 @@ function row(
       permanent: false
     },
     nextAction: "Weekly complete",
-    sortRank: 4,
+    sortRank: 3,
     ...overrides
   };
 }
@@ -76,6 +77,7 @@ describe("ProfessionWorkMatrix", () => {
     expect(screen.getByText("Quest")).toBeInTheDocument();
     expect(screen.getByText("Treat.")).toBeInTheDocument();
     expect(screen.getByText("Drops")).toBeInTheDocument();
+    expect(screen.getByText("Invest.")).toBeInTheDocument();
     expect(screen.getByText("Synblast")).toBeInTheDocument();
     expect(screen.getByText("Alchemy")).toBeInTheDocument();
     expect(

@@ -3,6 +3,7 @@ import type {
   ProfessionWeeklyProfessionSummary,
   ProfessionWeeklySourceStatus
 } from "../profession-weekly/profession-weekly-status.types.js";
+import type { ProfessionInvestedKnowledge } from "./profession-overview-work.knowledge.js";
 
 export type ProfessionWorkSourceState =
   | "COMPLETE"
@@ -50,10 +51,7 @@ export type ProfessionOverviewWorkRow = {
     current: number | null;
     display: string;
   };
-  knowledgePoints: {
-    available: number | null;
-    display: string;
-  };
+  investedKnowledge: ProfessionInvestedKnowledge;
   weekly: {
     state: ProfessionWorkWeeklyState;
     summary: string;

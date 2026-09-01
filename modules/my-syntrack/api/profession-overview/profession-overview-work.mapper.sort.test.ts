@@ -15,7 +15,7 @@ import {
 } from "./profession-overview-work.weekly.mapper.js";
 
 describe("ProfessionOverviewWork mapper ordering", () => {
-  it("prioritizes weekly attention before permanent treasure and KP", () => {
+  it("prioritizes weekly attention before permanent treasure", () => {
     expect(
       deriveProfessionSortRank({
         weeklyState: "ATTENTION",
@@ -23,8 +23,7 @@ describe("ProfessionOverviewWork mapper ordering", () => {
           state: "INCOMPLETE",
           label: "7/8",
           aggregate: null
-        },
-        knowledgePoints: 27
+        }
       })
     ).toBeLessThan(
       deriveProfessionSortRank({
@@ -33,8 +32,7 @@ describe("ProfessionOverviewWork mapper ordering", () => {
           state: "INCOMPLETE",
           label: "7/8",
           aggregate: null
-        },
-        knowledgePoints: 27
+        }
       })
     );
 
@@ -65,7 +63,6 @@ describe("ProfessionOverviewWork mapper ordering", () => {
             applicableTotal: 8
           }
         },
-        knowledgePoints: 27,
         weeklyState: "ATTENTION"
       })
     ).toBe("Complete weekly quest");
@@ -238,7 +235,7 @@ describe("ProfessionOverviewWork mapper ordering", () => {
     expect(summary.permanentAttentionCount).toBe(1);
   });
 
-  it("marks attention filter candidates for weekly, permanent, and KP", () => {
+  it("marks attention filter candidates for weekly and permanent only", () => {
     const weeklyRow = buildProfessionOverviewWorkRow({
       assignment: {
         characterId: "char-1",
@@ -303,7 +300,7 @@ describe("ProfessionOverviewWork mapper ordering", () => {
     });
 
     expect(rowNeedsAttention(weeklyRow)).toBe(true);
-    expect(rowNeedsAttention(kpRow)).toBe(true);
+    expect(rowNeedsAttention(kpRow)).toBe(false);
   });
 
   it("resolves weekly summary for mixed open components", () => {

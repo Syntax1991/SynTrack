@@ -4,6 +4,7 @@ import {
   deriveProfessionSortRank,
   mapTreasures
 } from "./profession-overview-work.action.mapper.js";
+import { resolveInvestedKnowledgeDisplay } from "./profession-overview-work.knowledge.js";
 import {
   mapWeeklySource,
   resolveProfessionWeeklyRowState,
@@ -33,16 +34,10 @@ function resolveSkillDisplay(skill: number): {
   };
 }
 
-function resolveKnowledgePointsDisplay(
-  knowledgePoints: number
-): {
-  available: number | null;
-  display: string;
-} {
-  return {
-    available: knowledgePoints,
-    display: String(knowledgePoints)
-  };
+export function rowNeedsAttention(
+  row: ProfessionOverviewWorkRow
+): boolean {
+  return row.attention.weekly || row.attention.permanent;
 }
 
 export function buildProfessionOverviewWorkRow(input: {
@@ -70,7 +65,7 @@ export function buildProfessionOverviewWorkRow(input: {
     state: weeklyState
   });
   const skill = resolveSkillDisplay(input.assignment.skill);
-  const knowledgePoints = resolveKnowledgePointsDisplay(
+  const investedKnowledge = resolveInvestedKnowledgeDisplay(
     input.assignment.knowledgePoints
   );
   const nextAction = deriveProfessionNextAction({
@@ -78,7 +73,6 @@ export function buildProfessionOverviewWorkRow(input: {
     treatise,
     drops,
     treasures,
-    knowledgePoints: knowledgePoints.available,
     weeklyState
   });
 
@@ -97,7 +91,7 @@ export function buildProfessionOverviewWorkRow(input: {
       category: input.assignment.professionCategory
     },
     skill,
-    knowledgePoints,
+    investedKnowledge,
     weekly: {
       state: weeklyState,
       summary: weeklySummary
@@ -113,8 +107,7 @@ export function buildProfessionOverviewWorkRow(input: {
     nextAction,
     sortRank: deriveProfessionSortRank({
       weeklyState,
-      treasures,
-      knowledgePoints: knowledgePoints.available
+      treasures
     })
   };
 }
@@ -173,12 +166,3 @@ export function buildProfessionOverviewWorkSummary(input: {
   };
 }
 
-export function rowNeedsAttention(
-  row: ProfessionOverviewWorkRow
-): boolean {
-  return (
-    row.attention.weekly ||
-    row.attention.permanent ||
-    (row.knowledgePoints.available ?? 0) > 0
-  );
-}

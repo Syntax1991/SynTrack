@@ -110,11 +110,7 @@ export function weeklySummaryToken(
 export function professionWorkNeedsAttention(
   row: ProfessionOverviewWorkRow
 ): boolean {
-  return (
-    row.attention.weekly ||
-    row.attention.permanent ||
-    (row.knowledgePoints.available ?? 0) > 0
-  );
+  return row.attention.weekly || row.attention.permanent;
 }
 
 export {

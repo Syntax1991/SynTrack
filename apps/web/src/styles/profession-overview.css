@@ -208,6 +208,56 @@
   white-space: nowrap;
 }
 
+.profession-work-matrix {
+  table-layout: fixed;
+}
+
+.profession-work-col-character {
+  width: 15%;
+}
+
+.profession-work-col-profession {
+  width: 12%;
+}
+
+.profession-work-col-compact {
+  width: 5.5%;
+}
+
+.profession-work-col-action {
+  width: 18%;
+}
+
+.profession-work-character-cell,
+.profession-work-profession-cell {
+  overflow: hidden;
+}
+
+.profession-work-identity {
+  min-width: 0;
+}
+
+.profession-work-identity span,
+.profession-work-profession-link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profession-work-action-header,
+.profession-work-action-cell {
+  text-align: left;
+}
+
+.profession-work-action-cell {
+  white-space: normal;
+}
+
+.profession-work-matrix .profession-work-action-link {
+  display: inline-block;
+  max-width: 100%;
+  text-align: left;
+}
+
 @media (max-width: 960px) {
   .profession-work-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
