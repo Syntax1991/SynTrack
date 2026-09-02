@@ -1,10 +1,15 @@
-import type { CharacterTrackerState } from "../trackers/tracker.types.js";
+import type { WeeklyGameplayDomainView } from "../weekly-gameplay/weekly-gameplay.types.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
+import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import {
-  WEEKLIES_MAP_USED_TRACKER_KEY,
   WEEKLIES_META_QUEST_TRACKER_KEY,
-  WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY
+  WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
+  WEEKLIES_TROVE_HUNTERS_BOUNTY_TRACKER_KEY
 } from "./weeklies-tracker-keys.js";
+import {
+  deriveMapSignal,
+  deriveMapSignalSource
+} from "./weeklies-map-signal.js";
 import type {
   WeekliesGameplaySignal,
   WeekliesGameplaySignals,
@@ -15,15 +20,12 @@ import type {
 const TWO_K_RIO_MILESTONE = 2000;
 
 const TWO_K_RIO_TITLE =
-  "Current-season Mythic+ rating / 2000 milestone";
-
-const MAP_SOURCE_NOT_CONFIGURED_TITLE =
-  "MAP canonical source not configured";
+  "Current-season Mythic+ rating / 2,000 milestone";
 
 const META_SOURCE_NOT_CONFIGURED_TITLE =
   "Meta Quest tracker not configured";
 
-type ResolvedTrackerDefinition = {
+export type ResolvedTrackerDefinition = {
   definition: TrackerDefinitionRow;
   state: CharacterTrackerState | null;
 };
@@ -149,89 +151,21 @@ export function deriveMetaQuestSignal(
   return unknownSignal(`${title} — unsupported tracker value type`);
 }
 
-export function deriveMapSignal(
-  resolved: ResolvedTrackerDefinition | null
-): WeekliesGameplaySignal {
-  if (!resolved) {
-    return unknownSignal(MAP_SOURCE_NOT_CONFIGURED_TITLE);
-  }
-
-  const { definition, state } = resolved;
-  const title = definition.name;
-
-  if (!state || state.state === "UNKNOWN" || !state.value) {
-    return unknownSignal(title);
-  }
-
-  const { value } = state;
-
-  if (value.valueType === "BOOLEAN") {
-    if (value.boolean) {
-      return completeSignal(title);
-    }
-
-    const actionLabel =
-      definition.resetBehavior === "WEEKLY"
-        ? `Complete ${definition.name}`
-        : null;
-
-    return incompleteSignal("open", title, actionLabel);
-  }
-
-  if (value.valueType === "NUMBER") {
-    return {
-      state: "INCOMPLETE",
-      label: String(value.number),
-      title,
-      actionLabel:
-        definition.resetBehavior === "WEEKLY"
-          ? `Complete ${definition.name}`
-          : null
-    };
-  }
-
-  if (value.valueType === "PROGRESS") {
-    if (value.current >= value.total) {
-      return completeSignal(title);
-    }
-
-    return incompleteSignal(
-      `${value.current}/${value.total}`,
-      `${title} — ${value.current} of ${value.total}`,
-      definition.resetBehavior === "WEEKLY"
-        ? `Complete ${definition.name}`
-        : null
-    );
-  }
-
-  if (value.valueType === "TEXT") {
-    return {
-      state: "INCOMPLETE",
-      label: value.text,
-      title,
-      actionLabel: null
-    };
-  }
-
-  return unknownSignal(title);
-}
-
 export function resolveWeekliesGameplaySignals(input: {
   twoKRio: ResolvedTrackerDefinition | null;
-  map: ResolvedTrackerDefinition | null;
+  bounty: ResolvedTrackerDefinition | null;
   meta: ResolvedTrackerDefinition | null;
+  delves: WeeklyGameplayDomainView | null;
 }): WeekliesGameplaySignals {
   return {
     twoKRio: deriveTwoKRioSignal(input.twoKRio),
-    map: deriveMapSignal(input.map),
+    map: deriveMapSignal(input.bounty, input.delves),
     meta: deriveMetaQuestSignal(input.meta),
     sources: {
       twoKRio: input.twoKRio
         ? configuredSource(input.twoKRio.definition)
         : unconfiguredSource(),
-      map: input.map
-        ? configuredSource(input.map.definition)
-        : unconfiguredSource(),
+      map: deriveMapSignalSource(input.bounty),
       meta: input.meta
         ? configuredSource(input.meta.definition)
         : unconfiguredSource()
@@ -242,8 +176,9 @@ export function resolveWeekliesGameplaySignals(input: {
 export function createDefaultWeekliesGameplaySignals(): WeekliesGameplaySignals {
   return resolveWeekliesGameplaySignals({
     twoKRio: null,
-    map: null,
-    meta: null
+    bounty: null,
+    meta: null,
+    delves: null
   });
 }
 
@@ -302,6 +237,6 @@ export function buildResolvedTracker(
 
 export const WEEKLIES_SIGNAL_DEFINITION_KEYS = {
   twoKRio: WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
-  map: WEEKLIES_MAP_USED_TRACKER_KEY,
+  bounty: WEEKLIES_TROVE_HUNTERS_BOUNTY_TRACKER_KEY,
   meta: WEEKLIES_META_QUEST_TRACKER_KEY
 } as const;

@@ -5,7 +5,8 @@ import type {
 } from "../trackers/tracker.types.js";
 import {
   WEEKLIES_META_QUEST_TRACKER_KEY,
-  WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY
+  WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
+  WEEKLIES_TROVE_HUNTERS_BOUNTY_TRACKER_KEY
 } from "./weeklies-tracker-keys.js";
 
 type WeekliesTrackerDefinitionSeed = {
@@ -17,20 +18,23 @@ type WeekliesTrackerDefinitionSeed = {
   sortOrder: number;
 };
 
-/*
- * Season-scoped tracker definitions consumed by the Weeklies gameplay
- * signals read model. MAP is intentionally omitted until product defines
- * canonical meaning and reset behavior.
- */
 const WEEKLIES_TRACKER_DEFINITION_SEEDS: WeekliesTrackerDefinitionSeed[] =
   [
     {
       key: WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
-      name: "Mythic+ Rating",
+      name: "Mythic+ Rating (2,000)",
       valueType: "NUMBER",
       resetBehavior: "SEASONAL",
       category: "GAMEPLAY",
       sortOrder: 10
+    },
+    {
+      key: WEEKLIES_TROVE_HUNTERS_BOUNTY_TRACKER_KEY,
+      name: "Trove Hunter's Bounty used",
+      valueType: "BOOLEAN",
+      resetBehavior: "WEEKLY",
+      category: "GAMEPLAY",
+      sortOrder: 15
     },
     {
       key: WEEKLIES_META_QUEST_TRACKER_KEY,

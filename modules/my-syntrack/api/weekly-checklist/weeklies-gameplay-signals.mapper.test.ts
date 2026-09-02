@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
 import {
-  deriveMapSignal,
   deriveMetaQuestSignal,
   deriveTwoKRioSignal,
   resolveWeekliesGameplaySignals
@@ -163,73 +162,12 @@ describe("weeklies gameplay signals - META", () => {
   it("marks source as unconfigured when tracker is missing", () => {
     const signals = resolveWeekliesGameplaySignals({
       twoKRio: null,
-      map: null,
-      meta: null
+      bounty: null,
+      meta: null,
+      delves: null
     });
 
     expect(signals.sources.meta.configured).toBe(false);
     expect(signals.meta.label).toBe("?");
-  });
-});
-
-describe("weeklies gameplay signals - MAP", () => {
-  it("shows unknown when MAP canonical source is not configured", () => {
-    const signal = deriveMapSignal(null);
-
-    expect(signal.state).toBe("UNKNOWN");
-    expect(signal.label).toBe("?");
-    expect(signal.title).toMatch(/MAP canonical source not configured/);
-  });
-
-  it("shows complete when weekly MAP tracker is recorded complete", () => {
-    const mapDefinition = definition({
-      id: "map-def",
-      key: "map-used",
-      name: "MAP used",
-      valueType: "BOOLEAN",
-      resetBehavior: "WEEKLY"
-    });
-
-    const signal = deriveMapSignal({
-      definition: mapDefinition,
-      state: booleanState(true, "map-def")
-    });
-
-    expect(signal.state).toBe("COMPLETE");
-    expect(signal.label).toBe("✓");
-  });
-
-  it("may participate in action only when weekly and incomplete", () => {
-    const mapDefinition = definition({
-      id: "map-def",
-      key: "map-used",
-      name: "MAP used",
-      valueType: "BOOLEAN",
-      resetBehavior: "WEEKLY"
-    });
-
-    const signal = deriveMapSignal({
-      definition: mapDefinition,
-      state: booleanState(false, "map-def")
-    });
-
-    expect(signal.actionLabel).toBe("Complete MAP used");
-  });
-
-  it("does not participate in action when seasonal MAP is incomplete", () => {
-    const mapDefinition = definition({
-      id: "map-def",
-      key: "map-used",
-      name: "MAP used",
-      valueType: "BOOLEAN",
-      resetBehavior: "SEASONAL"
-    });
-
-    const signal = deriveMapSignal({
-      definition: mapDefinition,
-      state: booleanState(false, "map-def")
-    });
-
-    expect(signal.actionLabel).toBeNull();
   });
 });

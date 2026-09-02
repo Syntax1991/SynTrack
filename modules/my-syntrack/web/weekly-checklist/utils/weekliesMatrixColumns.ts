@@ -1,3 +1,5 @@
+import { WEEKLIES_MAP_MEANING } from "../../../api/weekly-checklist/weeklies-tracker-keys.js";
+
 export type WeekliesMatrixColumn =
   | "character"
   | "vault"
@@ -37,11 +39,11 @@ export const WEEKLIES_COLUMN_LABELS: Record<
   delves: { label: "Delves" },
   twoKRio: {
     label: "2K",
-    title: "Current-season Mythic+ rating / 2000 milestone"
+    title: "Current-season Mythic+ rating / 2,000 milestone"
   },
   map: {
     label: "MAP",
-    title: "MAP usage/completion state"
+    title: WEEKLIES_MAP_MEANING
   },
   meta: {
     label: "META",

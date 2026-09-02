@@ -19,8 +19,11 @@ import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile
 import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
 import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
 import { TrackerValueService } from "../trackers/tracker-value.service.js";
-import { loadWeekliesGameplaySignalsByCharacterId } from "./weeklies-gameplay-signals.loader.js";
-import { createDefaultWeekliesGameplaySignals } from "./weeklies-gameplay-signals.mapper.js";
+import { loadWeekliesTrackerBundlesByCharacterId } from "./weeklies-gameplay-signals.loader.js";
+import {
+  createDefaultWeekliesGameplaySignals,
+  resolveWeekliesGameplaySignals
+} from "./weeklies-gameplay-signals.mapper.js";
 import { ensureWeekliesTrackerDefinitions } from "./weeklies-tracker-definitions.service.js";
 import { resolveWeekliesProfessionWeeklySummary } from "./weeklies-profession-summary.mapper.js";
 
@@ -179,8 +182,8 @@ export class WeeklyChecklistService {
         isWeeklyGameplayEnabled(character.trackingProfile)
       );
 
-    const gameplaySignalsByCharacterId =
-      await loadWeekliesGameplaySignalsByCharacterId(
+    const trackerBundlesByCharacterId =
+      await loadWeekliesTrackerBundlesByCharacterId(
         gameplayCharacters.map((character) => character.id),
         {
           trackerScopeProfileService:
@@ -191,12 +194,22 @@ export class WeeklyChecklistService {
         }
       );
 
-    const characterItems = gameplayCharacters.map((character) => ({
-      ...character,
-      gameplaySignals:
-        gameplaySignalsByCharacterId.get(character.id) ??
-        createDefaultWeekliesGameplaySignals()
-    }));
+    const characterItems = gameplayCharacters.map((character) => {
+      const trackerBundle =
+        trackerBundlesByCharacterId.get(character.id);
+
+      return {
+        ...character,
+        gameplaySignals: trackerBundle
+          ? resolveWeekliesGameplaySignals({
+              twoKRio: trackerBundle.twoKRio,
+              bounty: trackerBundle.bounty,
+              meta: trackerBundle.meta,
+              delves: character.weeklyGameplay?.delves ?? null
+            })
+          : createDefaultWeekliesGameplaySignals()
+      };
+    });
     const completedTaskCount =
       characterItems.reduce(
         (total, character) =>

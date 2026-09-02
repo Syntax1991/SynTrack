@@ -9,21 +9,29 @@ import {
   resolveWeekliesGameplaySignals,
   WEEKLIES_SIGNAL_DEFINITION_KEYS
 } from "./weeklies-gameplay-signals.mapper.js";
-import type { WeekliesGameplaySignals } from "./weeklies-gameplay-signals.types.js";
 
 /*
  * Bulk-loads Weeklies gameplay signal states (2K RIO, MAP, META) from the
  * generic tracker infrastructure. One getStatesForScope call per distinct
  * scope — never per character (N+1 risk: NO).
  */
-export async function loadWeekliesGameplaySignalsByCharacterId(
+export async function loadWeekliesTrackerBundlesByCharacterId(
   characterIds: string[],
   deps: {
     trackerScopeProfileService: TrackerScopeProfileService;
     trackerDefinitionRepository: TrackerDefinitionRepositoryContract;
     trackerValueService: TrackerValueService;
   }
-): Promise<Map<string, WeekliesGameplaySignals>> {
+): Promise<
+  Map<
+    string,
+    {
+      twoKRio: ReturnType<typeof buildResolvedTracker>;
+      bounty: ReturnType<typeof buildResolvedTracker>;
+      meta: ReturnType<typeof buildResolvedTracker>;
+    }
+  >
+> {
   const activeScope =
     await deps.trackerScopeProfileService.getActive();
 
@@ -46,10 +54,10 @@ export async function loadWeekliesGameplaySignalsByCharacterId(
     scopeKeys,
     WEEKLIES_SIGNAL_DEFINITION_KEYS.twoKRio
   );
-  const mapDefinition = resolveDefinitionByKey(
+  const bountyDefinition = resolveDefinitionByKey(
     definitionsByScope,
     scopeKeys,
-    WEEKLIES_SIGNAL_DEFINITION_KEYS.map
+    WEEKLIES_SIGNAL_DEFINITION_KEYS.bounty
   );
   const metaDefinition = resolveDefinitionByKey(
     definitionsByScope,
@@ -59,7 +67,7 @@ export async function loadWeekliesGameplaySignalsByCharacterId(
 
   const resolvedDefinitions = [
     twoKRioDefinition,
-    mapDefinition,
+    bountyDefinition,
     metaDefinition
   ].filter(
     (definition): definition is NonNullable<typeof definition> =>
@@ -87,9 +95,13 @@ export async function loadWeekliesGameplaySignalsByCharacterId(
         );
 
   const trackerStates = trackerStateGroups.flat();
-  const signalsByCharacterId = new Map<
+  const bundlesByCharacterId = new Map<
     string,
-    WeekliesGameplaySignals
+    {
+      twoKRio: ReturnType<typeof buildResolvedTracker>;
+      bounty: ReturnType<typeof buildResolvedTracker>;
+      meta: ReturnType<typeof buildResolvedTracker>;
+    }
   >();
 
   for (const characterId of characterIds) {
@@ -98,26 +110,23 @@ export async function loadWeekliesGameplaySignalsByCharacterId(
       characterId
     );
 
-    signalsByCharacterId.set(
-      characterId,
-      resolveWeekliesGameplaySignals({
-        twoKRio: buildResolvedTracker(
-          twoKRioDefinition,
-          statesByDefinitionId
-        ),
-        map: buildResolvedTracker(
-          mapDefinition,
-          statesByDefinitionId
-        ),
-        meta: buildResolvedTracker(
-          metaDefinition,
-          statesByDefinitionId
-        )
-      })
-    );
+    bundlesByCharacterId.set(characterId, {
+      twoKRio: buildResolvedTracker(
+        twoKRioDefinition,
+        statesByDefinitionId
+      ),
+      bounty: buildResolvedTracker(
+        bountyDefinition,
+        statesByDefinitionId
+      ),
+      meta: buildResolvedTracker(
+        metaDefinition,
+        statesByDefinitionId
+      )
+    });
   }
 
-  return signalsByCharacterId;
+  return bundlesByCharacterId;
 }
 
 function buildStatesByDefinitionId(

@@ -90,7 +90,7 @@ describe("WeeklyChecklistMatrix", () => {
     );
 
     const unknowns = screen.getAllByTitle(
-      /no canonical rating tracker configured|MAP canonical source not configured|Meta Quest tracker not configured/
+      /no canonical rating tracker configured|Trove Hunter's Bounty tracker not configured|Meta Quest tracker not configured/
     );
     expect(unknowns.length).toBeGreaterThanOrEqual(3);
   });
