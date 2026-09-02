@@ -149,7 +149,6 @@ describe("deriveSeasonEmbellishmentGoal", () => {
       emb,
       completeGoal("mplus"),
       completeGoal("portals"),
-      completeGoal("catalyst"),
       completeGoal("cracked"),
       completeGoal("nemesis"),
       completeGoal("raid")
@@ -157,7 +156,7 @@ describe("deriveSeasonEmbellishmentGoal", () => {
 
     expect(summary).toEqual({
       goalsOpen: 1,
-      goalsComplete: 7,
+      goalsComplete: 6,
       goalsUnknown: 0,
       action: "Complete Embellishment setup"
     });
@@ -182,7 +181,6 @@ describe("deriveSeasonEmbellishmentGoal", () => {
       emb,
       completeGoal("mplus"),
       completeGoal("portals"),
-      completeGoal("catalyst"),
       completeGoal("cracked"),
       completeGoal("nemesis"),
       completeGoal("raid")
@@ -190,7 +188,7 @@ describe("deriveSeasonEmbellishmentGoal", () => {
 
     expect(summary).toEqual({
       goalsOpen: 0,
-      goalsComplete: 7,
+      goalsComplete: 6,
       goalsUnknown: 1,
       action: null
     });

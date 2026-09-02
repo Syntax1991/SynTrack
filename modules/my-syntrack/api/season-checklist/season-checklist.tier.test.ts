@@ -177,7 +177,6 @@ describe("deriveSeasonTierGoal", () => {
       tier,
       completeGoal("mplus"),
       completeGoal("portals"),
-      completeGoal("catalyst"),
       completeGoal("cracked"),
       completeGoal("nemesis"),
       completeGoal("raid")
@@ -185,7 +184,7 @@ describe("deriveSeasonTierGoal", () => {
 
     expect(summary).toEqual({
       goalsOpen: 1,
-      goalsComplete: 6,
+      goalsComplete: 5,
       goalsUnknown: 0,
       action: "Complete 4pc tier set"
     });
@@ -214,7 +213,6 @@ describe("deriveSeasonTierGoal", () => {
       tier,
       completeGoal("mplus"),
       completeGoal("portals"),
-      completeGoal("catalyst"),
       completeGoal("cracked"),
       completeGoal("nemesis"),
       completeGoal("raid")
@@ -222,7 +220,7 @@ describe("deriveSeasonTierGoal", () => {
 
     expect(summary).toEqual({
       goalsOpen: 0,
-      goalsComplete: 6,
+      goalsComplete: 5,
       goalsUnknown: 1,
       action: null
     });

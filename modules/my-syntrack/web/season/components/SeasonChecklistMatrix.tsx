@@ -67,7 +67,6 @@ export function SeasonChecklistMatrix({
                 Emb.
               </th>
               <th className="season-col-portals">Portals</th>
-              <th className="season-col-catalyst">Catalyst</th>
               <th className="season-col-cracked">Cracked</th>
               <th className="season-col-nemesis">Nemesis</th>
               <th className="season-col-raid">Raid</th>
@@ -113,9 +112,6 @@ export function SeasonChecklistMatrix({
                   </td>
                   <td className="season-col-portals">
                     <StatusToken token={seasonToken(character.portals)} />
-                  </td>
-                  <td className="season-col-catalyst">
-                    <StatusToken token={seasonToken(character.catalyst)} />
                   </td>
                   <td className="season-col-cracked">
                     <StatusToken token={seasonToken(character.cracked)} />

@@ -76,14 +76,6 @@ describe("season temporal boundary", () => {
             detail: "Portals",
             actionLabel: null
           },
-          catalyst: {
-            key: "serpent-scion",
-            title: "Serpent Scion",
-            state: "UNKNOWN",
-            label: "?",
-            detail: "Midnight Season 2: Serpent Scion",
-            actionLabel: null
-          },
           cracked: {
             key: "cracked-keystone",
             title: "Cracked Keystone",
@@ -137,7 +129,7 @@ describe("season temporal boundary", () => {
       (goal) => !goal.enabled
     ).length;
 
-    expect(enabled).toHaveLength(9);
+    expect(enabled).toHaveLength(8);
     expect(disabledCount).toBeGreaterThan(0);
     expect(enabledWarbandSeasonGoals()).toHaveLength(0);
 

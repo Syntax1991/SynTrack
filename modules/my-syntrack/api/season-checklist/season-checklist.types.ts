@@ -27,7 +27,6 @@ export type SeasonChecklistCharacter = {
   tier: SeasonGoalSignal;
   embellishments: SeasonGoalSignal;
   portals: SeasonGoalSignal;
-  catalyst: SeasonGoalSignal;
   cracked: SeasonGoalSignal;
   nemesis: SeasonGoalSignal;
   raid: SeasonGoalSignal;

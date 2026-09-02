@@ -190,12 +190,101 @@ describe("season goal catalog", () => {
       "tier-4pc",
       "embellishments",
       "portals",
-      "serpent-scion",
       "cracked-keystone",
       "nemesis-aztarec",
       "aotc-ulatek",
       "ce-ulatek"
     ]);
+  });
+
+  it("disables Serpent Scion as a primary checklist goal while retaining evidence", () => {
+    expect(
+      MIDNIGHT_S2_SEASON_GOAL_CATALOG.find(
+        (goal) => goal.key === "serpent-scion"
+      )
+    ).toMatchObject({
+      enabled: false,
+      captureGap:
+        "Serpent Scion duplicates M+/Raid progression and is not a primary checklist goal"
+    });
+    expect(
+      blockedCharacterSeasonGoalGaps().some(
+        (goal) => goal.key === "serpent-scion"
+      )
+    ).toBe(true);
+    expect(SEASON_EVIDENCE_CATALOG.some((entry) => entry.externalId === 62872)).toBe(
+      true
+    );
+  });
+
+  it("does not count Serpent Scion toward Status or Action when omitted from live goals", () => {
+    const summary = summarizeSeasonGoals([
+      {
+        key: "rating-2000",
+        title: "M+",
+        state: "COMPLETE",
+        label: "✓ 2K",
+        detail: "done",
+        actionLabel: null
+      },
+      {
+        key: "tier-4pc",
+        title: "Tier",
+        state: "COMPLETE",
+        label: "✓ 4/4",
+        detail: "done",
+        actionLabel: null
+      },
+      {
+        key: "embellishments",
+        title: "Emb",
+        state: "COMPLETE",
+        label: "✓ 2/2",
+        detail: "done",
+        actionLabel: null
+      },
+      {
+        key: "portals",
+        title: "Portals",
+        state: "UNKNOWN",
+        label: "?",
+        detail: "?",
+        actionLabel: null
+      },
+      {
+        key: "cracked-keystone",
+        title: "Cracked",
+        state: "COMPLETE",
+        label: "✓",
+        detail: "done",
+        actionLabel: null
+      },
+      {
+        key: "nemesis-aztarec",
+        title: "Nemesis",
+        state: "UNKNOWN",
+        label: "?",
+        detail: "?",
+        actionLabel: null
+      },
+      {
+        key: "raid",
+        title: "Raid",
+        state: "COMPLETE",
+        label: "✓ AOTC",
+        detail: "done",
+        actionLabel: null
+      }
+    ]);
+
+    expect(summary).toEqual({
+      goalsOpen: 0,
+      goalsComplete: 5,
+      goalsUnknown: 2,
+      action: null
+    });
+    expect(seasonActionDisplay(summary).label).toBe("?");
+    expect(summary.action).not.toBe("Earn Serpent Scion");
   });
 
   it("keeps disabled goals internal and never as live warband product rows", () => {

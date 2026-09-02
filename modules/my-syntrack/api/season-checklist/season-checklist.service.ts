@@ -200,15 +200,10 @@ export class SeasonChecklistService {
           resolveEvidence(evidence.trackerKey)
         )
       );
-      const catalystEvidence = primarySeasonEvidenceForGoal("serpent-scion");
       const crackedEvidence = primarySeasonEvidenceForGoal("cracked-keystone");
       const nemesisEvidence = primarySeasonEvidenceForGoal("nemesis-aztarec");
       const aotcEvidence = primarySeasonEvidenceForGoal("aotc-ulatek");
       const ceEvidence = primarySeasonEvidenceForGoal("ce-ulatek");
-      const catalyst = deriveBooleanEvidenceGoal(
-        resolveEvidence(catalystEvidence?.trackerKey ?? ""),
-        "serpent-scion"
-      );
       const cracked = deriveBooleanEvidenceGoal(
         resolveEvidence(crackedEvidence?.trackerKey ?? ""),
         "cracked-keystone"
@@ -221,7 +216,8 @@ export class SeasonChecklistService {
         resolveEvidence(aotcEvidence?.trackerKey ?? ""),
         resolveEvidence(ceEvidence?.trackerKey ?? "")
       );
-      // Action priority: Tier → Emb → Cracked → M+ → Nemesis → Portals → Catalyst → Raid
+      // Action priority: Tier → Emb → Cracked → M+ → Nemesis → Portals → Raid
+      // Serpent Scion / Catalyst is intentionally excluded from product goals.
       const summary = summarizeSeasonGoals([
         tier,
         embellishments,
@@ -229,7 +225,6 @@ export class SeasonChecklistService {
         mythicPlus,
         nemesis,
         portals,
-        catalyst,
         raid
       ]);
 
@@ -239,7 +234,6 @@ export class SeasonChecklistService {
         tier,
         embellishments,
         portals,
-        catalyst,
         cracked,
         nemesis,
         raid,

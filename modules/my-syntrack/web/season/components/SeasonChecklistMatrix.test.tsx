@@ -47,14 +47,6 @@ function buildCharacter(
       detail: "Portals",
       actionLabel: "Earn remaining dungeon portals"
     },
-    catalyst: {
-      key: "serpent-scion",
-      title: "Serpent Scion",
-      state: "COMPLETE",
-      label: "✓",
-      detail: "Midnight Season 2: Serpent Scion",
-      actionLabel: null
-    },
     cracked: {
       key: "cracked-keystone",
       title: "Cracked Keystone",
@@ -99,7 +91,7 @@ describe("SeasonChecklistMatrix", () => {
     expect(screen.getByText("Tier")).toBeInTheDocument();
     expect(screen.getByText("Emb.")).toBeInTheDocument();
     expect(screen.getByText("Portals")).toBeInTheDocument();
-    expect(screen.getByText("Catalyst")).toBeInTheDocument();
+    expect(screen.queryByText("Catalyst")).not.toBeInTheDocument();
     expect(screen.getByText("Cracked")).toBeInTheDocument();
     expect(screen.getByText("Nemesis")).toBeInTheDocument();
     expect(screen.getByText("Raid")).toBeInTheDocument();
@@ -152,14 +144,6 @@ describe("SeasonChecklistMatrix", () => {
                 detail: "Portals",
                 actionLabel: null
               },
-              catalyst: {
-                key: "serpent-scion",
-                title: "Serpent Scion",
-                state: "UNKNOWN",
-                label: "?",
-                detail: "Catalyst",
-                actionLabel: null
-              },
               cracked: {
                 key: "cracked-keystone",
                 title: "Cracked Keystone",
@@ -186,7 +170,7 @@ describe("SeasonChecklistMatrix", () => {
               },
               goalsOpen: 0,
               goalsComplete: 1,
-              goalsUnknown: 7,
+              goalsUnknown: 6,
               action: null
             })
           ]}
@@ -194,7 +178,7 @@ describe("SeasonChecklistMatrix", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("7 unknown")).toBeInTheDocument();
+    expect(screen.getByText("6 unknown")).toBeInTheDocument();
     expect(screen.queryByText("5?")).not.toBeInTheDocument();
     expect(screen.getByTitle("Some Season goals are unresolved")).toHaveTextContent(
       "?"

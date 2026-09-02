@@ -88,10 +88,11 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Serpent Scion",
     category: "CORE",
     scope: "CHARACTER",
-    // Verified achievement 62872 (Midnight Season 2: Serpent Scion).
+    // Verified achievement 62872 retained as evidence; not a primary checklist goal.
     resetBehavior: "SEASONAL",
-    enabled: true,
-    captureGap: null
+    enabled: false,
+    captureGap:
+      "Serpent Scion duplicates M+/Raid progression and is not a primary checklist goal"
   },
   {
     key: "cracked-keystone",
