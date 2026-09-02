@@ -23,13 +23,6 @@ function buildCharacter(
       detail: "Current score 1847",
       actionLabel: "Reach 2K Mythic+ rating"
     },
-    professionWeeklySummary: {
-      state: "NOT_APPLICABLE",
-      label: "—",
-      openProfessionCount: 0,
-      unknownProfessionCount: 0,
-      path: "/professions"
-    },
     goalsOpen: 1,
     goalsComplete: 0,
     goalsUnknown: 0,
@@ -39,7 +32,7 @@ function buildCharacter(
 }
 
 describe("SeasonChecklistMatrix", () => {
-  it("renders condensed M+ without weekly Progress or Meta columns", () => {
+  it("renders Character | M+ | Open | Action without weekly Profession", () => {
     render(
       <MemoryRouter>
         <SeasonChecklistMatrix characters={[buildCharacter()]} />
@@ -47,13 +40,17 @@ describe("SeasonChecklistMatrix", () => {
     );
 
     expect(screen.getByText("M+")).toBeInTheDocument();
+    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("Action")).toBeInTheDocument();
     expect(screen.getByText("1847 → 2K")).toBeInTheDocument();
     expect(screen.getByText("Reach 2K Mythic+ rating")).toBeInTheDocument();
+    expect(screen.queryByText("Prof.")).not.toBeInTheDocument();
     expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     expect(screen.queryByText("META")).not.toBeInTheDocument();
     expect(screen.queryByText("Vault")).not.toBeInTheDocument();
     expect(screen.queryByText("Cracked")).not.toBeInTheDocument();
     expect(screen.queryByText("Nemesis")).not.toBeInTheDocument();
+    expect(screen.queryByText("Capture Pending")).not.toBeInTheDocument();
   });
 
   it("shows complete M+ milestone as ready", () => {

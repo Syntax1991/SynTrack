@@ -1,7 +1,5 @@
 import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
-import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
-import { ProfessionWeeklyStatusService } from "../profession-weekly/profession-weekly-status.service.js";
 import { TagRepository } from "../tags/tag.repository.js";
 import { TagService } from "../tags/tag.service.js";
 import { buildTagsByCharacterId } from "../overview/overview-character-extras.js";
@@ -16,27 +14,16 @@ import {
   resolveDefinitionByKey
 } from "../weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import { WeeklyChecklistRepository } from "../weekly-checklist/weekly-checklist.repository.js";
-import { getWeeklyPeriod } from "../shared/weekly-period.js";
-import { resolveWeekliesProfessionWeeklySummary } from "../weekly-checklist/weeklies-profession-summary.mapper.js";
 import { ensureWeekliesTrackerDefinitionsForImport } from "../weekly-checklist/weeklies-tracker-definitions.service.js";
 import { WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY } from "../weekly-checklist/weeklies-tracker-keys.js";
 import {
   deriveSeasonMythicPlusGoal,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
-import {
-  blockedCharacterSeasonGoalGaps,
-  warbandSeasonGoalGaps
-} from "./season-goal-catalog.js";
 import type { SeasonChecklistResponse } from "./season-checklist.types.js";
 
 export class SeasonChecklistService {
   private readonly repository = new WeeklyChecklistRepository();
-
-  private readonly professionWeeklyStatusService =
-    new ProfessionWeeklyStatusService(
-      new ProfessionWeeklyStatusRepository()
-    );
 
   private readonly tagService = new TagService(new TagRepository());
 
@@ -58,28 +45,15 @@ export class SeasonChecklistService {
       this.trackerDefinitionRepository
     );
 
-    const period = getWeeklyPeriod();
     const activeScope =
       await this.trackerScopeProfileService.getActive();
 
-    const [
-      characters,
-      professionWeeklyOverview,
-      tags,
-      tagAssignments
-    ] = await Promise.all([
-      this.repository.findCharacters(period.key),
-      this.professionWeeklyStatusService.getOverview(),
+    const [characters, tags, tagAssignments] = await Promise.all([
+      this.repository.findCharactersForSeason(),
       this.tagService.list(),
       this.tagService.listAllAssignments()
     ]);
 
-    const professionWeeklyByCharacterId = new Map(
-      professionWeeklyOverview.characters.map((character) => [
-        character.id,
-        character
-      ])
-    );
     const tagsByCharacterId = buildTagsByCharacterId(
       tags,
       tagAssignments
@@ -98,13 +72,7 @@ export class SeasonChecklistService {
           region: character.region,
           className: character.className,
           level: character.level,
-          trackingProfile,
-          professionWeeklySummary:
-            resolveWeekliesProfessionWeeklySummary({
-              professions:
-                professionWeeklyByCharacterId.get(character.id)
-                  ?.professions ?? []
-            })
+          trackingProfile
         };
       })
       .filter((character) =>
@@ -164,13 +132,8 @@ export class SeasonChecklistService {
       };
     });
 
-    const warbandGoals = warbandSeasonGoalGaps().map((entry) => ({
-      key: entry.key,
-      title: entry.title,
-      state: "CAPTURE_PENDING" as const,
-      label: "—",
-      detail: entry.captureGap ?? "Capture not available yet"
-    }));
+    // Live warband goals only — disabled catalog gaps stay internal.
+    const warbandGoals: SeasonChecklistResponse["warbandGoals"] = [];
 
     return {
       season: activeScope
@@ -181,7 +144,6 @@ export class SeasonChecklistService {
         : null,
       characters: characterItems,
       warbandGoals,
-      blockedCharacterGoals: blockedCharacterSeasonGoalGaps(),
       summary: {
         characterCount: characterItems.length,
         goalsOpen: characterItems.reduce(
@@ -195,8 +157,7 @@ export class SeasonChecklistService {
         goalsUnknown: characterItems.reduce(
           (total, character) => total + character.goalsUnknown,
           0
-        ),
-        warbandGoalsPending: warbandGoals.length
+        )
       }
     };
   }

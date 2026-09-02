@@ -2,8 +2,6 @@ import { Link } from "react-router-dom";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import { weekliesSignalTone } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
-import { weekliesProfessionSummaryTitle } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
-import type { WeekliesProfessionWeeklySummary } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
 import type { SeasonChecklistCharacter } from "../../../api/season-checklist/season-checklist.types.js";
 import type { WeekliesSignalState } from "../../../api/weekly-checklist/weeklies-gameplay-signals.types.js";
 
@@ -18,34 +16,6 @@ function mythicPlusToken(character: SeasonChecklistCharacter) {
       character.mythicPlus.state as WeekliesSignalState
     ),
     title: character.mythicPlus.detail
-  };
-}
-
-function professionToken(character: SeasonChecklistCharacter) {
-  const summary =
-    character.professionWeeklySummary as WeekliesProfessionWeeklySummary;
-  const title = weekliesProfessionSummaryTitle(summary);
-
-  if (summary.state === "COMPLETE") {
-    return { symbol: summary.label, tone: "ready" as const, title };
-  }
-
-  if (summary.state === "UNKNOWN") {
-    return { symbol: summary.label, tone: "unknown" as const, title };
-  }
-
-  if (summary.state === "NOT_APPLICABLE") {
-    return {
-      symbol: summary.label,
-      tone: "not-tracked" as const,
-      title
-    };
-  }
-
-  return {
-    symbol: summary.label,
-    tone: "attention" as const,
-    title
   };
 }
 
@@ -95,12 +65,6 @@ export function SeasonChecklistMatrix({
               >
                 M+
               </th>
-              <th
-                className="matrix-col-narrow"
-                title="Profession weekly work summary"
-              >
-                Prof.
-              </th>
               <th className="matrix-col-narrow">Open</th>
               <th className="matrix-col-action">Action</th>
             </tr>
@@ -131,14 +95,6 @@ export function SeasonChecklistMatrix({
                   </td>
                   <td className="matrix-col-narrow">
                     <StatusToken token={mythicPlusToken(character)} />
-                  </td>
-                  <td className="matrix-col-narrow">
-                    <Link
-                      className="weeklies-profession-link"
-                      to={character.professionWeeklySummary.path}
-                    >
-                      <StatusToken token={professionToken(character)} />
-                    </Link>
                   </td>
                   <td className="matrix-col-narrow">{statusLabel(character)}</td>
                   <td className="matrix-col-action">

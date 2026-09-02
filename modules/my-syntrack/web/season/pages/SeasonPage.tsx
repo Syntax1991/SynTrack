@@ -36,11 +36,9 @@ export function SeasonPage() {
             <p className="eyebrow">{seasonLabel}</p>
             <div className="matrix-summary">
               {checklist.summary.characterCount} characters ·{" "}
-              {checklist.summary.goalsOpen} Character goals open ·{" "}
+              {checklist.summary.goalsOpen} goals open ·{" "}
               {checklist.summary.goalsComplete} complete ·{" "}
-              {checklist.summary.goalsUnknown} unknown ·{" "}
-              {checklist.summary.warbandGoalsPending} Warband goals pending
-              capture
+              {checklist.summary.goalsUnknown} unknown
             </div>
           </section>
 
@@ -49,10 +47,7 @@ export function SeasonPage() {
             <SeasonChecklistMatrix characters={checklist.characters} />
           </section>
 
-          <SeasonWarbandGoalsPanel
-            blockedCharacterGoals={checklist.blockedCharacterGoals}
-            warbandGoals={checklist.warbandGoals}
-          />
+          <SeasonWarbandGoalsPanel warbandGoals={checklist.warbandGoals} />
         </>
       )}
     </>

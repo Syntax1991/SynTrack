@@ -3,6 +3,16 @@
  * Completion is never stored here; enabled goals consume canonical
  * CharacterTrackerValue / other domain facts. Disabled entries document
  * capture gaps until evidence exists (UNKNOWN > WRONG).
+ *
+ * Lifecycle distinction:
+ *   SOURCE FACT LIFECYCLE  ≠  SEASON CHECKLIST GOAL LIFECYCLE
+ * Example: individual dungeon portal achievements are permanent facts,
+ * but "complete this season's portal set" is a SEASONAL checklist goal.
+ * resetBehavior describes the checklist goal, not the raw evidence.
+ *
+ * Unsupported capture ≠ incomplete player state. Disabled rows stay
+ * internal (tests / future enablement) and must not appear as user
+ * checklist rows or "capture pending" product UI.
  */
 
 export type SeasonGoalScope = "CHARACTER" | "WARBAND";
@@ -13,12 +23,22 @@ export type SeasonGoalCategory =
   | "DELVES"
   | "WARBAND";
 
+/**
+ * Checklist-goal lifecycle. Use UNRESOLVED when capture/game semantics
+ * do not yet justify asserting WEEKLY / SEASONAL / PERMANENT.
+ */
+export type SeasonGoalResetBehavior =
+  | "WEEKLY"
+  | "SEASONAL"
+  | "PERMANENT"
+  | "UNRESOLVED";
+
 export type SeasonGoalCatalogEntry = {
   key: string;
   title: string;
   category: SeasonGoalCategory;
   scope: SeasonGoalScope;
-  resetBehavior: "WEEKLY" | "SEASONAL" | "PERMANENT";
+  resetBehavior: SeasonGoalResetBehavior;
   enabled: boolean;
   captureGap: string | null;
 };
@@ -38,7 +58,9 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Dungeon portals (+10 timed)",
     category: "MYTHIC_PLUS",
     scope: "CHARACTER",
-    resetBehavior: "PERMANENT",
+    // Season portal-set goal is seasonal; underlying portal achievements
+    // remain permanent source facts once capture exists.
+    resetBehavior: "SEASONAL",
     enabled: false,
     captureGap: "No achievement capture for timed +10 portals"
   },
@@ -111,9 +133,11 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Valeera level 80",
     category: "WARBAND",
     scope: "WARBAND",
-    resetBehavior: "PERMANENT",
+    // No companion capture yet — do not assert PERMANENT/SEASONAL.
+    resetBehavior: "UNRESOLVED",
     enabled: false,
-    captureGap: "No companion/follower level capture"
+    captureGap:
+      "No companion/follower level capture; lifecycle unresolved until evidence exists"
   }
 ];
 
@@ -132,5 +156,12 @@ export function warbandSeasonGoalGaps() {
 export function blockedCharacterSeasonGoalGaps() {
   return MIDNIGHT_S2_SEASON_GOAL_CATALOG.filter(
     (entry) => !entry.enabled && entry.scope === "CHARACTER"
+  );
+}
+
+/** Live warband goals only — disabled gaps are not product state. */
+export function enabledWarbandSeasonGoals() {
+  return MIDNIGHT_S2_SEASON_GOAL_CATALOG.filter(
+    (entry) => entry.enabled && entry.scope === "WARBAND"
   );
 }

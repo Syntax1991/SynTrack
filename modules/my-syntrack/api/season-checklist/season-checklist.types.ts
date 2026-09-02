@@ -1,6 +1,4 @@
 import type { CharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
-import type { WeekliesProfessionWeeklySummary } from "../weekly-checklist/weeklies-profession-summary.mapper.js";
-import type { SeasonGoalCatalogEntry } from "./season-goal-catalog.js";
 
 export type SeasonGoalState =
   | "COMPLETE"
@@ -26,19 +24,23 @@ export type SeasonChecklistCharacter = {
   level: number;
   trackingProfile: CharacterTrackingProfile;
   mythicPlus: SeasonGoalSignal;
-  professionWeeklySummary: WeekliesProfessionWeeklySummary;
   goalsOpen: number;
   goalsComplete: number;
   goalsUnknown: number;
   action: string | null;
 };
 
+/**
+ * Live warband season goals only. Capture-gap catalog entries are never
+ * projected into this list — unsupported ≠ incomplete player state.
+ */
 export type SeasonWarbandGoalView = {
   key: string;
   title: string;
-  state: "CAPTURE_PENDING";
+  state: SeasonGoalState;
   label: string;
   detail: string;
+  actionLabel: string | null;
 };
 
 export type SeasonChecklistResponse = {
@@ -47,13 +49,12 @@ export type SeasonChecklistResponse = {
     name: string;
   } | null;
   characters: SeasonChecklistCharacter[];
+  /** Empty until at least one warband goal has trackable evidence. */
   warbandGoals: SeasonWarbandGoalView[];
-  blockedCharacterGoals: SeasonGoalCatalogEntry[];
   summary: {
     characterCount: number;
     goalsOpen: number;
     goalsComplete: number;
     goalsUnknown: number;
-    warbandGoalsPending: number;
   };
 };

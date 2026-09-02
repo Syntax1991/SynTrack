@@ -4,7 +4,10 @@ import {
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
 import {
+  blockedCharacterSeasonGoalGaps,
   enabledCharacterSeasonGoals,
+  enabledWarbandSeasonGoals,
+  MIDNIGHT_S2_SEASON_GOAL_CATALOG,
   warbandSeasonGoalGaps
 } from "./season-goal-catalog.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
@@ -117,7 +120,7 @@ describe("season goal catalog", () => {
     ]);
   });
 
-  it("keeps warband goals as capture gaps, not fake incomplete rows", () => {
+  it("keeps disabled goals internal and never as live warband product rows", () => {
     const warband = warbandSeasonGoalGaps();
 
     expect(warband.map((goal) => goal.key)).toEqual([
@@ -126,5 +129,37 @@ describe("season goal catalog", () => {
       "valeera-80"
     ]);
     expect(warband.every((goal) => goal.enabled === false)).toBe(true);
+    expect(enabledWarbandSeasonGoals()).toEqual([]);
+  });
+
+  it("treats portals checklist goal as seasonal, not permanent source fact", () => {
+    const portals = MIDNIGHT_S2_SEASON_GOAL_CATALOG.find(
+      (goal) => goal.key === "portals"
+    );
+
+    expect(portals?.resetBehavior).toBe("SEASONAL");
+    expect(portals?.enabled).toBe(false);
+  });
+
+  it("marks Valeera lifecycle unresolved until companion capture exists", () => {
+    const valeera = MIDNIGHT_S2_SEASON_GOAL_CATALOG.find(
+      (goal) => goal.key === "valeera-80"
+    );
+
+    expect(valeera?.resetBehavior).toBe("UNRESOLVED");
+    expect(valeera?.enabled).toBe(false);
+  });
+
+  it("keeps capture-gap character goals disabled and out of enabled set", () => {
+    const blocked = blockedCharacterSeasonGoalGaps();
+
+    expect(blocked.some((goal) => goal.key === "cracked-keystone")).toBe(
+      true
+    );
+    expect(
+      enabledCharacterSeasonGoals().some(
+        (goal) => goal.key === "cracked-keystone"
+      )
+    ).toBe(false);
   });
 });

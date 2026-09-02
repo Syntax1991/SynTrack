@@ -33,7 +33,8 @@ const fakeImportResult: AddonImportResult =
       resourceSnapshots: 0,
       professionWeeklySnapshots: 0,
       professionKnowledgeTreasureSnapshots: 0,
-      weeklyGameplaySnapshots: 0
+      weeklyGameplaySnapshots: 0,
+      weekliesSignalSnapshots: 0
     }
   };
 

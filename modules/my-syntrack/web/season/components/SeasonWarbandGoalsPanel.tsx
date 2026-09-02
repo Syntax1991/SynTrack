@@ -1,22 +1,27 @@
 import type { SeasonWarbandGoalView } from "../../../api/season-checklist/season-checklist.types.js";
-import type { SeasonGoalCatalogEntry } from "../../../api/season-checklist/season-goal-catalog.js";
 
 type SeasonWarbandGoalsPanelProps = {
   warbandGoals: SeasonWarbandGoalView[];
-  blockedCharacterGoals: SeasonGoalCatalogEntry[];
 };
 
+/**
+ * Visible only when at least one warband goal has live trackable evidence.
+ * Capture-gap catalog entries must never appear as fake incomplete rows.
+ */
 export function SeasonWarbandGoalsPanel({
-  warbandGoals,
-  blockedCharacterGoals
+  warbandGoals
 }: SeasonWarbandGoalsPanelProps) {
+  if (warbandGoals.length === 0) {
+    return null;
+  }
+
   return (
     <section className="panel">
       <p className="eyebrow">WARBAND SEASON GOALS</p>
       <h2>Account-wide seasonal progress</h2>
       <p className="matrix-summary">
         Warband goals are listed separately so they are never marked incomplete
-        on every Character. Capture is not available yet for these facts.
+        on every Character.
       </p>
 
       <div className="table-scroll matrix-scroll">
@@ -25,7 +30,7 @@ export function SeasonWarbandGoalsPanel({
             <tr>
               <th>Goal</th>
               <th className="matrix-col-narrow">State</th>
-              <th>Capture gap</th>
+              <th>Detail</th>
             </tr>
           </thead>
           <tbody>
@@ -39,23 +44,6 @@ export function SeasonWarbandGoalsPanel({
           </tbody>
         </table>
       </div>
-
-      {blockedCharacterGoals.length > 0 ? (
-        <>
-          <p className="eyebrow" style={{ marginTop: "1.25rem" }}>
-            CHARACTER GOALS — CAPTURE PENDING
-          </p>
-          <ul className="matrix-summary">
-            {blockedCharacterGoals.map((goal) => (
-              <li key={goal.key}>
-                {goal.title}
-                {" — "}
-                {goal.captureGap}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
     </section>
   );
 }
