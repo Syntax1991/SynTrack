@@ -14,24 +14,29 @@ describe("SeasonWarbandGoalsPanel", () => {
     expect(screen.queryByText("Delver's Journey")).not.toBeInTheDocument();
   });
 
-  it("renders only live tracked warband goals", () => {
+  it("renders Sssensational with product-facing detail and no raw IDs", () => {
     render(
       <SeasonWarbandGoalsPanel
         warbandGoals={[
           {
-            key: "example",
-            title: "Example Warband Goal",
-            state: "INCOMPLETE",
-            label: "open",
-            detail: "Tracked progress",
-            actionLabel: "Continue"
+            key: "tier-visual",
+            title: "Sssensational!",
+            state: "COMPLETE",
+            label: "✓",
+            detail: "Enhanced Season 2 tier visuals",
+            actionLabel: null
           }
         ]}
       />
     );
 
     expect(screen.getByText("WARBAND SEASON GOALS")).toBeInTheDocument();
-    expect(screen.getByText("Example Warband Goal")).toBeInTheDocument();
-    expect(screen.queryByText("Capture gap")).not.toBeInTheDocument();
+    expect(screen.getByText("Warband seasonal progress")).toBeInTheDocument();
+    expect(screen.getByText("Sssensational!")).toBeInTheDocument();
+    expect(
+      screen.getByText("Enhanced Season 2 tier visuals")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/63473/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Account-tier/i)).not.toBeInTheDocument();
   });
 });

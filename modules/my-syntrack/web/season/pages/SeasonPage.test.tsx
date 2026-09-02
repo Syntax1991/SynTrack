@@ -45,6 +45,7 @@ describe("SeasonPage", () => {
     expect(screen.queryByText(/pending capture/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/CAPTURE PENDING/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/WARBAND SEASON GOALS/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sssensational!/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/No achievement capture/i)).not.toBeInTheDocument();
   });
 });

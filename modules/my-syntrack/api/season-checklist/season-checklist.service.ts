@@ -1,5 +1,7 @@
 import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
+import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
+import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
 import { TagRepository } from "../tags/tag.repository.js";
 import { TagService } from "../tags/tag.service.js";
 import { buildTagsByCharacterId } from "../overview/overview-character-extras.js";
@@ -20,12 +22,37 @@ import {
   deriveSeasonMythicPlusGoal,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
+import {
+  deriveBooleanEvidenceGoal,
+  derivePortalsGoal,
+  deriveRaidGoal,
+  deriveWarbandBooleanGoal
+} from "./season-checklist.evidence.js";
+import { deriveSeasonEmbellishmentGoal } from "./season-checklist.embellishment.js";
+import { deriveSeasonTierGoal } from "./season-checklist.tier.js";
+import {
+  resolveSeasonEmbellishmentOverviewState,
+  resolveSeasonTierOverviewState
+} from "./season-checklist.tier-source.js";
+import {
+  SEASON_EVIDENCE_CATALOG,
+  primarySeasonEvidenceForGoal,
+  seasonEvidenceForGoal
+} from "./season-evidence-catalog.js";
+import { ensureSeasonEvidenceTrackerDefinitionsForImport } from "./season-evidence-tracker-definitions.service.js";
+import {
+  enabledWarbandSeasonGoals
+} from "./season-goal-catalog.js";
 import type { SeasonChecklistResponse } from "./season-checklist.types.js";
 
 export class SeasonChecklistService {
   private readonly repository = new WeeklyChecklistRepository();
 
   private readonly tagService = new TagService(new TagRepository());
+
+  private readonly gearReadinessService = new GearReadinessService(
+    new GearReadinessRepository()
+  );
 
   private readonly trackerScopeProfileService =
     new TrackerScopeProfileService(
@@ -41,56 +68,73 @@ export class SeasonChecklistService {
   );
 
   async getChecklist(): Promise<SeasonChecklistResponse> {
-    await ensureWeekliesTrackerDefinitionsForImport(
-      this.trackerDefinitionRepository
-    );
+    const [weekliesScopeKey, evidenceScopeKey] = await Promise.all([
+      ensureWeekliesTrackerDefinitionsForImport(
+        this.trackerDefinitionRepository
+      ),
+      ensureSeasonEvidenceTrackerDefinitionsForImport(
+        this.trackerDefinitionRepository
+      )
+    ]);
 
     const activeScope =
       await this.trackerScopeProfileService.getActive();
 
-    const [characters, tags, tagAssignments] = await Promise.all([
-      this.repository.findCharactersForSeason(),
-      this.tagService.list(),
-      this.tagService.listAllAssignments()
-    ]);
+    const [characters, tags, tagAssignments, gearOverview] =
+      await Promise.all([
+        this.repository.findCharactersForSeason(),
+        this.tagService.list(),
+        this.tagService.listAllAssignments(),
+        this.gearReadinessService.getOverview()
+      ]);
+
+    const gearByCharacterId = new Map(
+      gearOverview.characters.map(
+        (character) => [character.id, character] as const
+      )
+    );
 
     const tagsByCharacterId = buildTagsByCharacterId(
       tags,
       tagAssignments
     );
 
-    const gameplayCharacters = characters
-      .map((character) => {
-        const trackingProfile = resolveCharacterTrackingProfile(
-          tagsByCharacterId.get(character.id) ?? []
-        );
-
-        return {
-          id: character.id,
-          name: character.name,
-          realm: character.realm,
-          region: character.region,
-          className: character.className,
-          level: character.level,
-          trackingProfile
-        };
-      })
-      .filter((character) =>
-        isWeeklyGameplayEnabled(character.trackingProfile)
+    // Active SynTrack Characters only (RemovedCharacter rows are deleted
+    // from Character). Warband evidence uses this full roster; the Season
+    // Character table still filters to gameplay-applicable Characters.
+    const activeCharacters = characters.map((character) => {
+      const trackingProfile = resolveCharacterTrackingProfile(
+        tagsByCharacterId.get(character.id) ?? []
       );
 
-    const characterIds = gameplayCharacters.map(
-      (character) => character.id
+      return {
+        id: character.id,
+        name: character.name,
+        realm: character.realm,
+        region: character.region,
+        className: character.className,
+        level: character.level,
+        trackingProfile
+      };
+    });
+
+    const gameplayCharacters = activeCharacters.filter((character) =>
+      isWeeklyGameplayEnabled(character.trackingProfile)
     );
+
+    const characterIds = activeCharacters.map((character) => character.id);
 
     const scopeKeys = [
       ...(activeScope ? [activeScope.key] : []),
+      weekliesScopeKey,
+      evidenceScopeKey,
       GLOBAL_TRACKER_SCOPE_KEY
     ];
+    const uniqueScopeKeys = [...new Set(scopeKeys)];
 
     const definitionsByScope = new Map(
       await Promise.all(
-        scopeKeys.map(async (scopeKey) => [
+        uniqueScopeKeys.map(async (scopeKey) => [
           scopeKey,
           await this.trackerDefinitionRepository.findByScope(
             scopeKey
@@ -101,17 +145,33 @@ export class SeasonChecklistService {
 
     const ratingDefinition = resolveDefinitionByKey(
       definitionsByScope,
-      scopeKeys,
+      uniqueScopeKeys,
       WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY
     );
 
-    const trackerStates =
-      ratingDefinition && characterIds.length > 0
-        ? await this.trackerValueService.getStatesForScope(
-            ratingDefinition.scopeKey,
-            characterIds
+    const evidenceDefinitions = new Map(
+      SEASON_EVIDENCE_CATALOG.map((evidence) => [
+        evidence.trackerKey,
+        resolveDefinitionByKey(
+          definitionsByScope,
+          uniqueScopeKeys,
+          evidence.trackerKey
+        )
+      ])
+    );
+
+    const trackerStates = characterIds.length > 0
+      ? (
+          await Promise.all(
+            uniqueScopeKeys.map((scopeKey) =>
+              this.trackerValueService.getStatesForScope(
+                scopeKey,
+                characterIds
+              )
+            )
           )
-        : [];
+        ).flat()
+      : [];
 
     const characterItems = gameplayCharacters.map((character) => {
       const statesByDefinitionId = new Map(
@@ -123,17 +183,89 @@ export class SeasonChecklistService {
       const mythicPlus = deriveSeasonMythicPlusGoal(
         buildResolvedTracker(ratingDefinition, statesByDefinitionId)
       );
-      const summary = summarizeSeasonGoals([mythicPlus]);
+      const gearCharacter = gearByCharacterId.get(character.id);
+      const tier = deriveSeasonTierGoal(
+        resolveSeasonTierOverviewState(gearCharacter)
+      );
+      const embellishments = deriveSeasonEmbellishmentGoal(
+        resolveSeasonEmbellishmentOverviewState(gearCharacter)
+      );
+      const resolveEvidence = (trackerKey: string) =>
+        buildResolvedTracker(
+          evidenceDefinitions.get(trackerKey) ?? null,
+          statesByDefinitionId
+        );
+      const portals = derivePortalsGoal(
+        seasonEvidenceForGoal("portals").map((evidence) =>
+          resolveEvidence(evidence.trackerKey)
+        )
+      );
+      const crackedEvidence = primarySeasonEvidenceForGoal("cracked-keystone");
+      const nemesisEvidence = primarySeasonEvidenceForGoal("nemesis-aztarec");
+      const aotcEvidence = primarySeasonEvidenceForGoal("aotc-ulatek");
+      const ceEvidence = primarySeasonEvidenceForGoal("ce-ulatek");
+      const cracked = deriveBooleanEvidenceGoal(
+        resolveEvidence(crackedEvidence?.trackerKey ?? ""),
+        "cracked-keystone"
+      );
+      const nemesis = deriveBooleanEvidenceGoal(
+        resolveEvidence(nemesisEvidence?.trackerKey ?? ""),
+        "nemesis-aztarec"
+      );
+      const raid = deriveRaidGoal(
+        resolveEvidence(aotcEvidence?.trackerKey ?? ""),
+        resolveEvidence(ceEvidence?.trackerKey ?? "")
+      );
+      // Action priority: Tier → Emb → Cracked → M+ → Nemesis → Portals → Raid
+      // Serpent Scion / Catalyst is intentionally excluded from product goals.
+      const summary = summarizeSeasonGoals([
+        tier,
+        embellishments,
+        cracked,
+        mythicPlus,
+        nemesis,
+        portals,
+        raid
+      ]);
 
       return {
         ...character,
         mythicPlus,
+        tier,
+        embellishments,
+        portals,
+        cracked,
+        nemesis,
+        raid,
         ...summary
       };
     });
 
-    // Live warband goals only — disabled catalog gaps stay internal.
-    const warbandGoals: SeasonChecklistResponse["warbandGoals"] = [];
+    const enabledWarband = enabledWarbandSeasonGoals();
+    const warbandGoals =
+      enabledWarband.length === 0
+        ? []
+        : (() => {
+            const tierEvidence = primarySeasonEvidenceForGoal("tier-visual");
+            const tierDefinition = tierEvidence
+              ? evidenceDefinitions.get(tierEvidence.trackerKey) ?? null
+              : null;
+            const tierSignals = activeCharacters.map((character) => {
+              const statesByDefinitionId = new Map(
+                trackerStates
+                  .filter((state) => state.characterId === character.id)
+                  .map((state) => [state.trackerDefinitionId, state])
+              );
+              return deriveBooleanEvidenceGoal(
+                buildResolvedTracker(tierDefinition, statesByDefinitionId),
+                "tier-visual"
+              );
+            });
+
+            return enabledWarband.map((goal) =>
+              deriveWarbandBooleanGoal(tierSignals, goal.key)
+            );
+          })();
 
     return {
       season: activeScope

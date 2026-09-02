@@ -23,7 +23,7 @@ function findDomain(
 }
 
 describe("navDomains - flat product-domain sidebar", () => {
-  it("registers exactly the six primary domains, in order, plus Settings kept separate", () => {
+  it("registers exactly the five primary domains, in order, plus Settings kept separate", () => {
     expect(
       primaryNavDomains.map(
         (domain) => domain.label
@@ -33,13 +33,23 @@ describe("navDomains - flat product-domain sidebar", () => {
       "Season",
       "Characters",
       "Weeklies",
-      "Professions",
-      "Gear"
+      "Professions"
     ]);
 
     expect(
       settingsNavDomain.label
     ).toBe("Settings");
+  });
+
+  it("does not register Gear as a primary product domain", () => {
+    expect(
+      primaryNavDomains.some(
+        (domain) => domain.label === "Gear"
+      )
+    ).toBe(false);
+    expect(
+      primaryNavDomains.map((domain) => domain.id)
+    ).not.toContain("gear");
   });
 
   it("keeps Season active on the seasonal checklist route", () => {
@@ -116,7 +126,7 @@ describe("navDomains - flat product-domain sidebar", () => {
     ).toBe(false);
   });
 
-  it("keeps Characters and Gear scoped to their own routes", () => {
+  it("keeps Characters scoped to its own routes", () => {
     const characters =
       findDomain("characters");
 
@@ -132,17 +142,8 @@ describe("navDomains - flat product-domain sidebar", () => {
       )
     ).toBe(true);
 
-    const gear =
-      findDomain("gear");
-
     expect(
-      gear.isActive(
-        "/gear-readiness"
-      )
-    ).toBe(true);
-
-    expect(
-      gear.isActive("/characters")
+      characters.isActive("/gear-readiness")
     ).toBe(false);
   });
 });

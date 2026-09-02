@@ -7,6 +7,7 @@ import { AddonProfessionWeeklyPersistence } from "./addon-import.profession-week
 import { AddonResourcePersistence } from "./addon-import.resource.persistence.js";
 import { AddonWeeklyActivityPersistence } from "./addon-import.weekly-activity.persistence.js";
 import { AddonWeekliesSignalsPersistence } from "./addon-import.weeklies-signals.persistence.js";
+import { AddonSeasonEvidencePersistence } from "./addon-import.season-evidence.persistence.js";
 import { getSyncDate } from "./addon-import.persistence-utils.js";
 import type {
   AddonImportTransaction,
@@ -45,6 +46,9 @@ export class AddonCharacterPersistence {
   private readonly weekliesSignalsPersistence =
     new AddonWeekliesSignalsPersistence();
 
+  private readonly seasonEvidencePersistence =
+    new AddonSeasonEvidencePersistence();
+
   private readonly removedCharacterRepository =
     new RemovedCharacterRepository();
 
@@ -64,7 +68,8 @@ export class AddonCharacterPersistence {
       professionWeeklySnapshots: 0,
       professionKnowledgeTreasureSnapshots: 0,
       weeklyGameplaySnapshots: 0,
-      weekliesSignalSnapshots: 0
+      weekliesSignalSnapshots: 0,
+      seasonEvidenceSnapshots: 0
     };
 
     for (
@@ -247,6 +252,13 @@ export class AddonCharacterPersistence {
       transaction,
       storedCharacter.id,
       character.weekliesSignals,
+      result
+    );
+
+    await this.seasonEvidencePersistence.persist(
+      transaction,
+      storedCharacter.id,
+      character.seasonEvidence,
       result
     );
 

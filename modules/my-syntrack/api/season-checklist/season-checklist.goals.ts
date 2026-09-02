@@ -79,6 +79,10 @@ export function summarizeSeasonGoals(
   let action: string | null = null;
 
   for (const goal of goals) {
+    if (goal.state === "NOT_APPLICABLE") {
+      continue;
+    }
+
     if (goal.state === "COMPLETE") {
       goalsComplete += 1;
       continue;
@@ -101,4 +105,64 @@ export function summarizeSeasonGoals(
     goalsUnknown,
     action
   };
+}
+
+/** Compact STATUS cell — never "5?". */
+export function seasonStatusLabel(character: {
+  goalsOpen: number;
+  goalsComplete: number;
+  goalsUnknown: number;
+}): string {
+  if (character.goalsOpen > 0) {
+    return `${character.goalsOpen} open`;
+  }
+
+  if (character.goalsUnknown > 0) {
+    return `${character.goalsUnknown} unknown`;
+  }
+
+  if (character.goalsComplete > 0) {
+    return "✓";
+  }
+
+  return "—";
+}
+
+export function seasonStatusDetail(character: {
+  goalsOpen: number;
+  goalsUnknown: number;
+}): string | null {
+  if (character.goalsOpen > 0 && character.goalsUnknown > 0) {
+    return `${character.goalsOpen} open · ${character.goalsUnknown} unresolved`;
+  }
+
+  return null;
+}
+
+/**
+ * ACTION cell: never show ✓ while any enabled goal is UNKNOWN.
+ */
+export function seasonActionDisplay(character: {
+  action: string | null;
+  goalsOpen: number;
+  goalsComplete: number;
+  goalsUnknown: number;
+}): { kind: "action" | "unknown" | "complete" | "empty"; label: string } {
+  if (character.goalsOpen > 0 && character.action) {
+    return { kind: "action", label: character.action };
+  }
+
+  if (character.goalsOpen > 0) {
+    return { kind: "action", label: "Continue season goals" };
+  }
+
+  if (character.goalsUnknown > 0) {
+    return { kind: "unknown", label: "?" };
+  }
+
+  if (character.goalsComplete > 0) {
+    return { kind: "complete", label: "✓" };
+  }
+
+  return { kind: "empty", label: "—" };
 }

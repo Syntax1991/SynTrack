@@ -27,6 +27,20 @@ describe("resolveTrackerPeriodKey", () => {
     );
   });
 
+  it("does not reset seasonal evidence at a weekly boundary", () => {
+    expect(
+      resolveTrackerPeriodKey(
+        "SEASONAL",
+        new Date("2026-08-26T08:00:00.000Z")
+      )
+    ).toBe(
+      resolveTrackerPeriodKey(
+        "SEASONAL",
+        new Date("2026-09-02T08:00:00.000Z")
+      )
+    );
+  });
+
   it("PERMANENT resolves to the same central non-weekly sentinel", () => {
     expect(
       resolveTrackerPeriodKey(

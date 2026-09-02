@@ -3,6 +3,7 @@ import type { AddonProfessionKnowledgeTreasureSnapshot } from "./addon-import.pr
 import type { AddonProfessionWeeklySnapshot } from "./addon-import.profession-weekly.types.js";
 import type { AddonWeeklyActivitySnapshot } from "./addon-import.weekly-activity.types.js";
 import type { AddonWeekliesSignalsSnapshot } from "./addon-import.weeklies-signals.types.js";
+import type { AddonSeasonEvidenceSnapshot } from "./addon-import.season-evidence.types.js";
 
 export type LuaValue =
   | string
@@ -250,6 +251,7 @@ export type AddonCharacter = {
   professionKnowledgeTreasures: AddonProfessionKnowledgeTreasureSnapshot | null;
   weeklyActivity: AddonWeeklyActivitySnapshot | null;
   weekliesSignals: AddonWeekliesSignalsSnapshot | null;
+  seasonEvidence: AddonSeasonEvidenceSnapshot | null;
 };
 
 export type AddonSnapshot = {
@@ -328,5 +330,6 @@ export type AddonImportResult = {
     professionKnowledgeTreasureSnapshots: number;
     weeklyGameplaySnapshots: number;
     weekliesSignalSnapshots: number;
+    seasonEvidenceSnapshots: number;
   };
 };

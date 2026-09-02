@@ -41,7 +41,13 @@
 }
 
 .season-col-mplus,
-.season-col-open {
+.season-col-tier,
+.season-col-emb,
+.season-col-portals,
+.season-col-cracked,
+.season-col-nemesis,
+.season-col-raid,
+.season-col-status {
   width: 1%;
   text-align: center;
   white-space: nowrap;
@@ -49,11 +55,17 @@
 
 .season-col-action {
   width: 1%;
-  min-width: 12.5rem;
+  min-width: 10.5rem;
   text-align: left;
   white-space: nowrap;
 }
 
 .season-col-action .overview-next-action {
   display: inline;
+}
+
+.season-col-action .overview-next-action.unresolved,
+.season-col-action .overview-next-action.empty {
+  color: var(--text-secondary);
+  font-weight: 600;
 }

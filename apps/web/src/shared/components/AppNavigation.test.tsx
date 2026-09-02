@@ -37,7 +37,7 @@ function sidebar() {
 }
 
 describe("AppNavigation - flat product-domain sidebar", () => {
-  it("renders exactly the seven domains: Overview, Season, Characters, Weeklies, Professions, Gear and Settings", () => {
+  it("renders exactly the six domains: Overview, Season, Characters, Weeklies, Professions and Settings", () => {
     renderNavigation();
 
     const labels = [
@@ -46,7 +46,6 @@ describe("AppNavigation - flat product-domain sidebar", () => {
       "Characters",
       "Weeklies",
       "Professions",
-      "Gear",
       "Settings"
     ];
 
@@ -55,6 +54,8 @@ describe("AppNavigation - flat product-domain sidebar", () => {
         sidebar().getByText(label)
       ).toBeInTheDocument();
     }
+
+    expect(sidebar().queryByText("Gear")).toBeNull();
   });
 
   it("never renders My Characters, Weekly Checklist, Vault / M+, profession child links, a My SynTrack wrapper, Roadmap, Automation, Guild, Loot, Recruitment or Raid Tasks", () => {
@@ -126,11 +127,6 @@ describe("AppNavigation - flat product-domain sidebar", () => {
         name: /Professions/i
       });
 
-    const gearLink =
-      sidebar().getByRole("link", {
-        name: /Gear/i
-      });
-
     expect(
       weekliesLink
     ).not.toHaveClass("active");
@@ -139,8 +135,30 @@ describe("AppNavigation - flat product-domain sidebar", () => {
       professionsLink
     ).not.toHaveClass("active");
 
-    expect(gearLink).toHaveClass(
-      "active"
+    expect(
+      sidebar().queryByRole("link", {
+        name: /^Gear$/i
+      })
+    ).toBeNull();
+  });
+
+  it("exposes primary product domains without Gear", () => {
+    renderNavigation("/season");
+
+    const labels = sidebar()
+      .getAllByRole("link")
+      .map((link) => link.textContent?.trim());
+
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "Overview",
+        "Season",
+        "Characters",
+        "Weeklies",
+        "Professions",
+        "Settings"
+      ])
     );
+    expect(labels).not.toContain("Gear");
   });
 });

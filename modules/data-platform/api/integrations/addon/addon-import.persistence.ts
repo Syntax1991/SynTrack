@@ -146,7 +146,9 @@ export class AddonImportPersistence {
             weeklyGameplaySnapshots:
               characterResult.weeklyGameplaySnapshots,
             weekliesSignalSnapshots:
-              characterResult.weekliesSignalSnapshots
+              characterResult.weekliesSignalSnapshots,
+            seasonEvidenceSnapshots:
+              characterResult.seasonEvidenceSnapshots
           }
         };
       }

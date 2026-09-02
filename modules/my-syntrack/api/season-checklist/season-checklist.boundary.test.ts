@@ -26,6 +26,10 @@ describe("season temporal boundary", () => {
     );
     expect(serviceSource).not.toMatch(/getWeeklyPeriod/);
     expect(serviceSource).toMatch(/findCharactersForSeason/);
+    expect(serviceSource).toMatch(/activeCharacters/);
+    expect(serviceSource).toMatch(
+      /gameplayCharacters = activeCharacters\.filter/
+    );
   });
 
   it("response shape excludes weekly profession summary and pending-capture counts", () => {
@@ -47,6 +51,54 @@ describe("season temporal boundary", () => {
             label: "1847 → 2K",
             detail: "score",
             actionLabel: "Reach 2K Mythic+ rating"
+          },
+          tier: {
+            key: "tier-4pc",
+            title: "Current-season 4pc Tier Set",
+            state: "COMPLETE",
+            label: "✓ 4/4",
+            detail: "Tier",
+            actionLabel: null
+          },
+          embellishments: {
+            key: "embellishments",
+            title: "Embellishment setup",
+            state: "COMPLETE",
+            label: "✓ 2/2",
+            detail: "Emb",
+            actionLabel: null
+          },
+          portals: {
+            key: "portals",
+            title: "Portals",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Portals",
+            actionLabel: null
+          },
+          cracked: {
+            key: "cracked-keystone",
+            title: "Cracked Keystone",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Complete the Season 2 Cracked Keystone quest",
+            actionLabel: null
+          },
+          nemesis: {
+            key: "nemesis-aztarec",
+            title: "Azta'rec (Nemesis)",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Defeat Azta'rec on ??",
+            actionLabel: null
+          },
+          raid: {
+            key: "raid",
+            title: "Raid",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Ula'tek raid milestones",
+            actionLabel: null
           },
           goalsOpen: 1,
           goalsComplete: 0,
@@ -77,7 +129,7 @@ describe("season temporal boundary", () => {
       (goal) => !goal.enabled
     ).length;
 
-    expect(enabled).toHaveLength(1);
+    expect(enabled).toHaveLength(8);
     expect(disabledCount).toBeGreaterThan(0);
     expect(enabledWarbandSeasonGoals()).toHaveLength(0);
 
@@ -98,7 +150,7 @@ describe("season temporal boundary", () => {
     expect(summary.goalsUnknown).toBe(0);
     expect(
       blockedCharacterSeasonGoalGaps().some(
-        (goal) => goal.key === "cracked-keystone"
+        (goal) => goal.key === "nemesis-aztarec-solo"
       )
     ).toBe(true);
   });

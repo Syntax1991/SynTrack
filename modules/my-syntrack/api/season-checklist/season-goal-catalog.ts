@@ -54,70 +54,106 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     captureGap: null
   },
   {
+    key: "tier-4pc",
+    title: "Current-season 4pc Tier Set",
+    category: "CORE",
+    scope: "CHARACTER",
+    // Derived from Gear ACTIVE_TIER_SET_IDS / deriveTierOverviewState.
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
+  },
+  {
+    key: "embellishments",
+    title: "Embellishment setup",
+    category: "CORE",
+    scope: "CHARACTER",
+    // Derived from Gear Unique-Equipped category 512 / deriveEmbellishmentOverviewState.
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
+  },
+  {
     key: "portals",
     title: "Dungeon portals (+10 timed)",
     category: "MYTHIC_PLUS",
     scope: "CHARACTER",
-    // Season portal-set goal is seasonal; underlying portal achievements
-    // remain permanent source facts once capture exists.
+    // Verified achievements 62437-62444.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture for timed +10 portals"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "serpent-scion",
-    title: "Serpent Scion / season catalyst milestone",
+    title: "Serpent Scion",
     category: "CORE",
     scope: "CHARACTER",
+    // Verified achievement 62872 retained as evidence; not a primary checklist goal.
     resetBehavior: "SEASONAL",
     enabled: false,
     captureGap:
-      "Need achievement evidence (OR of 2K / Heroic Ula'tek / 1600 PvP)"
+      "Serpent Scion duplicates M+/Raid progression and is not a primary checklist goal"
   },
   {
     key: "cracked-keystone",
     title: "Cracked Keystone",
     category: "DELVES",
     scope: "CHARACTER",
+    // Verified Midnight Season 2 quest 97910.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "Quest ID + seasonal quest-flag capture not in repo"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "nemesis-aztarec",
     title: "Azta'rec (Nemesis)",
     category: "DELVES",
     scope: "CHARACTER",
+    // Verified achievement 63326 (My Venomous Nemesis).
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
+  },
+  {
+    key: "nemesis-aztarec-solo",
+    title: "Let Me Solo Him: Azta'rec",
+    category: "DELVES",
+    scope: "CHARACTER",
+    // Verified achievement 63333; intentionally disabled stretch goal.
     resetBehavior: "SEASONAL",
     enabled: false,
-    captureGap: "No Nemesis achievement/quest/kill capture"
+    captureGap: "Stretch solo goal is not part of the product checklist"
   },
   {
     key: "aotc-ulatek",
     title: "AOTC: Ula'tek",
     category: "RAID",
     scope: "CHARACTER",
+    // Verified achievement 63650.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture; weekly raid lockout ≠ AOTC"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "ce-ulatek",
     title: "Cutting Edge: Ula'tek",
     category: "RAID",
     scope: "CHARACTER",
+    // Verified achievement 63651.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "tier-visual",
-    title: "Season tier visual (Sssensational!)",
+    title: "Sssensational!",
     category: "WARBAND",
     scope: "WARBAND",
+    // Verified Warband achievement 63473 — capture may remain; product goal off.
     resetBehavior: "SEASONAL",
     enabled: false,
-    captureGap: "No achievement capture; CharacterTrackerValue is not warband-scoped"
+    captureGap:
+      "Cosmetic tier visual unlock is not part of the primary Season checklist"
   },
   {
     key: "delvers-journey",

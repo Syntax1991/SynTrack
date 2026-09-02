@@ -5,6 +5,7 @@ import { normalizeProfessionKnowledgeTreasureSnapshot } from "./addon-import.pro
 import { normalizeProfessionWeeklySnapshot } from "./addon-import.profession-weekly.normalizer.js";
 import { normalizeWeeklyActivitySnapshot } from "./addon-import.weekly-activity.normalizer.js";
 import { normalizeWeekliesSignalsSnapshot } from "./addon-import.weeklies-signals.normalizer.js";
+import { normalizeSeasonEvidenceSnapshot } from "./addon-import.season-evidence.normalizer.js";
 import type {
   AddonCharacter,
   AddonExpansion,
@@ -211,6 +212,9 @@ export function normalizeCharacter(
   const weekliesSignals = normalizeWeekliesSignalsSnapshot(
     modules?.["weeklies-signals"]
   );
+  const seasonEvidence = normalizeSeasonEvidenceSnapshot(
+    modules?.["season-evidence"]
+  );
 
   return {
     key,
@@ -263,6 +267,7 @@ export function normalizeCharacter(
     professionWeekly,
     professionKnowledgeTreasures,
     weeklyActivity,
-    weekliesSignals
+    weekliesSignals,
+    seasonEvidence
   };
 }
