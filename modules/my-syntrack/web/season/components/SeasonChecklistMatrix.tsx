@@ -49,11 +49,16 @@ export function SeasonChecklistMatrix({
           <thead>
             <tr>
               <th className="season-col-character">Character</th>
-              <th
-                className="season-col-mplus"
+              <th className="season-col-mplus"
                 title="Current-season Mythic+ rating toward Keystone Master (2,000)"
               >
                 M+
+              </th>
+              <th
+                className="season-col-tier"
+                title="Current-season Tier set pieces toward 4pc"
+              >
+                Tier
               </th>
               <th className="season-col-portals">Portals</th>
               <th className="season-col-catalyst">Catalyst</th>
@@ -91,6 +96,9 @@ export function SeasonChecklistMatrix({
                   </td>
                   <td className="season-col-mplus">
                     <StatusToken token={seasonToken(character.mythicPlus)} />
+                  </td>
+                  <td className="season-col-tier">
+                    <StatusToken token={seasonToken(character.tier)} />
                   </td>
                   <td className="season-col-portals">
                     <StatusToken token={seasonToken(character.portals)} />

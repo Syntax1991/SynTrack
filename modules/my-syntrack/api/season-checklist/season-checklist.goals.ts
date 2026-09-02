@@ -79,6 +79,10 @@ export function summarizeSeasonGoals(
   let action: string | null = null;
 
   for (const goal of goals) {
+    if (goal.state === "NOT_APPLICABLE") {
+      continue;
+    }
+
     if (goal.state === "COMPLETE") {
       goalsComplete += 1;
       continue;

@@ -23,6 +23,14 @@ function buildCharacter(
       detail: "Current score 1847",
       actionLabel: "Reach 2K Mythic+ rating"
     },
+    tier: {
+      key: "tier-4pc",
+      title: "Current-season 4pc Tier Set",
+      state: "COMPLETE",
+      label: "✓ 4/4",
+      detail: "Tier",
+      actionLabel: null
+    },
     portals: {
       key: "portals",
       title: "Portals",
@@ -80,6 +88,7 @@ describe("SeasonChecklistMatrix", () => {
     );
 
     expect(screen.getByText("M+")).toBeInTheDocument();
+    expect(screen.getByText("Tier")).toBeInTheDocument();
     expect(screen.getByText("Portals")).toBeInTheDocument();
     expect(screen.getByText("Catalyst")).toBeInTheDocument();
     expect(screen.getByText("Cracked")).toBeInTheDocument();
@@ -108,6 +117,14 @@ describe("SeasonChecklistMatrix", () => {
                 state: "COMPLETE",
                 label: "✓ 2K",
                 detail: "done",
+                actionLabel: null
+              },
+              tier: {
+                key: "tier-4pc",
+                title: "Tier",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Tier",
                 actionLabel: null
               },
               portals: {
@@ -152,7 +169,7 @@ describe("SeasonChecklistMatrix", () => {
               },
               goalsOpen: 0,
               goalsComplete: 1,
-              goalsUnknown: 5,
+              goalsUnknown: 6,
               action: null
             })
           ]}
@@ -160,7 +177,7 @@ describe("SeasonChecklistMatrix", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("5 unknown")).toBeInTheDocument();
+    expect(screen.getByText("6 unknown")).toBeInTheDocument();
     expect(screen.queryByText("5?")).not.toBeInTheDocument();
     expect(screen.getByTitle("Some Season goals are unresolved")).toHaveTextContent(
       "?"

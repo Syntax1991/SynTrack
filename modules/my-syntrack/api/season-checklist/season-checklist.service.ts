@@ -1,5 +1,7 @@
 import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
+import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
+import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
 import { TagRepository } from "../tags/tag.repository.js";
 import { TagService } from "../tags/tag.service.js";
 import { buildTagsByCharacterId } from "../overview/overview-character-extras.js";
@@ -26,6 +28,8 @@ import {
   deriveRaidGoal,
   deriveWarbandBooleanGoal
 } from "./season-checklist.evidence.js";
+import { deriveSeasonTierGoal } from "./season-checklist.tier.js";
+import { resolveSeasonTierOverviewState } from "./season-checklist.tier-source.js";
 import {
   SEASON_EVIDENCE_CATALOG,
   primarySeasonEvidenceForGoal,
@@ -41,6 +45,10 @@ export class SeasonChecklistService {
   private readonly repository = new WeeklyChecklistRepository();
 
   private readonly tagService = new TagService(new TagRepository());
+
+  private readonly gearReadinessService = new GearReadinessService(
+    new GearReadinessRepository()
+  );
 
   private readonly trackerScopeProfileService =
     new TrackerScopeProfileService(
@@ -68,11 +76,19 @@ export class SeasonChecklistService {
     const activeScope =
       await this.trackerScopeProfileService.getActive();
 
-    const [characters, tags, tagAssignments] = await Promise.all([
-      this.repository.findCharactersForSeason(),
-      this.tagService.list(),
-      this.tagService.listAllAssignments()
-    ]);
+    const [characters, tags, tagAssignments, gearOverview] =
+      await Promise.all([
+        this.repository.findCharactersForSeason(),
+        this.tagService.list(),
+        this.tagService.listAllAssignments(),
+        this.gearReadinessService.getOverview()
+      ]);
+
+    const gearByCharacterId = new Map(
+      gearOverview.characters.map(
+        (character) => [character.id, character] as const
+      )
+    );
 
     const tagsByCharacterId = buildTagsByCharacterId(
       tags,
@@ -163,6 +179,11 @@ export class SeasonChecklistService {
       const mythicPlus = deriveSeasonMythicPlusGoal(
         buildResolvedTracker(ratingDefinition, statesByDefinitionId)
       );
+      const tier = deriveSeasonTierGoal(
+        resolveSeasonTierOverviewState(
+          gearByCharacterId.get(character.id)
+        )
+      );
       const resolveEvidence = (trackerKey: string) =>
         buildResolvedTracker(
           evidenceDefinitions.get(trackerKey) ?? null,
@@ -194,18 +215,21 @@ export class SeasonChecklistService {
         resolveEvidence(aotcEvidence?.trackerKey ?? ""),
         resolveEvidence(ceEvidence?.trackerKey ?? "")
       );
+      // Action priority: Tier → Cracked → M+ → Nemesis → Portals → Catalyst → Raid
       const summary = summarizeSeasonGoals([
+        tier,
+        cracked,
         mythicPlus,
+        nemesis,
         portals,
         catalyst,
-        cracked,
-        nemesis,
         raid
       ]);
 
       return {
         ...character,
         mythicPlus,
+        tier,
         portals,
         catalyst,
         cracked,

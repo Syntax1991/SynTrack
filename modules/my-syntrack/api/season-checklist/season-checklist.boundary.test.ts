@@ -52,6 +52,14 @@ describe("season temporal boundary", () => {
             detail: "score",
             actionLabel: "Reach 2K Mythic+ rating"
           },
+          tier: {
+            key: "tier-4pc",
+            title: "Current-season 4pc Tier Set",
+            state: "COMPLETE",
+            label: "✓ 4/4",
+            detail: "Tier",
+            actionLabel: null
+          },
           portals: {
             key: "portals",
             title: "Portals",
@@ -121,7 +129,7 @@ describe("season temporal boundary", () => {
       (goal) => !goal.enabled
     ).length;
 
-    expect(enabled).toHaveLength(7);
+    expect(enabled).toHaveLength(8);
     expect(disabledCount).toBeGreaterThan(0);
     expect(enabledWarbandSeasonGoals()).toHaveLength(0);
 

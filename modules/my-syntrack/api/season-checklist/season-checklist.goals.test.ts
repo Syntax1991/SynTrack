@@ -187,6 +187,7 @@ describe("season goal catalog", () => {
   it("enables all verified evidence-backed character goals", () => {
     expect(enabledCharacterSeasonGoals().map((goal) => goal.key)).toEqual([
       "rating-2000",
+      "tier-4pc",
       "portals",
       "serpent-scion",
       "cracked-keystone",

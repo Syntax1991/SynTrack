@@ -54,6 +54,16 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     captureGap: null
   },
   {
+    key: "tier-4pc",
+    title: "Current-season 4pc Tier Set",
+    category: "CORE",
+    scope: "CHARACTER",
+    // Derived from Gear ACTIVE_TIER_SET_IDS / deriveTierOverviewState.
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
+  },
+  {
     key: "portals",
     title: "Dungeon portals (+10 timed)",
     category: "MYTHIC_PLUS",
