@@ -21,6 +21,7 @@ import { TrackerValueRepository } from "../trackers/tracker-value.repository.js"
 import { TrackerValueService } from "../trackers/tracker-value.service.js";
 import { loadWeekliesGameplaySignalsByCharacterId } from "./weeklies-gameplay-signals.loader.js";
 import { createDefaultWeekliesGameplaySignals } from "./weeklies-gameplay-signals.mapper.js";
+import { ensureWeekliesTrackerDefinitions } from "./weeklies-tracker-definitions.service.js";
 import { resolveWeekliesProfessionWeeklySummary } from "./weeklies-profession-summary.mapper.js";
 
 const taskCatalog:
@@ -103,6 +104,16 @@ export class WeeklyChecklistService {
 
     const period =
       getWeeklyPeriod();
+    const activeScope =
+      await this.trackerScopeProfileService.getActive();
+
+    if (activeScope) {
+      await ensureWeekliesTrackerDefinitions(
+        activeScope.key,
+        this.trackerDefinitionRepository
+      );
+    }
+
     const [
       tasks,
       characters,
