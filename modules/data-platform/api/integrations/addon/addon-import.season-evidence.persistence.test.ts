@@ -36,12 +36,16 @@ function result(): CharacterPersistenceResult {
 }
 
 describe("AddonSeasonEvidencePersistence", () => {
-  it("persists known seasonal evidence at ALWAYS and skips unknown", async () => {
+  it("persists scoped facts at ALWAYS and skips unresolved", async () => {
     const rows: Array<Record<string, unknown>> = [];
     const definitions = new Map([
       [
         "season-achievement-62872",
         definition("catalyst-def", "season-achievement-62872")
+      ],
+      [
+        "season-achievement-63473",
+        definition("tier-def", "season-achievement-63473")
       ],
       [
         "season-achievement-63650",
@@ -68,18 +72,26 @@ describe("AddonSeasonEvidencePersistence", () => {
       } as never,
       "char-1",
       {
-        schemaVersion: 1,
+        schemaVersion: 2,
         capturedAt: "2026-08-28T12:00:00.000Z",
         achievements: {
           ["season-achievement-62872"]: {
             trackerKey: "season-achievement-62872",
             achievementId: 62872,
-            completed: true
+            accountCompleted: true,
+            earnedByCharacter: false
+          },
+          ["season-achievement-63473"]: {
+            trackerKey: "season-achievement-63473",
+            achievementId: 63473,
+            accountCompleted: true,
+            earnedByCharacter: false
           },
           ["season-achievement-63650"]: {
             trackerKey: "season-achievement-63650",
             achievementId: 63650,
-            completed: null
+            accountCompleted: true,
+            earnedByCharacter: null
           }
         },
         quests: {
@@ -93,9 +105,19 @@ describe("AddonSeasonEvidencePersistence", () => {
       tracked
     );
 
-    expect(rows).toHaveLength(2);
+    // CHARACTER catalyst: earnedByCharacter false → persist false
+    // WARBAND tier: accountCompleted true → persist true
+    // CHARACTER aotc: earnedByCharacter null → skip (UNKNOWN)
+    // QUEST cracked: false → persist
+    expect(rows).toHaveLength(3);
     expect(rows.every((row) => row.periodKey === "ALWAYS")).toBe(true);
-    expect(rows.map((row) => row.booleanValue)).toEqual([true, false]);
-    expect(tracked.seasonEvidenceSnapshots).toBe(2);
+    expect(
+      rows.map((row) => [row.trackerDefinitionId, row.booleanValue])
+    ).toEqual([
+      ["catalyst-def", false],
+      ["tier-def", true],
+      ["cracked-def", false]
+    ]);
+    expect(tracked.seasonEvidenceSnapshots).toBe(3);
   });
 });

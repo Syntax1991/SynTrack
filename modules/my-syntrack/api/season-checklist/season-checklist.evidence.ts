@@ -64,18 +64,41 @@ export function deriveBooleanEvidenceGoal(
       );
 }
 
+export type PortalEvidenceCounts = {
+  knownCompletedCount: number;
+  knownEvidenceCount: number;
+  total: number;
+};
+
+export function countPortalEvidence(
+  resolved: Array<ResolvedTrackerDefinition | null>
+): PortalEvidenceCounts {
+  const total = resolved.length || 8;
+  const knownCompletedCount = resolved.filter(
+    (entry) => booleanValue(entry) === true
+  ).length;
+  const knownEvidenceCount = resolved.filter(
+    (entry) => booleanValue(entry) !== null
+  ).length;
+
+  return { knownCompletedCount, knownEvidenceCount, total };
+}
+
+/**
+ * Exact portal fractions only when every expected evidence row is known.
+ * Any UNKNOWN evidence → overall UNKNOWN ("?"). Never show partial x/8.
+ */
 export function derivePortalsGoal(
   resolved: Array<ResolvedTrackerDefinition | null>
 ): SeasonGoalSignal {
-  const completed = resolved.filter(
-    (entry) => booleanValue(entry) === true
-  ).length;
-  const known = resolved.filter(
-    (entry) => booleanValue(entry) !== null
-  ).length;
-  const total = resolved.length || 8;
+  const { knownCompletedCount, knownEvidenceCount, total } =
+    countPortalEvidence(resolved);
 
-  if (completed === total && known === total) {
+  if (knownEvidenceCount < total) {
+    return goalSignal("portals", "Dungeon portals", "UNKNOWN", "?", null);
+  }
+
+  if (knownCompletedCount === total) {
     return goalSignal(
       "portals",
       "Dungeon portals",
@@ -85,19 +108,19 @@ export function derivePortalsGoal(
     );
   }
 
-  if (known === 0) {
-    return goalSignal("portals", "Dungeon portals", "UNKNOWN", "?", null);
-  }
-
   return goalSignal(
     "portals",
     "Dungeon portals",
     "INCOMPLETE",
-    `${completed}/${total}`,
+    `${knownCompletedCount}/${total}`,
     "Earn remaining dungeon portals"
   );
 }
 
+/**
+ * CE is a stronger optional complete signal.
+ * AOTC unknown + CE false does not prove AOTC open → UNKNOWN.
+ */
 export function deriveRaidGoal(
   aotc: ResolvedTrackerDefinition | null,
   ce: ResolvedTrackerDefinition | null
@@ -113,7 +136,7 @@ export function deriveRaidGoal(
     return goalSignal("raid", "Ula'tek raid", "COMPLETE", "✓ AOTC", null);
   }
 
-  if (aotcValue === false || ceValue === false) {
+  if (aotcValue === false) {
     return goalSignal(
       "raid",
       "Ula'tek raid",
@@ -124,6 +147,41 @@ export function deriveRaidGoal(
   }
 
   return goalSignal("raid", "Ula'tek raid", "UNKNOWN", "?", null);
+}
+
+export function deriveWarbandBooleanGoal(
+  signals: SeasonGoalSignal[],
+  key: string,
+  title: string,
+  incompleteAction: string
+): SeasonGoalSignal {
+  const hasComplete = signals.some((signal) => signal.state === "COMPLETE");
+  const knownIncomplete = signals.filter(
+    (signal) => signal.state === "INCOMPLETE"
+  );
+  const allUnknown =
+    signals.length === 0 ||
+    signals.every((signal) => signal.state === "UNKNOWN");
+
+  if (hasComplete) {
+    return goalSignal(key, title, "COMPLETE", "✓", null);
+  }
+
+  if (allUnknown) {
+    return goalSignal(key, title, "UNKNOWN", "?", null);
+  }
+
+  if (knownIncomplete.length > 0) {
+    return goalSignal(
+      key,
+      title,
+      "INCOMPLETE",
+      "open",
+      incompleteAction
+    );
+  }
+
+  return goalSignal(key, title, "UNKNOWN", "?", null);
 }
 
 export const deriveCatalystGoal = deriveBooleanEvidenceGoal;

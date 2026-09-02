@@ -2,29 +2,32 @@ local _, private = ...
 local API = private.API
 local CATALOG = private.SeasonEvidenceCatalog
 
+--[[
+    Capture raw achievement facts only.
+    Backend catalog scope decides which fact applies:
+      CHARACTER -> earnedByCharacter
+      WARBAND   -> accountCompleted
+]]
+
 local function captureAchievement(achievementId)
     if type(GetAchievementInfo) ~= "function" then
-        return nil
+        return nil, nil
     end
 
     local result = { pcall(GetAchievementInfo, achievementId) }
 
     if not result[1] then
-        return nil
+        return nil, nil
     end
 
-    local completed = result[5]
-    local wasEarnedByMe = result[14]
+    local accountCompleted = result[5]
+    local earnedByCharacter = result[14]
 
-    if type(wasEarnedByMe) == "boolean" then
-        return wasEarnedByMe
-    end
-
-    if type(completed) == "boolean" then
-        return completed
-    end
-
-    return nil
+    return (
+        type(accountCompleted) == "boolean" and accountCompleted or nil
+    ), (
+        type(earnedByCharacter) == "boolean" and earnedByCharacter or nil
+    )
 end
 
 local function captureQuest(questId)
@@ -51,9 +54,13 @@ local function captureSeasonEvidence()
     local quests = {}
 
     for trackerKey, achievementId in pairs(CATALOG.achievements) do
+        local accountCompleted, earnedByCharacter =
+            captureAchievement(achievementId)
+
         achievements[trackerKey] = {
             achievementId = achievementId,
-            completed = captureAchievement(achievementId)
+            accountCompleted = accountCompleted,
+            earnedByCharacter = earnedByCharacter
         }
     end
 
@@ -73,8 +80,8 @@ end
 local succeeded, errorMessage = API.RegisterModule({
     id = "season-evidence",
     name = "Season Evidence",
-    version = "0.1.0",
-    schemaVersion = 1,
+    version = "0.2.0",
+    schemaVersion = 2,
     scope = "character",
     capture = captureSeasonEvidence
 })

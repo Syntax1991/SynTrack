@@ -10,7 +10,8 @@ import type {
 } from "./addon-import.season-evidence.types.js";
 import type { LuaValue } from "./addon-import.types.js";
 
-export const SUPPORTED_SEASON_EVIDENCE_SCHEMA_VERSION = 1;
+/** schemaVersion 1 collapsed completion; reject rather than misinterpret. */
+export const SUPPORTED_SEASON_EVIDENCE_SCHEMA_VERSION = 2;
 
 function nullableBoolean(value: LuaValue | undefined): boolean | null {
   return typeof value === "boolean" ? value : null;
@@ -32,7 +33,8 @@ function normalizeAchievements(
         ? [[trackerKey, {
             trackerKey,
             achievementId: asNumber(row.achievementId),
-            completed: nullableBoolean(row.completed)
+            accountCompleted: nullableBoolean(row.accountCompleted),
+            earnedByCharacter: nullableBoolean(row.earnedByCharacter)
           }]]
         : [];
     })

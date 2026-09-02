@@ -1,6 +1,8 @@
 import { resolveTrackerPeriodKey } from "../../../../my-syntrack/api/trackers/tracker-period.js";
 import { buildTrackerValueColumns } from "../../../../my-syntrack/api/trackers/tracker-value-invariants.js";
 import type { TrackerResetBehavior } from "../../../../my-syntrack/api/trackers/tracker.types.js";
+import { SEASON_EVIDENCE_CATALOG } from "../../../../my-syntrack/api/season-checklist/season-evidence-catalog.js";
+import { resolveSeasonAchievementCompletion } from "../../../../my-syntrack/api/season-checklist/season-achievement-evidence.js";
 import type {
   AddonImportTransaction,
   CharacterPersistenceResult
@@ -15,6 +17,15 @@ export type SeasonEvidenceDefinitionLookup = {
   findSeasonEvidenceTrackerDefinitions(): Promise<SeasonEvidenceDefinitionsByKey>;
 };
 
+/**
+ * Persistence behavior for unresolved captures:
+ * - known boolean → upsert
+ * - unresolved (null) → skip write, preserving any previously recorded value
+ *
+ * Successful false from WoW APIs is treated as authoritative when returned
+ * as a boolean. API failure / non-boolean results stay null and do not
+ * overwrite proven completion.
+ */
 export class AddonSeasonEvidencePersistence {
   constructor(
     private readonly definitionLookup: SeasonEvidenceDefinitionLookup = {
@@ -35,11 +46,24 @@ export class AddonSeasonEvidencePersistence {
 
     const definitions =
       await this.definitionLookup.findSeasonEvidenceTrackerDefinitions();
-    const captured = [
-      ...Object.values(snapshot.achievements).map((evidence) => ({
-        trackerKey: evidence.trackerKey,
-        completed: evidence.completed
-      })),
+    const catalogByKey = new Map(
+      SEASON_EVIDENCE_CATALOG.map((entry) => [entry.trackerKey, entry])
+    );
+
+    const captured: Array<{ trackerKey: string; completed: boolean | null }> = [
+      ...Object.values(snapshot.achievements).map((evidence) => {
+        const catalog = catalogByKey.get(evidence.trackerKey);
+        return {
+          trackerKey: evidence.trackerKey,
+          completed: catalog
+            ? resolveSeasonAchievementCompletion(
+                catalog.scope,
+                evidence.accountCompleted,
+                evidence.earnedByCharacter
+              )
+            : null
+        };
+      }),
       ...Object.values(snapshot.quests).map((evidence) => ({
         trackerKey: evidence.trackerKey,
         completed: evidence.flaggedCompleted

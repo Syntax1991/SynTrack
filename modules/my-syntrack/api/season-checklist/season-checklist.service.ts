@@ -23,7 +23,8 @@ import {
 import {
   deriveBooleanEvidenceGoal,
   derivePortalsGoal,
-  deriveRaidGoal
+  deriveRaidGoal,
+  deriveWarbandBooleanGoal
 } from "./season-checklist.evidence.js";
 import {
   SEASON_EVIDENCE_CATALOG,
@@ -77,29 +78,30 @@ export class SeasonChecklistService {
       tagAssignments
     );
 
-    const gameplayCharacters = characters
-      .map((character) => {
-        const trackingProfile = resolveCharacterTrackingProfile(
-          tagsByCharacterId.get(character.id) ?? []
-        );
-
-        return {
-          id: character.id,
-          name: character.name,
-          realm: character.realm,
-          region: character.region,
-          className: character.className,
-          level: character.level,
-          trackingProfile
-        };
-      })
-      .filter((character) =>
-        isWeeklyGameplayEnabled(character.trackingProfile)
+    // Active SynTrack Characters only (RemovedCharacter rows are deleted
+    // from Character). Warband evidence uses this full roster; the Season
+    // Character table still filters to gameplay-applicable Characters.
+    const activeCharacters = characters.map((character) => {
+      const trackingProfile = resolveCharacterTrackingProfile(
+        tagsByCharacterId.get(character.id) ?? []
       );
 
-    const characterIds = gameplayCharacters.map(
-      (character) => character.id
+      return {
+        id: character.id,
+        name: character.name,
+        realm: character.realm,
+        region: character.region,
+        className: character.className,
+        level: character.level,
+        trackingProfile
+      };
+    });
+
+    const gameplayCharacters = activeCharacters.filter((character) =>
+      isWeeklyGameplayEnabled(character.trackingProfile)
     );
+
+    const characterIds = activeCharacters.map((character) => character.id);
 
     const scopeKeys = [
       ...(activeScope ? [activeScope.key] : []),
@@ -207,7 +209,7 @@ export class SeasonChecklistService {
     const tierDefinition = evidenceDefinitions.get(
       "season-achievement-63473"
     ) ?? null;
-    const tierSignals = gameplayCharacters.map((character) => {
+    const tierSignals = activeCharacters.map((character) => {
       const statesByDefinitionId = new Map(
         trackerStates
           .filter((state) => state.characterId === character.id)
@@ -219,26 +221,16 @@ export class SeasonChecklistService {
     });
     const warbandGoals: SeasonChecklistResponse["warbandGoals"] =
       enabledWarbandSeasonGoals().map((goal) => {
-        const hasComplete = tierSignals.some(
-          (signal) => signal.state === "COMPLETE"
+        const derived = deriveWarbandBooleanGoal(
+          tierSignals,
+          goal.key,
+          goal.title,
+          "Earn Sssensational!"
         );
-        const allUnknown =
-          tierSignals.length === 0 ||
-          tierSignals.every((signal) => signal.state === "UNKNOWN");
-        const state = hasComplete
-          ? "COMPLETE"
-          : allUnknown
-            ? "UNKNOWN"
-            : "INCOMPLETE";
 
         return {
-          key: goal.key,
-          title: goal.title,
-          state,
-          label: state === "COMPLETE" ? "✓" : state === "UNKNOWN" ? "?" : "open",
-          detail: "Account-tier achievement 63473",
-          actionLabel:
-            state === "INCOMPLETE" ? "Earn Sssensational!" : null
+          ...derived,
+          detail: "Account-tier achievement 63473"
         };
       });
 

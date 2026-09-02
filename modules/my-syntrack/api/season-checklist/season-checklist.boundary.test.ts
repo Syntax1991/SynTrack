@@ -26,6 +26,10 @@ describe("season temporal boundary", () => {
     );
     expect(serviceSource).not.toMatch(/getWeeklyPeriod/);
     expect(serviceSource).toMatch(/findCharactersForSeason/);
+    expect(serviceSource).toMatch(/activeCharacters/);
+    expect(serviceSource).toMatch(
+      /gameplayCharacters = activeCharacters\.filter/
+    );
   });
 
   it("response shape excludes weekly profession summary and pending-capture counts", () => {

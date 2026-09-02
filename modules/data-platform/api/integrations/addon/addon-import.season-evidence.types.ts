@@ -1,7 +1,8 @@
 export type AddonSeasonAchievementEvidence = {
   trackerKey: string;
   achievementId: number | null;
-  completed: boolean | null;
+  accountCompleted: boolean | null;
+  earnedByCharacter: boolean | null;
 };
 
 export type AddonSeasonQuestEvidence = {
