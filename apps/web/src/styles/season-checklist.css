@@ -26,7 +26,6 @@
 }
 
 .season-matrix {
-  table-layout: fixed;
   width: 100%;
 }
 
@@ -35,24 +34,22 @@
   vertical-align: middle;
 }
 
+/* Character absorbs leftover width; compact columns shrink to content
+   so Action sits next to Open (Professions-like density). */
 .season-col-character {
-  width: 42%;
+  width: auto;
 }
 
-.season-col-mplus {
-  width: 14%;
-  text-align: center;
-  white-space: nowrap;
-}
-
+.season-col-mplus,
 .season-col-open {
-  width: 10%;
+  width: 1%;
   text-align: center;
   white-space: nowrap;
 }
 
 .season-col-action {
-  width: 34%;
+  width: 1%;
+  min-width: 12.5rem;
   text-align: left;
   white-space: nowrap;
 }
