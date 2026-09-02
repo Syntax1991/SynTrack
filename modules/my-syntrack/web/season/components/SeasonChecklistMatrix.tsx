@@ -60,6 +60,12 @@ export function SeasonChecklistMatrix({
               >
                 Tier
               </th>
+              <th
+                className="season-col-emb"
+                title="Equipped Unique-Equipped Embellishments toward Season setup (2)"
+              >
+                Emb.
+              </th>
               <th className="season-col-portals">Portals</th>
               <th className="season-col-catalyst">Catalyst</th>
               <th className="season-col-cracked">Cracked</th>
@@ -99,6 +105,11 @@ export function SeasonChecklistMatrix({
                   </td>
                   <td className="season-col-tier">
                     <StatusToken token={seasonToken(character.tier)} />
+                  </td>
+                  <td className="season-col-emb">
+                    <StatusToken
+                      token={seasonToken(character.embellishments)}
+                    />
                   </td>
                   <td className="season-col-portals">
                     <StatusToken token={seasonToken(character.portals)} />

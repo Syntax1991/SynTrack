@@ -1,6 +1,10 @@
-import type { GearTierEmbellishmentInput } from "../gear-readiness/gear-tier-embellishment.deriver.js";
 import { resolveTierOverviewState } from "../overview/overview-tier-embellishment-state.mapper.js";
-import type { TierOverviewState } from "../overview/overview.types.js";
+import { resolveEmbellishmentOverviewState } from "../overview/overview-tier-embellishment-state.mapper.js";
+import type {
+  EmbellishmentOverviewState,
+  TierOverviewState
+} from "../overview/overview.types.js";
+import type { GearTierEmbellishmentInput } from "../gear-readiness/gear-tier-embellishment.deriver.js";
 
 type GearOverviewCharacterLike = {
   id: string;
@@ -28,8 +32,8 @@ type GearOverviewCharacterLike = {
 };
 
 /**
- * Build the same Tier input Overview uses from one GearReadiness getOverview()
- * character row — no extra queries.
+ * Build the same Tier/Emb input Overview uses from one GearReadiness
+ * getOverview() character row — no extra queries.
  */
 export function buildSeasonTierInputFromGearCharacter(
   character: GearOverviewCharacterLike
@@ -65,6 +69,18 @@ export function resolveSeasonTierOverviewState(
   }
 
   return resolveTierOverviewState(
+    buildSeasonTierInputFromGearCharacter(character)
+  );
+}
+
+export function resolveSeasonEmbellishmentOverviewState(
+  character: GearOverviewCharacterLike | undefined
+): EmbellishmentOverviewState {
+  if (!character) {
+    return resolveEmbellishmentOverviewState();
+  }
+
+  return resolveEmbellishmentOverviewState(
     buildSeasonTierInputFromGearCharacter(character)
   );
 }

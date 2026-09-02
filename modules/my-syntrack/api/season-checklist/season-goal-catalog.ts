@@ -64,6 +64,16 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     captureGap: null
   },
   {
+    key: "embellishments",
+    title: "Embellishment setup",
+    category: "CORE",
+    scope: "CHARACTER",
+    // Derived from Gear Unique-Equipped category 512 / deriveEmbellishmentOverviewState.
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
+  },
+  {
     key: "portals",
     title: "Dungeon portals (+10 timed)",
     category: "MYTHIC_PLUS",

@@ -100,6 +100,8 @@ export function AppRouter() {
         />
 
         <Route
+          // Legacy account-wide Gear page retained for Character Detail
+          // drilldowns; Gear is no longer a primary nav product module.
           path="gear-readiness"
           element={<GearReadinessPage />}
         />

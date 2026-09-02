@@ -60,6 +60,14 @@ describe("season temporal boundary", () => {
             detail: "Tier",
             actionLabel: null
           },
+          embellishments: {
+            key: "embellishments",
+            title: "Embellishment setup",
+            state: "COMPLETE",
+            label: "✓ 2/2",
+            detail: "Emb",
+            actionLabel: null
+          },
           portals: {
             key: "portals",
             title: "Portals",
@@ -129,7 +137,7 @@ describe("season temporal boundary", () => {
       (goal) => !goal.enabled
     ).length;
 
-    expect(enabled).toHaveLength(8);
+    expect(enabled).toHaveLength(9);
     expect(disabledCount).toBeGreaterThan(0);
     expect(enabledWarbandSeasonGoals()).toHaveLength(0);
 

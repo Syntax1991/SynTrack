@@ -4,7 +4,6 @@ export type NavDomainId =
   | "characters"
   | "weeklies"
   | "professions"
-  | "gear"
   | "settings";
 
 export type NavDomain = {
@@ -28,6 +27,10 @@ export type NavDomain = {
  * sidebar entries. Guild/Loot/Recruitment/Raid Tasks/Automation are not
  * part of the active personal product surface (their backend/routes
  * remain for a later deliberate cleanup).
+ *
+ * Gear is intentionally absent from primary navigation: Seasonal Tier /
+ * Embellishment setup live on /season; detailed gear remains Character
+ * Detail + legacy /gear-readiness route for existing drilldowns.
  */
 export const primaryNavDomains: NavDomain[] = [
   {
@@ -74,13 +77,6 @@ export const primaryNavDomains: NavDomain[] = [
       pathname.startsWith(
         "/professions/"
       )
-  },
-  {
-    id: "gear",
-    label: "Gear",
-    path: "/gear-readiness",
-    isActive: (pathname) =>
-      pathname === "/gear-readiness"
   }
 ];
 
@@ -92,3 +88,6 @@ export const settingsNavDomain: NavDomain =
     isActive: (pathname) =>
       pathname === "/settings"
   };
+
+/** Legacy account-wide Gear page — not a primary product domain. */
+export const LEGACY_GEAR_ROUTE_PATH = "/gear-readiness";

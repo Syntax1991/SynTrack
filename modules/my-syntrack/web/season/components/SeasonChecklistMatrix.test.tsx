@@ -31,6 +31,14 @@ function buildCharacter(
       detail: "Tier",
       actionLabel: null
     },
+    embellishments: {
+      key: "embellishments",
+      title: "Embellishment setup",
+      state: "COMPLETE",
+      label: "✓ 2/2",
+      detail: "Emb",
+      actionLabel: null
+    },
     portals: {
       key: "portals",
       title: "Portals",
@@ -89,6 +97,7 @@ describe("SeasonChecklistMatrix", () => {
 
     expect(screen.getByText("M+")).toBeInTheDocument();
     expect(screen.getByText("Tier")).toBeInTheDocument();
+    expect(screen.getByText("Emb.")).toBeInTheDocument();
     expect(screen.getByText("Portals")).toBeInTheDocument();
     expect(screen.getByText("Catalyst")).toBeInTheDocument();
     expect(screen.getByText("Cracked")).toBeInTheDocument();
@@ -125,6 +134,14 @@ describe("SeasonChecklistMatrix", () => {
                 state: "UNKNOWN",
                 label: "?",
                 detail: "Tier",
+                actionLabel: null
+              },
+              embellishments: {
+                key: "embellishments",
+                title: "Emb",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Emb",
                 actionLabel: null
               },
               portals: {
@@ -169,7 +186,7 @@ describe("SeasonChecklistMatrix", () => {
               },
               goalsOpen: 0,
               goalsComplete: 1,
-              goalsUnknown: 6,
+              goalsUnknown: 7,
               action: null
             })
           ]}
@@ -177,7 +194,7 @@ describe("SeasonChecklistMatrix", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("6 unknown")).toBeInTheDocument();
+    expect(screen.getByText("7 unknown")).toBeInTheDocument();
     expect(screen.queryByText("5?")).not.toBeInTheDocument();
     expect(screen.getByTitle("Some Season goals are unresolved")).toHaveTextContent(
       "?"

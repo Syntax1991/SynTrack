@@ -188,6 +188,7 @@ describe("season goal catalog", () => {
     expect(enabledCharacterSeasonGoals().map((goal) => goal.key)).toEqual([
       "rating-2000",
       "tier-4pc",
+      "embellishments",
       "portals",
       "serpent-scion",
       "cracked-keystone",

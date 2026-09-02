@@ -28,8 +28,12 @@ import {
   deriveRaidGoal,
   deriveWarbandBooleanGoal
 } from "./season-checklist.evidence.js";
+import { deriveSeasonEmbellishmentGoal } from "./season-checklist.embellishment.js";
 import { deriveSeasonTierGoal } from "./season-checklist.tier.js";
-import { resolveSeasonTierOverviewState } from "./season-checklist.tier-source.js";
+import {
+  resolveSeasonEmbellishmentOverviewState,
+  resolveSeasonTierOverviewState
+} from "./season-checklist.tier-source.js";
 import {
   SEASON_EVIDENCE_CATALOG,
   primarySeasonEvidenceForGoal,
@@ -179,10 +183,12 @@ export class SeasonChecklistService {
       const mythicPlus = deriveSeasonMythicPlusGoal(
         buildResolvedTracker(ratingDefinition, statesByDefinitionId)
       );
+      const gearCharacter = gearByCharacterId.get(character.id);
       const tier = deriveSeasonTierGoal(
-        resolveSeasonTierOverviewState(
-          gearByCharacterId.get(character.id)
-        )
+        resolveSeasonTierOverviewState(gearCharacter)
+      );
+      const embellishments = deriveSeasonEmbellishmentGoal(
+        resolveSeasonEmbellishmentOverviewState(gearCharacter)
       );
       const resolveEvidence = (trackerKey: string) =>
         buildResolvedTracker(
@@ -215,9 +221,10 @@ export class SeasonChecklistService {
         resolveEvidence(aotcEvidence?.trackerKey ?? ""),
         resolveEvidence(ceEvidence?.trackerKey ?? "")
       );
-      // Action priority: Tier → Cracked → M+ → Nemesis → Portals → Catalyst → Raid
+      // Action priority: Tier → Emb → Cracked → M+ → Nemesis → Portals → Catalyst → Raid
       const summary = summarizeSeasonGoals([
         tier,
+        embellishments,
         cracked,
         mythicPlus,
         nemesis,
@@ -230,6 +237,7 @@ export class SeasonChecklistService {
         ...character,
         mythicPlus,
         tier,
+        embellishments,
         portals,
         catalyst,
         cracked,
