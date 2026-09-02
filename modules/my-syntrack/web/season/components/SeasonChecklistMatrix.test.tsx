@@ -23,6 +23,46 @@ function buildCharacter(
       detail: "Current score 1847",
       actionLabel: "Reach 2K Mythic+ rating"
     },
+    portals: {
+      key: "portals",
+      title: "Portals",
+      state: "INCOMPLETE",
+      label: "5/8",
+      detail: "Portals",
+      actionLabel: "Earn remaining dungeon portals"
+    },
+    catalyst: {
+      key: "serpent-scion",
+      title: "Catalyst",
+      state: "COMPLETE",
+      label: "✓",
+      detail: "Catalyst",
+      actionLabel: null
+    },
+    cracked: {
+      key: "cracked-keystone",
+      title: "Cracked",
+      state: "UNKNOWN",
+      label: "?",
+      detail: "Cracked",
+      actionLabel: null
+    },
+    nemesis: {
+      key: "nemesis-aztarec",
+      title: "Nemesis",
+      state: "INCOMPLETE",
+      label: "open",
+      detail: "Nemesis",
+      actionLabel: "Complete Nemesis"
+    },
+    raid: {
+      key: "raid",
+      title: "Raid",
+      state: "INCOMPLETE",
+      label: "AOTC open",
+      detail: "Raid",
+      actionLabel: "Earn AOTC"
+    },
     goalsOpen: 1,
     goalsComplete: 0,
     goalsUnknown: 0,
@@ -32,7 +72,7 @@ function buildCharacter(
 }
 
 describe("SeasonChecklistMatrix", () => {
-  it("renders Character | M+ | Open | Action without weekly Profession", () => {
+  it("renders all seasonal evidence columns without weekly Profession", () => {
     const { container } = render(
       <MemoryRouter>
         <SeasonChecklistMatrix characters={[buildCharacter()]} />
@@ -40,6 +80,11 @@ describe("SeasonChecklistMatrix", () => {
     );
 
     expect(screen.getByText("M+")).toBeInTheDocument();
+    expect(screen.getByText("Portals")).toBeInTheDocument();
+    expect(screen.getByText("Catalyst")).toBeInTheDocument();
+    expect(screen.getByText("Cracked")).toBeInTheDocument();
+    expect(screen.getByText("Nemesis")).toBeInTheDocument();
+    expect(screen.getByText("Raid")).toBeInTheDocument();
     expect(screen.getByText("Open")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
     expect(screen.getByText("1847 → 2K")).toBeInTheDocument();
@@ -50,8 +95,6 @@ describe("SeasonChecklistMatrix", () => {
     expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     expect(screen.queryByText("META")).not.toBeInTheDocument();
     expect(screen.queryByText("Vault")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cracked")).not.toBeInTheDocument();
-    expect(screen.queryByText("Nemesis")).not.toBeInTheDocument();
     expect(screen.queryByText("Capture Pending")).not.toBeInTheDocument();
   });
 

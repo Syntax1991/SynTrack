@@ -1,0 +1,118 @@
+local _, private = ...
+local API = private.API
+local CATALOG = private.SeasonEvidenceCatalog
+
+local function captureAchievement(achievementId)
+    if type(GetAchievementInfo) ~= "function" then
+        return nil
+    end
+
+    local result = { pcall(GetAchievementInfo, achievementId) }
+
+    if not result[1] then
+        return nil
+    end
+
+    local completed = result[5]
+    local wasEarnedByMe = result[14]
+
+    if type(wasEarnedByMe) == "boolean" then
+        return wasEarnedByMe
+    end
+
+    if type(completed) == "boolean" then
+        return completed
+    end
+
+    return nil
+end
+
+local function captureQuest(questId)
+    if not C_QuestLog
+        or not C_QuestLog.IsQuestFlaggedCompleted
+    then
+        return nil
+    end
+
+    local succeeded, flagged = pcall(
+        C_QuestLog.IsQuestFlaggedCompleted,
+        questId
+    )
+
+    if succeeded and type(flagged) == "boolean" then
+        return flagged
+    end
+
+    return nil
+end
+
+local function captureSeasonEvidence()
+    local achievements = {}
+    local quests = {}
+
+    for trackerKey, achievementId in pairs(CATALOG.achievements) do
+        achievements[trackerKey] = {
+            achievementId = achievementId,
+            completed = captureAchievement(achievementId)
+        }
+    end
+
+    for trackerKey, questId in pairs(CATALOG.quests) do
+        quests[trackerKey] = {
+            questId = questId,
+            flaggedCompleted = captureQuest(questId)
+        }
+    end
+
+    return {
+        achievements = achievements,
+        quests = quests
+    }
+end
+
+local succeeded, errorMessage = API.RegisterModule({
+    id = "season-evidence",
+    name = "Season Evidence",
+    version = "0.1.0",
+    schemaVersion = 1,
+    scope = "character",
+    capture = captureSeasonEvidence
+})
+
+if not succeeded then
+    API.Print(
+        "Season Evidence registration failed: "
+            .. tostring(errorMessage)
+    )
+end
+
+local recaptureTimer = nil
+
+local function scheduleRecapture(reason, delaySec)
+    if recaptureTimer then
+        recaptureTimer:Cancel()
+    end
+
+    recaptureTimer = C_Timer.NewTimer(
+        delaySec or 0.5,
+        function()
+            recaptureTimer = nil
+            API.CaptureModule("season-evidence", reason)
+        end
+    )
+end
+
+API.Subscribe("SYNTRACK_CORE_READY", function()
+    API.CaptureModule("season-evidence", "addon-loaded")
+end)
+
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("ACHIEVEMENT_EARNED")
+frame:RegisterEvent("QUEST_TURNED_IN")
+frame:SetScript("OnEvent", function(_, event)
+    scheduleRecapture(
+        string.lower(string.gsub(event, "_", "-")),
+        event == "PLAYER_ENTERING_WORLD" and 1 or 0.5
+    )
+end)

@@ -4,18 +4,19 @@ import { getClassColor } from "../../../../../apps/web/src/shared/utils/classCol
 import { weekliesSignalTone } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import type { SeasonChecklistCharacter } from "../../../api/season-checklist/season-checklist.types.js";
 import type { WeekliesSignalState } from "../../../api/weekly-checklist/weeklies-gameplay-signals.types.js";
+import type { SeasonGoalSignal } from "../../../api/season-checklist/season-checklist.types.js";
 
 type SeasonChecklistMatrixProps = {
   characters: SeasonChecklistCharacter[];
 };
 
-function mythicPlusToken(character: SeasonChecklistCharacter) {
+function seasonToken(signal: SeasonGoalSignal) {
   return {
-    symbol: character.mythicPlus.label,
+    symbol: signal.label,
     tone: weekliesSignalTone(
-      character.mythicPlus.state as WeekliesSignalState
+      signal.state as WeekliesSignalState
     ),
-    title: character.mythicPlus.detail
+    title: signal.detail
   };
 }
 
@@ -65,6 +66,11 @@ export function SeasonChecklistMatrix({
               >
                 M+
               </th>
+              <th className="season-col-portals">Portals</th>
+              <th className="season-col-catalyst">Catalyst</th>
+              <th className="season-col-cracked">Cracked</th>
+              <th className="season-col-nemesis">Nemesis</th>
+              <th className="season-col-raid">Raid</th>
               <th className="season-col-open">Open</th>
               <th className="season-col-action">Action</th>
             </tr>
@@ -94,7 +100,22 @@ export function SeasonChecklistMatrix({
                     </div>
                   </td>
                   <td className="season-col-mplus">
-                    <StatusToken token={mythicPlusToken(character)} />
+                    <StatusToken token={seasonToken(character.mythicPlus)} />
+                  </td>
+                  <td className="season-col-portals">
+                    <StatusToken token={seasonToken(character.portals)} />
+                  </td>
+                  <td className="season-col-catalyst">
+                    <StatusToken token={seasonToken(character.catalyst)} />
+                  </td>
+                  <td className="season-col-cracked">
+                    <StatusToken token={seasonToken(character.cracked)} />
+                  </td>
+                  <td className="season-col-nemesis">
+                    <StatusToken token={seasonToken(character.nemesis)} />
+                  </td>
+                  <td className="season-col-raid">
+                    <StatusToken token={seasonToken(character.raid)} />
                   </td>
                   <td className="season-col-open">{statusLabel(character)}</td>
                   <td className="season-col-action">

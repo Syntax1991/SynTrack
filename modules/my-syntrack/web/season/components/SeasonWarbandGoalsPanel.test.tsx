@@ -19,19 +19,21 @@ describe("SeasonWarbandGoalsPanel", () => {
       <SeasonWarbandGoalsPanel
         warbandGoals={[
           {
-            key: "example",
-            title: "Example Warband Goal",
+            key: "tier-visual",
+            title: "Season tier visual (Sssensational!)",
             state: "INCOMPLETE",
             label: "open",
-            detail: "Tracked progress",
-            actionLabel: "Continue"
+            detail: "Account-tier achievement 63473",
+            actionLabel: "Earn Sssensational!"
           }
         ]}
       />
     );
 
     expect(screen.getByText("WARBAND SEASON GOALS")).toBeInTheDocument();
-    expect(screen.getByText("Example Warband Goal")).toBeInTheDocument();
+    expect(
+      screen.getByText("Season tier visual (Sssensational!)")
+    ).toBeInTheDocument();
     expect(screen.queryByText("Capture gap")).not.toBeInTheDocument();
   });
 });

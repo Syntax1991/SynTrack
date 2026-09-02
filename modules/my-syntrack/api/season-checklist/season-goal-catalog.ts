@@ -58,66 +58,80 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Dungeon portals (+10 timed)",
     category: "MYTHIC_PLUS",
     scope: "CHARACTER",
-    // Season portal-set goal is seasonal; underlying portal achievements
-    // remain permanent source facts once capture exists.
+    // Verified achievements 62437-62444.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture for timed +10 portals"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "serpent-scion",
     title: "Serpent Scion / season catalyst milestone",
     category: "CORE",
     scope: "CHARACTER",
+    // Verified achievement 62872.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap:
-      "Need achievement evidence (OR of 2K / Heroic Ula'tek / 1600 PvP)"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "cracked-keystone",
     title: "Cracked Keystone",
     category: "DELVES",
     scope: "CHARACTER",
+    // Verified quest 92600.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "Quest ID + seasonal quest-flag capture not in repo"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "nemesis-aztarec",
     title: "Azta'rec (Nemesis)",
     category: "DELVES",
     scope: "CHARACTER",
+    // Verified achievement 63326.
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
+  },
+  {
+    key: "nemesis-aztarec-solo",
+    title: "Let Me Solo Him: Azta'rec",
+    category: "DELVES",
+    scope: "CHARACTER",
+    // Verified achievement 63333; intentionally disabled stretch goal.
     resetBehavior: "SEASONAL",
     enabled: false,
-    captureGap: "No Nemesis achievement/quest/kill capture"
+    captureGap: "Stretch solo goal is not part of the product checklist"
   },
   {
     key: "aotc-ulatek",
     title: "AOTC: Ula'tek",
     category: "RAID",
     scope: "CHARACTER",
+    // Verified achievement 63650.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture; weekly raid lockout ≠ AOTC"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "ce-ulatek",
     title: "Cutting Edge: Ula'tek",
     category: "RAID",
     scope: "CHARACTER",
+    // Verified achievement 63651.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "tier-visual",
     title: "Season tier visual (Sssensational!)",
     category: "WARBAND",
     scope: "WARBAND",
+    // Verified account-tier achievement 63473.
     resetBehavior: "SEASONAL",
-    enabled: false,
-    captureGap: "No achievement capture; CharacterTrackerValue is not warband-scoped"
+    enabled: true,
+    captureGap: null
   },
   {
     key: "delvers-journey",

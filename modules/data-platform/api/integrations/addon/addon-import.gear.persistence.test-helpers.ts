@@ -266,6 +266,7 @@ export function character(
     professionKnowledgeTreasures: null,
     weeklyActivity: null,
     weekliesSignals: null,
+    seasonEvidence: null,
     ...overrides
   };
 }

@@ -48,6 +48,46 @@ describe("season temporal boundary", () => {
             detail: "score",
             actionLabel: "Reach 2K Mythic+ rating"
           },
+          portals: {
+            key: "portals",
+            title: "Portals",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Portals",
+            actionLabel: null
+          },
+          catalyst: {
+            key: "serpent-scion",
+            title: "Catalyst",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Catalyst",
+            actionLabel: null
+          },
+          cracked: {
+            key: "cracked-keystone",
+            title: "Cracked",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Cracked",
+            actionLabel: null
+          },
+          nemesis: {
+            key: "nemesis-aztarec",
+            title: "Nemesis",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Nemesis",
+            actionLabel: null
+          },
+          raid: {
+            key: "raid",
+            title: "Raid",
+            state: "UNKNOWN",
+            label: "?",
+            detail: "Raid",
+            actionLabel: null
+          },
           goalsOpen: 1,
           goalsComplete: 0,
           goalsUnknown: 0,
@@ -77,9 +117,9 @@ describe("season temporal boundary", () => {
       (goal) => !goal.enabled
     ).length;
 
-    expect(enabled).toHaveLength(1);
+    expect(enabled).toHaveLength(7);
     expect(disabledCount).toBeGreaterThan(0);
-    expect(enabledWarbandSeasonGoals()).toHaveLength(0);
+    expect(enabledWarbandSeasonGoals()).toHaveLength(1);
 
     // Only the live M+ goal contributes; disabled Cracked/etc. do not.
     const summary = summarizeSeasonGoals([
@@ -98,7 +138,7 @@ describe("season temporal boundary", () => {
     expect(summary.goalsUnknown).toBe(0);
     expect(
       blockedCharacterSeasonGoalGaps().some(
-        (goal) => goal.key === "cracked-keystone"
+        (goal) => goal.key === "nemesis-aztarec-solo"
       )
     ).toBe(true);
   });

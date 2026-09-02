@@ -12,6 +12,7 @@ import {
 } from "./season-goal-catalog.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
+import { SEASON_EVIDENCE_CATALOG } from "./season-evidence-catalog.js";
 
 function definition(): TrackerDefinitionRow {
   return {
@@ -114,9 +115,29 @@ describe("season checklist goals", () => {
 });
 
 describe("season goal catalog", () => {
-  it("enables only evidence-backed character goals in V1", () => {
+  it("contains only the verified achievement and quest IDs", () => {
+    expect(
+      SEASON_EVIDENCE_CATALOG.map((entry) => entry.externalId).sort(
+        (left, right) => left - right
+      )
+    ).toEqual([
+      62437, 62438, 62439, 62440, 62441, 62442, 62443, 62444,
+      62872, 63326, 63333, 63473, 63650, 63651, 92600
+    ]);
+    expect(SEASON_EVIDENCE_CATALOG.every((entry) => entry.verified)).toBe(
+      true
+    );
+  });
+
+  it("enables all verified evidence-backed character goals", () => {
     expect(enabledCharacterSeasonGoals().map((goal) => goal.key)).toEqual([
-      "rating-2000"
+      "rating-2000",
+      "portals",
+      "serpent-scion",
+      "cracked-keystone",
+      "nemesis-aztarec",
+      "aotc-ulatek",
+      "ce-ulatek"
     ]);
   });
 
@@ -128,8 +149,9 @@ describe("season goal catalog", () => {
       "delvers-journey",
       "valeera-80"
     ]);
-    expect(warband.every((goal) => goal.enabled === false)).toBe(true);
-    expect(enabledWarbandSeasonGoals()).toEqual([]);
+    expect(enabledWarbandSeasonGoals().map((goal) => goal.key)).toEqual([
+      "tier-visual"
+    ]);
   });
 
   it("treats portals checklist goal as seasonal, not permanent source fact", () => {
@@ -138,7 +160,7 @@ describe("season goal catalog", () => {
     );
 
     expect(portals?.resetBehavior).toBe("SEASONAL");
-    expect(portals?.enabled).toBe(false);
+    expect(portals?.enabled).toBe(true);
   });
 
   it("marks Valeera lifecycle unresolved until companion capture exists", () => {
@@ -150,16 +172,24 @@ describe("season goal catalog", () => {
     expect(valeera?.enabled).toBe(false);
   });
 
-  it("keeps capture-gap character goals disabled and out of enabled set", () => {
+  it("keeps Delver's Journey and Valeera disabled", () => {
+    expect(
+      MIDNIGHT_S2_SEASON_GOAL_CATALOG.filter((goal) =>
+        ["delvers-journey", "valeera-80"].includes(goal.key)
+      ).every((goal) => !goal.enabled)
+    ).toBe(true);
+  });
+
+  it("keeps solo stretch goal disabled and enables cracked keystone", () => {
     const blocked = blockedCharacterSeasonGoalGaps();
 
-    expect(blocked.some((goal) => goal.key === "cracked-keystone")).toBe(
+    expect(blocked.some((goal) => goal.key === "nemesis-aztarec-solo")).toBe(
       true
     );
     expect(
       enabledCharacterSeasonGoals().some(
         (goal) => goal.key === "cracked-keystone"
       )
-    ).toBe(false);
+    ).toBe(true);
   });
 });

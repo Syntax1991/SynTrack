@@ -24,6 +24,11 @@ export type SeasonChecklistCharacter = {
   level: number;
   trackingProfile: CharacterTrackingProfile;
   mythicPlus: SeasonGoalSignal;
+  portals: SeasonGoalSignal;
+  catalyst: SeasonGoalSignal;
+  cracked: SeasonGoalSignal;
+  nemesis: SeasonGoalSignal;
+  raid: SeasonGoalSignal;
   goalsOpen: number;
   goalsComplete: number;
   goalsUnknown: number;

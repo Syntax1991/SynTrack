@@ -20,6 +20,19 @@ import {
   deriveSeasonMythicPlusGoal,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
+import {
+  deriveBooleanEvidenceGoal,
+  derivePortalsGoal,
+  deriveRaidGoal
+} from "./season-checklist.evidence.js";
+import {
+  SEASON_EVIDENCE_CATALOG,
+  seasonEvidenceForGoal
+} from "./season-evidence-catalog.js";
+import { ensureSeasonEvidenceTrackerDefinitionsForImport } from "./season-evidence-tracker-definitions.service.js";
+import {
+  enabledWarbandSeasonGoals
+} from "./season-goal-catalog.js";
 import type { SeasonChecklistResponse } from "./season-checklist.types.js";
 
 export class SeasonChecklistService {
@@ -41,9 +54,14 @@ export class SeasonChecklistService {
   );
 
   async getChecklist(): Promise<SeasonChecklistResponse> {
-    await ensureWeekliesTrackerDefinitionsForImport(
-      this.trackerDefinitionRepository
-    );
+    const [weekliesScopeKey, evidenceScopeKey] = await Promise.all([
+      ensureWeekliesTrackerDefinitionsForImport(
+        this.trackerDefinitionRepository
+      ),
+      ensureSeasonEvidenceTrackerDefinitionsForImport(
+        this.trackerDefinitionRepository
+      )
+    ]);
 
     const activeScope =
       await this.trackerScopeProfileService.getActive();
@@ -85,12 +103,15 @@ export class SeasonChecklistService {
 
     const scopeKeys = [
       ...(activeScope ? [activeScope.key] : []),
+      weekliesScopeKey,
+      evidenceScopeKey,
       GLOBAL_TRACKER_SCOPE_KEY
     ];
+    const uniqueScopeKeys = [...new Set(scopeKeys)];
 
     const definitionsByScope = new Map(
       await Promise.all(
-        scopeKeys.map(async (scopeKey) => [
+        uniqueScopeKeys.map(async (scopeKey) => [
           scopeKey,
           await this.trackerDefinitionRepository.findByScope(
             scopeKey
@@ -101,17 +122,33 @@ export class SeasonChecklistService {
 
     const ratingDefinition = resolveDefinitionByKey(
       definitionsByScope,
-      scopeKeys,
+      uniqueScopeKeys,
       WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY
     );
 
-    const trackerStates =
-      ratingDefinition && characterIds.length > 0
-        ? await this.trackerValueService.getStatesForScope(
-            ratingDefinition.scopeKey,
-            characterIds
+    const evidenceDefinitions = new Map(
+      SEASON_EVIDENCE_CATALOG.map((evidence) => [
+        evidence.trackerKey,
+        resolveDefinitionByKey(
+          definitionsByScope,
+          uniqueScopeKeys,
+          evidence.trackerKey
+        )
+      ])
+    );
+
+    const trackerStates = characterIds.length > 0
+      ? (
+          await Promise.all(
+            uniqueScopeKeys.map((scopeKey) =>
+              this.trackerValueService.getStatesForScope(
+                scopeKey,
+                characterIds
+              )
+            )
           )
-        : [];
+        ).flat()
+      : [];
 
     const characterItems = gameplayCharacters.map((character) => {
       const statesByDefinitionId = new Map(
@@ -123,17 +160,87 @@ export class SeasonChecklistService {
       const mythicPlus = deriveSeasonMythicPlusGoal(
         buildResolvedTracker(ratingDefinition, statesByDefinitionId)
       );
-      const summary = summarizeSeasonGoals([mythicPlus]);
+      const resolveEvidence = (trackerKey: string) =>
+        buildResolvedTracker(
+          evidenceDefinitions.get(trackerKey) ?? null,
+          statesByDefinitionId
+        );
+      const portals = derivePortalsGoal(
+        seasonEvidenceForGoal("portals").map((evidence) =>
+          resolveEvidence(evidence.trackerKey)
+        )
+      );
+      const catalyst = deriveBooleanEvidenceGoal(
+        resolveEvidence("season-achievement-62872")
+      );
+      const cracked = deriveBooleanEvidenceGoal(
+        resolveEvidence("season-quest-cracked-keystone")
+      );
+      const nemesis = deriveBooleanEvidenceGoal(
+        resolveEvidence("season-achievement-63326")
+      );
+      const raid = deriveRaidGoal(
+        resolveEvidence("season-achievement-63650"),
+        resolveEvidence("season-achievement-63651")
+      );
+      const summary = summarizeSeasonGoals([
+        mythicPlus,
+        portals,
+        catalyst,
+        cracked,
+        nemesis,
+        raid
+      ]);
 
       return {
         ...character,
         mythicPlus,
+        portals,
+        catalyst,
+        cracked,
+        nemesis,
+        raid,
         ...summary
       };
     });
 
-    // Live warband goals only — disabled catalog gaps stay internal.
-    const warbandGoals: SeasonChecklistResponse["warbandGoals"] = [];
+    const tierDefinition = evidenceDefinitions.get(
+      "season-achievement-63473"
+    ) ?? null;
+    const tierSignals = gameplayCharacters.map((character) => {
+      const statesByDefinitionId = new Map(
+        trackerStates
+          .filter((state) => state.characterId === character.id)
+          .map((state) => [state.trackerDefinitionId, state])
+      );
+      return deriveBooleanEvidenceGoal(
+        buildResolvedTracker(tierDefinition, statesByDefinitionId)
+      );
+    });
+    const warbandGoals: SeasonChecklistResponse["warbandGoals"] =
+      enabledWarbandSeasonGoals().map((goal) => {
+        const hasComplete = tierSignals.some(
+          (signal) => signal.state === "COMPLETE"
+        );
+        const allUnknown =
+          tierSignals.length === 0 ||
+          tierSignals.every((signal) => signal.state === "UNKNOWN");
+        const state = hasComplete
+          ? "COMPLETE"
+          : allUnknown
+            ? "UNKNOWN"
+            : "INCOMPLETE";
+
+        return {
+          key: goal.key,
+          title: goal.title,
+          state,
+          label: state === "COMPLETE" ? "✓" : state === "UNKNOWN" ? "?" : "open",
+          detail: "Account-tier achievement 63473",
+          actionLabel:
+            state === "INCOMPLETE" ? "Earn Sssensational!" : null
+        };
+      });
 
     return {
       season: activeScope

@@ -22,4 +22,6 @@ WeeklyActivityVault.lua
 WeeklyActivity.lua
 WeekliesSignalsCatalog.lua
 WeekliesSignals.lua
+SeasonEvidenceCatalog.lua
+SeasonEvidence.lua
 Events.lua

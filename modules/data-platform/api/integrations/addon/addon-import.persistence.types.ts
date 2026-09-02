@@ -28,6 +28,7 @@ export type CharacterPersistenceResult = {
   professionKnowledgeTreasureSnapshots: number;
   weeklyGameplaySnapshots: number;
   weekliesSignalSnapshots: number;
+  seasonEvidenceSnapshots: number;
 };
 
 export type RecipePersistenceResult = {
