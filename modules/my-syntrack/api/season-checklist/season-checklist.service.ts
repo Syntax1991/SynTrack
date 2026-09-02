@@ -21,9 +21,13 @@ import { resolveWeekliesProfessionWeeklySummary } from "../weekly-checklist/week
 import { ensureWeekliesTrackerDefinitionsForImport } from "../weekly-checklist/weeklies-tracker-definitions.service.js";
 import { WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY } from "../weekly-checklist/weeklies-tracker-keys.js";
 import {
-  deriveSeasonTwoKGoal,
+  deriveSeasonMythicPlusGoal,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
+import {
+  blockedCharacterSeasonGoalGaps,
+  warbandSeasonGoalGaps
+} from "./season-goal-catalog.js";
 import type { SeasonChecklistResponse } from "./season-checklist.types.js";
 
 export class SeasonChecklistService {
@@ -148,17 +152,25 @@ export class SeasonChecklistService {
           .map((state) => [state.trackerDefinitionId, state])
       );
 
-      const twoKRio = deriveSeasonTwoKGoal(
+      const mythicPlus = deriveSeasonMythicPlusGoal(
         buildResolvedTracker(ratingDefinition, statesByDefinitionId)
       );
-      const summary = summarizeSeasonGoals([twoKRio]);
+      const summary = summarizeSeasonGoals([mythicPlus]);
 
       return {
         ...character,
-        twoKRio,
+        mythicPlus,
         ...summary
       };
     });
+
+    const warbandGoals = warbandSeasonGoalGaps().map((entry) => ({
+      key: entry.key,
+      title: entry.title,
+      state: "CAPTURE_PENDING" as const,
+      label: "—",
+      detail: entry.captureGap ?? "Capture not available yet"
+    }));
 
     return {
       season: activeScope
@@ -168,6 +180,8 @@ export class SeasonChecklistService {
           }
         : null,
       characters: characterItems,
+      warbandGoals,
+      blockedCharacterGoals: blockedCharacterSeasonGoalGaps(),
       summary: {
         characterCount: characterItems.length,
         goalsOpen: characterItems.reduce(
@@ -181,7 +195,8 @@ export class SeasonChecklistService {
         goalsUnknown: characterItems.reduce(
           (total, character) => total + character.goalsUnknown,
           0
-        )
+        ),
+        warbandGoalsPending: warbandGoals.length
       }
     };
   }

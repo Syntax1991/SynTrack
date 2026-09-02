@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  deriveSeasonTwoKGoal,
+  deriveSeasonMythicPlusGoal,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
+import {
+  enabledCharacterSeasonGoals,
+  warbandSeasonGoalGaps
+} from "./season-goal-catalog.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 
@@ -38,29 +42,29 @@ function numberState(number: number): CharacterTrackerState {
 }
 
 describe("season checklist goals", () => {
-  it("marks 2K complete at or above 2000", () => {
-    const goal = deriveSeasonTwoKGoal({
+  it("shows condensed complete M+ milestone", () => {
+    const goal = deriveSeasonMythicPlusGoal({
       definition: definition(),
       state: numberState(2050)
     });
 
     expect(goal.state).toBe("COMPLETE");
-    expect(goal.label).toBe("✓");
+    expect(goal.label).toBe("✓ 2K");
   });
 
-  it("shows compact rating below 2000", () => {
-    const goal = deriveSeasonTwoKGoal({
+  it("shows condensed score toward default 2K milestone", () => {
+    const goal = deriveSeasonMythicPlusGoal({
       definition: definition(),
       state: numberState(1847)
     });
 
     expect(goal.state).toBe("INCOMPLETE");
-    expect(goal.label).toBe("1847");
+    expect(goal.label).toBe("1847 → 2K");
     expect(goal.actionLabel).toBe("Reach 2K Mythic+ rating");
   });
 
   it("keeps unknown when rating evidence is missing", () => {
-    const goal = deriveSeasonTwoKGoal({
+    const goal = deriveSeasonMythicPlusGoal({
       definition: definition(),
       state: null
     });
@@ -73,9 +77,9 @@ describe("season checklist goals", () => {
     const summary = summarizeSeasonGoals([
       {
         key: "rating-2000",
-        title: "2K",
+        title: "M+",
         state: "COMPLETE",
-        label: "✓",
+        label: "✓ 2K",
         detail: "ok",
         actionLabel: null
       },
@@ -103,5 +107,24 @@ describe("season checklist goals", () => {
       goalsUnknown: 1,
       action: "Do other"
     });
+  });
+});
+
+describe("season goal catalog", () => {
+  it("enables only evidence-backed character goals in V1", () => {
+    expect(enabledCharacterSeasonGoals().map((goal) => goal.key)).toEqual([
+      "rating-2000"
+    ]);
+  });
+
+  it("keeps warband goals as capture gaps, not fake incomplete rows", () => {
+    const warband = warbandSeasonGoalGaps();
+
+    expect(warband.map((goal) => goal.key)).toEqual([
+      "tier-visual",
+      "delvers-journey",
+      "valeera-80"
+    ]);
+    expect(warband.every((goal) => goal.enabled === false)).toBe(true);
   });
 });

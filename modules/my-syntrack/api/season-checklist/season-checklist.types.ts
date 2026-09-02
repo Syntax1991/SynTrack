@@ -1,5 +1,6 @@
 import type { CharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import type { WeekliesProfessionWeeklySummary } from "../weekly-checklist/weeklies-profession-summary.mapper.js";
+import type { SeasonGoalCatalogEntry } from "./season-goal-catalog.js";
 
 export type SeasonGoalState =
   | "COMPLETE"
@@ -24,12 +25,20 @@ export type SeasonChecklistCharacter = {
   className: string;
   level: number;
   trackingProfile: CharacterTrackingProfile;
-  twoKRio: SeasonGoalSignal;
+  mythicPlus: SeasonGoalSignal;
   professionWeeklySummary: WeekliesProfessionWeeklySummary;
   goalsOpen: number;
   goalsComplete: number;
   goalsUnknown: number;
   action: string | null;
+};
+
+export type SeasonWarbandGoalView = {
+  key: string;
+  title: string;
+  state: "CAPTURE_PENDING";
+  label: string;
+  detail: string;
 };
 
 export type SeasonChecklistResponse = {
@@ -38,10 +47,13 @@ export type SeasonChecklistResponse = {
     name: string;
   } | null;
   characters: SeasonChecklistCharacter[];
+  warbandGoals: SeasonWarbandGoalView[];
+  blockedCharacterGoals: SeasonGoalCatalogEntry[];
   summary: {
     characterCount: number;
     goalsOpen: number;
     goalsComplete: number;
     goalsUnknown: number;
+    warbandGoalsPending: number;
   };
 };

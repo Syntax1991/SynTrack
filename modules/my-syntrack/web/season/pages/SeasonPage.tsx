@@ -3,6 +3,7 @@ import { LoadingPanel } from "../../../../../apps/web/src/shared/components/Load
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { SeasonChecklistMatrix } from "../components/SeasonChecklistMatrix";
+import { SeasonWarbandGoalsPanel } from "../components/SeasonWarbandGoalsPanel";
 import { useSeasonChecklist } from "../hooks/useSeasonChecklist";
 
 export function SeasonPage() {
@@ -20,7 +21,7 @@ export function SeasonPage() {
             Open Weeklies
           </Link>
         }
-        description="Seasonal goals that do not reset on Wednesday. Recurring reset work stays in Weeklies."
+        description="Seasonal Character and Warband goals. Weekly reset work stays in Weeklies."
         eyebrow="SEASONAL CHECKLIST"
         title="Season"
       />
@@ -35,15 +36,23 @@ export function SeasonPage() {
             <p className="eyebrow">{seasonLabel}</p>
             <div className="matrix-summary">
               {checklist.summary.characterCount} characters ·{" "}
-              {checklist.summary.goalsOpen} goals open ·{" "}
+              {checklist.summary.goalsOpen} Character goals open ·{" "}
               {checklist.summary.goalsComplete} complete ·{" "}
-              {checklist.summary.goalsUnknown} unknown
+              {checklist.summary.goalsUnknown} unknown ·{" "}
+              {checklist.summary.warbandGoalsPending} Warband goals pending
+              capture
             </div>
           </section>
 
           <section className="panel matrix-panel">
+            <p className="eyebrow">CHARACTER SEASON GOALS</p>
             <SeasonChecklistMatrix characters={checklist.characters} />
           </section>
+
+          <SeasonWarbandGoalsPanel
+            blockedCharacterGoals={checklist.blockedCharacterGoals}
+            warbandGoals={checklist.warbandGoals}
+          />
         </>
       )}
     </>

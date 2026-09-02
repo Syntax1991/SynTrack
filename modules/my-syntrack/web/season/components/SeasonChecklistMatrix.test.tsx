@@ -15,11 +15,11 @@ function buildCharacter(
     className: "Shaman",
     level: 80,
     trackingProfile: "FULL",
-    twoKRio: {
+    mythicPlus: {
       key: "rating-2000",
-      title: "2K Mythic+ rating",
+      title: "Mythic+ rating",
       state: "INCOMPLETE",
-      label: "1847",
+      label: "1847 → 2K",
       detail: "Current score 1847",
       actionLabel: "Reach 2K Mythic+ rating"
     },
@@ -39,32 +39,34 @@ function buildCharacter(
 }
 
 describe("SeasonChecklistMatrix", () => {
-  it("renders seasonal 2K without weekly Progress or Meta columns", () => {
+  it("renders condensed M+ without weekly Progress or Meta columns", () => {
     render(
       <MemoryRouter>
         <SeasonChecklistMatrix characters={[buildCharacter()]} />
       </MemoryRouter>
     );
 
-    expect(screen.getByText("2K")).toBeInTheDocument();
-    expect(screen.getByText("1847")).toBeInTheDocument();
+    expect(screen.getByText("M+")).toBeInTheDocument();
+    expect(screen.getByText("1847 → 2K")).toBeInTheDocument();
     expect(screen.getByText("Reach 2K Mythic+ rating")).toBeInTheDocument();
     expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     expect(screen.queryByText("META")).not.toBeInTheDocument();
     expect(screen.queryByText("Vault")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cracked")).not.toBeInTheDocument();
+    expect(screen.queryByText("Nemesis")).not.toBeInTheDocument();
   });
 
-  it("shows complete 2K as ready", () => {
+  it("shows complete M+ milestone as ready", () => {
     render(
       <MemoryRouter>
         <SeasonChecklistMatrix
           characters={[
             buildCharacter({
-              twoKRio: {
+              mythicPlus: {
                 key: "rating-2000",
-                title: "2K Mythic+ rating",
+                title: "Mythic+ rating",
                 state: "COMPLETE",
-                label: "✓",
+                label: "✓ 2K",
                 detail: "done",
                 actionLabel: null
               },
@@ -77,6 +79,6 @@ describe("SeasonChecklistMatrix", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getAllByText("✓").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("✓ 2K")).toBeInTheDocument();
   });
 });

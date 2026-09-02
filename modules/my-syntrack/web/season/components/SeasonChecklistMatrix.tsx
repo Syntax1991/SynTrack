@@ -11,13 +11,13 @@ type SeasonChecklistMatrixProps = {
   characters: SeasonChecklistCharacter[];
 };
 
-function goalToken(character: SeasonChecklistCharacter) {
+function mythicPlusToken(character: SeasonChecklistCharacter) {
   return {
-    symbol: character.twoKRio.label,
+    symbol: character.mythicPlus.label,
     tone: weekliesSignalTone(
-      character.twoKRio.state as WeekliesSignalState
+      character.mythicPlus.state as WeekliesSignalState
     ),
-    title: character.twoKRio.detail
+    title: character.mythicPlus.detail
   };
 }
 
@@ -70,7 +70,7 @@ export function SeasonChecklistMatrix({
 }: SeasonChecklistMatrixProps) {
   const summaryText = `${characters.length} gameplay character${
     characters.length === 1 ? "" : "s"
-  } · Seasonal goals only · Weeklies keep reset work`;
+  } · Character seasonal goals only · Weeklies keep reset work`;
 
   if (characters.length === 0) {
     return (
@@ -91,9 +91,9 @@ export function SeasonChecklistMatrix({
               <th>Character</th>
               <th
                 className="matrix-col-narrow"
-                title="Current-season Mythic+ rating / 2,000 milestone"
+                title="Current-season Mythic+ rating toward Keystone Master (2,000)"
               >
-                2K
+                M+
               </th>
               <th
                 className="matrix-col-narrow"
@@ -101,7 +101,7 @@ export function SeasonChecklistMatrix({
               >
                 Prof.
               </th>
-              <th className="matrix-col-narrow">Status</th>
+              <th className="matrix-col-narrow">Open</th>
               <th className="matrix-col-action">Action</th>
             </tr>
           </thead>
@@ -130,7 +130,7 @@ export function SeasonChecklistMatrix({
                     </div>
                   </td>
                   <td className="matrix-col-narrow">
-                    <StatusToken token={goalToken(character)} />
+                    <StatusToken token={mythicPlusToken(character)} />
                   </td>
                   <td className="matrix-col-narrow">
                     <Link

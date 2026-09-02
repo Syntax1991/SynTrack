@@ -6,30 +6,65 @@ import type {
   SeasonChecklistCharacter
 } from "./season-checklist.types.js";
 
-const TWO_K_GOAL_KEY = "rating-2000";
-const TWO_K_GOAL_TITLE = "2K Mythic+ rating";
+const DEFAULT_MILESTONE = 2000;
+const MILESTONE_LABEL = "2K";
 
 type ResolvedTracker = {
   definition: TrackerDefinitionRow;
   state: CharacterTrackerState | null;
 };
 
+/*
+ * Condensed M+ Season cell:
+ *   ✓ 2K
+ *   1847 → 2K
+ *   ?
+ * Stretch targets (2.5K/3K/…) stay out of V1 until purposes exist.
+ */
+export function deriveSeasonMythicPlusGoal(
+  resolved: ResolvedTracker | null,
+  milestone = DEFAULT_MILESTONE
+): SeasonGoalSignal {
+  const signal = deriveTwoKRioSignal(resolved);
+  const title = `Current-season Mythic+ rating / ${milestone} milestone`;
+
+  if (signal.state === "UNKNOWN" || signal.state === "NOT_APPLICABLE") {
+    return {
+      key: "rating-2000",
+      title: "Mythic+ rating",
+      state: signal.state,
+      label: signal.label,
+      detail: title,
+      actionLabel: null
+    };
+  }
+
+  if (signal.state === "COMPLETE") {
+    return {
+      key: "rating-2000",
+      title: "Mythic+ rating",
+      state: "COMPLETE",
+      label: `✓ ${MILESTONE_LABEL}`,
+      detail: title,
+      actionLabel: null
+    };
+  }
+
+  return {
+    key: "rating-2000",
+    title: "Mythic+ rating",
+    state: "INCOMPLETE",
+    label: `${signal.label} → ${MILESTONE_LABEL}`,
+    detail: title,
+    actionLabel: `Reach ${MILESTONE_LABEL} Mythic+ rating`
+  };
+}
+
+/** @deprecated use deriveSeasonMythicPlusGoal */
 export function deriveSeasonTwoKGoal(
   resolved: ResolvedTracker | null
 ): SeasonGoalSignal {
-  const signal = deriveTwoKRioSignal(resolved);
-
-  return {
-    key: TWO_K_GOAL_KEY,
-    title: TWO_K_GOAL_TITLE,
-    state: signal.state,
-    label: signal.label,
-    detail: signal.title,
-    actionLabel:
-      signal.state === "INCOMPLETE"
-        ? "Reach 2K Mythic+ rating"
-        : null
-  };
+  return deriveSeasonMythicPlusGoal(resolved);
 }
 
 export function summarizeSeasonGoals(
