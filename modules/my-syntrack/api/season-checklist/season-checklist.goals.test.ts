@@ -204,9 +204,14 @@ describe("season goal catalog", () => {
       "delvers-journey",
       "valeera-80"
     ]);
-    expect(enabledWarbandSeasonGoals().map((goal) => goal.key)).toEqual([
-      "tier-visual"
-    ]);
+    expect(enabledWarbandSeasonGoals()).toEqual([]);
+    expect(
+      MIDNIGHT_S2_SEASON_GOAL_CATALOG.find((goal) => goal.key === "tier-visual")
+    ).toMatchObject({
+      enabled: false,
+      captureGap:
+        "Cosmetic tier visual unlock is not part of the primary Season checklist"
+    });
   });
 
   it("treats portals checklist goal as seasonal, not permanent source fact", () => {

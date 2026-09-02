@@ -123,7 +123,7 @@ describe("season temporal boundary", () => {
 
     expect(enabled).toHaveLength(7);
     expect(disabledCount).toBeGreaterThan(0);
-    expect(enabledWarbandSeasonGoals()).toHaveLength(1);
+    expect(enabledWarbandSeasonGoals()).toHaveLength(0);
 
     // Only the live M+ goal contributes; disabled Cracked/etc. do not.
     const summary = summarizeSeasonGoals([

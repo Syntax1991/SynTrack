@@ -128,10 +128,11 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Sssensational!",
     category: "WARBAND",
     scope: "WARBAND",
-    // Verified Warband achievement 63473 (Sssensational!).
+    // Verified Warband achievement 63473 — capture may remain; product goal off.
     resetBehavior: "SEASONAL",
-    enabled: true,
-    captureGap: null
+    enabled: false,
+    captureGap:
+      "Cosmetic tier visual unlock is not part of the primary Season checklist"
   },
   {
     key: "delvers-journey",

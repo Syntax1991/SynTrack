@@ -215,25 +215,31 @@ export class SeasonChecklistService {
       };
     });
 
-    const tierEvidence = primarySeasonEvidenceForGoal("tier-visual");
-    const tierDefinition = tierEvidence
-      ? evidenceDefinitions.get(tierEvidence.trackerKey) ?? null
-      : null;
-    const tierSignals = activeCharacters.map((character) => {
-      const statesByDefinitionId = new Map(
-        trackerStates
-          .filter((state) => state.characterId === character.id)
-          .map((state) => [state.trackerDefinitionId, state])
-      );
-      return deriveBooleanEvidenceGoal(
-        buildResolvedTracker(tierDefinition, statesByDefinitionId),
-        "tier-visual"
-      );
-    });
-    const warbandGoals: SeasonChecklistResponse["warbandGoals"] =
-      enabledWarbandSeasonGoals().map((goal) =>
-        deriveWarbandBooleanGoal(tierSignals, goal.key)
-      );
+    const enabledWarband = enabledWarbandSeasonGoals();
+    const warbandGoals =
+      enabledWarband.length === 0
+        ? []
+        : (() => {
+            const tierEvidence = primarySeasonEvidenceForGoal("tier-visual");
+            const tierDefinition = tierEvidence
+              ? evidenceDefinitions.get(tierEvidence.trackerKey) ?? null
+              : null;
+            const tierSignals = activeCharacters.map((character) => {
+              const statesByDefinitionId = new Map(
+                trackerStates
+                  .filter((state) => state.characterId === character.id)
+                  .map((state) => [state.trackerDefinitionId, state])
+              );
+              return deriveBooleanEvidenceGoal(
+                buildResolvedTracker(tierDefinition, statesByDefinitionId),
+                "tier-visual"
+              );
+            });
+
+            return enabledWarband.map((goal) =>
+              deriveWarbandBooleanGoal(tierSignals, goal.key)
+            );
+          })();
 
     return {
       season: activeScope
