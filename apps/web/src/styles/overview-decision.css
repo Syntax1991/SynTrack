@@ -1,0 +1,87 @@
+/*
+ * Overview Decision Engine V1 — compact account cockpit.
+ * Specialist matrices live on Weeklies / Season / Professions.
+ */
+
+.overview-decision-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.overview-decision-metric {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
+}
+
+.overview-decision-metric-label {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.overview-decision-metric strong {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.overview-decision-panel {
+  margin-top: 16px;
+  padding: 16px 18px 14px;
+}
+
+.overview-decision-panel > .eyebrow {
+  margin: 0 0 12px;
+}
+
+.overview-decision-matrix {
+  width: 100%;
+}
+
+.overview-col-when,
+.overview-col-area {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.overview-col-character {
+  width: auto;
+}
+
+.overview-col-action {
+  width: 45%;
+}
+
+.overview-decision-area {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.overview-decision-area:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .overview-decision-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .overview-decision-strip {
+    grid-template-columns: 1fr;
+  }
+}

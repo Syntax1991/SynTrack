@@ -1,7 +1,7 @@
 /*
- * The character matrix is the primary SynTrack surface here, not a
- * table beneath a dashboard - density and restrained color throughout
- * this file exist to keep ~20 characters visible without scrolling.
+ * Legacy Overview matrix styles retained for CharacterWeeklyMatrix tests
+ * and Character Detail consumers. Decision Engine styles live in
+ * overview-decision.css.
  */
 
 .overview-matrix-panel {

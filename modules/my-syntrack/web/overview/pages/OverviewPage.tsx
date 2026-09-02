@@ -1,105 +1,34 @@
-import { useState } from "react";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
-import { TrackerManagerDrawer } from "../../trackers/components/TrackerManagerDrawer";
-import { AccountResourcesSummary } from "../components/AccountResourcesSummary";
-import { AttentionStrip } from "../components/AttentionStrip";
-import { CharacterWeeklyMatrix } from "../components/CharacterWeeklyMatrix";
-import { useOverview } from "../hooks/useOverview";
-import { formatResetCountdown } from "../utils/resetContext";
+import { OverviewActionTable } from "../components/OverviewActionTable";
+import { OverviewDecisionStrip } from "../components/OverviewDecisionStrip";
+import { useOverviewDecisions } from "../hooks/useOverviewDecisions";
 
-/*
- * The Character Control Matrix is the primary product surface here -
- * this page is a thin shell (header, a one-line summary/toolbar, a
- * compact attention strip) around it, not a dashboard with a table
- * underneath.
+/**
+ * Overview Decision Engine V1 — account-wide next-action cockpit.
+ * Specialist matrices stay on Weeklies / Season / Professions.
  */
 export function OverviewPage() {
-  const {
-    overview,
-    isLoading,
-    error,
-    refetch
-  } = useOverview();
-
-  const [
-    isTrackerManagerOpen,
-    setIsTrackerManagerOpen
-  ] = useState(false);
+  const { overview, isLoading, error } = useOverviewDecisions();
 
   return (
     <>
       <PageHeader
-        description={
-          overview
-            ? formatResetCountdown(
-                overview.summary
-                  .period.endsAt,
-                new Date()
-              )
-            : "Your weekly control center across every tracked character."
-        }
+        description="What should I do next across the Warband?"
         eyebrow="MY SYNTRACK"
         title="Overview"
       />
 
-      {error && (
-        <StatusMessage type="error">
-          {error}
-        </StatusMessage>
-      )}
+      {error && <StatusMessage type="error">{error}</StatusMessage>}
 
       {isLoading || !overview ? (
         <LoadingPanel />
       ) : (
         <>
-          <AttentionStrip
-            attentionItems={
-              overview.attentionItems
-            }
-          />
-
-          <AccountResourcesSummary
-            accountResources={
-              overview.accountResources
-            }
-          />
-
-          <CharacterWeeklyMatrix
-            characters={
-              overview.characters
-            }
-            onOpenTrackerManager={() =>
-              setIsTrackerManagerOpen(
-                true
-              )
-            }
-            onTrackerChanged={
-              refetch
-            }
-            resetLabel={formatResetCountdown(
-              overview.summary.period.endsAt,
-              new Date()
-            )}
-            trackerColumns={
-              overview.trackerColumns
-            }
-          />
+          <OverviewDecisionStrip summaries={overview.summaries} />
+          <OverviewActionTable overview={overview} />
         </>
-      )}
-
-      {isTrackerManagerOpen && (
-        <TrackerManagerDrawer
-          onClose={() =>
-            setIsTrackerManagerOpen(
-              false
-            )
-          }
-          onDefinitionsChanged={
-            refetch
-          }
-        />
       )}
     </>
   );

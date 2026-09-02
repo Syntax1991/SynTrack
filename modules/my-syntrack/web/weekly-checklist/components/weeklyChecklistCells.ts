@@ -1,4 +1,4 @@
-import { isWeeklyGameplayEnabled } from "../../../api/character-tracking/domain-applicability.js";
+import { deriveWeekliesGameplayAction } from "../../../api/overview/overview-decision.weeklies.js";
 import { weekliesProfessionSummaryTitle } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
 import { weekliesSignalTone } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import type { WeekliesGameplaySignal } from "../../../api/weekly-checklist/weeklies-gameplay-signals.types.js";
@@ -53,18 +53,11 @@ export function gameplaySignalToken(signal: WeekliesGameplaySignal) {
 export function weeklyActionLabel(
   character: WeeklyChecklistCharacter
 ): string | null {
-  if (!isWeeklyGameplayEnabled(character.trackingProfile)) {
-    return null;
-  }
-
-  return (
-    character.weeklyGameplay?.mythicPlusAction ??
-    character.weeklyGameplay?.raidAction ??
-    character.weeklyGameplay?.delvesAction ??
-    character.gameplaySignals.map.actionLabel ??
-    character.gameplaySignals.meta.actionLabel ??
-    null
-  );
+  return deriveWeekliesGameplayAction({
+    trackingProfile: character.trackingProfile,
+    weeklyGameplay: character.weeklyGameplay,
+    gameplaySignals: character.gameplaySignals
+  });
 }
 
 export { gameplayDomainToken };
