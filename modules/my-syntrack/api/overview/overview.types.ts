@@ -322,12 +322,9 @@ export type CharacterOverviewRow =
     health: CharacterDataHealth;
   };
 
-import type { OverviewPriorities } from "./overview-priority.types.js";
-
 export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
-  priorities: OverviewPriorities;
   characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
   activeScope: TrackerScopeProfileView | null;

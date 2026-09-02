@@ -290,25 +290,56 @@ export type TrackerScopeProfileView = {
   updatedAt: string;
 };
 
-import type { OverviewPriorities } from "./overviewPriority.types";
-import type { CharacterDataHealth } from "./overviewHealth.types";
+export type DomainHealthState =
+  | "FRESH"
+  | "STALE"
+  | "PARTIAL"
+  | "NEVER_CAPTURED"
+  | "NOT_TRACKED"
+  | "MANUAL";
 
-export type {
-  CharacterDataHealth,
-  DomainHealthState,
-  ProfessionHealthEntry
-} from "./overviewHealth.types";
+export type ProfessionHealthEntry = {
+  professionId: string;
+  name: string;
+  state:
+    | "FRESH"
+    | "STALE"
+    | "NEVER_CAPTURED";
+  lastSyncedAt: string | null;
+};
+
+export type CharacterDataHealth = {
+  characterId: string;
+  character: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
+  professions: {
+    state: DomainHealthState;
+    items: ProfessionHealthEntry[];
+  };
+  gear: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
+  resources: {
+    state: DomainHealthState;
+    lastSyncedAt: string | null;
+  };
+  professionWeekly: {
+    state: DomainHealthState;
+    items: ProfessionHealthEntry[];
+  };
+};
 
 export type CharacterOverviewRow = CharacterWeeklyState & {
   tags: TagView[];
   trackingProfile: "FULL" | "WEEKLY" | "PROFESSION" | "MINIMAL";
   health: CharacterDataHealth;
 };
-
 export type OverviewResponse = {
   summary: OverviewSummary;
   attentionItems: AttentionItem[];
-  priorities: OverviewPriorities;
   characters: CharacterOverviewRow[];
   trackerColumns: TrackerDefinitionView[];
   activeScope: TrackerScopeProfileView | null;

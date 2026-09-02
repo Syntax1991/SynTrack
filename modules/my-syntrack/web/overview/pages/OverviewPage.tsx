@@ -3,7 +3,6 @@ import { LoadingPanel } from "../../../../../apps/web/src/shared/components/Load
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { TrackerManagerDrawer } from "../../trackers/components/TrackerManagerDrawer";
-import { PriorityActionLayer } from "../components/PriorityActionLayer";
 import { AccountResourcesSummary } from "../components/AccountResourcesSummary";
 import { AttentionStrip } from "../components/AttentionStrip";
 import { CharacterWeeklyMatrix } from "../components/CharacterWeeklyMatrix";
@@ -55,10 +54,6 @@ export function OverviewPage() {
         <LoadingPanel />
       ) : (
         <>
-          <PriorityActionLayer
-            priorities={overview.priorities}
-          />
-
           <AttentionStrip
             attentionItems={
               overview.attentionItems
