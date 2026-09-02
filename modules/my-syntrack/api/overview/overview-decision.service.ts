@@ -101,8 +101,6 @@ export class OverviewDecisionService {
       }
     }
 
-    let professionWeeklyActions = 0;
-    let professionPermanentAttention = 0;
     let professionUnresolved = 0;
 
     for (const row of professions.rows) {
@@ -110,8 +108,8 @@ export class OverviewDecisionService {
         professionUnresolved += 1;
       }
 
+      // Prefer weekly nextAction when both horizons apply on one profession row.
       if (row.attention.weekly && isProfessionActionable(row.nextAction)) {
-        professionWeeklyActions += 1;
         actions.push({
           characterId: row.character.id,
           characterName: row.character.name,
@@ -132,7 +130,6 @@ export class OverviewDecisionService {
         row.attention.permanent &&
         isProfessionActionable(row.nextAction)
       ) {
-        professionPermanentAttention += 1;
         actions.push({
           characterId: row.character.id,
           characterName: row.character.name,
@@ -159,8 +156,9 @@ export class OverviewDecisionService {
           unknown: seasonUnknown
         },
         professions: {
-          weeklyActions: professionWeeklyActions,
-          permanentAttention: professionPermanentAttention
+          // Canonical Profession Overview summary — not recomputed from emitted actions.
+          weeklyActions: professions.summary.weeklyAttentionCount,
+          permanentAttention: professions.summary.permanentAttentionCount
         },
         unresolved: seasonUnknown + professionUnresolved
       },
