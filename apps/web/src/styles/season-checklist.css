@@ -4,7 +4,7 @@
  */
 
 .season-summary {
-  margin: 18px 0 6px;
+  margin: 20px 0 12px;
   color: var(--text-secondary);
   font-size: 0.76rem;
   font-weight: 600;
@@ -12,17 +12,17 @@
 }
 
 .season-matrix-panel {
-  margin-top: 14px;
-  padding: 16px 18px 14px;
+  margin-top: 0;
+  padding: 18px 20px 16px;
 }
 
 .season-matrix-panel > .eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   line-height: 1.45;
 }
 
 .season-matrix-panel .matrix-toolbar {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 
 .season-matrix {
