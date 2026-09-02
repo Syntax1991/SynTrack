@@ -126,16 +126,7 @@ describe("weeklyChecklistCells boundary", () => {
   it("does not surface 2K RIO as gameplay action", () => {
     const action = weeklyActionLabel(
       buildCharacter({
-        weeklyGameplay: readyGameplay(),
-        gameplaySignals: {
-          ...createDefaultWeekliesGameplaySignals(),
-          twoKRio: {
-            state: "INCOMPLETE",
-            label: "1847",
-            title: "Mythic+ Rating",
-            actionLabel: null
-          }
-        }
+        weeklyGameplay: readyGameplay()
       })
     );
 

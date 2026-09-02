@@ -34,10 +34,6 @@ function cellForColumn(
     return gameplayDomainToken(character, "delves");
   }
 
-  if (column === "twoKRio") {
-    return gameplaySignalToken(character.gameplaySignals.twoKRio);
-  }
-
   if (column === "map") {
     return gameplaySignalToken(character.gameplaySignals.map);
   }
@@ -63,7 +59,7 @@ export function WeeklyChecklistMatrix({
   const columns = weekliesColumns();
   const summaryText = `${characters.length} gameplay character${
     characters.length === 1 ? "" : "s"
-  } · Vault / M+ / Raid / Delves from this-week capture · 2K / MAP / META from trackers · Prof. links to /professions`;
+  } · Vault / M+ / Raid / Delves from this-week capture · MAP / META from weekly trackers · 2K lives on /season · Prof. links to /professions`;
 
   if (characters.length === 0) {
     return (

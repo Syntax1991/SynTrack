@@ -10,6 +10,13 @@ const navIconPaths: Record<
     "M14 4v4h6V4h-6Z",
     "M4 20h6v-4H4v4Z"
   ],
+  season: [
+    "M12 3v3",
+    "M12 18v3",
+    "M3 12h3",
+    "M18 12h3",
+    "M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"
+  ],
   characters: [
     "M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
     "M2 21a7 7 0 0 1 14 0",

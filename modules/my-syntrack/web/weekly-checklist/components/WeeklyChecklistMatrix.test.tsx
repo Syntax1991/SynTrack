@@ -68,7 +68,7 @@ describe("WeeklyChecklistMatrix", () => {
     expect(screen.getByText("M+")).toBeInTheDocument();
     expect(screen.getByText("Raid")).toBeInTheDocument();
     expect(screen.getByText("Delves")).toBeInTheDocument();
-    expect(screen.getByText("2K")).toBeInTheDocument();
+    expect(screen.queryByText("2K")).not.toBeInTheDocument();
     expect(screen.getByText("MAP")).toBeInTheDocument();
     expect(screen.getByText("META")).toBeInTheDocument();
     expect(screen.getByText("Prof.")).toBeInTheDocument();
@@ -90,9 +90,9 @@ describe("WeeklyChecklistMatrix", () => {
     );
 
     const unknowns = screen.getAllByTitle(
-      /no canonical rating tracker configured|Trove Hunter's Bounty tracker not configured|Meta Quest tracker not configured/
+      /Trove Hunter's Bounty tracker not configured|Meta Quest tracker not configured/
     );
-    expect(unknowns.length).toBeGreaterThanOrEqual(3);
+    expect(unknowns.length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders Synblast M+ 8/8 and Vault 6/9 when Delves are unresolved", () => {

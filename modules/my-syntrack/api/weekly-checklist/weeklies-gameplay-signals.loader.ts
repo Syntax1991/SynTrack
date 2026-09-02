@@ -6,14 +6,13 @@ import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import {
   buildResolvedTracker,
   resolveDefinitionByKey,
-  resolveWeekliesGameplaySignals,
   WEEKLIES_SIGNAL_DEFINITION_KEYS
 } from "./weeklies-gameplay-signals.mapper.js";
 
 /*
- * Bulk-loads Weeklies gameplay signal states (2K RIO, MAP, META) from the
- * generic tracker infrastructure. One getStatesForScope call per distinct
- * scope — never per character (N+1 risk: NO).
+ * Bulk-loads Weeklies weekly signals (MAP bounty + META) from generic
+ * trackers. Seasonal 2K rating lives on /season — not here.
+ * One getStatesForScope call per distinct scope (N+1 risk: NO).
  */
 export async function loadWeekliesTrackerBundlesByCharacterId(
   characterIds: string[],
@@ -26,7 +25,6 @@ export async function loadWeekliesTrackerBundlesByCharacterId(
   Map<
     string,
     {
-      twoKRio: ReturnType<typeof buildResolvedTracker>;
       bounty: ReturnType<typeof buildResolvedTracker>;
       meta: ReturnType<typeof buildResolvedTracker>;
     }
@@ -49,11 +47,6 @@ export async function loadWeekliesTrackerBundlesByCharacterId(
     )
   );
 
-  const twoKRioDefinition = resolveDefinitionByKey(
-    definitionsByScope,
-    scopeKeys,
-    WEEKLIES_SIGNAL_DEFINITION_KEYS.twoKRio
-  );
   const bountyDefinition = resolveDefinitionByKey(
     definitionsByScope,
     scopeKeys,
@@ -66,7 +59,6 @@ export async function loadWeekliesTrackerBundlesByCharacterId(
   );
 
   const resolvedDefinitions = [
-    twoKRioDefinition,
     bountyDefinition,
     metaDefinition
   ].filter(
@@ -98,7 +90,6 @@ export async function loadWeekliesTrackerBundlesByCharacterId(
   const bundlesByCharacterId = new Map<
     string,
     {
-      twoKRio: ReturnType<typeof buildResolvedTracker>;
       bounty: ReturnType<typeof buildResolvedTracker>;
       meta: ReturnType<typeof buildResolvedTracker>;
     }
@@ -111,10 +102,6 @@ export async function loadWeekliesTrackerBundlesByCharacterId(
     );
 
     bundlesByCharacterId.set(characterId, {
-      twoKRio: buildResolvedTracker(
-        twoKRioDefinition,
-        statesByDefinitionId
-      ),
       bounty: buildResolvedTracker(
         bountyDefinition,
         statesByDefinitionId

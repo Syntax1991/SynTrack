@@ -161,7 +161,6 @@ describe("weeklies gameplay signals - META", () => {
 
   it("marks source as unconfigured when tracker is missing", () => {
     const signals = resolveWeekliesGameplaySignals({
-      twoKRio: null,
       bounty: null,
       meta: null,
       delves: null

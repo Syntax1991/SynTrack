@@ -18,11 +18,9 @@ export type WeekliesGameplaySignalSource = {
 };
 
 export type WeekliesGameplaySignals = {
-  twoKRio: WeekliesGameplaySignal;
   map: WeekliesGameplaySignal;
   meta: WeekliesGameplaySignal;
   sources: {
-    twoKRio: WeekliesGameplaySignalSource;
     map: WeekliesGameplaySignalSource;
     meta: WeekliesGameplaySignalSource;
   };

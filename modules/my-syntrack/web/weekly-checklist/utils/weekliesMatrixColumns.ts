@@ -6,7 +6,6 @@ export type WeekliesMatrixColumn =
   | "mythicPlus"
   | "raid"
   | "delves"
-  | "twoKRio"
   | "map"
   | "meta"
   | "professions"
@@ -18,7 +17,6 @@ const WEEKLIES_COLUMNS: WeekliesMatrixColumn[] = [
   "mythicPlus",
   "raid",
   "delves",
-  "twoKRio",
   "map",
   "meta",
   "professions",
@@ -37,10 +35,6 @@ export const WEEKLIES_COLUMN_LABELS: Record<
   mythicPlus: { label: "M+" },
   raid: { label: "Raid" },
   delves: { label: "Delves" },
-  twoKRio: {
-    label: "2K",
-    title: "Current-season Mythic+ rating / 2,000 milestone"
-  },
   map: {
     label: "MAP",
     title: WEEKLIES_MAP_MEANING

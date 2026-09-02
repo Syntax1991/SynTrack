@@ -1,5 +1,6 @@
 export type NavDomainId =
   | "overview"
+  | "season"
   | "characters"
   | "weeklies"
   | "professions"
@@ -35,6 +36,14 @@ export const primaryNavDomains: NavDomain[] = [
     path: "/",
     isActive: (pathname) =>
       pathname === "/"
+  },
+  {
+    id: "season",
+    label: "Season",
+    path: "/season",
+    isActive: (pathname) =>
+      pathname === "/season" ||
+      pathname.startsWith("/season/")
   },
   {
     id: "characters",

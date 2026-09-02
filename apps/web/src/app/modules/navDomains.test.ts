@@ -23,13 +23,14 @@ function findDomain(
 }
 
 describe("navDomains - flat product-domain sidebar", () => {
-  it("registers exactly the five primary domains, in order, plus Settings kept separate", () => {
+  it("registers exactly the six primary domains, in order, plus Settings kept separate", () => {
     expect(
       primaryNavDomains.map(
         (domain) => domain.label
       )
     ).toEqual([
       "Overview",
+      "Season",
       "Characters",
       "Weeklies",
       "Professions",
@@ -39,6 +40,13 @@ describe("navDomains - flat product-domain sidebar", () => {
     expect(
       settingsNavDomain.label
     ).toBe("Settings");
+  });
+
+  it("keeps Season active on the seasonal checklist route", () => {
+    const season = findDomain("season");
+
+    expect(season.isActive("/season")).toBe(true);
+    expect(season.isActive("/weekly-checklist")).toBe(false);
   });
 
   it("keeps Professions active across every profession sub-route, without a sidebar child route existing", () => {

@@ -194,7 +194,6 @@ export class WeeklyChecklistService {
         ...character,
         gameplaySignals: trackerBundle
           ? resolveWeekliesGameplaySignals({
-              twoKRio: trackerBundle.twoKRio,
               bounty: trackerBundle.bounty,
               meta: trackerBundle.meta,
               delves: character.weeklyGameplay?.delves ?? null

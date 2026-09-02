@@ -88,7 +88,7 @@ describe("WeeklyChecklistPage", () => {
 
     expect(
       screen.getByText(
-        /1 gameplay character · Vault \/ M\+ \/ Raid \/ Delves from this-week capture · 2K \/ MAP \/ META from trackers · Prof\. links to \/professions/
+        /1 gameplay character · Vault \/ M\+ \/ Raid \/ Delves from this-week capture · MAP \/ META from weekly trackers · 2K lives on \/season · Prof\. links to \/professions/
       )
     ).toBeInTheDocument();
 

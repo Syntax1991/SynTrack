@@ -3,7 +3,6 @@ import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import {
   WEEKLIES_META_QUEST_TRACKER_KEY,
-  WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
   WEEKLIES_TROVE_HUNTERS_BOUNTY_TRACKER_KEY
 } from "./weeklies-tracker-keys.js";
 import {
@@ -152,19 +151,14 @@ export function deriveMetaQuestSignal(
 }
 
 export function resolveWeekliesGameplaySignals(input: {
-  twoKRio: ResolvedTrackerDefinition | null;
   bounty: ResolvedTrackerDefinition | null;
   meta: ResolvedTrackerDefinition | null;
   delves: WeeklyGameplayDomainView | null;
 }): WeekliesGameplaySignals {
   return {
-    twoKRio: deriveTwoKRioSignal(input.twoKRio),
     map: deriveMapSignal(input.bounty, input.delves),
     meta: deriveMetaQuestSignal(input.meta),
     sources: {
-      twoKRio: input.twoKRio
-        ? configuredSource(input.twoKRio.definition)
-        : unconfiguredSource(),
       map: deriveMapSignalSource(input.bounty),
       meta: input.meta
         ? configuredSource(input.meta.definition)
@@ -175,7 +169,6 @@ export function resolveWeekliesGameplaySignals(input: {
 
 export function createDefaultWeekliesGameplaySignals(): WeekliesGameplaySignals {
   return resolveWeekliesGameplaySignals({
-    twoKRio: null,
     bounty: null,
     meta: null,
     delves: null
@@ -236,7 +229,6 @@ export function buildResolvedTracker(
 }
 
 export const WEEKLIES_SIGNAL_DEFINITION_KEYS = {
-  twoKRio: WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
   bounty: WEEKLIES_TROVE_HUNTERS_BOUNTY_TRACKER_KEY,
   meta: WEEKLIES_META_QUEST_TRACKER_KEY
 } as const;
