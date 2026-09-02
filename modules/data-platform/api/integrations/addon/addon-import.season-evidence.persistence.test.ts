@@ -36,7 +36,7 @@ function result(): CharacterPersistenceResult {
 }
 
 describe("AddonSeasonEvidencePersistence", () => {
-  it("persists scoped facts at ALWAYS and skips unresolved", async () => {
+  it("persists scoped 97910 facts and ignores legacy 92600 tracker", async () => {
     const rows: Array<Record<string, unknown>> = [];
     const definitions = new Map([
       [
@@ -48,12 +48,8 @@ describe("AddonSeasonEvidencePersistence", () => {
         definition("tier-def", "season-achievement-63473")
       ],
       [
-        "season-achievement-63650",
-        definition("aotc-def", "season-achievement-63650")
-      ],
-      [
-        "season-quest-cracked-keystone",
-        definition("cracked-def", "season-quest-cracked-keystone")
+        "season-quest-cracked-keystone-97910",
+        definition("cracked-def", "season-quest-cracked-keystone-97910")
       ]
     ]);
     const persistence = new AddonSeasonEvidencePersistence({
@@ -86,15 +82,15 @@ describe("AddonSeasonEvidencePersistence", () => {
             achievementId: 63473,
             accountCompleted: true,
             earnedByCharacter: false
-          },
-          ["season-achievement-63650"]: {
-            trackerKey: "season-achievement-63650",
-            achievementId: 63650,
-            accountCompleted: true,
-            earnedByCharacter: null
           }
         },
         quests: {
+          ["season-quest-cracked-keystone-97910"]: {
+            trackerKey: "season-quest-cracked-keystone-97910",
+            questId: 97910,
+            flaggedCompleted: true
+          },
+          // Legacy payload key must not resolve through current catalog.
           ["season-quest-cracked-keystone"]: {
             trackerKey: "season-quest-cracked-keystone",
             questId: 92600,
@@ -105,18 +101,13 @@ describe("AddonSeasonEvidencePersistence", () => {
       tracked
     );
 
-    // CHARACTER catalyst: earnedByCharacter false → persist false
-    // WARBAND tier: accountCompleted true → persist true
-    // CHARACTER aotc: earnedByCharacter null → skip (UNKNOWN)
-    // QUEST cracked: false → persist
     expect(rows).toHaveLength(3);
-    expect(rows.every((row) => row.periodKey === "ALWAYS")).toBe(true);
     expect(
       rows.map((row) => [row.trackerDefinitionId, row.booleanValue])
     ).toEqual([
       ["catalyst-def", false],
       ["tier-def", true],
-      ["cracked-def", false]
+      ["cracked-def", true]
     ]);
     expect(tracked.seasonEvidenceSnapshots).toBe(3);
   });

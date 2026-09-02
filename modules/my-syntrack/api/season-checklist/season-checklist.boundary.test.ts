@@ -62,26 +62,26 @@ describe("season temporal boundary", () => {
           },
           catalyst: {
             key: "serpent-scion",
-            title: "Catalyst",
+            title: "Serpent Scion",
             state: "UNKNOWN",
             label: "?",
-            detail: "Catalyst",
+            detail: "Midnight Season 2: Serpent Scion",
             actionLabel: null
           },
           cracked: {
             key: "cracked-keystone",
-            title: "Cracked",
+            title: "Cracked Keystone",
             state: "UNKNOWN",
             label: "?",
-            detail: "Cracked",
+            detail: "Complete the Season 2 Cracked Keystone quest",
             actionLabel: null
           },
           nemesis: {
             key: "nemesis-aztarec",
-            title: "Nemesis",
+            title: "Azta'rec (Nemesis)",
             state: "UNKNOWN",
             label: "?",
-            detail: "Nemesis",
+            detail: "Defeat Azta'rec on ??",
             actionLabel: null
           },
           raid: {
@@ -89,7 +89,7 @@ describe("season temporal boundary", () => {
             title: "Raid",
             state: "UNKNOWN",
             label: "?",
-            detail: "Raid",
+            detail: "Ula'tek raid milestones",
             actionLabel: null
           },
           goalsOpen: 1,

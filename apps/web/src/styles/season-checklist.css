@@ -46,7 +46,7 @@
 .season-col-cracked,
 .season-col-nemesis,
 .season-col-raid,
-.season-col-open {
+.season-col-status {
   width: 1%;
   text-align: center;
   white-space: nowrap;
@@ -61,4 +61,10 @@
 
 .season-col-action .overview-next-action {
   display: inline;
+}
+
+.season-col-action .overview-next-action.unresolved,
+.season-col-action .overview-next-action.empty {
+  color: var(--text-secondary);
+  font-weight: 600;
 }

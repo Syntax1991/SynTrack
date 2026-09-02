@@ -2,6 +2,11 @@ import { Link } from "react-router-dom";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import { weekliesSignalTone } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
+import {
+  seasonActionDisplay,
+  seasonStatusDetail,
+  seasonStatusLabel
+} from "../../../api/season-checklist/season-checklist.goals.js";
 import type { SeasonChecklistCharacter } from "../../../api/season-checklist/season-checklist.types.js";
 import type { WeekliesSignalState } from "../../../api/weekly-checklist/weeklies-gameplay-signals.types.js";
 import type { SeasonGoalSignal } from "../../../api/season-checklist/season-checklist.types.js";
@@ -18,22 +23,6 @@ function seasonToken(signal: SeasonGoalSignal) {
     ),
     title: signal.detail
   };
-}
-
-function statusLabel(character: SeasonChecklistCharacter) {
-  if (character.goalsOpen > 0) {
-    return `${character.goalsOpen} open`;
-  }
-
-  if (character.goalsUnknown > 0) {
-    return `${character.goalsUnknown}?`;
-  }
-
-  if (character.goalsComplete > 0) {
-    return "✓";
-  }
-
-  return "—";
 }
 
 export function SeasonChecklistMatrix({
@@ -71,13 +60,14 @@ export function SeasonChecklistMatrix({
               <th className="season-col-cracked">Cracked</th>
               <th className="season-col-nemesis">Nemesis</th>
               <th className="season-col-raid">Raid</th>
-              <th className="season-col-open">Open</th>
+              <th className="season-col-status">Status</th>
               <th className="season-col-action">Action</th>
             </tr>
           </thead>
           <tbody>
             {characters.map((character) => {
-              const action = character.action;
+              const actionDisplay = seasonActionDisplay(character);
+              const statusDetail = seasonStatusDetail(character);
 
               return (
                 <tr key={character.id}>
@@ -117,17 +107,35 @@ export function SeasonChecklistMatrix({
                   <td className="season-col-raid">
                     <StatusToken token={seasonToken(character.raid)} />
                   </td>
-                  <td className="season-col-open">{statusLabel(character)}</td>
+                  <td
+                    className="season-col-status"
+                    title={statusDetail ?? undefined}
+                  >
+                    {seasonStatusLabel(character)}
+                  </td>
                   <td className="season-col-action">
-                    {action ? (
+                    {actionDisplay.kind === "action" ? (
                       <Link
                         className="overview-next-action"
                         to={`/characters/${character.id}`}
                       >
-                        {action}
+                        {actionDisplay.label}
                       </Link>
+                    ) : actionDisplay.kind === "unknown" ? (
+                      <span
+                        className="overview-next-action unresolved"
+                        title="Some Season goals are unresolved"
+                      >
+                        {actionDisplay.label}
+                      </span>
+                    ) : actionDisplay.kind === "complete" ? (
+                      <span className="overview-next-action ready">
+                        {actionDisplay.label}
+                      </span>
                     ) : (
-                      <span className="overview-next-action ready">✓</span>
+                      <span className="overview-next-action empty">
+                        {actionDisplay.label}
+                      </span>
                     )}
                   </td>
                 </tr>

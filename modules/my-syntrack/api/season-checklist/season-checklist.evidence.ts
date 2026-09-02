@@ -1,5 +1,6 @@
 import type { ResolvedTrackerDefinition } from "../weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import { SEASON_EVIDENCE_CATALOG } from "./season-evidence-catalog.js";
+import { seasonGoalPresentation } from "./season-goal-presentation.js";
 import type { SeasonGoalSignal } from "./season-checklist.types.js";
 
 function goalSignal(
@@ -7,6 +8,7 @@ function goalSignal(
   title: string,
   state: SeasonGoalSignal["state"],
   label: string,
+  detail: string,
   actionLabel: string | null
 ): SeasonGoalSignal {
   return {
@@ -14,7 +16,7 @@ function goalSignal(
     title,
     state,
     label,
-    detail: title,
+    detail,
     actionLabel
   };
 }
@@ -37,30 +39,60 @@ function booleanValue(
   return value.boolean;
 }
 
-export function deriveBooleanEvidenceGoal(
-  resolved: ResolvedTrackerDefinition | null
-): SeasonGoalSignal {
+function presentationForResolved(
+  resolved: ResolvedTrackerDefinition | null,
+  fallbackGoalKey?: string
+) {
   const catalogEvidence = resolved
     ? SEASON_EVIDENCE_CATALOG.find(
         (entry) => entry.trackerKey === resolved.definition.key
       )
     : undefined;
-  const key = catalogEvidence?.goalKey ?? resolved?.definition.key ?? "evidence";
-  const title = resolved?.definition.name ?? "Season evidence";
+  const goalKey =
+    catalogEvidence?.goalKey ?? fallbackGoalKey ?? "evidence";
+  return {
+    goalKey,
+    presentation: seasonGoalPresentation(goalKey)
+  };
+}
+
+export function deriveBooleanEvidenceGoal(
+  resolved: ResolvedTrackerDefinition | null,
+  fallbackGoalKey?: string
+): SeasonGoalSignal {
+  const { goalKey, presentation } = presentationForResolved(
+    resolved,
+    fallbackGoalKey
+  );
   const completed = booleanValue(resolved);
 
   if (completed === null) {
-    return goalSignal(key, title, "UNKNOWN", "?", null);
+    return goalSignal(
+      goalKey,
+      presentation.title,
+      "UNKNOWN",
+      "?",
+      presentation.detail,
+      null
+    );
   }
 
   return completed
-    ? goalSignal(key, title, "COMPLETE", "✓", null)
+    ? goalSignal(
+        goalKey,
+        presentation.title,
+        "COMPLETE",
+        "✓",
+        presentation.detail,
+        null
+      )
     : goalSignal(
-        key,
-        title,
+        goalKey,
+        presentation.title,
         "INCOMPLETE",
-        "open",
-        `Complete ${title}`
+        presentation.incompleteLabel,
+        presentation.detail,
+        presentation.incompleteAction
       );
 }
 
@@ -91,29 +123,39 @@ export function countPortalEvidence(
 export function derivePortalsGoal(
   resolved: Array<ResolvedTrackerDefinition | null>
 ): SeasonGoalSignal {
+  const presentation = seasonGoalPresentation("portals");
   const { knownCompletedCount, knownEvidenceCount, total } =
     countPortalEvidence(resolved);
 
   if (knownEvidenceCount < total) {
-    return goalSignal("portals", "Dungeon portals", "UNKNOWN", "?", null);
+    return goalSignal(
+      "portals",
+      presentation.title,
+      "UNKNOWN",
+      "?",
+      presentation.detail,
+      null
+    );
   }
 
   if (knownCompletedCount === total) {
     return goalSignal(
       "portals",
-      "Dungeon portals",
+      presentation.title,
       "COMPLETE",
       `✓ ${total}/${total}`,
+      presentation.detail,
       null
     );
   }
 
   return goalSignal(
     "portals",
-    "Dungeon portals",
+    presentation.title,
     "INCOMPLETE",
     `${knownCompletedCount}/${total}`,
-    "Earn remaining dungeon portals"
+    presentation.detail,
+    presentation.incompleteAction
   );
 }
 
@@ -127,34 +169,35 @@ export function deriveRaidGoal(
 ): SeasonGoalSignal {
   const aotcValue = booleanValue(aotc);
   const ceValue = booleanValue(ce);
+  const detail = "Ula'tek raid milestones for Midnight Season 2";
 
   if (ceValue === true) {
-    return goalSignal("raid", "Ula'tek raid", "COMPLETE", "✓ CE", null);
+    return goalSignal("raid", "Raid", "COMPLETE", "✓ CE", detail, null);
   }
 
   if (aotcValue === true) {
-    return goalSignal("raid", "Ula'tek raid", "COMPLETE", "✓ AOTC", null);
+    return goalSignal("raid", "Raid", "COMPLETE", "✓ AOTC", detail, null);
   }
 
   if (aotcValue === false) {
     return goalSignal(
       "raid",
-      "Ula'tek raid",
+      "Raid",
       "INCOMPLETE",
       "AOTC open",
-      "Earn Ahead of the Curve: Ula'tek"
+      detail,
+      "Earn AOTC: Ula'tek"
     );
   }
 
-  return goalSignal("raid", "Ula'tek raid", "UNKNOWN", "?", null);
+  return goalSignal("raid", "Raid", "UNKNOWN", "?", detail, null);
 }
 
 export function deriveWarbandBooleanGoal(
   signals: SeasonGoalSignal[],
-  key: string,
-  title: string,
-  incompleteAction: string
+  goalKey: string
 ): SeasonGoalSignal {
+  const presentation = seasonGoalPresentation(goalKey);
   const hasComplete = signals.some((signal) => signal.state === "COMPLETE");
   const knownIncomplete = signals.filter(
     (signal) => signal.state === "INCOMPLETE"
@@ -164,26 +207,56 @@ export function deriveWarbandBooleanGoal(
     signals.every((signal) => signal.state === "UNKNOWN");
 
   if (hasComplete) {
-    return goalSignal(key, title, "COMPLETE", "✓", null);
+    return goalSignal(
+      goalKey,
+      presentation.title,
+      "COMPLETE",
+      "✓",
+      presentation.detail,
+      null
+    );
   }
 
   if (allUnknown) {
-    return goalSignal(key, title, "UNKNOWN", "?", null);
+    return goalSignal(
+      goalKey,
+      presentation.title,
+      "UNKNOWN",
+      "?",
+      presentation.detail,
+      null
+    );
   }
 
   if (knownIncomplete.length > 0) {
     return goalSignal(
-      key,
-      title,
+      goalKey,
+      presentation.title,
       "INCOMPLETE",
-      "open",
-      incompleteAction
+      presentation.incompleteLabel,
+      presentation.detail,
+      presentation.incompleteAction
     );
   }
 
-  return goalSignal(key, title, "UNKNOWN", "?", null);
+  return goalSignal(
+    goalKey,
+    presentation.title,
+    "UNKNOWN",
+    "?",
+    presentation.detail,
+    null
+  );
 }
 
-export const deriveCatalystGoal = deriveBooleanEvidenceGoal;
-export const deriveCrackedGoal = deriveBooleanEvidenceGoal;
-export const deriveNemesisGoal = deriveBooleanEvidenceGoal;
+export const deriveCatalystGoal = (
+  resolved: ResolvedTrackerDefinition | null
+) => deriveBooleanEvidenceGoal(resolved, "serpent-scion");
+
+export const deriveCrackedGoal = (
+  resolved: ResolvedTrackerDefinition | null
+) => deriveBooleanEvidenceGoal(resolved, "cracked-keystone");
+
+export const deriveNemesisGoal = (
+  resolved: ResolvedTrackerDefinition | null
+) => deriveBooleanEvidenceGoal(resolved, "nemesis-aztarec");

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveSeasonMythicPlusGoal,
+  seasonActionDisplay,
+  seasonStatusLabel,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
 import {
@@ -112,6 +114,59 @@ describe("season checklist goals", () => {
       action: "Do other"
     });
   });
+
+  it("STATUS and ACTION never show false completion for unknown-only rows", () => {
+    expect(
+      seasonStatusLabel({
+        goalsOpen: 0,
+        goalsComplete: 1,
+        goalsUnknown: 5
+      })
+    ).toBe("5 unknown");
+
+    expect(
+      seasonStatusLabel({
+        goalsOpen: 1,
+        goalsComplete: 2,
+        goalsUnknown: 2
+      })
+    ).toBe("1 open");
+
+    expect(
+      seasonStatusLabel({
+        goalsOpen: 0,
+        goalsComplete: 6,
+        goalsUnknown: 0
+      })
+    ).toBe("✓");
+
+    expect(
+      seasonActionDisplay({
+        action: null,
+        goalsOpen: 0,
+        goalsComplete: 1,
+        goalsUnknown: 5
+      })
+    ).toEqual({ kind: "unknown", label: "?" });
+
+    expect(
+      seasonActionDisplay({
+        action: "Complete Cracked Keystone",
+        goalsOpen: 1,
+        goalsComplete: 3,
+        goalsUnknown: 1
+      })
+    ).toEqual({ kind: "action", label: "Complete Cracked Keystone" });
+
+    expect(
+      seasonActionDisplay({
+        action: null,
+        goalsOpen: 0,
+        goalsComplete: 6,
+        goalsUnknown: 0
+      })
+    ).toEqual({ kind: "complete", label: "✓" });
+  });
 });
 
 describe("season goal catalog", () => {
@@ -122,7 +177,7 @@ describe("season goal catalog", () => {
       )
     ).toEqual([
       62437, 62438, 62439, 62440, 62441, 62442, 62443, 62444,
-      62872, 63326, 63333, 63473, 63650, 63651, 92600
+      62872, 63326, 63333, 63473, 63650, 63651, 97910
     ]);
     expect(SEASON_EVIDENCE_CATALOG.every((entry) => entry.verified)).toBe(
       true

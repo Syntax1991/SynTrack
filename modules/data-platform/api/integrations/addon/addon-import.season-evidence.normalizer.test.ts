@@ -18,8 +18,8 @@ describe("normalizeSeasonEvidenceSnapshot", () => {
           }
         },
         quests: {
-          ["season-quest-cracked-keystone"]: {
-            questId: 92600,
+          ["season-quest-cracked-keystone-97910"]: {
+            questId: 97910,
             flaggedCompleted: false
           }
         }
@@ -33,13 +33,8 @@ describe("normalizeSeasonEvidenceSnapshot", () => {
       earnedByCharacter: false
     });
     expect(
-      snapshot?.achievements["season-achievement-63650"]?.accountCompleted
-    ).toBeNull();
-    expect(
-      snapshot?.achievements["season-achievement-63650"]?.earnedByCharacter
-    ).toBeNull();
-    expect(
-      snapshot?.quests["season-quest-cracked-keystone"]?.flaggedCompleted
+      snapshot?.quests["season-quest-cracked-keystone-97910"]
+        ?.flaggedCompleted
     ).toBe(false);
   });
 

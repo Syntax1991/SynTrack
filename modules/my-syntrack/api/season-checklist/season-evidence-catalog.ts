@@ -14,6 +14,11 @@ export type SeasonEvidenceCatalogEntry = {
 const wowheadAchievement = (id: number) =>
   `https://www.wowhead.com/achievement=${id}`;
 
+/**
+ * Canonical Midnight Season 2 evidence only.
+ * Legacy tracker `season-quest-cracked-keystone` (quest 92600) is intentionally
+ * absent — do not resolve or reinterpret its persisted ALWAYS values.
+ */
 export const SEASON_EVIDENCE_CATALOG: SeasonEvidenceCatalogEntry[] = [
   ...[
     62437, 62438, 62439, 62440, 62441, 62442, 62443, 62444
@@ -43,13 +48,13 @@ export const SEASON_EVIDENCE_CATALOG: SeasonEvidenceCatalogEntry[] = [
     sourceUrl: wowheadAchievement(externalId as number)
   })),
   {
-    trackerKey: "season-quest-cracked-keystone",
+    trackerKey: "season-quest-cracked-keystone-97910",
     evidenceKind: "QUEST",
-    externalId: 92600,
+    externalId: 97910,
     goalKey: "cracked-keystone",
     scope: "CHARACTER",
     verified: true,
-    sourceUrl: "https://www.wowhead.com/quest=92600"
+    sourceUrl: "https://www.wowhead.com/quest=97910"
   }
 ];
 
@@ -57,8 +62,15 @@ export const SEASON_PORTAL_EVIDENCE = SEASON_EVIDENCE_CATALOG.filter(
   (entry) => entry.goalKey === "portals"
 );
 
+export const LEGACY_CRACKED_KEYSTONE_TRACKER_KEY =
+  "season-quest-cracked-keystone";
+
 export function seasonEvidenceForGoal(goalKey: string) {
   return SEASON_EVIDENCE_CATALOG.filter(
     (entry) => entry.goalKey === goalKey
   );
+}
+
+export function primarySeasonEvidenceForGoal(goalKey: string) {
+  return seasonEvidenceForGoal(goalKey)[0] ?? null;
 }

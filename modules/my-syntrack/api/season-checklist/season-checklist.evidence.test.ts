@@ -9,6 +9,11 @@ import {
   deriveWarbandBooleanGoal
 } from "./season-checklist.evidence.js";
 import type { SeasonGoalSignal } from "./season-checklist.types.js";
+import {
+  LEGACY_CRACKED_KEYSTONE_TRACKER_KEY,
+  primarySeasonEvidenceForGoal,
+  SEASON_EVIDENCE_CATALOG
+} from "./season-evidence-catalog.js";
 
 function resolved(
   key: string,
@@ -184,12 +189,87 @@ describe("season evidence derivation", () => {
 
     const derived = deriveWarbandBooleanGoal(
       [gameplayA, gameplayB, professionOnlyC],
-      "tier-visual",
-      "Season tier visual",
-      "Earn Sssensational!"
+      "tier-visual"
     );
 
     expect(derived.state).toBe("COMPLETE");
     expect(derived.label).toBe("✓");
+    expect(derived.title).toBe("Sssensational!");
+    expect(derived.detail).toBe("Enhanced Season 2 tier visuals");
+    expect(derived.detail).not.toMatch(/\d{4,}/);
+  });
+
+  it("cracked 97910 complete / incomplete / unknown with product labels", () => {
+    expect(
+      deriveBooleanEvidenceGoal(
+        resolved("season-quest-cracked-keystone-97910", true),
+        "cracked-keystone"
+      )
+    ).toMatchObject({
+      state: "COMPLETE",
+      label: "✓",
+      title: "Cracked Keystone",
+      actionLabel: null
+    });
+
+    expect(
+      deriveBooleanEvidenceGoal(
+        resolved("season-quest-cracked-keystone-97910", false),
+        "cracked-keystone"
+      )
+    ).toMatchObject({
+      state: "INCOMPLETE",
+      label: "open",
+      actionLabel: "Complete Cracked Keystone"
+    });
+
+    expect(
+      deriveBooleanEvidenceGoal(
+        resolved("season-quest-cracked-keystone-97910", null),
+        "cracked-keystone"
+      )
+    ).toMatchObject({ state: "UNKNOWN", label: "?" });
+  });
+
+  it("legacy 92600 tracker is not consumed for Season cracked", () => {
+    expect(
+      SEASON_EVIDENCE_CATALOG.some(
+        (entry) => entry.trackerKey === LEGACY_CRACKED_KEYSTONE_TRACKER_KEY
+      )
+    ).toBe(false);
+    expect(primarySeasonEvidenceForGoal("cracked-keystone")).toMatchObject({
+      trackerKey: "season-quest-cracked-keystone-97910",
+      externalId: 97910
+    });
+
+    // No fresh 97910 evidence → UNKNOWN (legacy false must not appear as open)
+    expect(
+      deriveBooleanEvidenceGoal(null, "cracked-keystone")
+    ).toMatchObject({ state: "UNKNOWN", label: "?" });
+  });
+
+  it("product labels never include raw external IDs", () => {
+    const catalyst = deriveBooleanEvidenceGoal(
+      resolved("season-achievement-62872", false),
+      "serpent-scion"
+    );
+    const nemesis = deriveBooleanEvidenceGoal(
+      resolved("season-achievement-63326", false),
+      "nemesis-aztarec"
+    );
+    const warband = deriveWarbandBooleanGoal(
+      [signal("INCOMPLETE", "open")],
+      "tier-visual"
+    );
+
+    for (const signalValue of [catalyst, nemesis, warband]) {
+      expect(JSON.stringify(signalValue)).not.toMatch(
+        /62872|63326|63473|97910|92600/
+      );
+      expect(signalValue.actionLabel ?? "").not.toMatch(/Season evidence/i);
+    }
+
+    expect(catalyst.actionLabel).toBe("Earn Serpent Scion");
+    expect(nemesis.actionLabel).toBe("Defeat Azta'rec on ??");
   });
 });

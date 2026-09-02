@@ -33,27 +33,27 @@ function buildCharacter(
     },
     catalyst: {
       key: "serpent-scion",
-      title: "Catalyst",
+      title: "Serpent Scion",
       state: "COMPLETE",
       label: "✓",
-      detail: "Catalyst",
+      detail: "Midnight Season 2: Serpent Scion",
       actionLabel: null
     },
     cracked: {
       key: "cracked-keystone",
-      title: "Cracked",
+      title: "Cracked Keystone",
       state: "UNKNOWN",
       label: "?",
-      detail: "Cracked",
+      detail: "Complete the Season 2 Cracked Keystone quest",
       actionLabel: null
     },
     nemesis: {
       key: "nemesis-aztarec",
-      title: "Nemesis",
+      title: "Azta'rec (Nemesis)",
       state: "INCOMPLETE",
       label: "open",
-      detail: "Nemesis",
-      actionLabel: "Complete Nemesis"
+      detail: "Defeat Azta'rec on ??",
+      actionLabel: "Defeat Azta'rec on ??"
     },
     raid: {
       key: "raid",
@@ -61,7 +61,7 @@ function buildCharacter(
       state: "INCOMPLETE",
       label: "AOTC open",
       detail: "Raid",
-      actionLabel: "Earn AOTC"
+      actionLabel: "Earn AOTC: Ula'tek"
     },
     goalsOpen: 1,
     goalsComplete: 0,
@@ -72,7 +72,7 @@ function buildCharacter(
 }
 
 describe("SeasonChecklistMatrix", () => {
-  it("renders all seasonal evidence columns without weekly Profession", () => {
+  it("renders Status column and seasonal evidence without weekly Profession", () => {
     const { container } = render(
       <MemoryRouter>
         <SeasonChecklistMatrix characters={[buildCharacter()]} />
@@ -85,20 +85,18 @@ describe("SeasonChecklistMatrix", () => {
     expect(screen.getByText("Cracked")).toBeInTheDocument();
     expect(screen.getByText("Nemesis")).toBeInTheDocument();
     expect(screen.getByText("Raid")).toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("Status")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
+    expect(screen.queryByText("Open")).not.toBeInTheDocument();
     expect(screen.getByText("1847 → 2K")).toBeInTheDocument();
     expect(screen.getByText("Reach 2K Mythic+ rating")).toBeInTheDocument();
     expect(container.querySelector(".season-col-action")).not.toBeNull();
-    expect(container.querySelector(".season-matrix")).not.toBeNull();
+    expect(container.querySelector(".season-col-status")).not.toBeNull();
     expect(screen.queryByText("Prof.")).not.toBeInTheDocument();
-    expect(screen.queryByText("Progress")).not.toBeInTheDocument();
-    expect(screen.queryByText("META")).not.toBeInTheDocument();
-    expect(screen.queryByText("Vault")).not.toBeInTheDocument();
     expect(screen.queryByText("Capture Pending")).not.toBeInTheDocument();
   });
 
-  it("shows complete M+ milestone as ready", () => {
+  it("shows unknown status and ? action when only unresolved goals remain", () => {
     render(
       <MemoryRouter>
         <SeasonChecklistMatrix
@@ -112,8 +110,49 @@ describe("SeasonChecklistMatrix", () => {
                 detail: "done",
                 actionLabel: null
               },
+              portals: {
+                key: "portals",
+                title: "Portals",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Portals",
+                actionLabel: null
+              },
+              catalyst: {
+                key: "serpent-scion",
+                title: "Serpent Scion",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Catalyst",
+                actionLabel: null
+              },
+              cracked: {
+                key: "cracked-keystone",
+                title: "Cracked Keystone",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Cracked",
+                actionLabel: null
+              },
+              nemesis: {
+                key: "nemesis-aztarec",
+                title: "Nemesis",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Nemesis",
+                actionLabel: null
+              },
+              raid: {
+                key: "raid",
+                title: "Raid",
+                state: "UNKNOWN",
+                label: "?",
+                detail: "Raid",
+                actionLabel: null
+              },
               goalsOpen: 0,
               goalsComplete: 1,
+              goalsUnknown: 5,
               action: null
             })
           ]}
@@ -121,6 +160,11 @@ describe("SeasonChecklistMatrix", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("✓ 2K")).toBeInTheDocument();
+    expect(screen.getByText("5 unknown")).toBeInTheDocument();
+    expect(screen.queryByText("5?")).not.toBeInTheDocument();
+    expect(screen.getByTitle("Some Season goals are unresolved")).toHaveTextContent(
+      "?"
+    );
+    expect(screen.queryByText("✓", { selector: ".ready" })).not.toBeInTheDocument();
   });
 });

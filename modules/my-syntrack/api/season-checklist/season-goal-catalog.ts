@@ -65,10 +65,10 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
   },
   {
     key: "serpent-scion",
-    title: "Serpent Scion / season catalyst milestone",
+    title: "Serpent Scion",
     category: "CORE",
     scope: "CHARACTER",
-    // Verified achievement 62872.
+    // Verified achievement 62872 (Midnight Season 2: Serpent Scion).
     resetBehavior: "SEASONAL",
     enabled: true,
     captureGap: null
@@ -78,7 +78,7 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Cracked Keystone",
     category: "DELVES",
     scope: "CHARACTER",
-    // Verified quest 92600.
+    // Verified Midnight Season 2 quest 97910.
     resetBehavior: "SEASONAL",
     enabled: true,
     captureGap: null
@@ -88,7 +88,7 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Azta'rec (Nemesis)",
     category: "DELVES",
     scope: "CHARACTER",
-    // Verified achievement 63326.
+    // Verified achievement 63326 (My Venomous Nemesis).
     resetBehavior: "SEASONAL",
     enabled: true,
     captureGap: null
@@ -125,10 +125,10 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
   },
   {
     key: "tier-visual",
-    title: "Season tier visual (Sssensational!)",
+    title: "Sssensational!",
     category: "WARBAND",
     scope: "WARBAND",
-    // Verified account-tier achievement 63473.
+    // Verified Warband achievement 63473 (Sssensational!).
     resetBehavior: "SEASONAL",
     enabled: true,
     captureGap: null

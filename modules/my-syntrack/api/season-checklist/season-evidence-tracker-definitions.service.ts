@@ -4,6 +4,7 @@ import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile
 import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
 import type { TrackerDefinitionRepositoryContract } from "../trackers/tracker-repository.types.js";
 import { SEASON_EVIDENCE_CATALOG } from "./season-evidence-catalog.js";
+import { seasonGoalPresentation } from "./season-goal-presentation.js";
 
 export async function ensureSeasonEvidenceTrackerDefinitions(
   scopeKey: string,
@@ -20,10 +21,13 @@ export async function ensureSeasonEvidenceTrackerDefinitions(
         return;
       }
 
+      const presentation = seasonGoalPresentation(evidence.goalKey);
+
       await repository.create({
         scopeKey,
         key: evidence.trackerKey,
-        name: `Season evidence ${evidence.externalId}`,
+        // Product title only — never embed external IDs in names.
+        name: presentation.title,
         valueType: "BOOLEAN",
         resetBehavior: "SEASONAL",
         category: "SEASON_EVIDENCE",

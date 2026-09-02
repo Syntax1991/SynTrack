@@ -28,6 +28,7 @@ import {
 } from "./season-checklist.evidence.js";
 import {
   SEASON_EVIDENCE_CATALOG,
+  primarySeasonEvidenceForGoal,
   seasonEvidenceForGoal
 } from "./season-evidence-catalog.js";
 import { ensureSeasonEvidenceTrackerDefinitionsForImport } from "./season-evidence-tracker-definitions.service.js";
@@ -172,18 +173,26 @@ export class SeasonChecklistService {
           resolveEvidence(evidence.trackerKey)
         )
       );
+      const catalystEvidence = primarySeasonEvidenceForGoal("serpent-scion");
+      const crackedEvidence = primarySeasonEvidenceForGoal("cracked-keystone");
+      const nemesisEvidence = primarySeasonEvidenceForGoal("nemesis-aztarec");
+      const aotcEvidence = primarySeasonEvidenceForGoal("aotc-ulatek");
+      const ceEvidence = primarySeasonEvidenceForGoal("ce-ulatek");
       const catalyst = deriveBooleanEvidenceGoal(
-        resolveEvidence("season-achievement-62872")
+        resolveEvidence(catalystEvidence?.trackerKey ?? ""),
+        "serpent-scion"
       );
       const cracked = deriveBooleanEvidenceGoal(
-        resolveEvidence("season-quest-cracked-keystone")
+        resolveEvidence(crackedEvidence?.trackerKey ?? ""),
+        "cracked-keystone"
       );
       const nemesis = deriveBooleanEvidenceGoal(
-        resolveEvidence("season-achievement-63326")
+        resolveEvidence(nemesisEvidence?.trackerKey ?? ""),
+        "nemesis-aztarec"
       );
       const raid = deriveRaidGoal(
-        resolveEvidence("season-achievement-63650"),
-        resolveEvidence("season-achievement-63651")
+        resolveEvidence(aotcEvidence?.trackerKey ?? ""),
+        resolveEvidence(ceEvidence?.trackerKey ?? "")
       );
       const summary = summarizeSeasonGoals([
         mythicPlus,
@@ -206,9 +215,10 @@ export class SeasonChecklistService {
       };
     });
 
-    const tierDefinition = evidenceDefinitions.get(
-      "season-achievement-63473"
-    ) ?? null;
+    const tierEvidence = primarySeasonEvidenceForGoal("tier-visual");
+    const tierDefinition = tierEvidence
+      ? evidenceDefinitions.get(tierEvidence.trackerKey) ?? null
+      : null;
     const tierSignals = activeCharacters.map((character) => {
       const statesByDefinitionId = new Map(
         trackerStates
@@ -216,23 +226,14 @@ export class SeasonChecklistService {
           .map((state) => [state.trackerDefinitionId, state])
       );
       return deriveBooleanEvidenceGoal(
-        buildResolvedTracker(tierDefinition, statesByDefinitionId)
+        buildResolvedTracker(tierDefinition, statesByDefinitionId),
+        "tier-visual"
       );
     });
     const warbandGoals: SeasonChecklistResponse["warbandGoals"] =
-      enabledWarbandSeasonGoals().map((goal) => {
-        const derived = deriveWarbandBooleanGoal(
-          tierSignals,
-          goal.key,
-          goal.title,
-          "Earn Sssensational!"
-        );
-
-        return {
-          ...derived,
-          detail: "Account-tier achievement 63473"
-        };
-      });
+      enabledWarbandSeasonGoals().map((goal) =>
+        deriveWarbandBooleanGoal(tierSignals, goal.key)
+      );
 
     return {
       season: activeScope
