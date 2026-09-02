@@ -1,4 +1,5 @@
 import type { CharacterTrackingProfile } from "../../../api/character-tracking/character-tracking-profile.js";
+import type { WeekliesGameplaySignals } from "../../../api/weekly-checklist/weeklies-gameplay-signals.types.js";
 import type { WeekliesProfessionWeeklySummary } from "../../../api/weekly-checklist/weeklies-profession-summary.mapper.js";
 import type { WeeklyGameplayCharacterView } from "../../../api/weekly-gameplay/weekly-gameplay.types.js";
 
@@ -27,6 +28,7 @@ export type WeeklyChecklistCharacter = {
   completedTaskKeys: string[];
   professionWeeklySummary: WeekliesProfessionWeeklySummary;
   weeklyGameplay: WeeklyGameplayCharacterView | null;
+  gameplaySignals: WeekliesGameplaySignals;
 };
 
 export type WeeklyChecklistResponse = {

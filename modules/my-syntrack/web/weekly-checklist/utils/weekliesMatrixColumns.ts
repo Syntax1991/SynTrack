@@ -1,11 +1,14 @@
+import { WEEKLIES_MAP_MEANING } from "../../../api/weekly-checklist/weeklies-tracker-keys.js";
+
 export type WeekliesMatrixColumn =
   | "character"
   | "vault"
   | "mythicPlus"
   | "raid"
   | "delves"
+  | "map"
+  | "meta"
   | "professions"
-  | "progress"
   | "action";
 
 const WEEKLIES_COLUMNS: WeekliesMatrixColumn[] = [
@@ -14,8 +17,9 @@ const WEEKLIES_COLUMNS: WeekliesMatrixColumn[] = [
   "mythicPlus",
   "raid",
   "delves",
+  "map",
+  "meta",
   "professions",
-  "progress",
   "action"
 ];
 
@@ -31,9 +35,16 @@ export const WEEKLIES_COLUMN_LABELS: Record<
   mythicPlus: { label: "M+" },
   raid: { label: "Raid" },
   delves: { label: "Delves" },
+  map: {
+    label: "MAP",
+    title: WEEKLIES_MAP_MEANING
+  },
+  meta: {
+    label: "META",
+    title: "Weekly Meta Quest completion"
+  },
   professions: {
     label: "Prof.",
     title: "Profession weekly work summary"
-  },
-  progress: { label: "Progress" }
+  }
 };

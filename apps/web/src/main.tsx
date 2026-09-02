@@ -25,6 +25,7 @@ import "./styles/drawer.css";
 import "./styles/character-detail.css";
 import "./styles/character-tags.css";
 import "./styles/weekly-checklist.css";
+import "./styles/season-checklist.css";
 import "./styles/vault-mythic-plus-runs.css";
 import "./styles/raid-tasks.css";
 import "./styles/raid-tasks-board.css";

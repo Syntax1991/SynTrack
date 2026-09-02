@@ -91,6 +91,31 @@ export class WeeklyChecklistRepository {
     });
   }
 
+  /**
+   * Season roster source — no weekly completions join.
+   * Season must not become semantically weekly via periodKey.
+   */
+  findCharactersForSeason() {
+    return prisma.character.findMany({
+      select: {
+        id: true,
+        name: true,
+        realm: true,
+        region: true,
+        className: true,
+        level: true
+      },
+      orderBy: [
+        {
+          level: "desc"
+        },
+        {
+          name: "asc"
+        }
+      ]
+    });
+  }
+
   setTaskCompletion(
     characterId: string,
     taskId: string,

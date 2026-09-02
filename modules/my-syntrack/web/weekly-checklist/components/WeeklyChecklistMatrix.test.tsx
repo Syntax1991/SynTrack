@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
+import { createDefaultWeekliesGameplaySignals } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
 import type { WeeklyGameplayDomainView } from "../../../api/weekly-gameplay/weekly-gameplay.types.js";
 import { WeeklyChecklistMatrix } from "./WeeklyChecklistMatrix";
@@ -43,6 +44,7 @@ function buildCharacter(
       unknownProfessionCount: 0,
       path: "/professions"
     },
+    gameplaySignals: createDefaultWeekliesGameplaySignals(),
     ...overrides
   };
 }
@@ -66,8 +68,11 @@ describe("WeeklyChecklistMatrix", () => {
     expect(screen.getByText("M+")).toBeInTheDocument();
     expect(screen.getByText("Raid")).toBeInTheDocument();
     expect(screen.getByText("Delves")).toBeInTheDocument();
+    expect(screen.queryByText("2K")).not.toBeInTheDocument();
+    expect(screen.getByText("MAP")).toBeInTheDocument();
+    expect(screen.getByText("META")).toBeInTheDocument();
     expect(screen.getByText("Prof.")).toBeInTheDocument();
-    expect(screen.getByText("Progress")).toBeInTheDocument();
+    expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
 
     expect(screen.queryByText("Quest")).not.toBeInTheDocument();
@@ -79,15 +84,15 @@ describe("WeeklyChecklistMatrix", () => {
     expect(screen.getByText("Synbloom")).toBeInTheDocument();
   });
 
-  it("shows unresolved gameplay domains as unknown progress", () => {
+  it("shows unknown gameplay signal cells when tracker evidence is missing", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix characters={[buildCharacter()]} />
     );
 
     const unknowns = screen.getAllByTitle(
-      "Gameplay weekly progress unresolved"
+      /Trove Hunter's Bounty tracker not configured|Meta Quest tracker not configured/
     );
-    expect(unknowns.length).toBeGreaterThanOrEqual(1);
+    expect(unknowns.length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders Synblast M+ 8/8 and Vault 6/9 when Delves are unresolved", () => {
@@ -163,24 +168,44 @@ describe("WeeklyChecklistMatrix", () => {
     );
   });
 
-  it("does not surface profession actions in gameplay Action column", () => {
+  it("shows gameplay action complete while profession work remains open", () => {
     renderWithRouter(
       <WeeklyChecklistMatrix
         characters={[
           buildCharacter({
             professionWeeklySummary: {
               state: "ATTENTION",
-              label: "1 open",
-              openProfessionCount: 1,
+              label: "2 open",
+              openProfessionCount: 2,
               unknownProfessionCount: 0,
               path: "/professions"
             },
             weeklyGameplay: {
               characterId: "char-1",
-              vault: gameplayDomain({ label: "Vault" }),
-              mythicPlus: gameplayDomain({ label: "M+" }),
-              raid: gameplayDomain({ label: "Raid" }),
-              delves: gameplayDomain({ label: "Delves" }),
+              vault: gameplayDomain({
+                label: "Vault",
+                state: "READY",
+                completeCount: 9,
+                applicableTotal: 9
+              }),
+              mythicPlus: gameplayDomain({
+                label: "M+",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8
+              }),
+              raid: gameplayDomain({
+                label: "Raid",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8
+              }),
+              delves: gameplayDomain({
+                label: "Delves",
+                state: "READY",
+                completeCount: 8,
+                applicableTotal: 8
+              }),
               mythicPlusAction: null,
               raidAction: null,
               delvesAction: null,
@@ -191,8 +216,7 @@ describe("WeeklyChecklistMatrix", () => {
       />
     );
 
-    expect(
-      screen.queryByText(/Treatise|Quest remaining|Knowledge Drop/i)
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("2 open")).toBeInTheDocument();
+    expect(screen.getByText("✓")).toBeInTheDocument();
   });
 });

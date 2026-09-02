@@ -1,0 +1,59 @@
+/*
+ * Season checklist layout only — do not alter shared dense-matrix /
+ * matrix-col-action behavior used by Weeklies / Overview / Professions.
+ */
+
+.season-summary {
+  margin: 20px 0 12px;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.season-matrix-panel {
+  margin-top: 0;
+  padding: 18px 20px 16px;
+}
+
+.season-matrix-panel > .eyebrow {
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.season-matrix-panel .matrix-toolbar {
+  margin: 0 0 12px;
+}
+
+.season-matrix {
+  width: 100%;
+}
+
+.season-matrix th,
+.season-matrix td {
+  vertical-align: middle;
+}
+
+/* Character absorbs leftover width; compact columns shrink to content
+   so Action sits next to Open (Professions-like density). */
+.season-col-character {
+  width: auto;
+}
+
+.season-col-mplus,
+.season-col-open {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.season-col-action {
+  width: 1%;
+  min-width: 12.5rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.season-col-action .overview-next-action {
+  display: inline;
+}

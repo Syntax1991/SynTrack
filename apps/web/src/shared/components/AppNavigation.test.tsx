@@ -37,11 +37,12 @@ function sidebar() {
 }
 
 describe("AppNavigation - flat product-domain sidebar", () => {
-  it("renders exactly the six domains: Overview, Characters, Weeklies, Professions, Gear and Settings", () => {
+  it("renders exactly the seven domains: Overview, Season, Characters, Weeklies, Professions, Gear and Settings", () => {
     renderNavigation();
 
     const labels = [
       "Overview",
+      "Season",
       "Characters",
       "Weeklies",
       "Professions",

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { createDefaultWeekliesGameplaySignals } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
 import type { WeeklyGameplayDomainView } from "../../../api/weekly-gameplay/weekly-gameplay.types.js";
 import {
+  gameplaySignalToken,
   professionSummaryToken,
-  progressToken,
   weeklyActionLabel
 } from "./weeklyChecklistCells";
 
@@ -44,6 +45,7 @@ function buildCharacter(
       unknownProfessionCount: 0,
       path: "/professions"
     },
+    gameplaySignals: createDefaultWeekliesGameplaySignals(),
     ...overrides
   };
 }
@@ -85,22 +87,50 @@ function readyGameplay() {
 }
 
 describe("weeklyChecklistCells boundary", () => {
-  it("keeps gameplay progress independent from profession weekly work", () => {
-    const token = progressToken(
+  it("keeps gameplay action complete when profession work remains open", () => {
+    const action = weeklyActionLabel(
       buildCharacter({
         weeklyGameplay: readyGameplay(),
         professionWeeklySummary: {
           state: "ATTENTION",
-          label: "1 open",
-          openProfessionCount: 1,
+          label: "2 open",
+          openProfessionCount: 2,
           unknownProfessionCount: 0,
           path: "/professions"
         }
       })
     );
 
-    expect(token.symbol).toBe("33/33");
-    expect(token.tone).toBe("ready");
+    expect(action).toBeNull();
+  });
+
+  it("may surface weekly meta quest action after core gameplay actions", () => {
+    const action = weeklyActionLabel(
+      buildCharacter({
+        weeklyGameplay: readyGameplay(),
+        gameplaySignals: {
+          ...createDefaultWeekliesGameplaySignals(),
+          meta: {
+            state: "INCOMPLETE",
+            label: "open",
+            title: "Weekly Meta Quest",
+            actionLabel: "Complete Weekly Meta Quest"
+          }
+        }
+      })
+    );
+
+    expect(action).toBe("Complete Weekly Meta Quest");
+  });
+
+  it("does not surface 2K RIO as gameplay action", () => {
+    const action = weeklyActionLabel(
+      buildCharacter({
+        weeklyGameplay: readyGameplay()
+      })
+    );
+
+    expect(action).toBeNull();
   });
 
   it("keeps gameplay action independent from profession weekly work", () => {
@@ -122,6 +152,26 @@ describe("weeklyChecklistCells boundary", () => {
 
     expect(action).toBe("Run 4 M+ for next Vault slot");
     expect(action).not.toMatch(/Treatise|Quest|Drop|Knowledge/i);
+  });
+
+  it("renders compact gameplay signal tokens", () => {
+    expect(
+      gameplaySignalToken({
+        state: "COMPLETE",
+        label: "✓",
+        title: "2K RIO",
+        actionLabel: null
+      }).symbol
+    ).toBe("✓");
+
+    expect(
+      gameplaySignalToken({
+        state: "UNKNOWN",
+        label: "?",
+        title: "2K RIO",
+        actionLabel: null
+      }).symbol
+    ).toBe("?");
   });
 
   it("renders compact profession summary states", () => {

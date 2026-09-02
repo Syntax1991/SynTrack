@@ -14,6 +14,17 @@ import type {
   WeeklyChecklistTaskDefinition,
   WeeklyTaskUpdateInput
 } from "./weekly-checklist.types.js";
+import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
+import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile.repository.js";
+import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
+import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
+import { TrackerValueService } from "../trackers/tracker-value.service.js";
+import { loadWeekliesTrackerBundlesByCharacterId } from "./weeklies-gameplay-signals.loader.js";
+import {
+  createDefaultWeekliesGameplaySignals,
+  resolveWeekliesGameplaySignals
+} from "./weeklies-gameplay-signals.mapper.js";
+import { ensureWeekliesTrackerDefinitionsForImport } from "./weeklies-tracker-definitions.service.js";
 import { resolveWeekliesProfessionWeeklySummary } from "./weeklies-profession-summary.mapper.js";
 
 const taskCatalog:
@@ -72,6 +83,19 @@ export class WeeklyChecklistService {
     new WeeklyGameplayRepository()
   );
 
+  private readonly trackerScopeProfileService =
+    new TrackerScopeProfileService(
+      new TrackerScopeProfileRepository()
+    );
+
+  private readonly trackerDefinitionRepository =
+    new TrackerDefinitionRepository();
+
+  private readonly trackerValueService = new TrackerValueService(
+    new TrackerValueRepository(),
+    new TrackerDefinitionRepository()
+  );
+
   constructor(
     private readonly repository:
       WeeklyChecklistRepository
@@ -83,6 +107,8 @@ export class WeeklyChecklistService {
 
     const period =
       getWeeklyPeriod();
+    await ensureWeekliesTrackerDefinitionsForImport();
+
     const [
       tasks,
       characters,
@@ -117,7 +143,7 @@ export class WeeklyChecklistService {
       ])
     );
 
-    const characterItems = characters
+    const gameplayCharacters = characters
       .map((character) => {
         const trackingProfile = resolveCharacterTrackingProfile(
           tagsByCharacterId.get(character.id) ?? []
@@ -147,6 +173,34 @@ export class WeeklyChecklistService {
       .filter((character) =>
         isWeeklyGameplayEnabled(character.trackingProfile)
       );
+
+    const trackerBundlesByCharacterId =
+      await loadWeekliesTrackerBundlesByCharacterId(
+        gameplayCharacters.map((character) => character.id),
+        {
+          trackerScopeProfileService:
+            this.trackerScopeProfileService,
+          trackerDefinitionRepository:
+            this.trackerDefinitionRepository,
+          trackerValueService: this.trackerValueService
+        }
+      );
+
+    const characterItems = gameplayCharacters.map((character) => {
+      const trackerBundle =
+        trackerBundlesByCharacterId.get(character.id);
+
+      return {
+        ...character,
+        gameplaySignals: trackerBundle
+          ? resolveWeekliesGameplaySignals({
+              bounty: trackerBundle.bounty,
+              meta: trackerBundle.meta,
+              delves: character.weeklyGameplay?.delves ?? null
+            })
+          : createDefaultWeekliesGameplaySignals()
+      };
+    });
     const completedTaskCount =
       characterItems.reduce(
         (total, character) =>

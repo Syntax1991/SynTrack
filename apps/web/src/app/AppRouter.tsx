@@ -17,6 +17,7 @@ import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages
 import { GearReadinessPage } from "../../../../modules/my-syntrack/web/gear-readiness/pages/GearReadinessPage";
 import { RaidTasksPage } from "../../../../modules/my-syntrack/web/raid-tasks/pages/RaidTasksPage";
 import { WeeklyChecklistPage } from "../../../../modules/my-syntrack/web/weekly-checklist/pages/WeeklyChecklistPage";
+import { SeasonPage } from "../../../../modules/my-syntrack/web/season/pages/SeasonPage";
 import { VaultMythicPlusPage } from "../../../../modules/my-syntrack/web/vault-mythic-plus/pages/VaultMythicPlusPage";
 import { RaiderLoginCallbackPage } from "../../../../modules/data-platform/web/raider-auth/pages/RaiderLoginCallbackPage";
 import { LoginPage } from "../../../../modules/data-platform/web/raider-auth/pages/LoginPage";
@@ -81,6 +82,11 @@ export function AppRouter() {
         <Route
           path="weekly-checklist"
           element={<WeeklyChecklistPage />}
+        />
+
+        <Route
+          path="season"
+          element={<SeasonPage />}
         />
 
         <Route
