@@ -24,7 +24,7 @@ import {
   createDefaultWeekliesGameplaySignals,
   resolveWeekliesGameplaySignals
 } from "./weeklies-gameplay-signals.mapper.js";
-import { ensureWeekliesTrackerDefinitions } from "./weeklies-tracker-definitions.service.js";
+import { ensureWeekliesTrackerDefinitionsForImport } from "./weeklies-tracker-definitions.service.js";
 import { resolveWeekliesProfessionWeeklySummary } from "./weeklies-profession-summary.mapper.js";
 
 const taskCatalog:
@@ -107,15 +107,7 @@ export class WeeklyChecklistService {
 
     const period =
       getWeeklyPeriod();
-    const activeScope =
-      await this.trackerScopeProfileService.getActive();
-
-    if (activeScope) {
-      await ensureWeekliesTrackerDefinitions(
-        activeScope.key,
-        this.trackerDefinitionRepository
-      );
-    }
+    await ensureWeekliesTrackerDefinitionsForImport();
 
     const [
       tasks,

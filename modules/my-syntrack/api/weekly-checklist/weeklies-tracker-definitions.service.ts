@@ -1,3 +1,7 @@
+import { GLOBAL_TRACKER_SCOPE_KEY } from "../trackers/global-tracker-scope.js";
+import { TrackerDefinitionRepository } from "../trackers/tracker-definition.repository.js";
+import { TrackerScopeProfileRepository } from "../trackers/tracker-scope-profile.repository.js";
+import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.service.js";
 import type { TrackerDefinitionRepositoryContract } from "../trackers/tracker-repository.types.js";
 import type {
   TrackerResetBehavior,
@@ -73,4 +77,31 @@ export async function ensureWeekliesTrackerDefinitions(
       });
     })
   );
+}
+
+/*
+ * Addon import must be able to persist Weeklies tracker values even if
+ * the user has never opened /weekly-checklist (which also ensures defs).
+ */
+export type ActiveScopeLookup = {
+  getActive(): Promise<{ key: string } | null>;
+};
+
+export async function ensureWeekliesTrackerDefinitionsForImport(
+  repository: TrackerDefinitionRepositoryContract = new TrackerDefinitionRepository(),
+  scopeProfileService: ActiveScopeLookup = new TrackerScopeProfileService(
+    new TrackerScopeProfileRepository()
+  )
+): Promise<string> {
+  const activeScope =
+    await scopeProfileService.getActive();
+  const scopeKey =
+    activeScope?.key ?? GLOBAL_TRACKER_SCOPE_KEY;
+
+  await ensureWeekliesTrackerDefinitions(
+    scopeKey,
+    repository
+  );
+
+  return scopeKey;
 }

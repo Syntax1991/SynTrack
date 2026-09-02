@@ -3,6 +3,7 @@ import { TrackerDefinitionRepository } from "../../../../my-syntrack/api/tracker
 import { TrackerScopeProfileRepository } from "../../../../my-syntrack/api/trackers/tracker-scope-profile.repository.js";
 import { TrackerScopeProfileService } from "../../../../my-syntrack/api/trackers/tracker-scope-profile.service.js";
 import type { TrackerDefinitionRow } from "../../../../my-syntrack/api/trackers/tracker-repository.types.js";
+import { ensureWeekliesTrackerDefinitionsForImport } from "../../../../my-syntrack/api/weekly-checklist/weeklies-tracker-definitions.service.js";
 import {
   WEEKLIES_META_QUEST_TRACKER_KEY,
   WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
@@ -16,24 +17,33 @@ export type WeekliesTrackerDefinitionsByKey = {
 };
 
 export async function findWeekliesTrackerDefinitionsForImport(): Promise<WeekliesTrackerDefinitionsByKey> {
+  const definitionRepository = new TrackerDefinitionRepository();
+  const scopeKey =
+    await ensureWeekliesTrackerDefinitionsForImport(
+      definitionRepository
+    );
+
   const scopeProfileService = new TrackerScopeProfileService(
     new TrackerScopeProfileRepository()
   );
-  const definitionRepository = new TrackerDefinitionRepository();
-
   const activeScope =
     await scopeProfileService.getActive();
 
   const scopeKeys = [
-    ...(activeScope ? [activeScope.key] : []),
+    scopeKey,
+    ...(activeScope && activeScope.key !== scopeKey
+      ? [activeScope.key]
+      : []),
     GLOBAL_TRACKER_SCOPE_KEY
   ];
 
+  const uniqueScopeKeys = [...new Set(scopeKeys)];
+
   const definitionsByScope = await Promise.all(
-    scopeKeys.map(async (scopeKey) => ({
-      scopeKey,
+    uniqueScopeKeys.map(async (key) => ({
+      scopeKey: key,
       definitions:
-        await definitionRepository.findByScope(scopeKey)
+        await definitionRepository.findByScope(key)
     }))
   );
 

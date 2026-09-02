@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FakeTrackerDefinitionRepository } from "../trackers/tracker.fakes.js";
+import { ensureWeekliesTrackerDefinitionsForImport } from "./weeklies-tracker-definitions.service.js";
 import {
   WEEKLIES_META_QUEST_TRACKER_KEY,
   WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY,
@@ -69,5 +70,21 @@ describe("ensureWeekliesTrackerDefinitions", () => {
     );
 
     expect(definitions).toHaveLength(3);
+  });
+
+  it("falls back to GLOBAL when no active scope exists", async () => {
+    const repository = new FakeTrackerDefinitionRepository();
+    const scopeKey =
+      await ensureWeekliesTrackerDefinitionsForImport(
+        repository,
+        {
+          getActive: async () => null
+        }
+      );
+
+    expect(scopeKey).toBe("GLOBAL");
+    expect(await repository.findByScope("GLOBAL")).toHaveLength(
+      3
+    );
   });
 });

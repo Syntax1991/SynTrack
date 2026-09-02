@@ -19,7 +19,7 @@ local function anyQuestFlagged(questIds)
             )
 
         if succeeded then
-            return flagged == true, questId
+            return flagged, questId
         end
     end
 
@@ -27,24 +27,42 @@ local function anyQuestFlagged(questIds)
 end
 
 local function captureMythicPlusRating()
-    if not C_ChallengeMode
-        or not C_ChallengeMode.GetOverallDungeonScore
+    if C_ChallengeMode
+        and C_ChallengeMode.GetOverallDungeonScore
     then
-        return { captured = false }
+        local succeeded, score = pcall(
+            C_ChallengeMode.GetOverallDungeonScore
+        )
+
+        if succeeded and type(score) == "number" then
+            return {
+                captured = true,
+                seasonRating = math.floor(score)
+            }
+        end
     end
 
-    local succeeded, score = pcall(
-        C_ChallengeMode.GetOverallDungeonScore
-    )
+    if C_PlayerInfo
+        and C_PlayerInfo.GetPlayerMythicPlusRatingSummary
+    then
+        local succeeded, summary = pcall(
+            C_PlayerInfo.GetPlayerMythicPlusRatingSummary,
+            "player"
+        )
 
-    if not succeeded or type(score) ~= "number" then
-        return { captured = false }
+        if succeeded
+            and type(summary) == "table"
+            and type(summary.currentSeasonScore) == "number"
+        then
+            return {
+                captured = true,
+                seasonRating =
+                    math.floor(summary.currentSeasonScore)
+            }
+        end
     end
 
-    return {
-        captured = true,
-        seasonRating = math.floor(score)
-    }
+    return { captured = false }
 end
 
 local function captureQuestSignal(signalKey, questIds)

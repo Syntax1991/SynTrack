@@ -2,6 +2,7 @@ import { prisma } from "../../../../../apps/api/src/infrastructure/database/pris
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
 import { professionIconResolutionService } from "../../../../professions/api/icons/profession-icon-resolution.service.js";
 import { professionItemQualityResolutionService } from "../../../../professions/api/icons/profession-item-quality-resolution.service.js";
+import { ensureWeekliesTrackerDefinitionsForImport } from "../../../../my-syntrack/api/weekly-checklist/weeklies-tracker-definitions.service.js";
 import { AddonCatalogPersistence } from "./addon-import.catalog.persistence.js";
 import { AddonCharacterPersistence } from "./addon-import.character.persistence.js";
 import { collectProfessionKeys } from "./addon-import.persistence-utils.js";
@@ -77,6 +78,8 @@ export class AddonImportPersistence {
       async (
         transaction
       ) => {
+        await ensureWeekliesTrackerDefinitionsForImport();
+
         const professionIds =
           await this.loadProfessionIds(
             transaction,

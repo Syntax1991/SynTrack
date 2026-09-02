@@ -68,6 +68,18 @@ local function handleEvent(
         return
     end
 
+    if event == "PLAYER_ENTERING_WORLD" then
+        C_Timer.After(
+            3,
+            function()
+                API.RefreshExport(
+                    "player-entering-world"
+                )
+            end
+        )
+        return
+    end
+
     API.CaptureCurrentCharacter(
         string.lower(
             string.gsub(
