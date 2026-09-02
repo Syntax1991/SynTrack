@@ -55,18 +55,18 @@ export function SeasonChecklistMatrix({
       </div>
 
       <div className="table-scroll matrix-scroll">
-        <table className="dense-matrix">
+        <table className="dense-matrix season-matrix">
           <thead>
             <tr>
-              <th>Character</th>
+              <th className="season-col-character">Character</th>
               <th
-                className="matrix-col-narrow"
+                className="season-col-mplus"
                 title="Current-season Mythic+ rating toward Keystone Master (2,000)"
               >
                 M+
               </th>
-              <th className="matrix-col-narrow">Open</th>
-              <th className="matrix-col-action">Action</th>
+              <th className="season-col-open">Open</th>
+              <th className="season-col-action">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -75,7 +75,7 @@ export function SeasonChecklistMatrix({
 
               return (
                 <tr key={character.id}>
-                  <td>
+                  <td className="season-col-character">
                     <div className="matrix-identity">
                       <Link
                         className="matrix-character-link"
@@ -93,11 +93,11 @@ export function SeasonChecklistMatrix({
                       </span>
                     </div>
                   </td>
-                  <td className="matrix-col-narrow">
+                  <td className="season-col-mplus">
                     <StatusToken token={mythicPlusToken(character)} />
                   </td>
-                  <td className="matrix-col-narrow">{statusLabel(character)}</td>
-                  <td className="matrix-col-action">
+                  <td className="season-col-open">{statusLabel(character)}</td>
+                  <td className="season-col-action">
                     {action ? (
                       <Link
                         className="overview-next-action"

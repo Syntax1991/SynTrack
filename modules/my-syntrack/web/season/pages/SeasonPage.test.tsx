@@ -29,18 +29,23 @@ describe("SeasonPage", () => {
     });
   });
 
-  it("shows user-state summary without capture-pending developer metadata", () => {
+  it("shows compact user-state summary without capture-pending developer metadata", () => {
     render(
       <MemoryRouter>
         <SeasonPage />
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/2 characters/)).toBeInTheDocument();
-    expect(screen.getByText(/1 goals open/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Midnight Season 2 · 2 characters · 1 goals open · 1 complete · 0 unknown"
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText("CHARACTER SEASON GOALS")).toBeInTheDocument();
     expect(screen.queryByText(/pending capture/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/CAPTURE PENDING/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/WARBAND SEASON GOALS/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/No achievement capture/i)).not.toBeInTheDocument();
   });
 });
+

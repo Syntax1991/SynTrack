@@ -33,7 +33,7 @@ function buildCharacter(
 
 describe("SeasonChecklistMatrix", () => {
   it("renders Character | M+ | Open | Action without weekly Profession", () => {
-    render(
+    const { container } = render(
       <MemoryRouter>
         <SeasonChecklistMatrix characters={[buildCharacter()]} />
       </MemoryRouter>
@@ -44,6 +44,8 @@ describe("SeasonChecklistMatrix", () => {
     expect(screen.getByText("Action")).toBeInTheDocument();
     expect(screen.getByText("1847 → 2K")).toBeInTheDocument();
     expect(screen.getByText("Reach 2K Mythic+ rating")).toBeInTheDocument();
+    expect(container.querySelector(".season-col-action")).not.toBeNull();
+    expect(container.querySelector(".season-matrix")).not.toBeNull();
     expect(screen.queryByText("Prof.")).not.toBeInTheDocument();
     expect(screen.queryByText("Progress")).not.toBeInTheDocument();
     expect(screen.queryByText("META")).not.toBeInTheDocument();

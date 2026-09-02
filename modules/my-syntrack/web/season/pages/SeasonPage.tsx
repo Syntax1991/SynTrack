@@ -32,17 +32,19 @@ export function SeasonPage() {
         <LoadingPanel />
       ) : (
         <>
-          <section className="panel">
-            <p className="eyebrow">{seasonLabel}</p>
-            <div className="matrix-summary">
-              {checklist.summary.characterCount} characters ·{" "}
-              {checklist.summary.goalsOpen} goals open ·{" "}
-              {checklist.summary.goalsComplete} complete ·{" "}
-              {checklist.summary.goalsUnknown} unknown
-            </div>
-          </section>
+          <p className="season-summary">
+            {seasonLabel}
+            {" · "}
+            {checklist.summary.characterCount} characters
+            {" · "}
+            {checklist.summary.goalsOpen} goals open
+            {" · "}
+            {checklist.summary.goalsComplete} complete
+            {" · "}
+            {checklist.summary.goalsUnknown} unknown
+          </p>
 
-          <section className="panel matrix-panel">
+          <section className="panel matrix-panel season-matrix-panel">
             <p className="eyebrow">CHARACTER SEASON GOALS</p>
             <SeasonChecklistMatrix characters={checklist.characters} />
           </section>
