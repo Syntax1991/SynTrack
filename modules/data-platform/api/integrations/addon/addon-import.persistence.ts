@@ -141,7 +141,9 @@ export class AddonImportPersistence {
               characterResult
                 .professionKnowledgeTreasureSnapshots,
             weeklyGameplaySnapshots:
-              characterResult.weeklyGameplaySnapshots
+              characterResult.weeklyGameplaySnapshots,
+            weekliesSignalSnapshots:
+              characterResult.weekliesSignalSnapshots
           }
         };
       }

@@ -20,4 +20,6 @@ ResourceCatalog.lua
 Resources.lua
 WeeklyActivityVault.lua
 WeeklyActivity.lua
+WeekliesSignalsCatalog.lua
+WeekliesSignals.lua
 Events.lua
