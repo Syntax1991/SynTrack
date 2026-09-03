@@ -33,6 +33,25 @@ function professionActionLabel(
   return `${professionName}: ${nextAction}`;
 }
 
+function permanentProfessionTreasureAction(
+  treasures: {
+    state: string;
+    aggregate: { incompleteCount: number } | null;
+  }
+): string | null {
+  if (treasures.state !== "INCOMPLETE") {
+    return null;
+  }
+
+  const missing = treasures.aggregate?.incompleteCount ?? 0;
+
+  if (missing === 1) {
+    return "1 Knowledge Treasure missing";
+  }
+
+  return `${missing} Knowledge Treasures missing`;
+}
+
 /**
  * Account-wide Overview Decision Engine.
  * Composes Weeklies / Season / Profession work — raw candidates + Character projection.
@@ -118,7 +137,6 @@ export class OverviewDecisionService {
         professionUnresolved += 1;
       }
 
-      // Prefer weekly nextAction when both horizons apply on one profession row.
       if (row.attention.weekly && isProfessionActionable(row.nextAction)) {
         professionCharactersWithWork.add(row.character.id);
         actions.push({
@@ -135,27 +153,32 @@ export class OverviewDecisionService {
           localOrder: professionWeeklyLocalOrder
         });
         professionWeeklyLocalOrder += 1;
-        continue;
       }
 
-      if (
-        row.attention.permanent &&
-        isProfessionActionable(row.nextAction)
-      ) {
-        actions.push({
-          characterId: row.character.id,
-          characterName: row.character.name,
-          className: row.character.className,
-          source: "PROFESSIONS",
-          horizon: "PERMANENT",
-          action: professionActionLabel(
-            row.profession.name,
-            row.nextAction
-          ),
-          path: PROFESSIONS_PATH,
-          localOrder: professionPermanentLocalOrder
-        });
-        professionPermanentLocalOrder += 1;
+      if (row.attention.permanent) {
+        // When weekly also applies, nextAction is weekly-first — derive treasure text.
+        const permanentAction = row.attention.weekly
+          ? permanentProfessionTreasureAction(row.treasures)
+          : isProfessionActionable(row.nextAction)
+            ? row.nextAction
+            : permanentProfessionTreasureAction(row.treasures);
+
+        if (permanentAction) {
+          actions.push({
+            characterId: row.character.id,
+            characterName: row.character.name,
+            className: row.character.className,
+            source: "PROFESSIONS",
+            horizon: "PERMANENT",
+            action: professionActionLabel(
+              row.profession.name,
+              permanentAction
+            ),
+            path: PROFESSIONS_PATH,
+            localOrder: professionPermanentLocalOrder
+          });
+          professionPermanentLocalOrder += 1;
+        }
       }
     }
 
