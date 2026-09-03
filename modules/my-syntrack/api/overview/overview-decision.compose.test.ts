@@ -7,8 +7,19 @@ import {
   overviewHorizonLabel,
   sortOverviewActionCandidates
 } from "./overview-decision.compose.js";
-import type { OverviewActionCandidate } from "./overview-decision.types.js";
+import type {
+  OverviewActionCandidate,
+  OverviewDecisionProjection
+} from "./overview-decision.types.js";
 import { deriveWeekliesGameplayAction } from "./overview-decision.weeklies.js";
+
+function emptyProjection(): OverviewDecisionProjection {
+  return {
+    gameplayPriorities: [],
+    professionWork: [],
+    setupAttention: []
+  };
+}
 
 function candidate(
   overrides: Partial<OverviewActionCandidate> &
@@ -201,7 +212,11 @@ describe("overview decision compose", () => {
       summaries: {
         weekly: { charactersWithWork: 0 },
         season: { open: 1, unknown: 0 },
-        professions: { weeklyActions: 0, permanentAttention: 0 },
+        professions: {
+          charactersWithWork: 0,
+          weeklyActions: 0,
+          permanentAttention: 0
+        },
         unresolved: 0
       },
       actions: [
@@ -210,7 +225,8 @@ describe("overview decision compose", () => {
           horizon: "SEASONAL",
           source: "SEASON"
         })
-      ]
+      ],
+      projection: emptyProjection()
     });
 
     expect(response.actions[0]?.action).toBe("Complete 4pc tier set");
@@ -221,10 +237,15 @@ describe("overview decision compose", () => {
       summaries: {
         weekly: { charactersWithWork: 0 },
         season: { open: 0, unknown: 2 },
-        professions: { weeklyActions: 0, permanentAttention: 0 },
+        professions: {
+          charactersWithWork: 0,
+          weeklyActions: 0,
+          permanentAttention: 0
+        },
         unresolved: 2
       },
-      actions: []
+      actions: [],
+      projection: emptyProjection()
     });
 
     expect(response.actions).toHaveLength(0);
@@ -237,10 +258,15 @@ describe("overview decision compose", () => {
       summaries: {
         weekly: { charactersWithWork: 0 },
         season: { open: 0, unknown: 0 },
-        professions: { weeklyActions: 0, permanentAttention: 0 },
+        professions: {
+          charactersWithWork: 0,
+          weeklyActions: 0,
+          permanentAttention: 0
+        },
         unresolved: 0
       },
-      actions: []
+      actions: [],
+      projection: emptyProjection()
     });
 
     expect(response.emptyState).toBe("NO_OPEN_ACTIONS");

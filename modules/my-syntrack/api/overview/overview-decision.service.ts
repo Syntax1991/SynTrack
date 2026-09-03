@@ -5,6 +5,7 @@ import { WeeklyChecklistService } from "../weekly-checklist/weekly-checklist.ser
 import {
   buildOverviewDecisionResponse
 } from "./overview-decision.compose.js";
+import { projectOverviewDecisionSurfaces } from "./overview-decision.project.js";
 import type {
   OverviewActionCandidate,
   OverviewDecisionResponse
@@ -33,8 +34,8 @@ function professionActionLabel(
 }
 
 /**
- * Account-wide Overview Decision Engine V1.
- * Composes Weeklies / Season / Profession work actions — no duplicate truth.
+ * Account-wide Overview Decision Engine.
+ * Composes Weeklies / Season / Profession work — raw candidates + Character projection.
  */
 export class OverviewDecisionService {
   constructor(
@@ -82,8 +83,7 @@ export class OverviewDecisionService {
 
     let seasonOpen = 0;
     let seasonUnknown = 0;
-
-    for (const character of season.characters) {
+    const seasonFacts = season.characters.map((character) => {
       seasonOpen += character.goalsOpen;
       seasonUnknown += character.goalsUnknown;
 
@@ -99,9 +99,19 @@ export class OverviewDecisionService {
           localOrder: LOCAL_SEASON
         });
       }
-    }
+
+      return {
+        characterId: character.id,
+        goalsOpen: character.goalsOpen,
+        goalsUnknown: character.goalsUnknown
+      };
+    });
 
     let professionUnresolved = 0;
+    const professionCharactersWithWork = new Set<string>();
+    // Preserve Profession Overview row order inside Character groups.
+    let professionWeeklyLocalOrder = LOCAL_PROFESSION_WEEKLY;
+    let professionPermanentLocalOrder = LOCAL_PROFESSION_PERMANENT;
 
     for (const row of professions.rows) {
       if (row.weekly.state === "UNKNOWN" || row.treasures.state === "UNKNOWN") {
@@ -110,6 +120,7 @@ export class OverviewDecisionService {
 
       // Prefer weekly nextAction when both horizons apply on one profession row.
       if (row.attention.weekly && isProfessionActionable(row.nextAction)) {
+        professionCharactersWithWork.add(row.character.id);
         actions.push({
           characterId: row.character.id,
           characterName: row.character.name,
@@ -121,8 +132,9 @@ export class OverviewDecisionService {
             row.nextAction
           ),
           path: PROFESSIONS_PATH,
-          localOrder: LOCAL_PROFESSION_WEEKLY
+          localOrder: professionWeeklyLocalOrder
         });
+        professionWeeklyLocalOrder += 1;
         continue;
       }
 
@@ -141,10 +153,21 @@ export class OverviewDecisionService {
             row.nextAction
           ),
           path: PROFESSIONS_PATH,
-          localOrder: LOCAL_PROFESSION_PERMANENT
+          localOrder: professionPermanentLocalOrder
         });
+        professionPermanentLocalOrder += 1;
       }
     }
+
+    const projection = projectOverviewDecisionSurfaces({
+      gameplayCharacters: weeklies.characters.map((character) => ({
+        characterId: character.id,
+        characterName: character.name,
+        className: character.className
+      })),
+      actions,
+      seasonFacts
+    });
 
     return buildOverviewDecisionResponse({
       summaries: {
@@ -156,13 +179,14 @@ export class OverviewDecisionService {
           unknown: seasonUnknown
         },
         professions: {
-          // Canonical Profession Overview summary — not recomputed from emitted actions.
+          charactersWithWork: professionCharactersWithWork.size,
           weeklyActions: professions.summary.weeklyAttentionCount,
           permanentAttention: professions.summary.permanentAttentionCount
         },
         unresolved: seasonUnknown + professionUnresolved
       },
-      actions
+      actions,
+      projection
     });
   }
 }

@@ -1,6 +1,7 @@
 import type {
   OverviewActionCandidate,
   OverviewDecisionHorizon,
+  OverviewDecisionProjection,
   OverviewDecisionResponse,
   OverviewDecisionSummaries
 } from "./overview-decision.types.js";
@@ -70,12 +71,14 @@ export function resolveOverviewEmptyState(
 export function buildOverviewDecisionResponse(input: {
   summaries: OverviewDecisionSummaries;
   actions: OverviewActionCandidate[];
+  projection: OverviewDecisionProjection;
 }): OverviewDecisionResponse {
   const actions = sortOverviewActionCandidates(input.actions);
 
   return {
     summaries: input.summaries,
     actions,
+    projection: input.projection,
     emptyState: resolveOverviewEmptyState(
       actions,
       input.summaries.unresolved

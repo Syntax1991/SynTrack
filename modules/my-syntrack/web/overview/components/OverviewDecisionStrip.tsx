@@ -12,8 +12,8 @@ export function OverviewDecisionStrip({
       <div className="overview-decision-metric">
         <span className="overview-decision-metric-label">Weekly</span>
         <strong>
-          {summaries.weekly.charactersWithWork} character
-          {summaries.weekly.charactersWithWork === 1 ? "" : "s"} with work
+          {summaries.weekly.charactersWithWork} gameplay Character
+          {summaries.weekly.charactersWithWork === 1 ? "" : "s"}
         </strong>
       </div>
       <div className="overview-decision-metric">
@@ -21,17 +21,19 @@ export function OverviewDecisionStrip({
         <strong>
           {summaries.season.open} open · {summaries.season.unknown} unknown
         </strong>
+        {summaries.unresolved > 0 ? (
+          <span className="overview-decision-unresolved">
+            {summaries.unresolved} unresolved
+          </span>
+        ) : null}
       </div>
       <div className="overview-decision-metric">
         <span className="overview-decision-metric-label">Professions</span>
         <strong>
-          {summaries.professions.weeklyActions} weekly ·{" "}
-          {summaries.professions.permanentAttention} setup
+          {summaries.professions.charactersWithWork} Character
+          {summaries.professions.charactersWithWork === 1 ? "" : "s"} ·{" "}
+          {summaries.professions.weeklyActions} weekly
         </strong>
-      </div>
-      <div className="overview-decision-metric">
-        <span className="overview-decision-metric-label">Unresolved</span>
-        <strong>{summaries.unresolved}</strong>
       </div>
     </div>
   );
