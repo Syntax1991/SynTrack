@@ -9,7 +9,9 @@ export function AppLayout() {
         <AppNavigation />
 
         <main className="main-content">
-          <Outlet />
+          <div className="content-container">
+            <Outlet />
+          </div>
         </main>
       </div>
     </RequireRaiderSession>

@@ -2,14 +2,22 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns:
-    210px
+    224px
     minmax(0, 1fr);
+  background: var(--background);
 }
 
 .main-content {
   min-width: 0;
   grid-column: 2;
   padding: 34px 40px 60px;
+}
+
+/* Desktop-first content container: bounded and centered rather than
+   stretching edge-to-edge at 1920px+; dense pages may opt out. */
+.content-container {
+  max-width: 1360px;
+  margin: 0 auto;
 }
 
 .page-header {

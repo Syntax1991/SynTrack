@@ -3,6 +3,9 @@
   --surface: #12151d;
   --surface-elevated: #171b25;
   --surface-hover: #1d2230;
+  /* Matches the SynTrack logo asset's native background exactly, so the
+     sidebar surface and the logo image blend with no visible seam. */
+  --sidebar-background: #03060f;
   --border: #292e3a;
   --border-strong: #393f4f;
   --text: #f4f6fb;
@@ -20,5 +23,6 @@
   --radius-small: 8px;
   --radius-medium: 12px;
   --radius-large: 18px;
-  --shadow: 0 20px 50px rgb(0 0 0 / 20%);
+  /* Flat design: a hairline separation, not a soft drop shadow. */
+  --shadow: 0 1px 2px rgb(0 0 0 / 35%);
 }

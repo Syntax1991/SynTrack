@@ -148,6 +148,17 @@
   background: #a33838;
 }
 
+.button-ghost {
+  color: var(--text-secondary);
+  border-color: transparent;
+  background: transparent;
+}
+
+.button-ghost:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
 .button-compact {
   padding: 4px 10px;
   font-size: 0.85rem;
@@ -166,7 +177,7 @@
     1px solid var(--border);
   border-radius:
     var(--radius-large);
-  background: rgb(18 21 29 / 92%);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow);
 }
 
@@ -217,7 +228,7 @@
     1px solid var(--border);
   border-radius:
     var(--radius-large);
-  background: rgb(20 23 32 / 90%);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow);
 }
 
