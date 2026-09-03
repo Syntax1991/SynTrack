@@ -1,24 +1,17 @@
 import { Router } from "express";
 import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.js";
 import { OverviewController } from "./overview.controller.js";
-import { OverviewService } from "./overview.service.js";
 
-const service = new OverviewService();
-const controller =
-  new OverviewController(service);
+const controller = new OverviewController();
 
 export const overviewRouter = Router();
 
 overviewRouter.get(
   "/",
-  asyncHandler(
-    controller.getOverview
-  )
+  asyncHandler(controller.getOverview)
 );
 
 overviewRouter.get(
   "/characters/:characterId",
-  asyncHandler(
-    controller.getCharacterState
-  )
+  asyncHandler(controller.getCharacterState)
 );

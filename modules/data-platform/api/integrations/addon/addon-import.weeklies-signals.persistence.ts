@@ -2,6 +2,8 @@ import { getWeeklyPeriod } from "../../../../my-syntrack/api/shared/weekly-perio
 import { resolveTrackerPeriodKey } from "../../../../my-syntrack/api/trackers/tracker-period.js";
 import { buildTrackerValueColumns } from "../../../../my-syntrack/api/trackers/tracker-value-invariants.js";
 import type { TrackerDefinitionRow } from "../../../../my-syntrack/api/trackers/tracker-repository.types.js";
+import { metaEligibleSparkQuestIds } from "../../../../my-syntrack/api/weekly-checklist/midnight-weekly-spark-quest-catalog.js";
+import { deriveMetaQuestCompletion } from "../../../../my-syntrack/api/weekly-checklist/midnight-weekly-spark-meta.js";
 import type {
   AddonImportTransaction,
   CharacterPersistenceResult
@@ -45,6 +47,19 @@ async function upsertAddonTrackerValue(
       source: "ADDON"
     }
   });
+}
+
+function resolveMetaFlaggedCompleted(
+  weekliesSignals: AddonWeekliesSignalsSnapshot
+): boolean | null {
+  if (weekliesSignals.metaQuest.evidence.length > 0) {
+    return deriveMetaQuestCompletion(
+      weekliesSignals.metaQuest.evidence,
+      metaEligibleSparkQuestIds()
+    ).flaggedCompleted;
+  }
+
+  return weekliesSignals.metaQuest.flaggedCompleted;
 }
 
 /*
@@ -119,17 +134,16 @@ export class AddonWeekliesSignalsPersistence {
       result.weekliesSignalSnapshots += 1;
     }
 
-    if (
-      weekliesSignals.metaQuest.flaggedCompleted !== null &&
-      definitions.metaQuest
-    ) {
+    const metaFlagged = resolveMetaFlaggedCompleted(weekliesSignals);
+
+    if (metaFlagged !== null && definitions.metaQuest) {
       await upsertAddonTrackerValue(transaction, {
         definition: definitions.metaQuest,
         characterId,
         periodKey: weeklyPeriodKey,
         columns: buildTrackerValueColumns("BOOLEAN", {
           valueType: "BOOLEAN",
-          boolean: weekliesSignals.metaQuest.flaggedCompleted
+          boolean: metaFlagged
         })
       });
 

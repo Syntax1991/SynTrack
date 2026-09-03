@@ -1,316 +1,229 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import {
-  describe,
-  expect,
-  it,
-  vi
-} from "vitest";
-import type { OverviewResponse } from "../types/overview.types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { OverviewDecisionResponse } from "../types/overviewDecision.types";
 
-const mockOverview: OverviewResponse =
-  {
-    summary: {
-      period: {
-        key: "2026-08-26",
-        startsAt:
-          "2026-08-26T07:00:00.000Z",
-        endsAt:
-          "2026-09-02T07:00:00.000Z"
-      },
-      characterCount: 1,
-      readyCount: 0,
-      attentionCount: 1,
-      weeklyProgress: {
-        completed: 2,
-        total: 5
-      },
-      vault: {
-        trackedCount: 0,
-        fullyUnlockedCount: 0
-      },
-      refreshNeededCount: 0
+const useOverviewDecisions = vi.fn();
+
+vi.mock("../hooks/useOverviewDecisions", () => ({
+  useOverviewDecisions: () => useOverviewDecisions()
+}));
+
+import { OverviewPage } from "./OverviewPage";
+
+const mockOverview: OverviewDecisionResponse = {
+  summaries: {
+    weekly: { charactersWithWork: 2 },
+    season: { open: 3, unknown: 5 },
+    professions: {
+      charactersWithWork: 3,
+      weeklyActions: 4,
+      permanentAttention: 1
     },
-    attentionItems: [
+    unresolved: 5
+  },
+  actions: [
+    {
+      characterId: "c1",
+      characterName: "Synblast",
+      className: "Shaman",
+      source: "WEEKLIES",
+      horizon: "WEEKLY",
+      action: "2 more M+ runs for Vault slot 2",
+      path: "/weekly-checklist",
+      localOrder: 0
+    },
+    {
+      characterId: "c1",
+      characterName: "Synblast",
+      className: "Shaman",
+      source: "SEASON",
+      horizon: "SEASONAL",
+      action: "Defeat Azta'rec on ??",
+      path: "/season",
+      localOrder: 0
+    },
+    {
+      characterId: "c2",
+      characterName: "Synbloom",
+      className: "Druid",
+      source: "SEASON",
+      horizon: "SEASONAL",
+      action: "Complete 4pc tier set",
+      path: "/season",
+      localOrder: 0
+    },
+    {
+      characterId: "c3",
+      characterName: "Synbeam",
+      className: "Paladin",
+      source: "PROFESSIONS",
+      horizon: "WEEKLY",
+      action: "Blacksmithing: Use Treatise",
+      path: "/professions",
+      localOrder: 1
+    },
+    {
+      characterId: "c3",
+      characterName: "Synbeam",
+      className: "Paladin",
+      source: "PROFESSIONS",
+      horizon: "WEEKLY",
+      action: "Jewelcrafting: Use Treatise",
+      path: "/professions",
+      localOrder: 2
+    },
+    {
+      characterId: "c4",
+      characterName: "Synbeast",
+      className: "Hunter",
+      source: "PROFESSIONS",
+      horizon: "PERMANENT",
+      action: "Tailoring: Collect missing Knowledge Treasures",
+      path: "/professions",
+      localOrder: 0
+    }
+  ],
+  projection: {
+    gameplayPriorities: [
       {
-        id: "char-1:weekly",
-        characterId: "char-1",
-        characterName: "Synspin",
-        domain: "weekly",
-        severity: "this-week",
-        label:
-          "Weekly tasks remaining",
-        detail:
-          "3 of 5 tasks left",
-        path: "/weekly-checklist"
-      }
-    ],
-    characters: [
-      {
-        character: {
-          id: "char-1",
-          name: "Synspin",
-          realm: "Antonidas",
-          region: "eu",
-          className: "Mage",
-          level: 80
-        },
-        weekly: {
-          state: "IN_PROGRESS",
-          completed: 2,
-          total: 5,
-          source:
-            "MANUAL_CHECKLIST"
-        },
-        vault: {
-          state: "UNKNOWN",
-          unlockedSlots: 0,
-          slotsTotal: 3,
-          highestKeyLevel: null,
-          source: "MANUAL_LOG"
-        },
-        professions: {
-          state: "NOT_TRACKED",
-          issueCount: 0,
-          issues: [],
-          items: []
-        },
-        gear: {
-          state: "NOT_TRACKED",
-          readinessPercent: null,
-          trackedSlots: 0,
-          totalRelevantSlots: 16,
-          missingEnchantCount: 0,
-          emptySocketCount: 0,
-          itemLevel: null
-        },
-        resources: {
-          state: "NOT_TRACKED",
-          trackedResourceCount: 0,
-          totalRelevantResourceCount: 0,
-          attentionCount: 0,
-          items: []
-        },
-        tier: {
-          state: "NOT_TRACKED",
-          equippedPieces: 0,
-          targetPieces: 4,
-          twoPiece: false,
-          fourPiece: false,
-          rawEquippedPieces: 0
-        },
-        embellishments: {
-          state: "NOT_TRACKED",
-          equippedPieces: 0,
-          targetPieces: 2
-        },
-        professionWeekly: {
-          state: "NOT_TRACKED",
-          quest: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          treatise: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          drops: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          professions: []
-        },
-        professionKnowledgeTreasures: {
-          state: "NOT_TRACKED",
-          treasures: {
-            completeCount: 0,
-            incompleteCount: 0,
-            unknownCount: 0,
-            applicableTotal: 0
-          },
-          professions: []
-        },
-        weeklySummary: {
-          state: "NOT_TRACKED",
-          completedKnown: 0,
-          applicableKnown: 0,
-          unknownCount: 0,
-          domains: []
-        },
-        weeklyAction: null,
-        professionSetup: {
-          state: "NOT_TRACKED",
-          professions: [],
-          dataIssues: []
-        },
-        trackers: [],
-        attentionItems: [
-          {
-            id: "char-1:weekly",
-            characterId: "char-1",
-            characterName:
-              "Synspin",
-            domain: "weekly",
-            severity: "this-week",
-            label:
-              "Weekly tasks remaining",
-            detail:
-              "3 of 5 tasks left",
-            path: "/weekly-checklist"
-          }
-        ],
-        readinessState:
-          "attention",
-        nextAction: {
-          domain: "weekly",
-          label:
-            "Weekly tasks remaining",
-          detail:
-            "3 of 5 tasks left",
+        characterId: "c1",
+        characterName: "Synblast",
+        className: "Shaman",
+        next: {
+          action: "2 more M+ runs for Vault slot 2",
           path: "/weekly-checklist",
-          severity: "this-week"
+          source: "WEEKLIES"
         },
-        tags: [],
-        trackingProfile: "FULL",
-        health: {
-          characterId: "char-1",
-          character: {
-            state: "MANUAL",
-            lastSyncedAt: null
-          },
-          professions: {
-            state: "NOT_TRACKED",
-            items: []
-          },
-          gear: {
-            state: "NOT_TRACKED",
-            lastSyncedAt: null
-          },
-          resources: {
-            state: "NOT_TRACKED",
-            lastSyncedAt: null
-          },
-          professionWeekly: {
-            state: "NOT_TRACKED",
-            items: []
-          }
-        }
+        after: {
+          action: "Defeat Azta'rec on ??",
+          path: "/season",
+          source: "SEASON"
+        },
+        knownOpen: 2,
+        unknown: 1,
+        status: "2 open · 1 unknown"
+      },
+      {
+        characterId: "c2",
+        characterName: "Synbloom",
+        className: "Druid",
+        next: {
+          action: "Complete 4pc tier set",
+          path: "/season",
+          source: "SEASON"
+        },
+        after: null,
+        knownOpen: 1,
+        unknown: 0,
+        status: "1 open"
       }
     ],
-    trackerColumns: [],
-    activeScope: null,
-    accountResources: []
-  };
+    professionWork: [
+      {
+        characterId: "c3",
+        characterName: "Synbeam",
+        className: "Paladin",
+        next: {
+          action: "Blacksmithing: Use Treatise",
+          path: "/professions"
+        },
+        additionalActionCount: 1
+      }
+    ],
+    setupAttention: [
+      {
+        characterId: "c4",
+        characterName: "Synbeast",
+        className: "Hunter",
+        next: {
+          action: "Tailoring: Collect missing Knowledge Treasures",
+          path: "/professions"
+        },
+        additionalActionCount: 0
+      }
+    ]
+  },
+  emptyState: "NO_OPEN_ACTIONS"
+};
 
-vi.mock(
-  "../hooks/useOverview",
-  () => ({
-    useOverview: () => ({
+describe("OverviewPage decision cockpit", () => {
+  beforeEach(() => {
+    useOverviewDecisions.mockReturnValue({
       overview: mockOverview,
       isLoading: false,
       error: null,
-      refetch: () => {}
-    })
-  })
-);
-
-const { OverviewPage } =
-  await import("./OverviewPage");
-
-function renderPage() {
-  return render(
-    <MemoryRouter>
-      <OverviewPage />
-    </MemoryRouter>
-  );
-}
-
-describe("OverviewPage", () => {
-  it("never renders the obsolete KPI cards (Crafting Ready, Synced, Coverage)", () => {
-    renderPage();
-
-    expect(
-      screen.queryByText(
-        /Crafting Ready/i
-      )
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText(/Synced/i)
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        /Coverage/i
-      )
-    ).not.toBeInTheDocument();
+      refetch: vi.fn()
+    });
   });
 
-  it("never renders the old 'My SynTrack Workspaces' section or a Raid Tasks card", () => {
-    renderPage();
-
-    expect(
-      screen.queryByText(
-        /My SynTrack Workspaces/i
-      )
-    ).not.toBeInTheDocument();
-
-    expect(
-      screen.queryByText(
-        /Raid Tasks/i
-      )
-    ).not.toBeInTheDocument();
-  });
-
-  it("renders the compact attention strip and character matrix, with the matrix as the primary surface (no large panel above it)", () => {
-    renderPage();
-
-    expect(
-      screen.getByRole("button", {
-        name: /need attention/i
-      })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getAllByText("Synspin").length
-    ).toBeGreaterThan(0);
-
-    expect(
-      screen.getByRole("columnheader", { name: "Weeklies" })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByRole("columnheader", { name: "Prof." })
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByRole("columnheader", { name: "Vault" })
-    ).not.toBeInTheDocument();
-  });
-
-  it("never renders the old four KPI cards, replacing them with one compact summary line", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(
-      new Date("2026-08-26T23:00:00.000Z")
+  it("renders Character-level surfaces instead of a flat action queue", () => {
+    render(
+      <MemoryRouter>
+        <OverviewPage />
+      </MemoryRouter>
     );
 
-    try {
-      renderPage();
+    expect(screen.getByText("Overview")).toBeInTheDocument();
+    expect(
+      screen.getByText("What should I do next across the Warband?")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Weekly")).toBeInTheDocument();
+    expect(screen.getByText("Season")).toBeInTheDocument();
+    expect(screen.getByText("Professions")).toBeInTheDocument();
+    expect(screen.getByText("5 unresolved")).toBeInTheDocument();
+    expect(screen.queryByText("NEXT ACTIONS")).not.toBeInTheDocument();
+    expect(screen.queryByText("THIS WEEK")).not.toBeInTheDocument();
+    expect(screen.getByText("GAMEPLAY PRIORITIES")).toBeInTheDocument();
+    expect(screen.getByText("PROFESSION WORK")).toBeInTheDocument();
+    expect(screen.getByText("SETUP ATTENTION")).toBeInTheDocument();
+    expect(
+      screen.getByText("2 more M+ runs for Vault slot 2")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Defeat Azta'rec on ??")).toBeInTheDocument();
+    expect(screen.getByText("Blacksmithing: Use Treatise")).toBeInTheDocument();
+    expect(screen.getByText("+1 more")).toBeInTheDocument();
+    expect(
+      screen.getByText("Tailoring: Collect missing Knowledge Treasures")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("iLvl")).not.toBeInTheDocument();
+  });
 
-      expect(
-        screen.getByText(
-          "1 total · 1 gameplay · 0 professions · 1 attention · 0 ready · Reset in 6d 8h"
-        )
-      ).toBeInTheDocument();
-    }
-    finally {
-      vi.useRealTimers();
-    }
+  it("shows unresolved empty state without claiming completion", () => {
+    useOverviewDecisions.mockReturnValue({
+      overview: {
+        summaries: {
+          weekly: { charactersWithWork: 0 },
+          season: { open: 0, unknown: 2 },
+          professions: {
+            charactersWithWork: 0,
+            weeklyActions: 0,
+            permanentAttention: 0
+          },
+          unresolved: 2
+        },
+        actions: [],
+        projection: {
+          gameplayPriorities: [],
+          professionWork: [],
+          setupAttention: []
+        },
+        emptyState: "NO_KNOWN_ACTIONS_UNRESOLVED"
+      },
+      isLoading: false,
+      error: null,
+      refetch: vi.fn()
+    });
+
+    render(
+      <MemoryRouter>
+        <OverviewPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByText("No known actions · 2 unresolved")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("All done")).not.toBeInTheDocument();
   });
 });

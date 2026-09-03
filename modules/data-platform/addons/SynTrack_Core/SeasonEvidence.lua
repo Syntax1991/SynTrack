@@ -9,6 +9,19 @@ local CATALOG = private.SeasonEvidenceCatalog
       WARBAND   -> accountCompleted
 ]]
 
+--[[
+    Preserve successful boolean false.
+    Never use `cond and value or nil` for booleans: when value is false,
+    Lua evaluates `false or nil` → nil and drops authoritative incompleteness.
+]]
+local function booleanOrNil(value)
+    if type(value) == "boolean" then
+        return value
+    end
+
+    return nil
+end
+
 local function captureAchievement(achievementId)
     if type(GetAchievementInfo) ~= "function" then
         return nil, nil
@@ -20,14 +33,13 @@ local function captureAchievement(achievementId)
         return nil, nil
     end
 
-    local accountCompleted = result[5]
-    local earnedByCharacter = result[14]
+    -- pcall ok + GetAchievementInfo returns:
+    -- id, name, points, completed, month, day, year, description, flags,
+    -- icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic
+    local accountCompleted = booleanOrNil(result[5])
+    local earnedByCharacter = booleanOrNil(result[14])
 
-    return (
-        type(accountCompleted) == "boolean" and accountCompleted or nil
-    ), (
-        type(earnedByCharacter) == "boolean" and earnedByCharacter or nil
-    )
+    return accountCompleted, earnedByCharacter
 end
 
 local function captureQuest(questId)
@@ -80,7 +92,7 @@ end
 local succeeded, errorMessage = API.RegisterModule({
     id = "season-evidence",
     name = "Season Evidence",
-    version = "0.2.0",
+    version = "0.2.1",
     schemaVersion = 2,
     scope = "character",
     capture = captureSeasonEvidence

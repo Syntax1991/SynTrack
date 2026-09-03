@@ -5,25 +5,60 @@ local API = private.API
     Weeklies tracker signals consumed by the web Weeklies matrix:
     - current-season Mythic+ rating (2K milestone)
     - Trovehunter's Bounty weekly usage flag
-    - weekly Meta Quest completion
+    - weekly Meta / Spark quest completion (OR of catalog alternatives)
 ]]
 
 local CATALOG = private.WeekliesSignalsCatalog
 
-local function anyQuestFlagged(questIds)
-    for _, questId in ipairs(questIds) do
-        local succeeded, flagged =
-            pcall(
-                C_QuestLog.IsQuestFlaggedCompleted,
-                questId
-            )
+--[[
+    any true → complete
+    all known false → incomplete
+    no true + any unresolved → unknown (nil)
+]]
+local function resolveAnyQuestCompleted(questIds)
+    local knownFalseCount = 0
+    local firstFalseId = nil
 
-        if succeeded then
-            return flagged, questId
+    for _, questId in ipairs(questIds) do
+        local succeeded, flagged = pcall(
+            C_QuestLog.IsQuestFlaggedCompleted,
+            questId
+        )
+
+        if succeeded and type(flagged) == "boolean" then
+            if flagged then
+                return true, questId
+            end
+
+            knownFalseCount = knownFalseCount + 1
+            firstFalseId = firstFalseId or questId
         end
     end
 
-    return nil, questIds[1]
+    if knownFalseCount == #questIds and #questIds > 0 then
+        return false, firstFalseId
+    end
+
+    return nil, firstFalseId or questIds[1]
+end
+
+local function captureQuestEvidence(questIds)
+    local evidence = {}
+
+    for _, questId in ipairs(questIds) do
+        local succeeded, flagged = pcall(
+            C_QuestLog.IsQuestFlaggedCompleted,
+            questId
+        )
+
+        if succeeded and type(flagged) == "boolean" then
+            evidence[questId] = flagged
+        else
+            evidence[questId] = nil
+        end
+    end
+
+    return evidence
 end
 
 local function captureMythicPlusRating()
@@ -65,9 +100,9 @@ local function captureMythicPlusRating()
     return { captured = false }
 end
 
-local function captureQuestSignal(signalKey, questIds)
+local function captureSingleQuestSignal(signalKey, questIds)
     local flaggedCompleted, representativeQuestId =
-        anyQuestFlagged(questIds)
+        resolveAnyQuestCompleted(questIds)
 
     return {
         signalKey = signalKey,
@@ -76,15 +111,26 @@ local function captureQuestSignal(signalKey, questIds)
     }
 end
 
+local function captureMetaQuestSignal(questIds)
+    local flaggedCompleted, determiningQuestId =
+        resolveAnyQuestCompleted(questIds)
+
+    return {
+        signalKey = "meta-quest",
+        externalQuestId = determiningQuestId,
+        flaggedCompleted = flaggedCompleted,
+        evidence = captureQuestEvidence(questIds)
+    }
+end
+
 local function captureWeekliesSignals()
     return {
         mythicPlusRating = captureMythicPlusRating(),
-        troveHuntersBountyUsed = captureQuestSignal(
+        troveHuntersBountyUsed = captureSingleQuestSignal(
             "trove-hunters-bounty-used",
             CATALOG.troveHuntersBountyUsed.questIds
         ),
-        metaQuest = captureQuestSignal(
-            "meta-quest",
+        metaQuest = captureMetaQuestSignal(
             CATALOG.metaQuest.questIds
         )
     }
@@ -95,8 +141,8 @@ local function registerWeekliesSignalsModule()
         API.RegisterModule({
             id = "weeklies-signals",
             name = "Weeklies Signals",
-            version = "0.1.0",
-            schemaVersion = 1,
+            version = "0.2.0",
+            schemaVersion = 2,
             scope = "character",
             capture = captureWeekliesSignals
         })
@@ -141,6 +187,8 @@ local frame = CreateFrame("Frame")
 
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("QUEST_TURNED_IN")
+frame:RegisterEvent("QUEST_ACCEPTED")
+frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 frame:RegisterEvent("MYTHIC_PLUS_NEW_WEEKLY_RECORD")
 

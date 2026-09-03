@@ -146,7 +146,7 @@ describe("weeklies gameplay signals - META", () => {
 
     expect(signal.state).toBe("INCOMPLETE");
     expect(signal.label).toBe("open");
-    expect(signal.actionLabel).toBe("Complete Weekly Meta Quest");
+    expect(signal.actionLabel).toBe("Complete Meta Quest");
   });
 
   it("shows unknown without reliable current-period evidence", () => {

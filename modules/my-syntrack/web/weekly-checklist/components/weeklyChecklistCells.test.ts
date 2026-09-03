@@ -114,13 +114,13 @@ describe("weeklyChecklistCells boundary", () => {
             state: "INCOMPLETE",
             label: "open",
             title: "Weekly Meta Quest",
-            actionLabel: "Complete Weekly Meta Quest"
+            actionLabel: "Complete Meta Quest"
           }
         }
       })
     );
 
-    expect(action).toBe("Complete Weekly Meta Quest");
+    expect(action).toBe("Complete Meta Quest");
   });
 
   it("does not surface 2K RIO as gameplay action", () => {

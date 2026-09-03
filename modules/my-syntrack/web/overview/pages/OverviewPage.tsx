@@ -1,105 +1,61 @@
-import { useState } from "react";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
-import { TrackerManagerDrawer } from "../../trackers/components/TrackerManagerDrawer";
-import { AccountResourcesSummary } from "../components/AccountResourcesSummary";
-import { AttentionStrip } from "../components/AttentionStrip";
-import { CharacterWeeklyMatrix } from "../components/CharacterWeeklyMatrix";
-import { useOverview } from "../hooks/useOverview";
-import { formatResetCountdown } from "../utils/resetContext";
+import { OverviewDecisionStrip } from "../components/OverviewDecisionStrip";
+import { OverviewGameplayPriorities } from "../components/OverviewGameplayPriorities";
+import { OverviewProfessionWork } from "../components/OverviewProfessionWork";
+import { OverviewSetupAttention } from "../components/OverviewSetupAttention";
+import { useOverviewDecisions } from "../hooks/useOverviewDecisions";
 
-/*
- * The Character Control Matrix is the primary product surface here -
- * this page is a thin shell (header, a one-line summary/toolbar, a
- * compact attention strip) around it, not a dashboard with a table
- * underneath.
+/**
+ * Overview Decision Cockpit — Character-level priorities over raw candidates.
+ * Specialist matrices stay on Weeklies / Season / Professions.
  */
 export function OverviewPage() {
-  const {
-    overview,
-    isLoading,
-    error,
-    refetch
-  } = useOverview();
-
-  const [
-    isTrackerManagerOpen,
-    setIsTrackerManagerOpen
-  ] = useState(false);
+  const { overview, isLoading, error } = useOverviewDecisions();
 
   return (
     <>
       <PageHeader
-        description={
-          overview
-            ? formatResetCountdown(
-                overview.summary
-                  .period.endsAt,
-                new Date()
-              )
-            : "Your weekly control center across every tracked character."
-        }
+        description="What should I do next across the Warband?"
         eyebrow="MY SYNTRACK"
         title="Overview"
       />
 
-      {error && (
-        <StatusMessage type="error">
-          {error}
-        </StatusMessage>
-      )}
+      {error && <StatusMessage type="error">{error}</StatusMessage>}
 
       {isLoading || !overview ? (
         <LoadingPanel />
       ) : (
         <>
-          <AttentionStrip
-            attentionItems={
-              overview.attentionItems
-            }
-          />
+          <OverviewDecisionStrip summaries={overview.summaries} />
 
-          <AccountResourcesSummary
-            accountResources={
-              overview.accountResources
-            }
-          />
-
-          <CharacterWeeklyMatrix
-            characters={
-              overview.characters
-            }
-            onOpenTrackerManager={() =>
-              setIsTrackerManagerOpen(
-                true
-              )
-            }
-            onTrackerChanged={
-              refetch
-            }
-            resetLabel={formatResetCountdown(
-              overview.summary.period.endsAt,
-              new Date()
-            )}
-            trackerColumns={
-              overview.trackerColumns
-            }
-          />
+          {overview.projection.gameplayPriorities.length === 0 &&
+          overview.projection.professionWork.length === 0 &&
+          overview.projection.setupAttention.length === 0 ? (
+            <section className="panel overview-decision-panel">
+              <div className="empty-state">
+                {overview.emptyState === "NO_KNOWN_ACTIONS_UNRESOLVED"
+                  ? `No known actions · ${overview.summaries.unresolved} unresolved`
+                  : "No open actions"}
+              </div>
+            </section>
+          ) : (
+            <>
+              {overview.projection.gameplayPriorities.length > 0 ? (
+                <OverviewGameplayPriorities
+                  rows={overview.projection.gameplayPriorities}
+                />
+              ) : null}
+              <OverviewProfessionWork
+                rows={overview.projection.professionWork}
+              />
+              <OverviewSetupAttention
+                rows={overview.projection.setupAttention}
+              />
+            </>
+          )}
         </>
-      )}
-
-      {isTrackerManagerOpen && (
-        <TrackerManagerDrawer
-          onClose={() =>
-            setIsTrackerManagerOpen(
-              false
-            )
-          }
-          onDefinitionsChanged={
-            refetch
-          }
-        />
       )}
     </>
   );
