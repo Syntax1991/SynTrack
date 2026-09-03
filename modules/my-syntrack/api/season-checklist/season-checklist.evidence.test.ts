@@ -4,9 +4,9 @@ import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import { resolveSeasonAchievementCompletion } from "./season-achievement-evidence.js";
 import {
   deriveBooleanEvidenceGoal,
-  derivePortalsGoal,
   deriveRaidGoal,
-  deriveWarbandBooleanGoal
+  deriveWarbandBooleanGoal,
+  deriveWarbandPortalsGoal
 } from "./season-checklist.evidence.js";
 import type { SeasonGoalSignal } from "./season-checklist.types.js";
 import {
@@ -106,50 +106,86 @@ describe("season evidence derivation", () => {
     ).toBe("UNKNOWN");
   });
 
-  it("portals: exact fraction only when all 8 known", () => {
-    expect(
-      derivePortalsGoal(
-        Array.from({ length: 8 }, (_, index) =>
-          resolved(`season-portal-${62437 + index}`, null)
-        )
-      ).label
-    ).toBe("?");
+  it("warband portals: exact fraction only when all 8 are known", () => {
+    const perPortalUnknown = Array.from({ length: 8 }, () => [
+      signal("UNKNOWN", "?")
+    ]);
+    expect(deriveWarbandPortalsGoal(perPortalUnknown).label).toBe("?");
 
-    const allKnownPartial = derivePortalsGoal(
-      Array.from({ length: 8 }, (_, index) =>
-        resolved(
-          `season-portal-${62437 + index}`,
-          index < 5
-        )
-      )
-    );
+    const perPortalAllKnownPartial = Array.from({ length: 8 }, (_, index) => [
+      signal(index < 5 ? "COMPLETE" : "INCOMPLETE", index < 5 ? "✓" : "✕")
+    ]);
+    const allKnownPartial = deriveWarbandPortalsGoal(perPortalAllKnownPartial);
     expect(allKnownPartial.state).toBe("INCOMPLETE");
     expect(allKnownPartial.label).toBe("5/8");
 
-    expect(
-      derivePortalsGoal(
-        Array.from({ length: 8 }, (_, index) =>
-          resolved(`season-portal-${62437 + index}`, true)
-        )
-      ).label
-    ).toBe("✓ 8/8");
+    const perPortalAllComplete = Array.from({ length: 8 }, () => [
+      signal("COMPLETE", "✓")
+    ]);
+    expect(deriveWarbandPortalsGoal(perPortalAllComplete).label).toBe(
+      "✓ 8/8"
+    );
   });
 
-  it("portals: any UNKNOWN → UNKNOWN, never partial exact fraction", () => {
-    const partialUnknown = derivePortalsGoal(
-      Array.from({ length: 8 }, (_, index) => {
-        if (index < 3) {
-          return resolved(`season-portal-${62437 + index}`, true);
-        }
-        if (index < 5) {
-          return resolved(`season-portal-${62437 + index}`, false);
-        }
-        return resolved(`season-portal-${62437 + index}`, null);
-      })
-    );
+  it("warband portals: any unresolved portal -> UNKNOWN, never a partial exact fraction", () => {
+    const perPortal = Array.from({ length: 8 }, (_, index) => {
+      if (index < 3) {
+        return [signal("COMPLETE", "✓")];
+      }
+      if (index < 5) {
+        return [signal("INCOMPLETE", "✕")];
+      }
+      return [signal("UNKNOWN", "?")];
+    });
+
+    const partialUnknown = deriveWarbandPortalsGoal(perPortal);
 
     expect(partialUnknown.state).toBe("UNKNOWN");
     expect(partialUnknown.label).toBe("?");
+  });
+
+  it("warband portals: a legacy Character false never leaks into the Warband aggregate", () => {
+    // The old CHARACTER-scoped tracker's persisted `false` must never be
+    // read by the new Warband derivation — only signals sourced from the
+    // new accountCompleted-backed tracker key are ever passed in.
+    const legacyCharacterSignal = deriveBooleanEvidenceGoal(
+      resolved("season-portal-62437", false)
+    );
+    expect(legacyCharacterSignal.state).toBe("INCOMPLETE");
+
+    // The new Warband tracker has no persisted value yet for any Character.
+    const perPortalWithNewTrackerUnresolved = [
+      [deriveBooleanEvidenceGoal(resolved("season-warband-portal-62437-v2", null))],
+      ...Array.from({ length: 7 }, () => [signal("UNKNOWN", "?")])
+    ];
+
+    const result = deriveWarbandPortalsGoal(perPortalWithNewTrackerUnresolved);
+
+    expect(result.state).toBe("UNKNOWN");
+    expect(result.label).toBe("?");
+  });
+
+  it("valeera: completion-only accountCompleted evidence, never a fabricated level", () => {
+    expect(
+      deriveBooleanEvidenceGoal(
+        resolved("season-achievement-63435", true),
+        "valeera-80"
+      )
+    ).toMatchObject({ state: "COMPLETE", label: "✓" });
+
+    expect(
+      deriveBooleanEvidenceGoal(
+        resolved("season-achievement-63435", false),
+        "valeera-80"
+      )
+    ).toMatchObject({ state: "INCOMPLETE", label: "✕" });
+
+    expect(
+      deriveBooleanEvidenceGoal(
+        resolved("season-achievement-63435", null),
+        "valeera-80"
+      )
+    ).toMatchObject({ state: "UNKNOWN", label: "?" });
   });
 
   it("raid: conservative partial UNKNOWN and CE preference", () => {
@@ -165,7 +201,7 @@ describe("season evidence derivation", () => {
         resolved("season-achievement-63650", false),
         resolved("season-achievement-63651", false)
       )
-    ).toMatchObject({ state: "INCOMPLETE", label: "AOTC open" });
+    ).toMatchObject({ state: "INCOMPLETE", label: "✕ AOTC" });
 
     expect(
       deriveRaidGoal(
@@ -219,7 +255,7 @@ describe("season evidence derivation", () => {
       )
     ).toMatchObject({
       state: "INCOMPLETE",
-      label: "open",
+      label: "✕",
       actionLabel: "Complete Cracked Keystone"
     });
 

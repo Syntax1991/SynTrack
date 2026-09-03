@@ -35,7 +35,11 @@ describe("season evidence catalog parity", () => {
     const luaQuests = parseLuaIdMap(lua, "quests");
 
     const backendAchievements = SEASON_EVIDENCE_CATALOG.filter(
-      (entry) => entry.evidenceKind === "ACHIEVEMENT"
+      // Derived tracker keys (e.g. WARBAND portal facts) reuse an existing
+      // addon-reported achievement's raw evidence under a new backend-only
+      // key — they have no dedicated Lua catalog entry of their own by
+      // design, so they're excluded from this 1:1 parity check.
+      (entry) => entry.evidenceKind === "ACHIEVEMENT" && !entry.derivedFromTrackerKey
     ).map((entry) => ({
       key: entry.trackerKey,
       id: entry.externalId

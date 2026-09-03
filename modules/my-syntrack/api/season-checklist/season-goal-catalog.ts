@@ -76,9 +76,11 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
   {
     key: "portals",
     title: "Dungeon portals (+10 timed)",
-    category: "MYTHIC_PLUS",
-    scope: "CHARACTER",
-    // Verified achievements 62437-62444.
+    category: "WARBAND",
+    scope: "WARBAND",
+    // Verified achievements 62437-62444. Account-wide by product definition —
+    // see season-evidence-catalog.ts's WARBAND portal entries for the
+    // versioned-tracker-key safety rationale.
     resetBehavior: "SEASONAL",
     enabled: true,
     captureGap: null
@@ -169,11 +171,11 @@ export const MIDNIGHT_S2_SEASON_GOAL_CATALOG: SeasonGoalCatalogEntry[] = [
     title: "Valeera level 80",
     category: "WARBAND",
     scope: "WARBAND",
-    // No companion capture yet — do not assert PERMANENT/SEASONAL.
-    resetBehavior: "UNRESOLVED",
-    enabled: false,
-    captureGap:
-      "No companion/follower level capture; lifecycle unresolved until evidence exists"
+    // Exact companion level still uncaptured; completion-only evidence via
+    // achievement 63435 (Buddy System VIII: Valeera) is now canonical.
+    resetBehavior: "SEASONAL",
+    enabled: true,
+    captureGap: null
   }
 ];
 

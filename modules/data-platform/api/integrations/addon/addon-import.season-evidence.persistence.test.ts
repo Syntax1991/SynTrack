@@ -111,4 +111,61 @@ describe("AddonSeasonEvidencePersistence", () => {
     ]);
     expect(tracked.seasonEvidenceSnapshots).toBe(3);
   });
+
+  it("fans one raw portal report out to both the legacy Character row and the new Warband row", async () => {
+    const rows: Array<Record<string, unknown>> = [];
+    const definitions = new Map([
+      [
+        "season-portal-62437",
+        definition("legacy-portal-def", "season-portal-62437")
+      ],
+      [
+        "season-warband-portal-62437-v2",
+        definition("warband-portal-def", "season-warband-portal-62437-v2")
+      ]
+    ]);
+    const persistence = new AddonSeasonEvidencePersistence({
+      findSeasonEvidenceTrackerDefinitions: async () => definitions
+    });
+    const tracked = result();
+
+    await persistence.persist(
+      {
+        characterTrackerValue: {
+          upsert: async ({ create }: { create: Record<string, unknown> }) => {
+            rows.push(create);
+            return create;
+          }
+        }
+      } as never,
+      "char-1",
+      {
+        schemaVersion: 2,
+        capturedAt: "2026-09-03T12:00:00.000Z",
+        achievements: {
+          // Only the addon's own key is present in the raw payload — no
+          // Lua change was needed to populate the new Warband tracker.
+          ["season-portal-62437"]: {
+            trackerKey: "season-portal-62437",
+            achievementId: 62437,
+            accountCompleted: true,
+            earnedByCharacter: false
+          }
+        },
+        quests: {}
+      },
+      tracked
+    );
+
+    expect(rows).toHaveLength(2);
+    expect(
+      rows.map((row) => [row.trackerDefinitionId, row.booleanValue]).sort()
+    ).toEqual([
+      // Legacy CHARACTER row keeps earnedByCharacter semantics — untouched.
+      ["legacy-portal-def", false],
+      // New WARBAND row is populated exclusively from accountCompleted.
+      ["warband-portal-def", true]
+    ]);
+    expect(tracked.seasonEvidenceSnapshots).toBe(2);
+  });
 });

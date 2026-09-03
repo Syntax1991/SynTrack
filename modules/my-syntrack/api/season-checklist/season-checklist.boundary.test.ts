@@ -68,12 +68,12 @@ describe("season temporal boundary", () => {
             detail: "Emb",
             actionLabel: null
           },
-          portals: {
-            key: "portals",
-            title: "Portals",
+          resi: {
+            key: "resilient-keystone",
+            title: "Resilient Keystone",
             state: "UNKNOWN",
             label: "?",
-            detail: "Portals",
+            detail: "Resi",
             actionLabel: null
           },
           cracked: {
@@ -129,9 +129,9 @@ describe("season temporal boundary", () => {
       (goal) => !goal.enabled
     ).length;
 
-    expect(enabled).toHaveLength(8);
+    expect(enabled).toHaveLength(7);
     expect(disabledCount).toBeGreaterThan(0);
-    expect(enabledWarbandSeasonGoals()).toHaveLength(0);
+    expect(enabledWarbandSeasonGoals()).toHaveLength(2);
 
     // Only the live M+ goal contributes; disabled Cracked/etc. do not.
     const summary = summarizeSeasonGoals([

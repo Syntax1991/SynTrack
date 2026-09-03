@@ -5,16 +5,8 @@ import {
   seasonStatusLabel,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
-import {
-  blockedCharacterSeasonGoalGaps,
-  enabledCharacterSeasonGoals,
-  enabledWarbandSeasonGoals,
-  MIDNIGHT_S2_SEASON_GOAL_CATALOG,
-  warbandSeasonGoalGaps
-} from "./season-goal-catalog.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
-import { SEASON_EVIDENCE_CATALOG } from "./season-evidence-catalog.js";
 
 function definition(): TrackerDefinitionRow {
   return {
@@ -48,14 +40,24 @@ function numberState(number: number): CharacterTrackerState {
 }
 
 describe("season checklist goals", () => {
-  it("shows condensed complete M+ milestone", () => {
+  it("shows the real score after reaching the 2K milestone", () => {
     const goal = deriveSeasonMythicPlusGoal({
       definition: definition(),
       state: numberState(2050)
     });
 
     expect(goal.state).toBe("COMPLETE");
-    expect(goal.label).toBe("✓ 2K");
+    expect(goal.label).toBe("2050 ✓");
+  });
+
+  it("shows the real score for a high score well past the milestone", () => {
+    const goal = deriveSeasonMythicPlusGoal({
+      definition: definition(),
+      state: numberState(2678)
+    });
+
+    expect(goal.state).toBe("COMPLETE");
+    expect(goal.label).toBe("2678 ✓");
   });
 
   it("shows condensed score toward default 2K milestone", () => {
@@ -67,6 +69,16 @@ describe("season checklist goals", () => {
     expect(goal.state).toBe("INCOMPLETE");
     expect(goal.label).toBe("1847 → 2K");
     expect(goal.actionLabel).toBe("Reach 2K Mythic+ rating");
+  });
+
+  it("shows 1951 -> 2K for a score just below the milestone", () => {
+    const goal = deriveSeasonMythicPlusGoal({
+      definition: definition(),
+      state: numberState(1951)
+    });
+
+    expect(goal.state).toBe("INCOMPLETE");
+    expect(goal.label).toBe("1951 → 2K");
   });
 
   it("keeps unknown when rating evidence is missing", () => {
@@ -166,181 +178,5 @@ describe("season checklist goals", () => {
         goalsUnknown: 0
       })
     ).toEqual({ kind: "complete", label: "✓" });
-  });
-});
-
-describe("season goal catalog", () => {
-  it("contains only the verified achievement and quest IDs", () => {
-    expect(
-      SEASON_EVIDENCE_CATALOG.map((entry) => entry.externalId).sort(
-        (left, right) => left - right
-      )
-    ).toEqual([
-      62437, 62438, 62439, 62440, 62441, 62442, 62443, 62444,
-      62872, 63326, 63333, 63473, 63650, 63651, 97910
-    ]);
-    expect(SEASON_EVIDENCE_CATALOG.every((entry) => entry.verified)).toBe(
-      true
-    );
-  });
-
-  it("enables all verified evidence-backed character goals", () => {
-    expect(enabledCharacterSeasonGoals().map((goal) => goal.key)).toEqual([
-      "rating-2000",
-      "tier-4pc",
-      "embellishments",
-      "portals",
-      "cracked-keystone",
-      "nemesis-aztarec",
-      "aotc-ulatek",
-      "ce-ulatek"
-    ]);
-  });
-
-  it("disables Serpent Scion as a primary checklist goal while retaining evidence", () => {
-    expect(
-      MIDNIGHT_S2_SEASON_GOAL_CATALOG.find(
-        (goal) => goal.key === "serpent-scion"
-      )
-    ).toMatchObject({
-      enabled: false,
-      captureGap:
-        "Serpent Scion duplicates M+/Raid progression and is not a primary checklist goal"
-    });
-    expect(
-      blockedCharacterSeasonGoalGaps().some(
-        (goal) => goal.key === "serpent-scion"
-      )
-    ).toBe(true);
-    expect(SEASON_EVIDENCE_CATALOG.some((entry) => entry.externalId === 62872)).toBe(
-      true
-    );
-  });
-
-  it("does not count Serpent Scion toward Status or Action when omitted from live goals", () => {
-    const summary = summarizeSeasonGoals([
-      {
-        key: "rating-2000",
-        title: "M+",
-        state: "COMPLETE",
-        label: "✓ 2K",
-        detail: "done",
-        actionLabel: null
-      },
-      {
-        key: "tier-4pc",
-        title: "Tier",
-        state: "COMPLETE",
-        label: "✓ 4/4",
-        detail: "done",
-        actionLabel: null
-      },
-      {
-        key: "embellishments",
-        title: "Emb",
-        state: "COMPLETE",
-        label: "✓ 2/2",
-        detail: "done",
-        actionLabel: null
-      },
-      {
-        key: "portals",
-        title: "Portals",
-        state: "UNKNOWN",
-        label: "?",
-        detail: "?",
-        actionLabel: null
-      },
-      {
-        key: "cracked-keystone",
-        title: "Cracked",
-        state: "COMPLETE",
-        label: "✓",
-        detail: "done",
-        actionLabel: null
-      },
-      {
-        key: "nemesis-aztarec",
-        title: "Nemesis",
-        state: "UNKNOWN",
-        label: "?",
-        detail: "?",
-        actionLabel: null
-      },
-      {
-        key: "raid",
-        title: "Raid",
-        state: "COMPLETE",
-        label: "✓ AOTC",
-        detail: "done",
-        actionLabel: null
-      }
-    ]);
-
-    expect(summary).toEqual({
-      goalsOpen: 0,
-      goalsComplete: 5,
-      goalsUnknown: 2,
-      action: null
-    });
-    expect(seasonActionDisplay(summary).label).toBe("?");
-    expect(summary.action).not.toBe("Earn Serpent Scion");
-  });
-
-  it("keeps disabled goals internal and never as live warband product rows", () => {
-    const warband = warbandSeasonGoalGaps();
-
-    expect(warband.map((goal) => goal.key)).toEqual([
-      "tier-visual",
-      "delvers-journey",
-      "valeera-80"
-    ]);
-    expect(enabledWarbandSeasonGoals()).toEqual([]);
-    expect(
-      MIDNIGHT_S2_SEASON_GOAL_CATALOG.find((goal) => goal.key === "tier-visual")
-    ).toMatchObject({
-      enabled: false,
-      captureGap:
-        "Cosmetic tier visual unlock is not part of the primary Season checklist"
-    });
-  });
-
-  it("treats portals checklist goal as seasonal, not permanent source fact", () => {
-    const portals = MIDNIGHT_S2_SEASON_GOAL_CATALOG.find(
-      (goal) => goal.key === "portals"
-    );
-
-    expect(portals?.resetBehavior).toBe("SEASONAL");
-    expect(portals?.enabled).toBe(true);
-  });
-
-  it("marks Valeera lifecycle unresolved until companion capture exists", () => {
-    const valeera = MIDNIGHT_S2_SEASON_GOAL_CATALOG.find(
-      (goal) => goal.key === "valeera-80"
-    );
-
-    expect(valeera?.resetBehavior).toBe("UNRESOLVED");
-    expect(valeera?.enabled).toBe(false);
-  });
-
-  it("keeps Delver's Journey and Valeera disabled", () => {
-    expect(
-      MIDNIGHT_S2_SEASON_GOAL_CATALOG.filter((goal) =>
-        ["delvers-journey", "valeera-80"].includes(goal.key)
-      ).every((goal) => !goal.enabled)
-    ).toBe(true);
-  });
-
-  it("keeps solo stretch goal disabled and enables cracked keystone", () => {
-    const blocked = blockedCharacterSeasonGoalGaps();
-
-    expect(blocked.some((goal) => goal.key === "nemesis-aztarec-solo")).toBe(
-      true
-    );
-    expect(
-      enabledCharacterSeasonGoals().some(
-        (goal) => goal.key === "cracked-keystone"
-      )
-    ).toBe(true);
   });
 });

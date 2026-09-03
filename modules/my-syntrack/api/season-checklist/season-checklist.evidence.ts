@@ -96,69 +96,6 @@ export function deriveBooleanEvidenceGoal(
       );
 }
 
-export type PortalEvidenceCounts = {
-  knownCompletedCount: number;
-  knownEvidenceCount: number;
-  total: number;
-};
-
-export function countPortalEvidence(
-  resolved: Array<ResolvedTrackerDefinition | null>
-): PortalEvidenceCounts {
-  const total = resolved.length || 8;
-  const knownCompletedCount = resolved.filter(
-    (entry) => booleanValue(entry) === true
-  ).length;
-  const knownEvidenceCount = resolved.filter(
-    (entry) => booleanValue(entry) !== null
-  ).length;
-
-  return { knownCompletedCount, knownEvidenceCount, total };
-}
-
-/**
- * Exact portal fractions only when every expected evidence row is known.
- * Any UNKNOWN evidence → overall UNKNOWN ("?"). Never show partial x/8.
- */
-export function derivePortalsGoal(
-  resolved: Array<ResolvedTrackerDefinition | null>
-): SeasonGoalSignal {
-  const presentation = seasonGoalPresentation("portals");
-  const { knownCompletedCount, knownEvidenceCount, total } =
-    countPortalEvidence(resolved);
-
-  if (knownEvidenceCount < total) {
-    return goalSignal(
-      "portals",
-      presentation.title,
-      "UNKNOWN",
-      "?",
-      presentation.detail,
-      null
-    );
-  }
-
-  if (knownCompletedCount === total) {
-    return goalSignal(
-      "portals",
-      presentation.title,
-      "COMPLETE",
-      `✓ ${total}/${total}`,
-      presentation.detail,
-      null
-    );
-  }
-
-  return goalSignal(
-    "portals",
-    presentation.title,
-    "INCOMPLETE",
-    `${knownCompletedCount}/${total}`,
-    presentation.detail,
-    presentation.incompleteAction
-  );
-}
-
 /**
  * CE is a stronger optional complete signal.
  * AOTC unknown + CE false does not prove AOTC open → UNKNOWN.
@@ -184,7 +121,7 @@ export function deriveRaidGoal(
       "raid",
       "Raid",
       "INCOMPLETE",
-      "AOTC open",
+      "✕ AOTC",
       detail,
       "Earn AOTC: Ula'tek"
     );
@@ -244,6 +181,61 @@ export function deriveWarbandBooleanGoal(
     presentation.title,
     "UNKNOWN",
     "?",
+    presentation.detail,
+    null
+  );
+}
+
+/**
+ * Warband portal aggregate: one call to deriveWarbandBooleanGoal per
+ * portal (aggregating that single achievement across every Character's
+ * accountCompleted-sourced signal), then combined into a fraction — mirrors
+ * derivePortalsGoal's counting rules but over pre-aggregated Warband states
+ * instead of one Character's raw resolved trackers. Any unresolved portal →
+ * overall UNKNOWN; never a partial exact fraction.
+ */
+export function deriveWarbandPortalsGoal(
+  perPortalCharacterSignals: SeasonGoalSignal[][]
+): SeasonGoalSignal {
+  const presentation = seasonGoalPresentation("portals");
+  const total = perPortalCharacterSignals.length || 8;
+  const aggregated = perPortalCharacterSignals.map((signals) =>
+    deriveWarbandBooleanGoal(signals, "portals")
+  );
+  const knownCompletedCount = aggregated.filter(
+    (signal) => signal.state === "COMPLETE"
+  ).length;
+  const knownEvidenceCount = aggregated.filter(
+    (signal) => signal.state !== "UNKNOWN"
+  ).length;
+
+  if (knownEvidenceCount < total) {
+    return goalSignal(
+      "portals",
+      presentation.title,
+      "UNKNOWN",
+      "?",
+      presentation.detail,
+      null
+    );
+  }
+
+  if (knownCompletedCount === total) {
+    return goalSignal(
+      "portals",
+      presentation.title,
+      "COMPLETE",
+      `✓ ${total}/${total}`,
+      presentation.detail,
+      null
+    );
+  }
+
+  return goalSignal(
+    "portals",
+    presentation.title,
+    "INCOMPLETE",
+    `${knownCompletedCount}/${total}`,
     presentation.detail,
     null
   );

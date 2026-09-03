@@ -52,7 +52,13 @@ export function SeasonChecklistMatrix({
               <th className="season-col-mplus"
                 title="Current-season Mythic+ rating toward Keystone Master (2,000)"
               >
-                M+
+                Score
+              </th>
+              <th
+                className="season-col-resi"
+                title="Highest current-season Resilient Keystone floor unlocked (informational — does not affect Status)"
+              >
+                Resi
               </th>
               <th
                 className="season-col-tier"
@@ -66,7 +72,6 @@ export function SeasonChecklistMatrix({
               >
                 Emb.
               </th>
-              <th className="season-col-portals">Portals</th>
               <th className="season-col-cracked">Cracked</th>
               <th className="season-col-nemesis">Nemesis</th>
               <th className="season-col-raid">Raid</th>
@@ -102,6 +107,9 @@ export function SeasonChecklistMatrix({
                   <td className="season-col-mplus">
                     <StatusToken token={seasonToken(character.mythicPlus)} />
                   </td>
+                  <td className="season-col-resi">
+                    <StatusToken token={seasonToken(character.resi)} />
+                  </td>
                   <td className="season-col-tier">
                     <StatusToken token={seasonToken(character.tier)} />
                   </td>
@@ -109,9 +117,6 @@ export function SeasonChecklistMatrix({
                     <StatusToken
                       token={seasonToken(character.embellishments)}
                     />
-                  </td>
-                  <td className="season-col-portals">
-                    <StatusToken token={seasonToken(character.portals)} />
                   </td>
                   <td className="season-col-cracked">
                     <StatusToken token={seasonToken(character.cracked)} />

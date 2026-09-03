@@ -14,12 +14,32 @@ type ResolvedTracker = {
   state: CharacterTrackerState | null;
 };
 
+/** Raw recorded rating, independent of deriveTwoKRioSignal's label (which
+ * collapses to "✓" on complete and discards the real number). */
+function ratingValue(resolved: ResolvedTracker | null): number | null {
+  const value = resolved?.state?.value;
+
+  if (
+    !resolved ||
+    !resolved.state ||
+    resolved.state.state === "UNKNOWN" ||
+    !value ||
+    value.valueType !== "NUMBER"
+  ) {
+    return null;
+  }
+
+  return value.number;
+}
+
 /*
- * Condensed M+ Season cell:
- *   ✓ 2K
+ * Condensed Season SCORE cell:
+ *   2678 ✓
  *   1847 → 2K
  *   ?
- * Stretch targets (2.5K/3K/…) stay out of V1 until purposes exist.
+ * The real score stays visible after completion — never collapses to a
+ * generic "✓ 2K". Stretch targets (2.5K/3K/…) stay out of V1 until purposes
+ * exist.
  */
 export function deriveSeasonMythicPlusGoal(
   resolved: ResolvedTracker | null,
@@ -40,11 +60,12 @@ export function deriveSeasonMythicPlusGoal(
   }
 
   if (signal.state === "COMPLETE") {
+    const score = ratingValue(resolved);
     return {
       key: "rating-2000",
       title: "Mythic+ rating",
       state: "COMPLETE",
-      label: `✓ ${MILESTONE_LABEL}`,
+      label: score !== null ? `${score} ✓` : `✓ ${MILESTONE_LABEL}`,
       detail: title,
       actionLabel: null
     };
