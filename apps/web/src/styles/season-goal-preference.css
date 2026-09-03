@@ -1,0 +1,93 @@
+/*
+ * Manage Goals drawer — configurable Season goal preferences.
+ */
+.manage-goals-section {
+  margin: 0 16px 20px;
+}
+
+.manage-goals-section > .eyebrow {
+  margin: 0 0 10px;
+}
+
+.manage-goals-character-select {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.season-goal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.season-goal-row:last-child {
+  border-bottom: none;
+}
+
+.season-goal-row-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.season-goal-reset {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.season-goal-row-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.season-goal-enabled {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.season-goal-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.season-goal-target-input {
+  width: 5.5rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.chip {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.chip-active {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}

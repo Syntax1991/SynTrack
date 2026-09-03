@@ -1,7 +1,10 @@
 import { resolveTrackerPeriodKey } from "../../../../my-syntrack/api/trackers/tracker-period.js";
 import { buildTrackerValueColumns } from "../../../../my-syntrack/api/trackers/tracker-value-invariants.js";
 import type { TrackerResetBehavior } from "../../../../my-syntrack/api/trackers/tracker.types.js";
-import { SEASON_EVIDENCE_CATALOG } from "../../../../my-syntrack/api/season-checklist/season-evidence-catalog.js";
+import {
+  SEASON_EVIDENCE_CATALOG,
+  type SeasonEvidenceCatalogEntry
+} from "../../../../my-syntrack/api/season-checklist/season-evidence-catalog.js";
 import { resolveSeasonAchievementCompletion } from "../../../../my-syntrack/api/season-checklist/season-achievement-evidence.js";
 import type {
   AddonImportTransaction,
@@ -49,20 +52,42 @@ export class AddonSeasonEvidencePersistence {
     const catalogByKey = new Map(
       SEASON_EVIDENCE_CATALOG.map((entry) => [entry.trackerKey, entry])
     );
+    // Tracker keys that reinterpret ANOTHER tracker's raw addon evidence
+    // under a different scope (see SeasonEvidenceCatalogEntry.derivedFromTrackerKey).
+    // Indexed by the origin key so one raw report can fan out to every
+    // catalog entry derived from it, alongside its own primary write.
+    const derivedByOriginKey = new Map<string, SeasonEvidenceCatalogEntry[]>();
+    for (const entry of SEASON_EVIDENCE_CATALOG) {
+      if (!entry.derivedFromTrackerKey) {
+        continue;
+      }
+      const siblings = derivedByOriginKey.get(entry.derivedFromTrackerKey) ?? [];
+      siblings.push(entry);
+      derivedByOriginKey.set(entry.derivedFromTrackerKey, siblings);
+    }
 
     const captured: Array<{ trackerKey: string; completed: boolean | null }> = [
-      ...Object.values(snapshot.achievements).map((evidence) => {
-        const catalog = catalogByKey.get(evidence.trackerKey);
-        return {
-          trackerKey: evidence.trackerKey,
-          completed: catalog
-            ? resolveSeasonAchievementCompletion(
-                catalog.scope,
-                evidence.accountCompleted,
-                evidence.earnedByCharacter
-              )
-            : null
-        };
+      ...Object.values(snapshot.achievements).flatMap((evidence) => {
+        const primaryCatalog = catalogByKey.get(evidence.trackerKey);
+        const derivedCatalogs =
+          derivedByOriginKey.get(evidence.trackerKey) ?? [];
+        const catalogsToWrite = [
+          ...(primaryCatalog ? [primaryCatalog] : []),
+          ...derivedCatalogs
+        ];
+
+        if (catalogsToWrite.length === 0) {
+          return [{ trackerKey: evidence.trackerKey, completed: null }];
+        }
+
+        return catalogsToWrite.map((catalog) => ({
+          trackerKey: catalog.trackerKey,
+          completed: resolveSeasonAchievementCompletion(
+            catalog.scope,
+            evidence.accountCompleted,
+            evidence.earnedByCharacter
+          )
+        }));
       }),
       ...Object.values(snapshot.quests).map((evidence) => ({
         trackerKey: evidence.trackerKey,

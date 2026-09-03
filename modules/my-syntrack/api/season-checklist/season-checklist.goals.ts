@@ -1,50 +1,83 @@
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import type { TrackerDefinitionRow } from "../trackers/tracker-repository.types.js";
-import { deriveTwoKRioSignal } from "../weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import type {
   SeasonGoalSignal,
   SeasonChecklistCharacter
 } from "./season-checklist.types.js";
 
 const DEFAULT_MILESTONE = 2000;
-const MILESTONE_LABEL = "2K";
 
 type ResolvedTracker = {
   definition: TrackerDefinitionRow;
   state: CharacterTrackerState | null;
 };
 
+/** Raw recorded rating — the actual score always stays visible, never
+ * collapsed to a generic "✓ 2K"-style placeholder. */
+function ratingValue(resolved: ResolvedTracker | null): number | null {
+  const value = resolved?.state?.value;
+
+  if (
+    !resolved ||
+    !resolved.state ||
+    resolved.state.state === "UNKNOWN" ||
+    !value ||
+    value.valueType !== "NUMBER"
+  ) {
+    return null;
+  }
+
+  return value.number;
+}
+
+/** Compact target label: 2000 -> "2K", 2500 -> "2.5K", 2750 -> "2.75K". */
+function formatCompactTarget(target: number): string {
+  if (target < 1000) {
+    return String(target);
+  }
+
+  const inThousands = Math.round((target / 1000) * 100) / 100;
+  const formatted =
+    inThousands % 1 === 0
+      ? String(inThousands)
+      : inThousands.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+
+  return `${formatted}K`;
+}
+
 /*
- * Condensed M+ Season cell:
- *   ✓ 2K
- *   1847 → 2K
+ * Condensed Season SCORE cell, target-aware (configurable via Manage Goals):
+ *   2678 ✓        (target reached)
+ *   1847 → 2K     (target 2000)
+ *   1847 → 2.5K   (target 2500)
  *   ?
- * Stretch targets (2.5K/3K/…) stay out of V1 until purposes exist.
  */
 export function deriveSeasonMythicPlusGoal(
   resolved: ResolvedTracker | null,
   milestone = DEFAULT_MILESTONE
 ): SeasonGoalSignal {
-  const signal = deriveTwoKRioSignal(resolved);
-  const title = `Current-season Mythic+ rating / ${milestone} milestone`;
+  const title = `Current-season Mythic+ rating / ${formatCompactTarget(milestone)} milestone`;
+  const score = ratingValue(resolved);
 
-  if (signal.state === "UNKNOWN" || signal.state === "NOT_APPLICABLE") {
+  if (score === null) {
     return {
       key: "rating-2000",
       title: "Mythic+ rating",
-      state: signal.state,
-      label: signal.label,
+      state: "UNKNOWN",
+      label: "?",
       detail: title,
       actionLabel: null
     };
   }
 
-  if (signal.state === "COMPLETE") {
+  const milestoneLabel = formatCompactTarget(milestone);
+
+  if (score >= milestone) {
     return {
       key: "rating-2000",
       title: "Mythic+ rating",
       state: "COMPLETE",
-      label: `✓ ${MILESTONE_LABEL}`,
+      label: `${score} ✓`,
       detail: title,
       actionLabel: null
     };
@@ -54,9 +87,28 @@ export function deriveSeasonMythicPlusGoal(
     key: "rating-2000",
     title: "Mythic+ rating",
     state: "INCOMPLETE",
-    label: `${signal.label} → ${MILESTONE_LABEL}`,
+    label: `${score} → ${milestoneLabel}`,
     detail: title,
-    actionLabel: `Reach ${MILESTONE_LABEL} Mythic+ rating`
+    actionLabel: `Reach ${milestoneLabel} Mythic+ rating`
+  };
+}
+
+/** Overrides any goal signal to NOT_APPLICABLE ("—") when the user has
+ * disabled it via Manage Goals — summarizeSeasonGoals already skips
+ * NOT_APPLICABLE, so a disabled goal never contributes to Status/Action. */
+export function applyGoalEnabledGate(
+  signal: SeasonGoalSignal,
+  enabled: boolean
+): SeasonGoalSignal {
+  if (enabled) {
+    return signal;
+  }
+
+  return {
+    ...signal,
+    state: "NOT_APPLICABLE",
+    label: "—",
+    actionLabel: null
   };
 }
 

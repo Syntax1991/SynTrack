@@ -10,45 +10,51 @@ export type SeasonGoalPresentation = {
 
 export const SEASON_GOAL_PRESENTATION: Record<string, SeasonGoalPresentation> = {
   portals: {
-    title: "Dungeon portals",
+    title: "Dungeon Portals",
     detail: "Timed +10 dungeon portals for Midnight Season 2",
-    incompleteLabel: "open",
+    incompleteLabel: "✕",
     incompleteAction: "Earn remaining dungeon portals"
+  },
+  "valeera-80": {
+    title: "Valeera 80",
+    detail: "Reach level 80",
+    incompleteLabel: "✕",
+    incompleteAction: "Reach level 80"
   },
   "serpent-scion": {
     title: "Serpent Scion",
     detail: "Midnight Season 2: Serpent Scion",
-    incompleteLabel: "open",
+    incompleteLabel: "✕",
     incompleteAction: "Earn Serpent Scion"
   },
   "cracked-keystone": {
     title: "Cracked Keystone",
     detail: "Complete the Season 2 Cracked Keystone quest",
-    incompleteLabel: "open",
+    incompleteLabel: "✕",
     incompleteAction: "Complete Cracked Keystone"
   },
   "nemesis-aztarec": {
     title: "Azta'rec (Nemesis)",
     detail: "Defeat Azta'rec on ?? during Midnight Season 2",
-    incompleteLabel: "open",
+    incompleteLabel: "✕",
     incompleteAction: "Defeat Azta'rec on ??"
   },
   "aotc-ulatek": {
     title: "AOTC: Ula'tek",
     detail: "Ahead of the Curve: Ula'tek",
-    incompleteLabel: "AOTC open",
+    incompleteLabel: "✕ AOTC",
     incompleteAction: "Earn AOTC: Ula'tek"
   },
   "ce-ulatek": {
     title: "Cutting Edge: Ula'tek",
     detail: "Cutting Edge: Ula'tek",
-    incompleteLabel: "open",
+    incompleteLabel: "✕",
     incompleteAction: "Earn Cutting Edge: Ula'tek"
   },
   "tier-visual": {
     title: "Sssensational!",
     detail: "Enhanced Season 2 tier visuals",
-    incompleteLabel: "open",
+    incompleteLabel: "✕",
     incompleteAction: "Earn Sssensational!"
   }
 };
@@ -58,7 +64,7 @@ export function seasonGoalPresentation(goalKey: string): SeasonGoalPresentation 
     SEASON_GOAL_PRESENTATION[goalKey] ?? {
       title: "Season goal",
       detail: "Season goal",
-      incompleteLabel: "open",
+      incompleteLabel: "✕",
       incompleteAction: "Complete season goal"
     }
   );

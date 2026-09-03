@@ -20,7 +20,7 @@ export function SeasonWarbandGoalsPanel({
 
   return (
     <section className="panel">
-      <p className="eyebrow">WARBAND SEASON GOALS</p>
+      <p className="eyebrow">WARBAND SEASON PROGRESS</p>
       <h2>Warband seasonal progress</h2>
       <p className="matrix-summary">
         Warband goals are listed separately so they are never marked incomplete

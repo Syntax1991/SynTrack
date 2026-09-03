@@ -39,13 +39,13 @@ function buildCharacter(
       detail: "Emb",
       actionLabel: null
     },
-    portals: {
-      key: "portals",
-      title: "Portals",
+    resi: {
+      key: "resilient-keystone",
+      title: "Resilient Keystone",
       state: "INCOMPLETE",
-      label: "5/8",
-      detail: "Portals",
-      actionLabel: "Earn remaining dungeon portals"
+      label: "5/8 → 12",
+      detail: "Resi",
+      actionLabel: null
     },
     cracked: {
       key: "cracked-keystone",
@@ -59,7 +59,7 @@ function buildCharacter(
       key: "nemesis-aztarec",
       title: "Azta'rec (Nemesis)",
       state: "INCOMPLETE",
-      label: "open",
+      label: "✕",
       detail: "Defeat Azta'rec on ??",
       actionLabel: "Defeat Azta'rec on ??"
     },
@@ -67,7 +67,7 @@ function buildCharacter(
       key: "raid",
       title: "Raid",
       state: "INCOMPLETE",
-      label: "AOTC open",
+      label: "✕ AOTC",
       detail: "Raid",
       actionLabel: "Earn AOTC: Ula'tek"
     },
@@ -87,10 +87,11 @@ describe("SeasonChecklistMatrix", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("M+")).toBeInTheDocument();
+    expect(screen.getByText("Score")).toBeInTheDocument();
+    expect(screen.getByText("Resi")).toBeInTheDocument();
     expect(screen.getByText("Tier")).toBeInTheDocument();
     expect(screen.getByText("Emb.")).toBeInTheDocument();
-    expect(screen.getByText("Portals")).toBeInTheDocument();
+    expect(screen.queryByText("Portals")).not.toBeInTheDocument();
     expect(screen.queryByText("Catalyst")).not.toBeInTheDocument();
     expect(screen.getByText("Cracked")).toBeInTheDocument();
     expect(screen.getByText("Nemesis")).toBeInTheDocument();
@@ -104,6 +105,56 @@ describe("SeasonChecklistMatrix", () => {
     expect(container.querySelector(".season-col-status")).not.toBeNull();
     expect(screen.queryByText("Prof.")).not.toBeInTheDocument();
     expect(screen.queryByText("Capture Pending")).not.toBeInTheDocument();
+
+    // Known-incomplete goal cells render the compact ✕ glyph, never "open" text.
+    expect(
+      container.querySelector("td.season-col-nemesis")
+    ).toHaveTextContent("✕");
+    expect(
+      container.querySelector("td.season-col-nemesis")
+    ).not.toHaveTextContent("open");
+    expect(container.querySelector("td.season-col-raid")).toHaveTextContent(
+      "✕ AOTC"
+    );
+    expect(
+      container.querySelector("td.season-col-raid")
+    ).not.toHaveTextContent("open");
+    // STATUS stays textual — aggregate counts are not goal cells.
+    expect(container.querySelector("td.season-col-status")).toHaveTextContent(
+      "1 open"
+    );
+    // RESI is informational — rendered, but never folded into STATUS.
+    expect(container.querySelector("td.season-col-resi")).toHaveTextContent(
+      "5/8 → 12"
+    );
+  });
+
+  it("renders ✕ for a known-incomplete Cracked cell, never textual open", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <SeasonChecklistMatrix
+          characters={[
+            buildCharacter({
+              cracked: {
+                key: "cracked-keystone",
+                title: "Cracked Keystone",
+                state: "INCOMPLETE",
+                label: "✕",
+                detail: "Complete the Season 2 Cracked Keystone quest",
+                actionLabel: "Complete Cracked Keystone"
+              }
+            })
+          ]}
+        />
+      </MemoryRouter>
+    );
+
+    expect(
+      container.querySelector("td.season-col-cracked")
+    ).toHaveTextContent("✕");
+    expect(
+      container.querySelector("td.season-col-cracked")
+    ).not.toHaveTextContent("open");
   });
 
   it("shows unknown status and ? action when only unresolved goals remain", () => {
@@ -136,12 +187,12 @@ describe("SeasonChecklistMatrix", () => {
                 detail: "Emb",
                 actionLabel: null
               },
-              portals: {
-                key: "portals",
-                title: "Portals",
+              resi: {
+                key: "resilient-keystone",
+                title: "Resilient Keystone",
                 state: "UNKNOWN",
                 label: "?",
-                detail: "Portals",
+                detail: "Resi",
                 actionLabel: null
               },
               cracked: {

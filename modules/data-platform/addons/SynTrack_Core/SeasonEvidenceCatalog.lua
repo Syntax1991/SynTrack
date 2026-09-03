@@ -15,7 +15,8 @@ private.SeasonEvidenceCatalog = {
         ["season-achievement-63333"] = 63333,
         ["season-achievement-63650"] = 63650,
         ["season-achievement-63651"] = 63651,
-        ["season-achievement-63473"] = 63473
+        ["season-achievement-63473"] = 63473,
+        ["season-achievement-63435"] = 63435
     },
     quests = {
         -- Midnight Season 2 Cracked Keystone (do not reuse legacy 92600 key)
