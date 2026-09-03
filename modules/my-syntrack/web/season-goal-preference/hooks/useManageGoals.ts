@@ -40,16 +40,35 @@ export function useManageGoals(active: boolean) {
 
   const save = useCallback(
     async (input: SeasonGoalPreferenceInput) => {
-      await saveSeasonGoalPreference(input);
-      await reload();
+      try {
+        await saveSeasonGoalPreference(input);
+        await reload();
+      } catch (saveError) {
+        // Never leave a checked-but-unsaved control — view stays at its
+        // last successful fetch, so the control re-renders back to the
+        // real persisted state, with the error surfaced instead of silent.
+        setError(
+          saveError instanceof Error
+            ? saveError.message
+            : "Season goal preference could not be saved."
+        );
+      }
     },
     [reload]
   );
 
   const reset = useCallback(
     async (goalKey: string, characterId: string | null) => {
-      await resetSeasonGoalPreference(goalKey, characterId);
-      await reload();
+      try {
+        await resetSeasonGoalPreference(goalKey, characterId);
+        await reload();
+      } catch (resetError) {
+        setError(
+          resetError instanceof Error
+            ? resetError.message
+            : "Season goal preference could not be reset."
+        );
+      }
     },
     [reload]
   );

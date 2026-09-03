@@ -7,6 +7,10 @@ function fakeRepository(seed: SeasonGoalPreferenceRow[] = []) {
   const rows = [...seed];
   return {
     findAll: async () => rows,
+    findOne: async (goalKey: string, characterId: string) =>
+      rows.find(
+        (row) => row.goalKey === goalKey && row.characterId === characterId
+      ) ?? null,
     upsert: async (
       goalKey: string,
       characterId: string,

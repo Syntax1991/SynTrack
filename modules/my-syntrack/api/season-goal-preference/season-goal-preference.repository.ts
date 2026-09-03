@@ -14,6 +14,32 @@ export class SeasonGoalPreferenceRepository {
     }));
   }
 
+  async findOne(
+    goalKey: string,
+    characterId: string
+  ): Promise<SeasonGoalPreferenceRow | null> {
+    const row = await prisma.seasonGoalPreference.findUnique({
+      where: {
+        goalKey_characterId: {
+          goalKey,
+          characterId
+        }
+      }
+    });
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      goalKey: row.goalKey,
+      characterId: row.characterId,
+      enabled: row.enabled,
+      numericTarget: row.numericTarget,
+      enumTarget: row.enumTarget
+    };
+  }
+
   async upsert(
     goalKey: string,
     characterId: string,

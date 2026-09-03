@@ -41,7 +41,10 @@ function effectiveValue(
   };
 }
 
-function validateInput(input: SeasonGoalPreferenceInput): SeasonGoalDefinition {
+/** Unknown goal / scope-mismatch checks only — target value checks happen
+ * separately, AFTER default-on-enable normalization has had a chance to
+ * fill in a missing numeric target. */
+function validateShape(input: SeasonGoalPreferenceInput): SeasonGoalDefinition {
   const definition = findSeasonGoalDefinition(input.goalKey);
 
   if (!definition) {
@@ -62,6 +65,16 @@ function validateInput(input: SeasonGoalPreferenceInput): SeasonGoalDefinition {
     );
   }
 
+  return definition;
+}
+
+/** Explicit values only — an explicitly out-of-range target (e.g. 11) is
+ * always rejected here. Only a MISSING target on enable gets defaulted,
+ * by applyDefaultTargetOnEnable, before this runs. */
+function validateTarget(
+  input: SeasonGoalPreferenceInput,
+  definition: SeasonGoalDefinition
+): void {
   if (input.enabled && definition.targetType === "NUMBER") {
     if (
       input.numericTarget === null ||
@@ -87,8 +100,6 @@ function validateInput(input: SeasonGoalPreferenceInput): SeasonGoalDefinition {
       );
     }
   }
-
-  return definition;
 }
 
 export class SeasonGoalPreferenceService {
@@ -179,16 +190,25 @@ export class SeasonGoalPreferenceService {
   async savePreference(
     input: SeasonGoalPreferenceInput
   ): Promise<SeasonGoalPreferenceValue> {
-    const definition = validateInput(input);
+    const definition = validateShape(input);
     const characterId =
       definition.scope === "WARBAND"
         ? SEASON_GOAL_PREFERENCE_WARBAND_SCOPE
         : (input.characterId as string);
 
-    const row = await this.repository.upsert(input.goalKey, characterId, {
-      enabled: input.enabled,
-      numericTarget: definition.targetType === "NUMBER" ? input.numericTarget : null,
-      enumTarget: definition.targetType === "ENUM" ? input.enumTarget : null
+    const normalized = await this.applyDefaultTargetOnEnable(
+      input,
+      definition,
+      characterId
+    );
+    validateTarget(normalized, definition);
+
+    const row = await this.repository.upsert(normalized.goalKey, characterId, {
+      enabled: normalized.enabled,
+      numericTarget:
+        definition.targetType === "NUMBER" ? normalized.numericTarget : null,
+      enumTarget:
+        definition.targetType === "ENUM" ? normalized.enumTarget : null
     });
 
     return {
@@ -196,6 +216,38 @@ export class SeasonGoalPreferenceService {
       numericTarget: row.numericTarget,
       enumTarget: row.enumTarget
     };
+  }
+
+  /**
+   * Centralized default-on-enable rule (applies to any current or future
+   * NUMBER-type goal, not just Resi): enabling a goal should never require
+   * the caller to already know a valid target. Only a MISSING target is
+   * defaulted — an explicit invalid value (e.g. 11) is still rejected by
+   * validateTarget. An existing valid target (even while the goal was
+   * disabled) is always preserved over the catalog fallback.
+   */
+  private async applyDefaultTargetOnEnable(
+    input: SeasonGoalPreferenceInput,
+    definition: SeasonGoalDefinition,
+    characterId: string
+  ): Promise<SeasonGoalPreferenceInput> {
+    if (
+      !input.enabled ||
+      definition.targetType !== "NUMBER" ||
+      input.numericTarget !== null
+    ) {
+      return input;
+    }
+
+    const min = definition.minNumericTarget ?? 1;
+    const existing = await this.repository.findOne(input.goalKey, characterId);
+
+    if (existing?.numericTarget !== null && existing?.numericTarget !== undefined && existing.numericTarget >= min) {
+      return { ...input, numericTarget: existing.numericTarget };
+    }
+
+    const fallbackTarget = definition.numericPresets?.[0] ?? min;
+    return { ...input, numericTarget: fallbackTarget };
   }
 
   async resetPreference(
