@@ -5,12 +5,17 @@ import {
 } from "./addon-import.lua-utils.js";
 import type { LuaValue } from "./addon-import.types.js";
 import type {
+  AddonWeekliesMetaQuestEvidence,
+  AddonWeekliesMetaQuestSignal,
   AddonWeekliesMythicPlusRatingCapture,
   AddonWeekliesQuestSignal,
   AddonWeekliesSignalsSnapshot
 } from "./addon-import.weeklies-signals.types.js";
 
-export const SUPPORTED_WEEKLIES_SIGNALS_SCHEMA_VERSION = 1;
+/** schemaVersion 1: aggregate only. schemaVersion 2: + per-quest evidence. */
+export const SUPPORTED_WEEKLIES_SIGNALS_SCHEMA_VERSIONS = new Set([
+  1, 2
+]);
 
 function asNullableBoolean(
   value: LuaValue | undefined
@@ -60,6 +65,43 @@ function normalizeQuestSignal(
   };
 }
 
+function normalizeMetaEvidence(
+  value: LuaValue | undefined
+): AddonWeekliesMetaQuestEvidence[] {
+  const table = asTable(value);
+
+  if (!table) {
+    return [];
+  }
+
+  return Object.entries(table).flatMap(([key, raw]) => {
+    const questId = Number(key);
+
+    if (!Number.isFinite(questId)) {
+      return [];
+    }
+
+    return [
+      {
+        questId,
+        flaggedCompleted: asNullableBoolean(raw as LuaValue)
+      }
+    ];
+  });
+}
+
+function normalizeMetaQuestSignal(
+  value: LuaValue | undefined
+): AddonWeekliesMetaQuestSignal {
+  const base = normalizeQuestSignal(value, "meta-quest");
+  const row = asTable(value);
+
+  return {
+    ...base,
+    evidence: normalizeMetaEvidence(row?.evidence)
+  };
+}
+
 export function normalizeWeekliesSignalsSnapshot(
   weekliesSignalsModule: LuaValue | undefined
 ): AddonWeekliesSignalsSnapshot | null {
@@ -71,9 +113,7 @@ export function normalizeWeekliesSignalsSnapshot(
 
   const schemaVersion = asNumber(module.schemaVersion) ?? 0;
 
-  if (
-    schemaVersion !== SUPPORTED_WEEKLIES_SIGNALS_SCHEMA_VERSION
-  ) {
+  if (!SUPPORTED_WEEKLIES_SIGNALS_SCHEMA_VERSIONS.has(schemaVersion)) {
     return null;
   }
 
@@ -93,9 +133,6 @@ export function normalizeWeekliesSignalsSnapshot(
       data.troveHuntersBountyUsed,
       "trove-hunters-bounty-used"
     ),
-    metaQuest: normalizeQuestSignal(
-      data.metaQuest,
-      "meta-quest"
-    )
+    metaQuest: normalizeMetaQuestSignal(data.metaQuest)
   };
 }

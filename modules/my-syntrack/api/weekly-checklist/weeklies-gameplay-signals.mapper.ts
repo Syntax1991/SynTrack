@@ -130,7 +130,7 @@ export function deriveMetaQuestSignal(
       return completeSignal(title);
     }
 
-    return incompleteSignal("open", title, `Complete ${definition.name}`);
+    return incompleteSignal("open", title, "Complete Meta Quest");
   }
 
   if (state.value.valueType === "PROGRESS") {
@@ -143,7 +143,7 @@ export function deriveMetaQuestSignal(
     return incompleteSignal(
       `${current}/${total}`,
       `${title} — ${current} of ${total}`,
-      `Complete ${definition.name}`
+      "Complete Meta Quest"
     );
   }
 

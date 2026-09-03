@@ -112,8 +112,9 @@ function snapshot(
     },
     metaQuest: {
       signalKey: "meta-quest",
-      externalQuestId: 95520,
-      flaggedCompleted: false
+      externalQuestId: 98172,
+      flaggedCompleted: false,
+      evidence: []
     },
     ...overrides
   };
@@ -162,6 +163,42 @@ describe("AddonWeekliesSignalsPersistence", () => {
     expect(
       rows.get("rating-def:char-1:ALWAYS")?.source
     ).toBe("ADDON");
+  });
+
+  it("derives META complete from evidence when one alternative is true", async () => {
+    const { transaction, rows } = createTransaction();
+    const persistence = new AddonWeekliesSignalsPersistence({
+      findWeekliesTrackerDefinitions: async () => definitions()
+    });
+
+    await persistence.persist(
+      transaction as never,
+      "char-1",
+      snapshot({
+        schemaVersion: 2,
+        mythicPlusRating: { captured: false, seasonRating: null },
+        troveHuntersBountyUsed: {
+          signalKey: "trove-hunters-bounty-used",
+          externalQuestId: 86371,
+          flaggedCompleted: null
+        },
+        metaQuest: {
+          signalKey: "meta-quest",
+          externalQuestId: 93911,
+          flaggedCompleted: null,
+          evidence: [
+            { questId: 93744, flaggedCompleted: false },
+            { questId: 93911, flaggedCompleted: true },
+            { questId: 98172, flaggedCompleted: false }
+          ]
+        }
+      }),
+      result()
+    );
+
+    expect(rows.get("meta-def:char-1:2026-08-26")?.booleanValue).toBe(
+      true
+    );
   });
 
   it("skips rating persistence when capture evidence is missing", async () => {
