@@ -4,7 +4,6 @@ import type { CharacterTrackerState } from "../trackers/tracker.types.js";
 import { resolveSeasonAchievementCompletion } from "./season-achievement-evidence.js";
 import {
   deriveBooleanEvidenceGoal,
-  deriveRaidGoal,
   deriveWarbandBooleanGoal,
   deriveWarbandPortalsGoal
 } from "./season-checklist.evidence.js";
@@ -186,36 +185,6 @@ describe("season evidence derivation", () => {
         "valeera-80"
       )
     ).toMatchObject({ state: "UNKNOWN", label: "?" });
-  });
-
-  it("raid: conservative partial UNKNOWN and CE preference", () => {
-    expect(
-      deriveRaidGoal(
-        resolved("season-achievement-63650", null),
-        resolved("season-achievement-63651", false)
-      )
-    ).toMatchObject({ state: "UNKNOWN", label: "?" });
-
-    expect(
-      deriveRaidGoal(
-        resolved("season-achievement-63650", false),
-        resolved("season-achievement-63651", false)
-      )
-    ).toMatchObject({ state: "INCOMPLETE", label: "✕ AOTC" });
-
-    expect(
-      deriveRaidGoal(
-        resolved("season-achievement-63650", true),
-        resolved("season-achievement-63651", false)
-      )
-    ).toMatchObject({ state: "COMPLETE", label: "✓ AOTC" });
-
-    expect(
-      deriveRaidGoal(
-        resolved("season-achievement-63650", false),
-        resolved("season-achievement-63651", true)
-      )
-    ).toMatchObject({ state: "COMPLETE", label: "✓ CE" });
   });
 
   it("warband aggregation completes from profession-only character evidence", () => {

@@ -20,15 +20,17 @@ import { WeeklyChecklistRepository } from "../weekly-checklist/weekly-checklist.
 import { ensureWeekliesTrackerDefinitionsForImport } from "../weekly-checklist/weeklies-tracker-definitions.service.js";
 import { WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY } from "../weekly-checklist/weeklies-tracker-keys.js";
 import { MythicPlusSeasonProgressService } from "../weekly-gameplay/mythic-plus-season-progress.service.js";
+import { SeasonGoalPreferenceService } from "../season-goal-preference/season-goal-preference.service.js";
+import type { SeasonGoalPreferenceValue } from "../season-goal-preference/season-goal-preference.types.js";
 import {
+  applyGoalEnabledGate,
   deriveSeasonMythicPlusGoal,
   summarizeSeasonGoals
 } from "./season-checklist.goals.js";
 import {
   deriveBooleanEvidenceGoal,
   deriveRaidGoal,
-  deriveWarbandBooleanGoal,
-  deriveWarbandPortalsGoal
+  type SeasonRaidGoalTarget
 } from "./season-checklist.evidence.js";
 import { deriveSeasonEmbellishmentGoal } from "./season-checklist.embellishment.js";
 import { deriveResilientKeystoneGoal } from "./season-checklist.resilient.js";
@@ -39,13 +41,10 @@ import {
 } from "./season-checklist.tier-source.js";
 import {
   SEASON_EVIDENCE_CATALOG,
-  SEASON_WARBAND_PORTAL_EVIDENCE,
   primarySeasonEvidenceForGoal
 } from "./season-evidence-catalog.js";
 import { ensureSeasonEvidenceTrackerDefinitionsForImport } from "./season-evidence-tracker-definitions.service.js";
-import {
-  enabledWarbandSeasonGoals
-} from "./season-goal-catalog.js";
+import { buildWarbandGoals } from "./season-checklist.warband.js";
 import type { SeasonChecklistResponse } from "./season-checklist.types.js";
 
 export class SeasonChecklistService {
@@ -72,6 +71,9 @@ export class SeasonChecklistService {
 
   private readonly mythicPlusSeasonProgressService =
     new MythicPlusSeasonProgressService();
+
+  private readonly seasonGoalPreferenceService =
+    new SeasonGoalPreferenceService();
 
   async getChecklist(): Promise<SeasonChecklistResponse> {
     const [weekliesScopeKey, evidenceScopeKey] = await Promise.all([
@@ -166,7 +168,12 @@ export class SeasonChecklistService {
       ])
     );
 
-    const [trackerStates, mythicPlusSeasonProgressByCharacterId] =
+    const [
+      trackerStates,
+      mythicPlusSeasonProgressByCharacterId,
+      goalPreferencesByCharacterId,
+      warbandGoalPreferences
+    ] =
       characterIds.length > 0
         ? await Promise.all([
             Promise.all(
@@ -179,9 +186,13 @@ export class SeasonChecklistService {
             ).then((states) => states.flat()),
             this.mythicPlusSeasonProgressService.getForCharacters(
               gameplayCharacters.map((character) => character.id)
-            )
+            ),
+            this.seasonGoalPreferenceService.getEffectivePreferencesByCharacter(
+              gameplayCharacters.map((character) => character.id)
+            ),
+            this.seasonGoalPreferenceService.getEffectiveWarbandPreferences()
           ])
-        : [[], new Map()];
+        : [[], new Map(), new Map(), new Map()];
 
     const statesByCharacterId = new Map<
       string,
@@ -194,38 +205,52 @@ export class SeasonChecklistService {
       statesByCharacterId.set(state.characterId, existing);
     }
 
-    const characterSignalsForTrackerKey = (
-      trackerKey: string,
-      fallbackGoalKey: string
-    ) => {
-      const definition = evidenceDefinitions.get(trackerKey) ?? null;
-      return activeCharacters.map((character) =>
-        deriveBooleanEvidenceGoal(
-          buildResolvedTracker(
-            definition,
-            statesByCharacterId.get(character.id) ?? new Map()
-          ),
-          fallbackGoalKey
-        )
-      );
+    const noPreference: SeasonGoalPreferenceValue = {
+      enabled: true,
+      numericTarget: null,
+      enumTarget: null
     };
 
     const characterItems = gameplayCharacters.map((character) => {
       const statesByDefinitionId =
         statesByCharacterId.get(character.id) ?? new Map();
+      const preferences =
+        goalPreferencesByCharacterId.get(character.id) ?? new Map();
+      const preferenceFor = (goalKey: string) =>
+        preferences.get(goalKey) ?? noPreference;
 
-      const mythicPlus = deriveSeasonMythicPlusGoal(
-        buildResolvedTracker(ratingDefinition, statesByDefinitionId)
+      const scorePreference = preferenceFor("mythic-plus-score");
+      const mythicPlus = applyGoalEnabledGate(
+        deriveSeasonMythicPlusGoal(
+          buildResolvedTracker(ratingDefinition, statesByDefinitionId),
+          scorePreference.numericTarget ?? 2000
+        ),
+        scorePreference.enabled
       );
+
+      const resiPreference = preferenceFor("resilient-keystone");
+      // Disabled -> still informational (target null), never a real goal.
+      const resiTarget = resiPreference.enabled
+        ? resiPreference.numericTarget
+        : null;
       const resi = deriveResilientKeystoneGoal(
-        mythicPlusSeasonProgressByCharacterId.get(character.id) ?? null
+        mythicPlusSeasonProgressByCharacterId.get(character.id) ?? null,
+        resiTarget
       );
+      const resiIsActiveGoal = resiTarget !== null;
+
       const gearCharacter = gearByCharacterId.get(character.id);
-      const tier = deriveSeasonTierGoal(
-        resolveSeasonTierOverviewState(gearCharacter)
+      const tierPreference = preferenceFor("tier-four-piece");
+      const tier = applyGoalEnabledGate(
+        deriveSeasonTierGoal(resolveSeasonTierOverviewState(gearCharacter)),
+        tierPreference.enabled
       );
-      const embellishments = deriveSeasonEmbellishmentGoal(
-        resolveSeasonEmbellishmentOverviewState(gearCharacter)
+      const embPreference = preferenceFor("embellishments");
+      const embellishments = applyGoalEnabledGate(
+        deriveSeasonEmbellishmentGoal(
+          resolveSeasonEmbellishmentOverviewState(gearCharacter)
+        ),
+        embPreference.enabled
       );
       const resolveEvidence = (trackerKey: string) =>
         buildResolvedTracker(
@@ -236,20 +261,32 @@ export class SeasonChecklistService {
       const nemesisEvidence = primarySeasonEvidenceForGoal("nemesis-aztarec");
       const aotcEvidence = primarySeasonEvidenceForGoal("aotc-ulatek");
       const ceEvidence = primarySeasonEvidenceForGoal("ce-ulatek");
-      const cracked = deriveBooleanEvidenceGoal(
-        resolveEvidence(crackedEvidence?.trackerKey ?? ""),
-        "cracked-keystone"
+      const crackedPreference = preferenceFor("cracked-keystone");
+      const cracked = applyGoalEnabledGate(
+        deriveBooleanEvidenceGoal(
+          resolveEvidence(crackedEvidence?.trackerKey ?? ""),
+          "cracked-keystone"
+        ),
+        crackedPreference.enabled
       );
-      const nemesis = deriveBooleanEvidenceGoal(
-        resolveEvidence(nemesisEvidence?.trackerKey ?? ""),
-        "nemesis-aztarec"
+      const nemesisPreference = preferenceFor("nemesis");
+      const nemesis = applyGoalEnabledGate(
+        deriveBooleanEvidenceGoal(
+          resolveEvidence(nemesisEvidence?.trackerKey ?? ""),
+          "nemesis-aztarec"
+        ),
+        nemesisPreference.enabled
       );
+      const raidPreference = preferenceFor("raid");
       const raid = deriveRaidGoal(
         resolveEvidence(aotcEvidence?.trackerKey ?? ""),
-        resolveEvidence(ceEvidence?.trackerKey ?? "")
+        resolveEvidence(ceEvidence?.trackerKey ?? ""),
+        (raidPreference.enumTarget as SeasonRaidGoalTarget | null) ?? "AOTC"
       );
       // Action priority: Tier → Emb → Cracked → M+ → Nemesis → Raid.
-      // Portals moved to Warband; Resi is informational; Serpent Scion /
+      // Portals moved to Warband; Resi only counts when the user configured
+      // an explicit target; disabled goals are NOT_APPLICABLE and are
+      // skipped by summarizeSeasonGoals automatically. Serpent Scion /
       // Catalyst is intentionally excluded from product goals.
       const summary = summarizeSeasonGoals([
         tier,
@@ -257,7 +294,8 @@ export class SeasonChecklistService {
         cracked,
         mythicPlus,
         nemesis,
-        raid
+        raid,
+        ...(resiIsActiveGoal ? [resi] : [])
       ]);
 
       return {
@@ -273,25 +311,12 @@ export class SeasonChecklistService {
       };
     });
 
-    const enabledWarband = enabledWarbandSeasonGoals();
-    // Each Warband goal resolves its own canonical evidence — never reuse
-    // one goal's derived signals for another (that bug let every enabled
-    // Warband goal silently collapse onto whichever one was computed first).
-    const warbandGoals = enabledWarband.map((goal) => {
-      if (goal.key === "portals") {
-        return deriveWarbandPortalsGoal(
-          SEASON_WARBAND_PORTAL_EVIDENCE.map((evidence) =>
-            characterSignalsForTrackerKey(evidence.trackerKey, "portals")
-          )
-        );
-      }
-
-      const evidence = primarySeasonEvidenceForGoal(goal.key);
-      const signals = evidence
-        ? characterSignalsForTrackerKey(evidence.trackerKey, goal.key)
-        : [];
-      return deriveWarbandBooleanGoal(signals, goal.key);
-    });
+    const warbandGoals = buildWarbandGoals(
+      activeCharacters,
+      statesByCharacterId,
+      evidenceDefinitions,
+      warbandGoalPreferences
+    );
 
     return {
       season: activeScope

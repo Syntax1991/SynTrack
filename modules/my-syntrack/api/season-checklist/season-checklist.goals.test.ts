@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyGoalEnabledGate,
   deriveSeasonMythicPlusGoal,
   seasonActionDisplay,
   seasonStatusLabel,
@@ -79,6 +80,47 @@ describe("season checklist goals", () => {
 
     expect(goal.state).toBe("INCOMPLETE");
     expect(goal.label).toBe("1951 → 2K");
+  });
+
+  it("uses a configurable target instead of the hardcoded 2K milestone", () => {
+    const incomplete2631 = deriveSeasonMythicPlusGoal(
+      { definition: definition(), state: numberState(2631) },
+      3000
+    );
+    expect(incomplete2631.state).toBe("INCOMPLETE");
+    expect(incomplete2631.label).toBe("2631 → 3K");
+    expect(incomplete2631.actionLabel).toBe("Reach 3K Mythic+ rating");
+
+    const complete2631 = deriveSeasonMythicPlusGoal(
+      { definition: definition(), state: numberState(2631) },
+      2000
+    );
+    expect(complete2631.state).toBe("COMPLETE");
+    expect(complete2631.label).toBe("2631 ✓");
+
+    const target2500 = deriveSeasonMythicPlusGoal(
+      { definition: definition(), state: numberState(2399) },
+      2500
+    );
+    expect(target2500.label).toBe("2399 → 2.5K");
+  });
+
+  it("never creates a second tracker fact when only the target changes — same score, different label", () => {
+    const state = numberState(2631);
+    const target2000 = deriveSeasonMythicPlusGoal(
+      { definition: definition(), state },
+      2000
+    );
+    const target3000 = deriveSeasonMythicPlusGoal(
+      { definition: definition(), state },
+      3000
+    );
+
+    expect(target2000.state).toBe("COMPLETE");
+    expect(target3000.state).toBe("INCOMPLETE");
+    // Same canonical score fact underneath both derivations.
+    expect(target2000.label).toContain("2631");
+    expect(target3000.label).toContain("2631");
   });
 
   it("keeps unknown when rating evidence is missing", () => {
@@ -178,5 +220,47 @@ describe("season checklist goals", () => {
         goalsUnknown: 0
       })
     ).toEqual({ kind: "complete", label: "✓" });
+  });
+});
+
+describe("applyGoalEnabledGate", () => {
+  it("passes an enabled goal through unchanged", () => {
+    const signal = {
+      key: "nemesis",
+      title: "Nemesis",
+      state: "INCOMPLETE" as const,
+      label: "✕",
+      detail: "detail",
+      actionLabel: "Defeat Azta'rec"
+    };
+
+    expect(applyGoalEnabledGate(signal, true)).toEqual(signal);
+  });
+
+  it("overrides a disabled goal to NOT_APPLICABLE with a dash, never COMPLETE", () => {
+    const gated = applyGoalEnabledGate(
+      {
+        key: "nemesis",
+        title: "Nemesis",
+        state: "INCOMPLETE",
+        label: "✕",
+        detail: "detail",
+        actionLabel: "Defeat Azta'rec"
+      },
+      false
+    );
+
+    expect(gated.state).toBe("NOT_APPLICABLE");
+    expect(gated.label).toBe("—");
+    expect(gated.actionLabel).toBeNull();
+
+    // NOT_APPLICABLE is excluded from summarizeSeasonGoals entirely.
+    const summary = summarizeSeasonGoals([gated]);
+    expect(summary).toEqual({
+      goalsOpen: 0,
+      goalsComplete: 0,
+      goalsUnknown: 0,
+      action: null
+    });
   });
 });

@@ -10,10 +10,16 @@ export type SeasonGoalPresentation = {
 
 export const SEASON_GOAL_PRESENTATION: Record<string, SeasonGoalPresentation> = {
   portals: {
-    title: "Dungeon portals",
+    title: "Dungeon Portals",
     detail: "Timed +10 dungeon portals for Midnight Season 2",
     incompleteLabel: "✕",
     incompleteAction: "Earn remaining dungeon portals"
+  },
+  "valeera-80": {
+    title: "Valeera 80",
+    detail: "Reach level 80",
+    incompleteLabel: "✕",
+    incompleteAction: "Reach level 80"
   },
   "serpent-scion": {
     title: "Serpent Scion",

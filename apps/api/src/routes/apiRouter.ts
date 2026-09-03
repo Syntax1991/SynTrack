@@ -16,6 +16,7 @@ import { gearReadinessRouter } from "../../../../modules/my-syntrack/api/gear-re
 import { raidTaskRouter } from "../../../../modules/my-syntrack/api/raid-tasks/raid-task.routes.js";
 import { weeklyChecklistRouter } from "../../../../modules/my-syntrack/api/weekly-checklist/weekly-checklist.routes.js";
 import { seasonChecklistRouter } from "../../../../modules/my-syntrack/api/season-checklist/season-checklist.routes.js";
+import { seasonGoalPreferenceRouter } from "../../../../modules/my-syntrack/api/season-goal-preference/season-goal-preference.routes.js";
 import { vaultMythicPlusRouter } from "../../../../modules/my-syntrack/api/vault-mythic-plus/vault-mythic-plus.routes.js";
 import { trackerDefinitionRouter } from "../../../../modules/my-syntrack/api/trackers/tracker-definition.routes.js";
 import { trackerValueRouter } from "../../../../modules/my-syntrack/api/trackers/tracker-value.routes.js";
@@ -66,6 +67,11 @@ apiRouter.use(
 apiRouter.use(
   "/season-checklist",
   seasonChecklistRouter
+);
+
+apiRouter.use(
+  "/season-goal-preferences",
+  seasonGoalPreferenceRouter
 );
 
 apiRouter.use(

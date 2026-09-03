@@ -100,14 +100,47 @@ export function deriveBooleanEvidenceGoal(
  * CE is a stronger optional complete signal.
  * AOTC unknown + CE false does not prove AOTC open → UNKNOWN.
  */
+export type SeasonRaidGoalTarget = "AOTC" | "CE" | "OFF";
+
+/**
+ * Raid target is configurable via Manage Goals (default AOTC). "OFF"
+ * excludes Raid from Status/Action entirely (NOT_APPLICABLE), same
+ * convention as a disabled boolean goal.
+ */
 export function deriveRaidGoal(
   aotc: ResolvedTrackerDefinition | null,
-  ce: ResolvedTrackerDefinition | null
+  ce: ResolvedTrackerDefinition | null,
+  target: SeasonRaidGoalTarget = "AOTC"
 ): SeasonGoalSignal {
-  const aotcValue = booleanValue(aotc);
-  const ceValue = booleanValue(ce);
   const detail = "Ula'tek raid milestones for Midnight Season 2";
 
+  if (target === "OFF") {
+    return goalSignal("raid", "Raid", "NOT_APPLICABLE", "—", detail, null);
+  }
+
+  const aotcValue = booleanValue(aotc);
+  const ceValue = booleanValue(ce);
+
+  if (target === "CE") {
+    if (ceValue === true) {
+      return goalSignal("raid", "Raid", "COMPLETE", "✓ CE", detail, null);
+    }
+
+    if (ceValue === false) {
+      return goalSignal(
+        "raid",
+        "Raid",
+        "INCOMPLETE",
+        "✕ CE",
+        detail,
+        "Earn Cutting Edge: Ula'tek"
+      );
+    }
+
+    return goalSignal("raid", "Raid", "UNKNOWN", "?", detail, null);
+  }
+
+  // target === "AOTC" — CE still counts as a stronger complete signal.
   if (ceValue === true) {
     return goalSignal("raid", "Raid", "COMPLETE", "✓ CE", detail, null);
   }

@@ -75,3 +75,43 @@ describe("deriveResilientKeystoneGoal", () => {
     expect(goal.actionLabel).toBeNull();
   });
 });
+
+describe("deriveResilientKeystoneGoal with a configured target", () => {
+  it("floor 12 below target 14 -> OPEN, showing the real current floor", () => {
+    const goal = deriveResilientKeystoneGoal(
+      progress([12, 12, 13, 14, 12, 15, 12, 13]),
+      14
+    );
+
+    expect(goal.state).toBe("INCOMPLETE");
+    expect(goal.label).toBe("12");
+    expect(goal.actionLabel).toBe("Reach Resilient Keystone 14");
+  });
+
+  it("floor 14 at target 14 -> COMPLETE", () => {
+    const goal = deriveResilientKeystoneGoal(
+      progress([14, 15, 14, 17, 16, 14, 15, 16]),
+      14
+    );
+
+    expect(goal.state).toBe("COMPLETE");
+    expect(goal.label).toBe("14");
+    expect(goal.actionLabel).toBeNull();
+  });
+
+  it("no floor yet with a target still shows N/8 -> 12 progress", () => {
+    const goal = deriveResilientKeystoneGoal(
+      progress([12, 12, 12, 12, 12, 8, 8, 8]),
+      14
+    );
+
+    expect(goal.state).toBe("INCOMPLETE");
+    expect(goal.label).toBe("5/8 → 12");
+    expect(goal.actionLabel).toBe("Reach Resilient Keystone 14");
+  });
+
+  it("stays UNKNOWN with a target when capture completeness cannot be proven", () => {
+    expect(deriveResilientKeystoneGoal(null, 14).state).toBe("UNKNOWN");
+    expect(deriveResilientKeystoneGoal(null, 14).actionLabel).toBeNull();
+  });
+});

@@ -1088,3 +1088,30 @@ model DeviceCredential {
   @@index([revokedAt])
   @@index([raiderAccountId])
 }
+
+/*
+ * User intent only — never derived completion/progress. Canonical Season
+ * facts (score, tier, achievements, dungeon runs, ...) stay owned by their
+ * existing domains; this table just says which supported goal a Character
+ * (or the Warband) wants to pursue, and at what target.
+ *
+ * characterId holds a real Character.id for a CHARACTER-scoped goal, or the
+ * literal sentinel "WARBAND" for a WARBAND-scoped goal (see
+ * SEASON_GOAL_PREFERENCE_WARBAND_SCOPE) — never null, so the compound
+ * unique index behaves correctly under SQLite (NULL != NULL there). No FK
+ * relation is declared for this reason; an orphaned row after a Character
+ * is deleted is harmless since it's simply never looked up again.
+ */
+model SeasonGoalPreference {
+  id            String   @id @default(cuid())
+  goalKey       String
+  characterId   String
+  enabled       Boolean  @default(true)
+  numericTarget Int?
+  enumTarget    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([goalKey, characterId])
+  @@index([characterId])
+}
