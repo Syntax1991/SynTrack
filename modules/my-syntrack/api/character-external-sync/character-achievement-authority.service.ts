@@ -41,6 +41,43 @@ export function mergeAchievementCompletion(
   return null;
 }
 
+/*
+ * Corrective safety review (post-Phase E): response shape/structure does
+ * NOT prove `criteria.is_completed` means "this specific character
+ * earned it" - Phase E's own live audit proved this field's
+ * character-specificity is per-achievement, not universal. Live evidence:
+ *   - Dungeon Portals (62437-62444): PROVEN character-specific - exact
+ *     match against the addon's wasEarnedByMe across 7 ids x 3 real
+ *     characters, 21/21 data points, zero discrepancies.
+ *   - 62872 (Serpent Scion, a structurally identical single-criteria
+ *     achievement, NOT in this allowlist): Blizzard reported true for
+ *     two characters whose addon-captured wasEarnedByMe was false -
+ *     proof that "looks like the proven family" is not sufficient.
+ *   - AOTC (63650): only live data point is Blizzard reporting false
+ *     while the addon's live client read true for the same character -
+ *     this proves lag/staleness, NOT what Blizzard reports on a
+ *     non-earning character once it eventually flips to true. UNVERIFIED
+ *     until a real cross-character (earner vs non-earner) comparison
+ *     exists for a true value.
+ *   - CE (63651): nobody has earned it yet on any tracked character -
+ *     completely unverified in either direction.
+ *
+ * Only ids in this set may have Blizzard evidence applied to a
+ * CHARACTER-scoped goal (see withAchievementBlizzardMerge in
+ * season-achievement-blizzard-merge.ts). This is a strict allowlist,
+ * never inferred from achievement-family similarity, response shape, or
+ * "it's the same kind of achievement as a proven one" - each id is added
+ * here only after its own live cross-character proof exists. WARBAND
+ * aggregation (blizzardWarbandAchievementSignal) is NOT gated by this
+ * list - Warband's cross-character OR is safe regardless of any single
+ * achievement's character-specificity, since it only ever asks "does
+ * this exist anywhere on the account," which is exactly what Blizzard's
+ * account-wide propagation already answers correctly by design.
+ */
+export const CHARACTER_SCOPE_PROVEN_BLIZZARD_ACHIEVEMENT_IDS = new Set<number>([
+  62437, 62438, 62439, 62440, 62441, 62442, 62443, 62444 // Dungeon Portals
+]);
+
 export class CharacterAchievementAuthorityService {
   constructor(
     private readonly snapshotRepository: CharacterExternalSnapshotRepository

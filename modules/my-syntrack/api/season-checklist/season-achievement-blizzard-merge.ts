@@ -1,5 +1,8 @@
 import type { ResolvedTrackerDefinition } from "../weekly-checklist/weeklies-gameplay-signals.mapper.js";
-import { mergeAchievementCompletion } from "../character-external-sync/character-achievement-authority.service.js";
+import {
+  CHARACTER_SCOPE_PROVEN_BLIZZARD_ACHIEVEMENT_IDS,
+  mergeAchievementCompletion
+} from "../character-external-sync/character-achievement-authority.service.js";
 import { booleanValue } from "./season-checklist.evidence.js";
 import { primarySeasonEvidenceForGoal } from "./season-evidence-catalog.js";
 import type { SeasonGoalSignal } from "./season-checklist.types.js";
@@ -15,18 +18,25 @@ import type { SeasonGoalSignal } from "./season-checklist.types.js";
  */
 
 /**
- * CHARACTER-scoped merge: only synthesizes a modified resolved tracker
- * when the merge actually changes the outcome (Blizzard confirms a
- * completion the addon hadn't recorded, or vice versa is impossible by
- * construction - see mergeAchievementCompletion) - otherwise returns the
- * original object unchanged so callers never see a spurious "BLIZZARD"
- * source label when nothing actually came from Blizzard.
+ * CHARACTER-scoped merge: gated by CHARACTER_SCOPE_PROVEN_BLIZZARD_ACHIEVEMENT_IDS
+ * FIRST - an achievement id not on that allowlist returns the addon-only
+ * `resolved` completely unchanged, regardless of what Blizzard reports,
+ * because response shape/structure alone never proves character-specific
+ * semantics (see the allowlist's doc comment for the live evidence this
+ * corrects). For an allowlisted id, only synthesizes a modified resolved
+ * tracker when the merge actually changes the outcome - otherwise returns
+ * the original object unchanged so callers never see a spurious
+ * "BLIZZARD" source label when nothing actually came from Blizzard.
  */
 export function withAchievementBlizzardMerge(
   resolved: ResolvedTrackerDefinition | null,
   achievementId: number,
   blizzardEarnedByCharacter: Map<number, boolean>
 ): ResolvedTrackerDefinition | null {
+  if (!CHARACTER_SCOPE_PROVEN_BLIZZARD_ACHIEVEMENT_IDS.has(achievementId)) {
+    return resolved;
+  }
+
   const addonValue = booleanValue(resolved);
   const blizzardValue = blizzardEarnedByCharacter.get(achievementId) ?? null;
   const merged = mergeAchievementCompletion(addonValue, blizzardValue);
