@@ -304,3 +304,32 @@ export type BattleNetMythicKeystoneSeasonProfile = {
   };
   best_runs?: BattleNetMythicKeystoneBestRun[];
 };
+
+/*
+ * Live-verified (Phase E, 2026-09-04/05, real characters). Every entry
+ * carries a `completed_timestamp` even when `criteria.is_completed` is
+ * false (last-progress time, not earn time) - never treat presence
+ * alone as "earned". `criteria.is_completed` was empirically PROVEN
+ * character-specific for the dungeon-portal achievement family (matched
+ * the addon's own wasEarnedByMe exactly across 7 ids x 3 characters,
+ * zero discrepancies) but PROVEN NOT reliably character-specific for at
+ * least one other achievement (62872 showed is_completed:true for two
+ * characters whose addon-captured wasEarnedByMe was false) - never
+ * assume this field's meaning generalizes across achievement ids
+ * without per-achievement verification (see
+ * blizzard-achievements.normalizer.ts / the Phase E report).
+ */
+export type BattleNetAchievementCriteria = {
+  id?: number;
+  is_completed?: boolean;
+};
+
+export type BattleNetAchievementEntry = {
+  id?: number;
+  criteria?: BattleNetAchievementCriteria;
+  completed_timestamp?: number;
+};
+
+export type BattleNetCharacterAchievements = {
+  achievements?: BattleNetAchievementEntry[];
+};

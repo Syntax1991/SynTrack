@@ -12,37 +12,23 @@ import { TrackerScopeProfileService } from "../trackers/tracker-scope-profile.se
 import { TrackerValueRepository } from "../trackers/tracker-value.repository.js";
 import { TrackerValueService } from "../trackers/tracker-value.service.js";
 import type { CharacterTrackerState } from "../trackers/tracker.types.js";
-import {
-  buildResolvedTracker,
-  resolveDefinitionByKey
-} from "../weekly-checklist/weeklies-gameplay-signals.mapper.js";
+import { buildResolvedTracker, resolveDefinitionByKey } from "../weekly-checklist/weeklies-gameplay-signals.mapper.js";
 import { WeeklyChecklistRepository } from "../weekly-checklist/weekly-checklist.repository.js";
 import { ensureWeekliesTrackerDefinitionsForImport } from "../weekly-checklist/weeklies-tracker-definitions.service.js";
 import { WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY } from "../weekly-checklist/weeklies-tracker-keys.js";
 import { MythicPlusSeasonProgressService } from "../weekly-gameplay/mythic-plus-season-progress.service.js";
+import { CharacterAchievementAuthorityService } from "../character-external-sync/character-achievement-authority.service.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { SeasonGoalPreferenceService } from "../season-goal-preference/season-goal-preference.service.js";
 import type { SeasonGoalPreferenceValue } from "../season-goal-preference/season-goal-preference.types.js";
-import {
-  applyGoalEnabledGate,
-  deriveSeasonMythicPlusGoal,
-  summarizeSeasonGoals
-} from "./season-checklist.goals.js";
-import {
-  deriveBooleanEvidenceGoal,
-  deriveRaidGoal,
-  type SeasonRaidGoalTarget
-} from "./season-checklist.evidence.js";
+import { resolveMergedCharacterEvidence } from "./season-achievement-blizzard-merge.js";
+import { applyGoalEnabledGate, deriveSeasonMythicPlusGoal, summarizeSeasonGoals } from "./season-checklist.goals.js";
+import { deriveBooleanEvidenceGoal, deriveRaidGoal, type SeasonRaidGoalTarget } from "./season-checklist.evidence.js";
 import { deriveSeasonEmbellishmentGoal } from "./season-checklist.embellishment.js";
 import { deriveResilientKeystoneGoal } from "./season-checklist.resilient.js";
 import { deriveSeasonTierGoal } from "./season-checklist.tier.js";
-import {
-  resolveSeasonEmbellishmentOverviewState,
-  resolveSeasonTierOverviewState
-} from "./season-checklist.tier-source.js";
-import {
-  SEASON_EVIDENCE_CATALOG,
-  primarySeasonEvidenceForGoal
-} from "./season-evidence-catalog.js";
+import { resolveSeasonEmbellishmentOverviewState, resolveSeasonTierOverviewState } from "./season-checklist.tier-source.js";
+import { SEASON_EVIDENCE_CATALOG, primarySeasonEvidenceForGoal } from "./season-evidence-catalog.js";
 import { ensureSeasonEvidenceTrackerDefinitionsForImport } from "./season-evidence-tracker-definitions.service.js";
 import { buildWarbandGoals } from "./season-checklist.warband.js";
 import type { SeasonChecklistResponse } from "./season-checklist.types.js";
@@ -71,6 +57,11 @@ export class SeasonChecklistService {
 
   private readonly mythicPlusSeasonProgressService =
     new MythicPlusSeasonProgressService();
+
+  private readonly achievementAuthorityService =
+    new CharacterAchievementAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    );
 
   private readonly seasonGoalPreferenceService =
     new SeasonGoalPreferenceService();
@@ -172,7 +163,8 @@ export class SeasonChecklistService {
       trackerStates,
       mythicPlusSeasonProgressByCharacterId,
       goalPreferencesByCharacterId,
-      warbandGoalPreferences
+      warbandGoalPreferences,
+      blizzardEarnedByCharacterMaps
     ] =
       characterIds.length > 0
         ? await Promise.all([
@@ -190,9 +182,12 @@ export class SeasonChecklistService {
             this.seasonGoalPreferenceService.getEffectivePreferencesByCharacter(
               gameplayCharacters.map((character) => character.id)
             ),
-            this.seasonGoalPreferenceService.getEffectiveWarbandPreferences()
+            this.seasonGoalPreferenceService.getEffectiveWarbandPreferences(),
+            this.achievementAuthorityService.getBlizzardEarnedByCharacterMaps(
+              characterIds
+            )
           ])
-        : [[], new Map(), new Map(), new Map()];
+        : [[], new Map(), new Map(), new Map(), new Map()];
 
     const statesByCharacterId = new Map<
       string,
@@ -259,8 +254,6 @@ export class SeasonChecklistService {
         );
       const crackedEvidence = primarySeasonEvidenceForGoal("cracked-keystone");
       const nemesisEvidence = primarySeasonEvidenceForGoal("nemesis-aztarec");
-      const aotcEvidence = primarySeasonEvidenceForGoal("aotc-ulatek");
-      const ceEvidence = primarySeasonEvidenceForGoal("ce-ulatek");
       const crackedPreference = preferenceFor("cracked-keystone");
       const cracked = applyGoalEnabledGate(
         deriveBooleanEvidenceGoal(
@@ -278,9 +271,11 @@ export class SeasonChecklistService {
         nemesisPreference.enabled
       );
       const raidPreference = preferenceFor("raid");
+      const characterBlizzardEarned =
+        blizzardEarnedByCharacterMaps.get(character.id) ?? new Map();
       const raid = deriveRaidGoal(
-        resolveEvidence(aotcEvidence?.trackerKey ?? ""),
-        resolveEvidence(ceEvidence?.trackerKey ?? ""),
+        resolveMergedCharacterEvidence("aotc-ulatek", resolveEvidence, characterBlizzardEarned),
+        resolveMergedCharacterEvidence("ce-ulatek", resolveEvidence, characterBlizzardEarned),
         (raidPreference.enumTarget as SeasonRaidGoalTarget | null) ?? "AOTC"
       );
       // Action priority: Tier → Emb → Cracked → M+ → Nemesis → Raid.
@@ -315,7 +310,8 @@ export class SeasonChecklistService {
       activeCharacters,
       statesByCharacterId,
       evidenceDefinitions,
-      warbandGoalPreferences
+      warbandGoalPreferences,
+      blizzardEarnedByCharacterMaps
     );
 
     return {

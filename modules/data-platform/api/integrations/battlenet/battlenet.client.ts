@@ -1,6 +1,6 @@
 import { env } from "../../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
-import type { BattleNetAccountProfile, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetGuildRoster, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
+import type { BattleNetAccountProfile, BattleNetCharacterAchievements, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetGuildRoster, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
 
 const authorizationUrl = "https://oauth.battle.net/authorize";
 const tokenUrl = "https://oauth.battle.net/token";
@@ -53,26 +53,19 @@ export class BattleNetClient {
       method: "POST",
       headers: {
         Accept: "application/json",
-        Authorization:
-          `Basic ${basicCredentials}`,
-        "Content-Type":
-          "application/x-www-form-urlencoded"
+        Authorization: `Basic ${basicCredentials}`,
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri:
-          redirectUri
+        redirect_uri: redirectUri
       })
     });
 
-    const payload =
-      await this.readJsonResponse(response);
+    const payload = await this.readJsonResponse(response);
 
-    if (
-      !response.ok ||
-      !this.isTokenResponse(payload)
-    ) {
+    if (!response.ok || !this.isTokenResponse(payload)) {
       throw new AppError(
         502,
         "Battle.net konnte den Autorisierungscode nicht einlösen.",
@@ -86,19 +79,14 @@ export class BattleNetClient {
   async getUserInfo(
     accessToken: string
   ): Promise<BattleNetUserInfo> {
-    const response = await fetch(
-      userInfoUrl,
-      {
-        headers: {
-          Accept: "application/json",
-          Authorization:
-            `Bearer ${accessToken}`
-        }
+    const response = await fetch(userInfoUrl, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
       }
-    );
+    });
 
-    const payload =
-      await this.readJsonResponse(response);
+    const payload = await this.readJsonResponse(response);
 
     if (!response.ok) {
       throw new AppError(
@@ -226,6 +214,22 @@ export class BattleNetClient {
 
     return this.getProfileResource<BattleNetMythicKeystoneSeasonProfile>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile/season/${seasonId}`,
+      accessToken,
+      true
+    );
+  }
+
+  // null = no achievements profile at all (same allowNotFound contract as
+  // the other character endpoints).
+  async getCharacterAchievements(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string
+  ): Promise<BattleNetCharacterAchievements | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetCharacterAchievements>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/achievements`,
       accessToken,
       true
     );

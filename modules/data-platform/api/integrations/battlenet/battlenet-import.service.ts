@@ -6,6 +6,7 @@ import { RemovedCharacterRepository } from "../../../../my-syntrack/api/characte
 import type { CharacterProfileRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profile-refresh.service.js";
 import type { CharacterProfessionRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profession-refresh.service.js";
 import type { CharacterMythicPlusRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-mythic-plus-refresh.service.js";
+import type { CharacterAchievementsRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-achievements-refresh.service.js";
 import type { RaiderAccessTokenGuard } from "../../raider-auth/raider-auth.types.js";
 import type { BattleNetAppTokenService } from "./battlenet-app-token.service.js";
 import { BattleNetClient } from "./battlenet.client.js";
@@ -57,7 +58,10 @@ export class BattleNetImportService {
       CharacterProfessionRefreshService,
 
     private readonly mythicPlusRefreshService:
-      CharacterMythicPlusRefreshService
+      CharacterMythicPlusRefreshService,
+
+    private readonly achievementsRefreshService:
+      CharacterAchievementsRefreshService
   ) {}
 
   async listCharacters(
@@ -294,6 +298,15 @@ export class BattleNetImportService {
 
       try {
         await this.mythicPlusRefreshService.refreshCharacter(
+          savedCharacter.id
+        );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
+
+      try {
+        await this.achievementsRefreshService.refreshCharacter(
           savedCharacter.id
         );
       }

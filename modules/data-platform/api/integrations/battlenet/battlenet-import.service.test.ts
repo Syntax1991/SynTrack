@@ -64,6 +64,11 @@ function createHarness() {
     currentPeriodBestRunCount: 1,
     seasonBestRunCount: 1
   }));
+  const refreshAchievements = vi.fn(async () => ({
+    status: "SUCCESS",
+    characterId: "char-1",
+    watchedAchievementCount: 3
+  }));
 
   const service = new BattleNetImportService(
     { getAccountProfile } as never,
@@ -72,7 +77,8 @@ function createHarness() {
     { getAccessToken: getAppAccessToken } as never,
     { refreshCharacter: refreshProfile } as never,
     { refreshCharacter: refreshProfessions } as never,
-    { refreshCharacter: refreshMythicPlus } as never
+    { refreshCharacter: refreshMythicPlus } as never,
+    { refreshCharacter: refreshAchievements } as never
   );
 
   return {
@@ -83,7 +89,8 @@ function createHarness() {
     upsertFromBattleNet,
     refreshProfile,
     refreshProfessions,
-    refreshMythicPlus
+    refreshMythicPlus,
+    refreshAchievements
   };
 }
 
@@ -113,7 +120,7 @@ describe("BattleNetImportService token usage", () => {
     );
   });
 
-  it("triggers PROFILE, PROFESSIONS, and MYTHIC_PLUS refreshes for the newly-imported character via the app-token pipelines", async () => {
+  it("triggers PROFILE, PROFESSIONS, MYTHIC_PLUS, and ACHIEVEMENTS refreshes for the newly-imported character via the app-token pipelines", async () => {
     const harness = createHarness();
 
     await harness.service.importCharacters("session-token", ["1:antonidas"]);
@@ -121,9 +128,10 @@ describe("BattleNetImportService token usage", () => {
     expect(harness.refreshProfile).toHaveBeenCalledWith("char-1");
     expect(harness.refreshProfessions).toHaveBeenCalledWith("char-1");
     expect(harness.refreshMythicPlus).toHaveBeenCalledWith("char-1");
+    expect(harness.refreshAchievements).toHaveBeenCalledWith("char-1");
   });
 
-  it("still reports the character as imported even if profile, profession, or Mythic+ enrichment fails", async () => {
+  it("still reports the character as imported even if profile, profession, Mythic+, or achievements enrichment fails", async () => {
     const requireUsableAccessToken = vi.fn(async () => ({
       accessToken: "user-token",
       raiderAccountId: "raider-1"
@@ -147,6 +155,11 @@ describe("BattleNetImportService token usage", () => {
       {
         refreshCharacter: vi.fn(async () => {
           throw new Error("unexpected mythic+ refresh bug");
+        })
+      } as never,
+      {
+        refreshCharacter: vi.fn(async () => {
+          throw new Error("unexpected achievements refresh bug");
         })
       } as never
     );
