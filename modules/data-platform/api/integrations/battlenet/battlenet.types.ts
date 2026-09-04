@@ -146,14 +146,37 @@ export type BattleNetEquippedItemUpgrade = {
   max_value?: number;
 };
 
+export type BattleNetEquippedItemEnchantment = {
+  enchantment_id?: number;
+  display_string?: string;
+};
+
+export type BattleNetEquippedItemSetReference = {
+  item_set?: {
+    id?: number;
+    name?: string;
+  };
+};
+
 export type BattleNetEquippedItem = {
   name?: string;
   slot?: BattleNetEquippedItemSlot;
   level?: BattleNetEquippedItemLevel;
   quality?: BattleNetEquippedItemQuality;
-  enchantments?: unknown[];
+  enchantments?: BattleNetEquippedItemEnchantment[];
   sockets?: BattleNetEquippedItemSocket[];
   upgrades?: BattleNetEquippedItemUpgrade;
+  /*
+   * Raw evidence preserved for later tier-set/embellishment
+   * classification (currently done client-side by the addon's
+   * GearEvidence.enrichEquippedSlot) - never itself interpreted as
+   * "isTier"/"isEmbellished" here.
+   */
+  item?: {
+    id?: number;
+  };
+  bonus_list?: number[];
+  set?: BattleNetEquippedItemSetReference;
 };
 
 export type BattleNetCharacterEquipment = {

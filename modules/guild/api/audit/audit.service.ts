@@ -1,6 +1,7 @@
 import { mapWithConcurrency } from "../../../../apps/api/src/shared/async/mapWithConcurrency.js";
+import type { BattleNetAppTokenService } from "../../../data-platform/api/integrations/battlenet/battlenet-app-token.service.js";
 import type { BattleNetClient } from "../../../data-platform/api/integrations/battlenet/battlenet.client.js";
-import type { RaiderAccessTokenGuard } from "../../../data-platform/api/raider-auth/raider-auth.types.js";
+import type { RaiderSessionGuard } from "../../../data-platform/api/raider-auth/raider-auth.types.js";
 import type { GuildVerificationGuard } from "../verification/verification.types.js";
 import { slugifyRealmName } from "./audit.realm-slug.js";
 import {
@@ -23,19 +24,31 @@ export class GuildAuditService {
     private readonly verification:
       GuildVerificationGuard,
 
+    /*
+     * Only authenticates the caller as a live raider session - it is
+     * NOT the source of the Blizzard access token used below. Phase 0's
+     * live capability test proved Character Equipment works with the
+     * app's own client_credentials token, so an officer's personal
+     * Battle.net OAuth token expiring must never block a guild-wide
+     * audit refresh. requireSession() (unlike requireUsableAccessToken)
+     * doesn't care whether the underlying Blizzard token is still
+     * fresh - exactly the narrower guarantee this needs.
+     */
     private readonly raiderAuth:
-      RaiderAccessTokenGuard
+      RaiderSessionGuard,
+
+    private readonly appTokenService:
+      BattleNetAppTokenService
   ) {}
 
   async refreshAll(
     token: string
   ): Promise<GuildAuditRefreshResult> {
     await this.verification.ensureVerified();
+    await this.raiderAuth.requireSession(token);
 
-    const { accessToken } =
-      await this.raiderAuth.requireUsableAccessToken(
-        token
-      );
+    const accessToken =
+      await this.appTokenService.getAccessToken();
 
     const members =
       await this.repository.findAllMembers();
