@@ -1,9 +1,5 @@
-import type { BattleNetProfessionAssignmentInput } from "../../../../my-syntrack/api/characters/character.types.js";
-import { getProfessionKeyByBattleNetId } from "./battlenet.profession-map.js";
 import type {
-  BattleNetAccountProfile,
-  BattleNetProfessionEntry,
-  BattleNetProfessionsResponse
+  BattleNetAccountProfile
 } from "./battlenet.types.js";
 
 export type ImportableBattleNetCharacter = {
@@ -78,79 +74,4 @@ export function normalizeBattleNetCharacters(
   }
 
   return [...characterMap.values()];
-}
-
-export function createBattleNetProfessionAssignments(
-  data: BattleNetProfessionsResponse,
-  professionIdByKey: Map<string, string>
-): BattleNetProfessionAssignmentInput[] {
-  return (data.primaries ?? [])
-    .map((entry) =>
-      createProfessionAssignment(
-        entry,
-        professionIdByKey
-      )
-    )
-    .filter(
-      (
-        assignment
-      ): assignment is BattleNetProfessionAssignmentInput =>
-        assignment !== null
-    )
-    .slice(0, 2);
-}
-
-function createProfessionAssignment(
-  entry: BattleNetProfessionEntry,
-  professionIdByKey: Map<string, string>
-): BattleNetProfessionAssignmentInput | null {
-  const battleNetProfessionId =
-    entry.profession?.id;
-
-  if (
-    typeof battleNetProfessionId !==
-    "number"
-  ) {
-    return null;
-  }
-
-  const professionKey =
-    getProfessionKeyByBattleNetId(
-      battleNetProfessionId
-    );
-
-  if (!professionKey) {
-    return null;
-  }
-
-  const professionId =
-    professionIdByKey.get(
-      professionKey
-    );
-
-  if (!professionId) {
-    return null;
-  }
-
-  const primaryTier =
-    entry.tiers?.[0];
-
-  const skill =
-    primaryTier?.skill_points ?? 0;
-
-  const maximumSkill =
-    primaryTier?.max_skill_points ?? 0;
-
-  const tierName =
-    primaryTier?.tier?.name;
-
-  return {
-    professionId,
-    skill,
-    knowledgePoints: 0,
-    specializationSummary:
-      tierName
-        ? `${tierName}: ${skill}/${maximumSkill}`
-        : null
-  };
 }

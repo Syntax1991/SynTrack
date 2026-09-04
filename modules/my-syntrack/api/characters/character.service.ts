@@ -1,6 +1,7 @@
 import { prisma } from "../../../../apps/api/src/infrastructure/database/prismaClient.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { ProfessionRepository } from "../../../professions/api/profession.repository.js";
+import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
 import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { CharacterRepository } from "./character.repository.js";
@@ -14,16 +15,20 @@ export class CharacterService {
     private readonly removedCharacterRepository = new RemovedCharacterRepository(),
     private readonly profileAuthorityService = new CharacterProfileAuthorityService(
       new CharacterExternalSnapshotRepository()
+    ),
+    private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
+      new CharacterExternalSnapshotRepository()
     )
   ) {}
 
   /*
-   * Additive read-path integration (Phase B7): each character gets an
-   * extra `profile` field with whatever Blizzard-authoritative public
-   * facts (race/faction/spec/guild/item level) are available, without
-   * touching name/realm/level/className themselves or any existing
-   * consumer's expectations - those stay exactly the Character row's own
-   * values, as before.
+   * Additive read-path integration (Phase B7/C9): each character gets an
+   * extra `profile` field (race/faction/spec/guild/item level) and a
+   * `professions` field (learned profession/tier/skill/max-skill, source
+   * per entry) with whatever Blizzard-authoritative public facts are
+   * available - without touching name/realm/level/className/the existing
+   * `professions` relation (still the addon's own CharacterProfession
+   * rows, untouched) or any existing consumer's expectations.
    */
   async list() {
     const characters = await this.characterRepository.findAll();
@@ -40,7 +45,16 @@ export class CharacterService {
             level: character.level,
             className: character.className
           }
-        )
+        ),
+        authoritativeProfessions:
+          await this.professionAuthorityService.getAuthoritativeProfessions(
+            character.id,
+            character.professions.map((assignment) => ({
+              professionKey: assignment.profession.key,
+              professionName: assignment.profession.name,
+              skill: assignment.skill
+            }))
+          )
       }))
     );
   }

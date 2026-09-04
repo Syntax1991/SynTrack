@@ -12,10 +12,12 @@ export type ExternalSnapshotSource = typeof EXTERNAL_SOURCE_BLIZZARD;
 
 export const EXTERNAL_DOMAIN_EQUIPMENT = "EQUIPMENT";
 export const EXTERNAL_DOMAIN_PROFILE = "PROFILE";
+export const EXTERNAL_DOMAIN_PROFESSIONS = "PROFESSIONS";
 
 export type ExternalSnapshotDomain =
   | typeof EXTERNAL_DOMAIN_EQUIPMENT
-  | typeof EXTERNAL_DOMAIN_PROFILE;
+  | typeof EXTERNAL_DOMAIN_PROFILE
+  | typeof EXTERNAL_DOMAIN_PROFESSIONS;
 
 export type ExternalSnapshotStatus = "SUCCESS" | "FAILED";
 
@@ -168,4 +170,64 @@ export type ProfileRefreshSummary = {
   succeeded: number;
   failed: number;
   results: ProfileRefreshOutcome[];
+};
+
+/*
+ * PUBLIC profession facts only - see wow-class-catalog-style locale
+ * safety notes in blizzard-professions.normalizer.ts. Knowledge Points,
+ * specialization node ranks, weekly quest/Treatise/Treasure state, and
+ * crafting simulation are permanently ADDON-only and never appear here.
+ */
+export type NormalizedBlizzardProfessionEntry = {
+  professionId: number;
+  /** SynTrack's internal Profession.key via the existing Blizzard-id map; null if Blizzard reports a profession not in SynTrack's catalog. */
+  professionKey: string | null;
+  /** Blizzard's localized display name - presentation only, never a join key. */
+  professionName: string | null;
+  /** The resolved CURRENT tier's id (highest numeric tier id) - never the first/last array entry. */
+  tierId: number | null;
+  /** Blizzard's localized tier display name - presentation only, never a join key. */
+  tierName: string | null;
+  skill: number | null;
+  maxSkill: number | null;
+};
+
+export type NormalizedBlizzardProfessionsPayload = {
+  professions: NormalizedBlizzardProfessionEntry[];
+};
+
+export type AuthoritativeProfessionEntry = {
+  source: "BLIZZARD" | "ADDON";
+  professionKey: string | null;
+  professionId: number | null;
+  professionName: string;
+  tierId: number | null;
+  tierName: string | null;
+  skill: number;
+  maxSkill: number | null;
+  fetchedAt: Date | null;
+  isStale: boolean;
+};
+
+export type ProfessionsRefreshOutcome =
+  | {
+      status: "SUCCESS";
+      characterId: string;
+      professionCount: number;
+    }
+  | {
+      status: "FAILED";
+      characterId: string;
+      reason: string;
+    }
+  | {
+      status: "NOT_FOUND";
+      characterId: string;
+    };
+
+export type ProfessionsRefreshSummary = {
+  totalCharacters: number;
+  succeeded: number;
+  failed: number;
+  results: ProfessionsRefreshOutcome[];
 };

@@ -4,13 +4,12 @@ import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js"
 import { CharacterRepository } from "../../../../my-syntrack/api/characters/character.repository.js";
 import { RemovedCharacterRepository } from "../../../../my-syntrack/api/characters/removed-character.repository.js";
 import type { CharacterProfileRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profile-refresh.service.js";
-import { ProfessionRepository } from "../../../../professions/api/profession.repository.js";
+import type { CharacterProfessionRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profession-refresh.service.js";
 import type { RaiderAccessTokenGuard } from "../../raider-auth/raider-auth.types.js";
 import type { BattleNetAppTokenService } from "./battlenet-app-token.service.js";
 import { BattleNetClient } from "./battlenet.client.js";
 import {
   createBattleNetCharacterKey,
-  createBattleNetProfessionAssignments,
   normalizeBattleNetCharacters,
   type ImportableBattleNetCharacter
 } from "./battlenet-import.mapper.js";
@@ -38,9 +37,6 @@ export class BattleNetImportService {
     private readonly characterRepository:
       CharacterRepository,
 
-    private readonly professionRepository:
-      ProfessionRepository,
-
     /*
      * Only ever used for /profile/user/wow (account character discovery)
      * - the one endpoint Phase 0 confirmed genuinely requires a user
@@ -54,7 +50,10 @@ export class BattleNetImportService {
       BattleNetAppTokenService,
 
     private readonly profileRefreshService:
-      CharacterProfileRefreshService
+      CharacterProfileRefreshService,
+
+    private readonly professionRefreshService:
+      CharacterProfessionRefreshService
   ) {}
 
   async listCharacters(
@@ -181,9 +180,6 @@ export class BattleNetImportService {
       );
     }
 
-    const professionIdByKey =
-      await this.createProfessionIdMap();
-
     const outcomes =
       await mapWithConcurrency(
         selectedCharacters,
@@ -191,7 +187,6 @@ export class BattleNetImportService {
         async (character) =>
           this.importCharacter(
             character,
-            professionIdByKey,
             raiderAccountId
           )
       );
@@ -222,8 +217,6 @@ export class BattleNetImportService {
   private async importCharacter(
     character:
       ImportableBattleNetCharacter,
-    professionIdByKey:
-      Map<string, string>,
     raiderAccountId: string
   ): Promise<ImportOutcome> {
     try {
@@ -246,50 +239,48 @@ export class BattleNetImportService {
       }
 
       /*
-       * Professions is a public Character Profile endpoint - Phase 0
-       * proved it works with the app's own client_credentials token, so
-       * this no longer needs the importing user's personal Battle.net
-       * session at all.
+       * Identity only here - no professions payload at all. Public
+       * profession enrichment (learned profession/tier/skill/max-skill)
+       * goes through the same app-token PROFESSIONS refresh pipeline as
+       * a manual refresh, below, instead of writing directly into
+       * CharacterProfession here. The old path
+       * (getCharacterProfessions + a direct upsertFromBattleNet
+       * professions[] write) used to unconditionally overwrite
+       * knowledgePoints with a hardcoded 0 on every re-import, silently
+       * zeroing real addon-captured Knowledge Points - this removes that
+       * write path entirely rather than trying to patch it, since
+       * Knowledge Points must never be touched by anything Blizzard-
+       * sourced (see CharacterProfessionAuthorityService).
        */
-      const appAccessToken =
-        await this.appTokenService.getAccessToken();
-
-      const professionData =
-        await this.client
-          .getCharacterProfessions(
-            appAccessToken,
-            character.realmSlug,
-            character.name
-          );
-
-      const professionAssignments =
-        createBattleNetProfessionAssignments(
-          professionData,
-          professionIdByKey
-        );
-
       const savedCharacter =
         await this.characterRepository
           .upsertFromBattleNet({
             ...character,
             region:
               env.BATTLENET_REGION,
-            professions:
-              professionAssignments
+            professions: []
           });
 
       /*
-       * Public profile enrichment (class/race/faction/spec/guild/item
-       * level) uses the same app-token refresh pipeline as a manual
-       * PROFILE refresh. refreshCharacter() already catches Blizzard-side
-       * failures internally and never throws for them - this try/catch
-       * is an extra guard so that even a genuinely unexpected error here
-       * can never turn an already-successful import into a reported
-       * failure; the character is tracked regardless of whether this
-       * enrichment step succeeds.
+       * Public profile/profession enrichment uses the same app-token
+       * refresh pipelines as a manual refresh. Both already catch
+       * Blizzard-side failures internally and never throw for them -
+       * these try/catches are an extra guard so that even a genuinely
+       * unexpected error here can never turn an already-successful
+       * import into a reported failure; the character is tracked
+       * regardless of whether either enrichment step succeeds.
        */
       try {
         await this.profileRefreshService.refreshCharacter(
+          savedCharacter.id
+        );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
+
+      try {
+        await this.professionRefreshService.refreshCharacter(
           savedCharacter.id
         );
       }
@@ -324,22 +315,6 @@ export class BattleNetImportService {
         }
       };
     }
-  }
-
-  private async createProfessionIdMap():
-    Promise<Map<string, string>> {
-    const professions =
-      await this.professionRepository
-        .findAll();
-
-    return new Map(
-      professions.map(
-        (profession) => [
-          profession.key,
-          profession.id
-        ]
-      )
-    );
   }
 
 }

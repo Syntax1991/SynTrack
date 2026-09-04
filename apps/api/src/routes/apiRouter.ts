@@ -15,6 +15,7 @@ import { tagRouter } from "../../../../modules/my-syntrack/api/tags/tag.routes.j
 import { gearReadinessRouter } from "../../../../modules/my-syntrack/api/gear-readiness/gear-readiness.routes.js";
 import { characterEquipmentRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-equipment-refresh.routes.js";
 import { characterProfileRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-profile-refresh.routes.js";
+import { characterProfessionsRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-professions-refresh.routes.js";
 import { raidTaskRouter } from "../../../../modules/my-syntrack/api/raid-tasks/raid-task.routes.js";
 import { weeklyChecklistRouter } from "../../../../modules/my-syntrack/api/weekly-checklist/weekly-checklist.routes.js";
 import { seasonChecklistRouter } from "../../../../modules/my-syntrack/api/season-checklist/season-checklist.routes.js";
@@ -99,6 +100,11 @@ apiRouter.use(
 apiRouter.use(
   "/characters",
   characterProfileRefreshRouter
+);
+
+apiRouter.use(
+  "/characters",
+  characterProfessionsRefreshRouter
 );
 
 apiRouter.use(
