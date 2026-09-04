@@ -1,6 +1,8 @@
 import { prisma } from "../../../../apps/api/src/infrastructure/database/prismaClient.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { ProfessionRepository } from "../../../professions/api/profession.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { CharacterRepository } from "./character.repository.js";
 import type { CharacterInput } from "./character.types.js";
 import { RemovedCharacterRepository } from "./removed-character.repository.js";
@@ -9,11 +11,38 @@ export class CharacterService {
   constructor(
     private readonly characterRepository: CharacterRepository,
     private readonly professionRepository: ProfessionRepository,
-    private readonly removedCharacterRepository = new RemovedCharacterRepository()
+    private readonly removedCharacterRepository = new RemovedCharacterRepository(),
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
-  list() {
-    return this.characterRepository.findAll();
+  /*
+   * Additive read-path integration (Phase B7): each character gets an
+   * extra `profile` field with whatever Blizzard-authoritative public
+   * facts (race/faction/spec/guild/item level) are available, without
+   * touching name/realm/level/className themselves or any existing
+   * consumer's expectations - those stay exactly the Character row's own
+   * values, as before.
+   */
+  async list() {
+    const characters = await this.characterRepository.findAll();
+
+    return Promise.all(
+      characters.map(async (character) => ({
+        ...character,
+        profile: await this.profileAuthorityService.getAuthoritativeProfile(
+          character.id,
+          {
+            name: character.name,
+            realm: character.realm,
+            region: character.region,
+            level: character.level,
+            className: character.className
+          }
+        )
+      }))
+    );
   }
 
   listRemoved(raiderAccountId: string) {

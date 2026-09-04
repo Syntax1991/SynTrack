@@ -98,6 +98,31 @@ export type BattleNetCharacterProfile = {
     slug?: string;
   };
   guild?: BattleNetGuildReference;
+  /*
+   * character_class/race/active_spec carry a stable numeric id plus a
+   * display name in whichever locale BATTLENET_LOCALE is configured for
+   * (this deployment runs de_DE) - never assume .name is English.
+   * faction.type ("ALLIANCE" | "HORDE") is the one locale-independent
+   * field on faction; faction.name is localized like the others.
+   */
+  character_class?: {
+    id?: number;
+    name?: string;
+  };
+  race?: {
+    id?: number;
+    name?: string;
+  };
+  faction?: {
+    type?: string;
+    name?: string;
+  };
+  active_spec?: {
+    id?: number;
+    name?: string;
+  };
+  average_item_level?: number;
+  equipped_item_level?: number;
 };
 
 export type BattleNetGuildRosterMember = {
