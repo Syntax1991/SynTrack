@@ -92,19 +92,22 @@
 
 .dense-matrix th,
 .dense-matrix td {
-  padding: 6px 12px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--border);
-  font-size: 0.76rem;
-  line-height: 1.35;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  vertical-align: middle;
 }
 
 .dense-matrix thead th {
   position: sticky;
   top: 0;
   z-index: 2;
+  padding-top: 11px;
+  padding-bottom: 11px;
   background: var(--surface-elevated);
-  color: var(--text-muted);
-  font-size: 0.66rem;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
   font-weight: 750;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -182,18 +185,18 @@
 .matrix-identity {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
   white-space: nowrap;
 }
 
 .matrix-identity strong {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
 .matrix-character-link {
   color: inherit;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
 }
@@ -204,7 +207,7 @@
 
 .matrix-identity span {
   color: var(--text-muted);
-  font-size: 0.66rem;
+  font-size: 0.72rem;
 }
 
 /*
@@ -263,7 +266,7 @@
 
 .matrix-source {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   text-transform: lowercase;
   opacity: 0.75;
 }

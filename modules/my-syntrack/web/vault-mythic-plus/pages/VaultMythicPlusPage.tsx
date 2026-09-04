@@ -43,11 +43,6 @@ export function VaultMythicPlusPage() {
       <WeekliesTabNav />
 
       <PageHeader
-        actions={
-          <Link className="button button-secondary" to="/weekly-checklist">
-            Weeklies
-          </Link>
-        }
         description="Automatic Great Vault and Mythic+ progress from your synced WoW data."
         eyebrow="WEEKLY GAMEPLAY DETAIL"
         title="Vault / Mythic+"
