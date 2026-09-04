@@ -105,7 +105,7 @@
   z-index: 2;
   padding-top: 11px;
   padding-bottom: 11px;
-  background: var(--surface-elevated);
+  background: var(--surface-control);
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 750;
@@ -131,6 +131,7 @@
 
 .dense-matrix thead th:first-child {
   z-index: 3;
+  background: var(--surface-control);
 }
 
 .dense-matrix tbody tr:hover td:first-child {

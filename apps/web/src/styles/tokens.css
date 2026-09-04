@@ -2,6 +2,10 @@
   --background: #0a0c11;
   --surface: #12151d;
   --surface-elevated: #171b25;
+  /* A step lighter than --surface-elevated - for table headers and other
+     "control" chrome that needs to read as distinct from the panel body
+     it sits on, without introducing a new hue. */
+  --surface-control: #1c212d;
   --surface-hover: #1d2230;
   /* Matches the SynTrack logo asset's native background exactly, so the
      sidebar surface and the logo image blend with no visible seam. */

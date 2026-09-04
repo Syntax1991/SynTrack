@@ -16,12 +16,12 @@ export function OverviewProfessionWork({
   return (
     <section className="panel overview-decision-panel">
       <div className="overview-decision-section-head">
-        <p className="eyebrow">PROFESSION WORK</p>
+        <p className="panel-title">PROFESSION WORK</p>
         <Link className="overview-decision-section-link" to="/professions">
           Open Professions
         </Link>
       </div>
-      <table className="dense-matrix overview-decision-matrix">
+      <table className="dense-matrix overview-decision-matrix overview-decision-matrix-compact">
         <thead>
           <tr>
             <th className="overview-col-character">Character</th>

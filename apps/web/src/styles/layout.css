@@ -13,12 +13,14 @@
   padding: 32px 40px 60px;
 }
 
-/* Desktop-first content container: bounded, but left-anchored rather
-   than centered - the gap to the sidebar is always this padding, not
-   that plus however much extra centering margin an ultra-wide viewport
-   would otherwise add. Dense pages may opt out. */
+/* Desktop-first content container: bounded and centered in the main
+   area. A flat left-anchor was tried and rejected - on wide/ultrawide
+   monitors it dumps 100% of the leftover width onto the right edge as
+   a single lopsided gap, which reads as broken, not spacious. Centered
+   the leftover splits evenly, which reads as an intentional margin. */
 .content-container {
-  max-width: 1520px;
+  width: min(100%, 1520px);
+  margin-inline: auto;
 }
 
 .page-header {
@@ -44,6 +46,17 @@
   color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.6;
+}
+
+/* An optional supplementary summary line (e.g. Season's goal counts) -
+   stays part of the header's left column instead of floating as its
+   own disconnected element below the header. */
+.page-summary {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .stats-grid {
