@@ -186,8 +186,19 @@
   gap: 12px;
 }
 
+/*
+ * Every real consumer already sets its own padding via a modifier
+ * class (.overview-decision-panel, .season-matrix-panel, etc.), which
+ * fully overrides this. This default only takes effect where a panel
+ * has no such modifier (or one that forgot padding) - it existed as
+ * plain 0, which let a first-child eyebrow/label render 1px from the
+ * top border, inside the curve of the 18px border-radius, so it
+ * visually collided with the rounded corner. A panel should never be
+ * able to render its content flush against its own border by default.
+ */
 .panel {
   margin-top: 24px;
+  padding: 18px 20px 16px;
   overflow: hidden;
   border:
     1px solid var(--border);

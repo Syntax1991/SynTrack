@@ -221,19 +221,19 @@
  * or action string must never silently disappear.
  */
 .profession-work-col-character {
-  width: 18%;
-}
-
-.profession-work-col-profession {
   width: 14%;
 }
 
+.profession-work-col-profession {
+  width: 11%;
+}
+
 .profession-work-col-compact {
-  width: 4.5%;
+  width: 8%;
 }
 
 .profession-work-col-action {
-  width: 36.5%;
+  width: 19%;
 }
 
 .profession-work-identity {
