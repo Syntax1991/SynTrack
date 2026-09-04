@@ -104,4 +104,70 @@ describe("normalizeBlizzardProfessions", () => {
   it("tolerates a fully empty response without throwing", () => {
     expect(normalizeBlizzardProfessions({})).toEqual({ professions: [] });
   });
+
+  it("regression guard: pins a known profession to its verified Midnight tier id even when a higher-numbered future tier is present", () => {
+    // Alchemy (171) has a live-verified Midnight tier id (2906). A naive
+    // highest-tier-id heuristic would pick the synthetic id 9999999
+    // "Some Future Expansion Alchemy" tier below instead - this test
+    // fails if that regression is reintroduced.
+    const result = normalizeBlizzardProfessions({
+      primaries: [
+        {
+          profession: { id: 171, name: "Alchemy" },
+          tiers: [
+            { tier: { id: 2906, name: "Midnight Alchemy" }, skill_points: 97, max_skill_points: 100 },
+            { tier: { id: 9999999, name: "Some Future Expansion Alchemy" }, skill_points: 1, max_skill_points: 50 }
+          ]
+        }
+      ]
+    });
+
+    expect(result.professions[0]).toMatchObject({
+      tierId: 2906,
+      tierName: "Midnight Alchemy",
+      skill: 97,
+      maxSkill: 100
+    });
+  });
+
+  it("falls back to the highest-tier-id heuristic for a profession with no verified Midnight tier id", () => {
+    // Blacksmithing (164) has no entry in the verified Midnight-tier map -
+    // only real tracked characters could confirm one, and none tracks
+    // Blacksmithing today - so the heuristic is still expected here.
+    const result = normalizeBlizzardProfessions({
+      primaries: [
+        {
+          profession: { id: 164, name: "Blacksmithing" },
+          tiers: [
+            { tier: { id: 2485 }, skill_points: 1, max_skill_points: 300 },
+            { tier: { id: 2920 }, skill_points: 50, max_skill_points: 100 }
+          ]
+        }
+      ]
+    });
+
+    expect(result.professions[0]?.tierId).toBe(2920);
+  });
+
+  it("falls back to the highest-tier-id heuristic when a known profession's verified Midnight tier isn't present in this response", () => {
+    // Alchemy (171) is a known profession, but this character's response
+    // (e.g. never touched Midnight Alchemy content) has no tier matching
+    // the verified id 2906 - must not resolve to null just because the
+    // pinned id is absent.
+    const result = normalizeBlizzardProfessions({
+      primaries: [
+        {
+          profession: { id: 171, name: "Alchemy" },
+          tiers: [
+            { tier: { id: 2823, name: "Dragon Isles Alchemy" }, skill_points: 100, max_skill_points: 100 }
+          ]
+        }
+      ]
+    });
+
+    expect(result.professions[0]).toMatchObject({
+      tierId: 2823,
+      tierName: "Dragon Isles Alchemy"
+    });
+  });
 });

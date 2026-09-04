@@ -6,6 +6,7 @@ import { CharacterEquipmentRefreshRepository } from "./character-equipment-refre
 import { CharacterProfessionRefreshService } from "./character-profession-refresh.service.js";
 import { CharacterProfessionsRefreshController } from "./character-professions-refresh.controller.js";
 import { CharacterExternalSnapshotRepository } from "./character-external-snapshot.repository.js";
+import { raiderAuthService } from "../../../data-platform/api/raider-auth/raider-auth.routes.js";
 
 const appTokenService = new BattleNetAppTokenService();
 const battleNetClient = new BattleNetClient();
@@ -19,7 +20,7 @@ const service = new CharacterProfessionRefreshService(
   characterLookup
 );
 
-const controller = new CharacterProfessionsRefreshController(service);
+const controller = new CharacterProfessionsRefreshController(service, raiderAuthService);
 
 export const characterProfessionsRefreshRouter = Router();
 

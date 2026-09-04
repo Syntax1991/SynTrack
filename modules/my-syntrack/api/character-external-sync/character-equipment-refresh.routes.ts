@@ -6,6 +6,7 @@ import { CharacterEquipmentRefreshController } from "./character-equipment-refre
 import { CharacterEquipmentRefreshRepository } from "./character-equipment-refresh.repository.js";
 import { CharacterEquipmentRefreshService } from "./character-equipment-refresh.service.js";
 import { CharacterExternalSnapshotRepository } from "./character-external-snapshot.repository.js";
+import { raiderAuthService } from "../../../data-platform/api/raider-auth/raider-auth.routes.js";
 
 const appTokenService = new BattleNetAppTokenService();
 const battleNetClient = new BattleNetClient();
@@ -19,7 +20,7 @@ const service = new CharacterEquipmentRefreshService(
   characterLookup
 );
 
-const controller = new CharacterEquipmentRefreshController(service);
+const controller = new CharacterEquipmentRefreshController(service, raiderAuthService);
 
 export const characterEquipmentRefreshRouter = Router();
 

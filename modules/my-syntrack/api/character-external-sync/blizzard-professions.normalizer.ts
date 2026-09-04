@@ -1,4 +1,4 @@
-import { getProfessionKeyByBattleNetId } from "../../../data-platform/api/integrations/battlenet/battlenet.profession-map.js";
+import { getKnownMidnightTierId, getProfessionKeyByBattleNetId } from "../../../data-platform/api/integrations/battlenet/battlenet.profession-map.js";
 import type {
   BattleNetProfessionEntry,
   BattleNetProfessionsResponse,
@@ -11,16 +11,38 @@ import type { NormalizedBlizzardProfessionEntry, NormalizedBlizzardProfessionsPa
  * (Classic, Dragonflight, Khaz Algar, Midnight, ...), NOT just the
  * current one - and live-verified (2026-09-04, real characters) they are
  * NOT guaranteed to be in id order (Cooking returned Cataclysm's tier
- * before Classic's). Tier ids are monotonically assigned as expansions
- * ship though - live-verified across 7 real characters and 9 professions
- * that the highest numeric tier.id is always the current-expansion one,
- * regardless of localized tier.name (this deployment's de_DE locale
- * still showed literal "Midnight ..." tier names in this sample, but
- * that is NOT assumed reliable - the id is what business logic keys on).
+ * before Classic's).
+ *
+ * Highest-numeric-tier-id is only a HEURISTIC, not a documented Blizzard
+ * contract: tier ids have so far been assigned monotonically as
+ * expansions ship, but nothing guarantees a future expansion's tier id
+ * stays higher than Midnight's forever, or that Blizzard never inserts a
+ * higher id for unrelated reasons. For a profession where SynTrack has a
+ * live-verified, explicit Midnight tier.id (getKnownMidnightTierId), that
+ * id is preferred outright when present in the response - this is what
+ * keeps SynTrack reading Midnight skill data even after some future
+ * expansion adds a tier with a higher numeric id, for as long as SynTrack
+ * is still configured for the Midnight season. The heuristic remains only
+ * as a fallback: for professions with no verified Midnight id (not yet
+ * observed against a real tracked character), and for a known profession
+ * whose Midnight tier isn't present at all in a given character's
+ * response (e.g. never touched that profession's Midnight content) -
+ * regression-guarded in blizzard-professions.normalizer.test.ts.
  */
 function resolveCurrentTier(
-  tiers: BattleNetProfessionTier[]
+  tiers: BattleNetProfessionTier[],
+  professionId: number
 ): BattleNetProfessionTier | null {
+  const knownMidnightTierId = getKnownMidnightTierId(professionId);
+
+  if (knownMidnightTierId !== null) {
+    const pinned = tiers.find((tier) => tier.tier?.id === knownMidnightTierId);
+
+    if (pinned) {
+      return pinned;
+    }
+  }
+
   let current: BattleNetProfessionTier | null = null;
   let currentId = -Infinity;
 
@@ -45,7 +67,7 @@ function normalizeEntry(
     return null;
   }
 
-  const currentTier = resolveCurrentTier(entry.tiers ?? []);
+  const currentTier = resolveCurrentTier(entry.tiers ?? [], professionId);
 
   return {
     professionId,
