@@ -116,6 +116,7 @@ tbody tr:last-child td {
   background: transparent;
   font-size: 0.8rem;
   font-weight: 650;
+  white-space: normal;
 }
 
 .text-button:hover {

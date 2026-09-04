@@ -17,7 +17,6 @@
   color: var(--text-secondary);
   font-size: 0.76rem;
   font-weight: 600;
-  white-space: nowrap;
 }
 
 .matrix-toolbar-actions {
@@ -154,10 +153,13 @@
   white-space: nowrap;
 }
 
+/* Real instruction text, not a short label - nowrap let one long
+   value stretch the table past its scroll container. Wrap instead. */
 .matrix-col-action {
+  max-width: 280px;
   min-width: 120px;
   text-align: right;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .matrix-col-checkbox {
