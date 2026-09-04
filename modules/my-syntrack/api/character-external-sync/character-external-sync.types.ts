@@ -13,11 +13,13 @@ export type ExternalSnapshotSource = typeof EXTERNAL_SOURCE_BLIZZARD;
 export const EXTERNAL_DOMAIN_EQUIPMENT = "EQUIPMENT";
 export const EXTERNAL_DOMAIN_PROFILE = "PROFILE";
 export const EXTERNAL_DOMAIN_PROFESSIONS = "PROFESSIONS";
+export const EXTERNAL_DOMAIN_MYTHIC_PLUS = "MYTHIC_PLUS";
 
 export type ExternalSnapshotDomain =
   | typeof EXTERNAL_DOMAIN_EQUIPMENT
   | typeof EXTERNAL_DOMAIN_PROFILE
-  | typeof EXTERNAL_DOMAIN_PROFESSIONS;
+  | typeof EXTERNAL_DOMAIN_PROFESSIONS
+  | typeof EXTERNAL_DOMAIN_MYTHIC_PLUS;
 
 export type ExternalSnapshotStatus = "SUCCESS" | "FAILED";
 
@@ -230,4 +232,92 @@ export type ProfessionsRefreshSummary = {
   succeeded: number;
   failed: number;
   results: ProfessionsRefreshOutcome[];
+};
+
+/*
+ * PUBLIC/SEASONAL Mythic+ facts only - see Phase D2's hard authority
+ * boundary. This domain never carries current-week Vault run
+ * counts/progress, Vault slot thresholds, or anything Great Vault reads -
+ * those remain permanently ADDON-only in CharacterWeeklyGameplaySnapshot/
+ * CharacterWeeklyVaultActivity/CharacterWeeklyMythicPlusCapture, a
+ * completely separate model family this module never imports.
+ * `dungeonId` is the same stable Blizzard Challenge Mode Map id space the
+ * addon already reports as `mapChallengeModeId` - no separate SynTrack
+ * dungeon catalog exists today (verified during the Phase D audit), so
+ * none is invented here; `dungeonName` is Blizzard's raw (possibly
+ * localized) display text, presentation only, never a join key.
+ * `periodId`/`seasonIds` are Blizzard's own weekly-period/season
+ * identifiers, kept as raw evidence - never to be confused with
+ * SynTrack's own weekly periodKey used by the addon's gameplay snapshots.
+ */
+export type NormalizedBlizzardMythicPlusBestRun = {
+  dungeonId: number | null;
+  dungeonName: string | null;
+  keystoneLevel: number | null;
+  durationMs: number | null;
+  /** Raw epoch milliseconds, as Blizzard reported it - evidence, not yet interpreted. */
+  completedTimestamp: number | null;
+  /**
+   * Blizzard's own `is_completed_within_time` - passed through as-is.
+   * Never derived/fabricated when Blizzard omits it (stays null).
+   */
+  completedInTime: boolean | null;
+  affixIds: number[];
+  runRating: number | null;
+  mapRating: number | null;
+};
+
+export type NormalizedBlizzardMythicPlusPayload = {
+  /**
+   * False only when Blizzard confirmed (a clean 404) that this character
+   * has no Mythic Keystone profile at all - distinct from a thrown
+   * network/5xx error, which never reaches the normalizer and is recorded
+   * as a FAILED attempt instead (see CharacterMythicPlusRefreshService).
+   */
+  hasProfile: boolean;
+  /** Math.floor(current_mythic_rating.rating) - see rounding-rule note in the normalizer. */
+  rating: number | null;
+  /** The unrounded Blizzard value, kept as evidence. */
+  rawRating: number | null;
+  periodId: number | null;
+  seasonIds: number[];
+  bestRuns: NormalizedBlizzardMythicPlusBestRun[];
+};
+
+export type AuthoritativeMythicPlusBestRun = NormalizedBlizzardMythicPlusBestRun;
+
+export type AuthoritativeMythicPlusResult = {
+  source: "BLIZZARD" | "ADDON" | "NONE";
+  rating: number | null;
+  /** True only when source="BLIZZARD" and Blizzard confirmed a real profile exists. */
+  hasProfile: boolean;
+  /** Always empty unless source="BLIZZARD" - Blizzard is the only source of per-run evidence in this domain. */
+  bestRuns: AuthoritativeMythicPlusBestRun[];
+  periodId: number | null;
+  fetchedAt: Date | null;
+  isStale: boolean;
+};
+
+export type MythicPlusRefreshOutcome =
+  | {
+      status: "SUCCESS";
+      characterId: string;
+      hasMythicPlusProfile: boolean;
+      bestRunCount: number;
+    }
+  | {
+      status: "FAILED";
+      characterId: string;
+      reason: string;
+    }
+  | {
+      status: "NOT_FOUND";
+      characterId: string;
+    };
+
+export type MythicPlusRefreshSummary = {
+  totalCharacters: number;
+  succeeded: number;
+  failed: number;
+  results: MythicPlusRefreshOutcome[];
 };

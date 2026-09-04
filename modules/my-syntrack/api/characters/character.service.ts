@@ -3,6 +3,7 @@ import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { ProfessionRepository } from "../../../professions/api/profession.repository.js";
 import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
 import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { CharacterMythicPlusAuthorityService } from "../character-external-sync/character-mythic-plus-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { CharacterRepository } from "./character.repository.js";
 import type { CharacterInput } from "./character.types.js";
@@ -18,17 +19,25 @@ export class CharacterService {
     ),
     private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
       new CharacterExternalSnapshotRepository()
+    ),
+    private readonly mythicPlusAuthorityService = new CharacterMythicPlusAuthorityService(
+      new CharacterExternalSnapshotRepository()
     )
   ) {}
 
   /*
-   * Additive read-path integration (Phase B7/C9): each character gets an
-   * extra `profile` field (race/faction/spec/guild/item level) and a
-   * `professions` field (learned profession/tier/skill/max-skill, source
-   * per entry) with whatever Blizzard-authoritative public facts are
-   * available - without touching name/realm/level/className/the existing
-   * `professions` relation (still the addon's own CharacterProfession
-   * rows, untouched) or any existing consumer's expectations.
+   * Additive read-path integration (Phase B7/C9/D10): each character gets
+   * an extra `profile` field (race/faction/spec/guild/item level), an
+   * `authoritativeProfessions` field (learned profession/tier/skill/max-
+   * skill, source per entry), and an `authoritativeMythicPlus` field
+   * (PUBLIC/SEASONAL rating + current-period best runs, source per
+   * result) with whatever Blizzard-authoritative public facts are
+   * available - without touching name/realm/level/className, the
+   * existing `professions` relation (still the addon's own
+   * CharacterProfession rows, untouched), or any current-week Vault/
+   * Weeklies gameplay data (permanently addon-only, see Phase D8's Great
+   * Vault firewall - this service never imports the weekly-gameplay
+   * module).
    */
   async list() {
     const characters = await this.characterRepository.findAll();
@@ -54,6 +63,10 @@ export class CharacterService {
               professionName: assignment.profession.name,
               skill: assignment.skill
             }))
+          ),
+        authoritativeMythicPlus:
+          await this.mythicPlusAuthorityService.getAuthoritativeMythicPlus(
+            character.id
           )
       }))
     );

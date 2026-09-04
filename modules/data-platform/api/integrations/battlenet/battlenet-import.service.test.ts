@@ -57,6 +57,12 @@ function createHarness() {
     characterId: "char-1",
     professionCount: 2
   }));
+  const refreshMythicPlus = vi.fn(async () => ({
+    status: "SUCCESS",
+    characterId: "char-1",
+    hasMythicPlusProfile: true,
+    bestRunCount: 1
+  }));
 
   const service = new BattleNetImportService(
     { getAccountProfile } as never,
@@ -64,7 +70,8 @@ function createHarness() {
     { requireUsableAccessToken } as never,
     { getAccessToken: getAppAccessToken } as never,
     { refreshCharacter: refreshProfile } as never,
-    { refreshCharacter: refreshProfessions } as never
+    { refreshCharacter: refreshProfessions } as never,
+    { refreshCharacter: refreshMythicPlus } as never
   );
 
   return {
@@ -74,7 +81,8 @@ function createHarness() {
     getAppAccessToken,
     upsertFromBattleNet,
     refreshProfile,
-    refreshProfessions
+    refreshProfessions,
+    refreshMythicPlus
   };
 }
 
@@ -104,16 +112,17 @@ describe("BattleNetImportService token usage", () => {
     );
   });
 
-  it("triggers both a PROFILE and a PROFESSIONS refresh for the newly-imported character via the app-token pipelines", async () => {
+  it("triggers PROFILE, PROFESSIONS, and MYTHIC_PLUS refreshes for the newly-imported character via the app-token pipelines", async () => {
     const harness = createHarness();
 
     await harness.service.importCharacters("session-token", ["1:antonidas"]);
 
     expect(harness.refreshProfile).toHaveBeenCalledWith("char-1");
     expect(harness.refreshProfessions).toHaveBeenCalledWith("char-1");
+    expect(harness.refreshMythicPlus).toHaveBeenCalledWith("char-1");
   });
 
-  it("still reports the character as imported even if profile or profession enrichment fails", async () => {
+  it("still reports the character as imported even if profile, profession, or Mythic+ enrichment fails", async () => {
     const requireUsableAccessToken = vi.fn(async () => ({
       accessToken: "user-token",
       raiderAccountId: "raider-1"
@@ -132,6 +141,11 @@ describe("BattleNetImportService token usage", () => {
       {
         refreshCharacter: vi.fn(async () => {
           throw new Error("unexpected profession refresh bug");
+        })
+      } as never,
+      {
+        refreshCharacter: vi.fn(async () => {
+          throw new Error("unexpected mythic+ refresh bug");
         })
       } as never
     );

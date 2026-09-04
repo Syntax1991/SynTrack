@@ -236,3 +236,57 @@ export type BattleNetImportResult = {
   importedCharacters: number;
   failedCharacters: BattleNetImportFailure[];
 };
+
+/*
+ * Shape confirmed against a real live response (2026-09-04, Synblast/
+ * Antonidas/EU) rather than assumed from Blizzard's docs alone.
+ * `current_period` is keyed to a WEEKLY period id (mythic-keystone/period/
+ * {id}) - `best_runs` under it is the best completed run PER DUNGEON for
+ * THAT WEEKLY PERIOD, never the season's all-time best and never
+ * SynTrack's own Vault run count/list. `seasons[]` links to a per-season
+ * sub-resource this phase does not fetch (see Phase D9's documented scope
+ * decision) - present here only so a snapshot can record which seasons
+ * Blizzard says exist without this phase acting on it.
+ */
+export type BattleNetMythicKeystoneAffix = {
+  id?: number;
+  name?: string;
+};
+
+export type BattleNetMythicKeystoneRating = {
+  rating?: number;
+};
+
+export type BattleNetMythicKeystoneDungeon = {
+  id?: number;
+  name?: string;
+};
+
+export type BattleNetMythicKeystoneBestRun = {
+  completed_timestamp?: number;
+  duration?: number;
+  keystone_level?: number;
+  keystone_affixes?: BattleNetMythicKeystoneAffix[];
+  members?: unknown[];
+  dungeon?: BattleNetMythicKeystoneDungeon;
+  is_completed_within_time?: boolean;
+  mythic_rating?: BattleNetMythicKeystoneRating;
+  map_rating?: BattleNetMythicKeystoneRating;
+};
+
+export type BattleNetMythicKeystonePeriod = {
+  period?: {
+    id?: number;
+  };
+  best_runs?: BattleNetMythicKeystoneBestRun[];
+};
+
+export type BattleNetMythicKeystoneSeasonReference = {
+  id?: number;
+};
+
+export type BattleNetMythicKeystoneProfile = {
+  current_period?: BattleNetMythicKeystonePeriod;
+  seasons?: BattleNetMythicKeystoneSeasonReference[];
+  current_mythic_rating?: BattleNetMythicKeystoneRating;
+};

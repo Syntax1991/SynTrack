@@ -1,23 +1,10 @@
 import { env } from "../../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
-import type {
-  BattleNetAccountProfile,
-  BattleNetCharacterEquipment,
-  BattleNetCharacterProfile,
-  BattleNetGuildRoster,
-  BattleNetProfessionsResponse,
-  BattleNetTokenResponse,
-  BattleNetUserInfo
-} from "./battlenet.types.js";
+import type { BattleNetAccountProfile, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetGuildRoster, BattleNetMythicKeystoneProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
 
-const authorizationUrl =
-  "https://oauth.battle.net/authorize";
-
-const tokenUrl =
-  "https://oauth.battle.net/token";
-
-const userInfoUrl =
-  "https://oauth.battle.net/userinfo";
+const authorizationUrl = "https://oauth.battle.net/authorize";
+const tokenUrl = "https://oauth.battle.net/token";
+const userInfoUrl = "https://oauth.battle.net/userinfo";
 
 export class BattleNetClient {
   createAuthorizationUrl(
@@ -234,6 +221,23 @@ export class BattleNetClient {
       BattleNetCharacterEquipment
     >(
       `/profile/wow/character/${encodedRealm}/${encodedName}/equipment`,
+      accessToken,
+      true
+    );
+  }
+
+  // null = no Mythic Keystone profile (same allowNotFound contract as
+  // getCharacterProfile/getCharacterEquipment; genuine "never done M+").
+  async getCharacterMythicKeystoneProfile(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string
+  ): Promise<BattleNetMythicKeystoneProfile | null> {
+    const encodedRealm = encodeURIComponent(realmSlug.toLowerCase());
+    const encodedName = encodeURIComponent(characterName.toLowerCase());
+
+    return this.getProfileResource<BattleNetMythicKeystoneProfile>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile`,
       accessToken,
       true
     );

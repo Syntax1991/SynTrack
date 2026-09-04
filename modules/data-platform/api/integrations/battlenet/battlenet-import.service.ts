@@ -5,6 +5,7 @@ import { CharacterRepository } from "../../../../my-syntrack/api/characters/char
 import { RemovedCharacterRepository } from "../../../../my-syntrack/api/characters/removed-character.repository.js";
 import type { CharacterProfileRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profile-refresh.service.js";
 import type { CharacterProfessionRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profession-refresh.service.js";
+import type { CharacterMythicPlusRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-mythic-plus-refresh.service.js";
 import type { RaiderAccessTokenGuard } from "../../raider-auth/raider-auth.types.js";
 import type { BattleNetAppTokenService } from "./battlenet-app-token.service.js";
 import { BattleNetClient } from "./battlenet.client.js";
@@ -53,7 +54,10 @@ export class BattleNetImportService {
       CharacterProfileRefreshService,
 
     private readonly professionRefreshService:
-      CharacterProfessionRefreshService
+      CharacterProfessionRefreshService,
+
+    private readonly mythicPlusRefreshService:
+      CharacterMythicPlusRefreshService
   ) {}
 
   async listCharacters(
@@ -281,6 +285,15 @@ export class BattleNetImportService {
 
       try {
         await this.professionRefreshService.refreshCharacter(
+          savedCharacter.id
+        );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
+
+      try {
+        await this.mythicPlusRefreshService.refreshCharacter(
           savedCharacter.id
         );
       }
