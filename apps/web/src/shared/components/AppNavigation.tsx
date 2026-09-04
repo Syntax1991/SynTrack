@@ -153,11 +153,17 @@ export function AppNavigation() {
             }
             to="/"
           >
-            <img
-              alt="SynTrack — Track Together. Progress Everywhere."
-              className="sidebar-logo"
-              src="/branding/syntrack-logo.png"
-            />
+            <span className="sidebar-logo-frame">
+              <img
+                alt="SynTrack"
+                className="sidebar-logo"
+                src="/branding/syntrack-logo.png"
+              />
+            </span>
+
+            <span className="sidebar-tagline">
+              Track Together. Progress Everywhere.
+            </span>
           </Link>
 
           <button

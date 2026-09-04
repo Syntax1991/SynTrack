@@ -27,10 +27,35 @@
   min-width: 0;
 }
 
+/*
+ * The supplied logo is one wide horizontal lockup (icon + wordmark +
+ * tagline) sized for a banner-width context. Shrinking the WHOLE image
+ * to fit the sidebar's ~180px inner width makes the tagline's raster
+ * text a few px tall and unreadable no matter how sharp the source
+ * file is — this frame crops the image (via CSS, not a second asset)
+ * to just the icon+wordmark, sized legibly, and the tagline below is
+ * real text instead: same exact copy, but never blurry.
+ */
+.sidebar-logo-frame {
+  display: block;
+  overflow: hidden;
+  aspect-ratio: 720 / 113;
+}
+
 .sidebar-logo {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.sidebar-tagline {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-muted);
+  font-size: 0.58rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 
 .sidebar-navigation {
