@@ -19,21 +19,23 @@ const freshSnapshotWithProfile = {
     hasProfile: true,
     rating: 3125,
     rawRating: 3125.5818,
-    periodId: 1079,
-    seasonIds: [15],
-    bestRuns: [
-      {
-        dungeonId: 585,
-        dungeonName: "Arena der Leerennarbe",
-        keystoneLevel: 11,
-        durationMs: 1043693,
-        completedTimestamp: 1788361477000,
-        completedInTime: true,
-        affixIds: [160, 10, 9],
-        runRating: 350,
-        mapRating: 395.27353
-      }
-    ]
+    currentPeriod: {
+      periodId: 1079,
+      bestRuns: [
+        {
+          dungeonId: 585,
+          dungeonName: "Arena der Leerennarbe",
+          keystoneLevel: 11,
+          durationMs: 1043693,
+          completedTimestamp: 1788361477000,
+          completedInTime: true,
+          affixIds: [160, 10, 9],
+          runRating: 350,
+          mapRating: 395.27353
+        }
+      ]
+    },
+    season: { seasonId: 18, bestRuns: [] }
   },
   fetchedAt: new Date(),
   lastStatus: "SUCCESS" as const,
@@ -51,7 +53,7 @@ describe("CharacterMythicPlusAuthorityService", () => {
       source: "BLIZZARD",
       rating: 3125,
       hasProfile: true,
-      bestRuns: freshSnapshotWithProfile.payload.bestRuns,
+      bestRuns: freshSnapshotWithProfile.payload.currentPeriod.bestRuns,
       periodId: 1079,
       fetchedAt: freshSnapshotWithProfile.fetchedAt,
       isStale: false
@@ -76,7 +78,14 @@ describe("CharacterMythicPlusAuthorityService", () => {
 
   it("falls back to ADDON (not a fabricated null) when Blizzard confirms no profile but the addon has a real rating - a live-observed Blizzard 404 does not distinguish transient unavailability from genuine absence", async () => {
     const harness = createHarness(
-      { ...freshSnapshotWithProfile, payload: { ...freshSnapshotWithProfile.payload, hasProfile: false, bestRuns: [] } },
+      {
+        ...freshSnapshotWithProfile,
+        payload: {
+          ...freshSnapshotWithProfile.payload,
+          hasProfile: false,
+          currentPeriod: { periodId: null, bestRuns: [] }
+        }
+      },
       3100
     );
 

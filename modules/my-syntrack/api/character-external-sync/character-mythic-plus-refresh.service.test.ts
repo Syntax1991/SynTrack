@@ -4,7 +4,12 @@ import type { RefreshableCharacter } from "./character-equipment-refresh.service
 
 function createHarness(
   characters: RefreshableCharacter[],
-  options: { mythicPlusResult?: unknown; mythicPlusError?: Error } = {}
+  options: {
+    mythicPlusResult?: unknown;
+    mythicPlusError?: Error;
+    seasonResult?: unknown;
+    seasonError?: Error;
+  } = {}
 ) {
   const getAccessToken = vi.fn(async () => "app-token");
   const getCharacterMythicKeystoneProfile = vi.fn(async () => {
@@ -14,12 +19,19 @@ function createHarness(
 
     return "mythicPlusResult" in options ? options.mythicPlusResult : null;
   });
+  const getCharacterMythicKeystoneProfileSeason = vi.fn(async () => {
+    if (options.seasonError) {
+      throw options.seasonError;
+    }
+
+    return "seasonResult" in options ? options.seasonResult : null;
+  });
   const recordSuccess = vi.fn(async () => {});
   const recordFailure = vi.fn(async () => {});
 
   const service = new CharacterMythicPlusRefreshService(
     { getAccessToken } as never,
-    { getCharacterMythicKeystoneProfile } as never,
+    { getCharacterMythicKeystoneProfile, getCharacterMythicKeystoneProfileSeason } as never,
     { recordSuccess, recordFailure } as never,
     {
       findById: vi.fn(
@@ -34,6 +46,7 @@ function createHarness(
     service,
     getAccessToken,
     getCharacterMythicKeystoneProfile,
+    getCharacterMythicKeystoneProfileSeason,
     recordSuccess,
     recordFailure
   };
@@ -69,14 +82,19 @@ describe("CharacterMythicPlusRefreshService", () => {
     expect(harness.getAccessToken).not.toHaveBeenCalled();
   });
 
-  it("persists a successful BLIZZARD/MYTHIC_PLUS snapshot with the normalized payload", async () => {
+  it("persists a successful BLIZZARD/MYTHIC_PLUS snapshot with both currentPeriod and season data", async () => {
     const harness = createHarness([character], {
       mythicPlusResult: {
         current_mythic_rating: { rating: 3125.5818 },
         current_period: {
           period: { id: 1079 },
           best_runs: [{ keystone_level: 11, dungeon: { id: 585 } }]
-        }
+        },
+        seasons: [{ id: 18 }, { id: 14 }]
+      },
+      seasonResult: {
+        season: { id: 18 },
+        best_runs: [{ keystone_level: 12, dungeon: { id: 587 }, is_completed_within_time: true }]
       }
     });
 
@@ -86,13 +104,64 @@ describe("CharacterMythicPlusRefreshService", () => {
       status: "SUCCESS",
       characterId: "char-1",
       hasMythicPlusProfile: true,
-      bestRunCount: 1
+      currentPeriodBestRunCount: 1,
+      seasonBestRunCount: 1
     });
+    expect(harness.getCharacterMythicKeystoneProfileSeason).toHaveBeenCalledWith(
+      "app-token",
+      "antonidas",
+      "Synblast",
+      18
+    );
     expect(harness.recordSuccess).toHaveBeenCalledWith(
       "char-1",
       "BLIZZARD",
       "MYTHIC_PLUS",
-      expect.objectContaining({ hasProfile: true, rating: 3125 })
+      expect.objectContaining({
+        hasProfile: true,
+        rating: 3125,
+        season: expect.objectContaining({ seasonId: 18 })
+      })
+    );
+  });
+
+  it("does not fetch the season sub-resource when the profile has no seasons link", async () => {
+    const harness = createHarness([character], {
+      mythicPlusResult: { current_period: { period: { id: 1079 } } }
+    });
+
+    await harness.service.refreshCharacter("char-1");
+
+    expect(harness.getCharacterMythicKeystoneProfileSeason).not.toHaveBeenCalled();
+  });
+
+  it("a failed season fetch does not fail the whole refresh - current_period data is still recorded as a success", async () => {
+    const harness = createHarness([character], {
+      mythicPlusResult: {
+        current_period: { period: { id: 1079 }, best_runs: [{ keystone_level: 11, dungeon: { id: 585 } }] },
+        seasons: [{ id: 18 }]
+      },
+      seasonError: new Error("season endpoint temporarily unavailable")
+    });
+
+    const outcome = await harness.service.refreshCharacter("char-1");
+
+    expect(outcome).toEqual({
+      status: "SUCCESS",
+      characterId: "char-1",
+      hasMythicPlusProfile: true,
+      currentPeriodBestRunCount: 1,
+      seasonBestRunCount: 0
+    });
+    expect(harness.recordFailure).not.toHaveBeenCalled();
+    expect(harness.recordSuccess).toHaveBeenCalledWith(
+      "char-1",
+      "BLIZZARD",
+      "MYTHIC_PLUS",
+      expect.objectContaining({
+        currentPeriod: expect.objectContaining({ periodId: 1079 }),
+        season: { seasonId: null, bestRuns: [] }
+      })
     );
   });
 
@@ -105,8 +174,10 @@ describe("CharacterMythicPlusRefreshService", () => {
       status: "SUCCESS",
       characterId: "char-1",
       hasMythicPlusProfile: false,
-      bestRunCount: 0
+      currentPeriodBestRunCount: 0,
+      seasonBestRunCount: 0
     });
+    expect(harness.getCharacterMythicKeystoneProfileSeason).not.toHaveBeenCalled();
     expect(harness.recordSuccess).toHaveBeenCalledWith(
       "char-1",
       "BLIZZARD",
@@ -116,7 +187,7 @@ describe("CharacterMythicPlusRefreshService", () => {
     expect(harness.recordFailure).not.toHaveBeenCalled();
   });
 
-  it("records a failure without throwing on network/5xx errors, never touching the last snapshot", async () => {
+  it("records a failure without throwing on network/5xx errors from the base profile call, never touching the last snapshot", async () => {
     const harness = createHarness([character], {
       mythicPlusError: new Error("Battle.net request failed (503).")
     });
@@ -151,12 +222,13 @@ describe("CharacterMythicPlusRefreshService", () => {
         return null;
       }
     );
+    const getCharacterMythicKeystoneProfileSeason = vi.fn(async () => null);
     const recordSuccess = vi.fn(async () => {});
     const recordFailure = vi.fn(async () => {});
 
     const service = new CharacterMythicPlusRefreshService(
       { getAccessToken } as never,
-      { getCharacterMythicKeystoneProfile } as never,
+      { getCharacterMythicKeystoneProfile, getCharacterMythicKeystoneProfileSeason } as never,
       { recordSuccess, recordFailure } as never,
       {
         findById: vi.fn(),

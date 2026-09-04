@@ -2,7 +2,8 @@ import { slugifyRealmName } from "../../../guild/api/audit/audit.realm-slug.js";
 import { mapWithConcurrency } from "../../../../apps/api/src/shared/async/mapWithConcurrency.js";
 import type { BattleNetAppTokenService } from "../../../data-platform/api/integrations/battlenet/battlenet-app-token.service.js";
 import type { BattleNetClient } from "../../../data-platform/api/integrations/battlenet/battlenet.client.js";
-import { normalizeBlizzardMythicPlus } from "./blizzard-mythic-plus.normalizer.js";
+import { normalizeBlizzardMythicPlus, resolveCurrentSeasonId } from "./blizzard-mythic-plus.normalizer.js";
+import type { BattleNetMythicKeystoneSeasonProfile } from "../../../data-platform/api/integrations/battlenet/battlenet.types.js";
 import type { CharacterEquipmentLookup, RefreshableCharacter } from "./character-equipment-refresh.service.js";
 import { CharacterExternalSnapshotRepository } from "./character-external-snapshot.repository.js";
 import {
@@ -84,7 +85,14 @@ export class CharacterMythicPlusRefreshService {
         character.name
       );
 
-      const payload = normalizeBlizzardMythicPlus(response);
+      const seasonResponse = await this.fetchSeasonProfile(
+        accessToken,
+        realmSlug,
+        character.name,
+        response
+      );
+
+      const payload = normalizeBlizzardMythicPlus(response, seasonResponse);
 
       await this.snapshotRepository.recordSuccess(
         character.id,
@@ -97,7 +105,8 @@ export class CharacterMythicPlusRefreshService {
         status: "SUCCESS",
         characterId: character.id,
         hasMythicPlusProfile: payload.hasProfile,
-        bestRunCount: payload.bestRuns.length
+        currentPeriodBestRunCount: payload.currentPeriod.bestRuns.length,
+        seasonBestRunCount: payload.season.bestRuns.length
       };
     }
     catch (error) {
@@ -118,6 +127,43 @@ export class CharacterMythicPlusRefreshService {
         characterId: character.id,
         reason: message
       };
+    }
+  }
+
+  /*
+   * Isolated on purpose: a season-endpoint failure must never discard a
+   * successfully-fetched current_period profile (Phase D.1 observed this
+   * specific endpoint family can be intermittently unavailable even when
+   * sibling endpoints succeed). `profile === null` (no Mythic Keystone
+   * profile at all) or no resolvable season id both short-circuit to no
+   * season fetch at all, rather than a season/null lookup.
+   */
+  private async fetchSeasonProfile(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string,
+    profile: Parameters<typeof normalizeBlizzardMythicPlus>[0]
+  ): Promise<BattleNetMythicKeystoneSeasonProfile | null> {
+    if (!profile) {
+      return null;
+    }
+
+    const seasonId = resolveCurrentSeasonId(profile);
+
+    if (seasonId === null) {
+      return null;
+    }
+
+    try {
+      return await this.battleNetClient.getCharacterMythicKeystoneProfileSeason(
+        accessToken,
+        realmSlug,
+        characterName,
+        seasonId
+      );
+    }
+    catch {
+      return null;
     }
   }
 }

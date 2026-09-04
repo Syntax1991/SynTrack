@@ -290,3 +290,17 @@ export type BattleNetMythicKeystoneProfile = {
   seasons?: BattleNetMythicKeystoneSeasonReference[];
   current_mythic_rating?: BattleNetMythicKeystoneRating;
 };
+
+/*
+ * Live-verified (Phase D.1, 2026-09-04): NOT deduplicated to one entry
+ * per dungeon - a dungeon can carry a best untimed/depleted entry and a
+ * separate best timed entry when they differ. `is_completed_within_time`
+ * must be filtered on explicitly by any consumer that wants "the best
+ * TIMED level" (see blizzard-mythic-plus.normalizer.ts).
+ */
+export type BattleNetMythicKeystoneSeasonProfile = {
+  season?: {
+    id?: number;
+  };
+  best_runs?: BattleNetMythicKeystoneBestRun[];
+};

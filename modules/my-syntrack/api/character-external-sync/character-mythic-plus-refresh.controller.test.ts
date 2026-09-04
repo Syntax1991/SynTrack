@@ -71,7 +71,8 @@ describe("CharacterMythicPlusRefreshController auth boundary", () => {
       status: "SUCCESS",
       characterId: "char-1",
       hasMythicPlusProfile: true,
-      bestRunCount: 3
+      currentPeriodBestRunCount: 3,
+      seasonBestRunCount: 5
     });
     const requireSession = vi.fn().mockResolvedValue(validSession);
 
@@ -90,7 +91,8 @@ describe("CharacterMythicPlusRefreshController auth boundary", () => {
       status: "SUCCESS",
       characterId: "char-1",
       hasMythicPlusProfile: true,
-      bestRunCount: 3
+      currentPeriodBestRunCount: 3,
+      seasonBestRunCount: 5
     });
   });
 

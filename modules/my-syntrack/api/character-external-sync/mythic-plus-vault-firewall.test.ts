@@ -60,14 +60,18 @@ describe("Mythic+ / Great Vault firewall", () => {
     }
   });
 
-  it("the Vault/weekly-gameplay module has no reference to the MYTHIC_PLUS external-snapshot domain or BLIZZARD source", () => {
+  it("the actual Vault-computation files have no reference to the MYTHIC_PLUS external-snapshot domain or BLIZZARD source", () => {
+    // mythic-plus-season-progress.service.ts is DELIBERATELY excluded here
+    // (Phase D.2): it is the one legitimate crossover point that reads
+    // BLIZZARD/MYTHIC_PLUS season data for Resilient Keystone evidence.
+    // The files below are the actual Vault slot/threshold/current-week
+    // computation - they must never gain this dependency.
     const weeklyGameplayDir = join(here, "..", "weekly-gameplay");
     const filesToCheck = [
       "weekly-gameplay.detail.ts",
       "weekly-gameplay.vault.ts",
       "weekly-gameplay.highest.ts",
-      "weekly-gameplay.deriver.ts",
-      "mythic-plus-season-progress.service.ts"
+      "weekly-gameplay.deriver.ts"
     ];
 
     for (const file of filesToCheck) {
@@ -81,5 +85,20 @@ describe("Mythic+ / Great Vault firewall", () => {
         expect(line).not.toMatch(/CharacterExternalSnapshot/);
       }
     }
+  });
+
+  it("mythic-plus-season-progress.service.ts may read BLIZZARD/MYTHIC_PLUS season data, but never Vault-specific identifiers", () => {
+    // The one deliberate, scoped crossover (Phase D.2): season-wide
+    // Resilient Keystone evidence is allowed to read the MYTHIC_PLUS
+    // external snapshot, but must never reference Vault-specific models -
+    // this is the precise invariant Phase D8/D.2 actually require (no
+    // Vault crossover), not "never touch character-external-sync at all".
+    const filePath = join(here, "..", "weekly-gameplay", "mythic-plus-season-progress.service.ts");
+    const content = readFileSync(filePath, "utf8");
+
+    expect(content).toMatch(/EXTERNAL_DOMAIN_MYTHIC_PLUS/);
+    expect(content).not.toMatch(/CharacterWeeklyVaultActivity/);
+    expect(content).not.toMatch(/vaultActivities/);
+    expect(content).not.toMatch(/VaultActivitySlot/);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeBlizzardMythicPlus } from "./blizzard-mythic-plus.normalizer.js";
+import { normalizeBlizzardMythicPlus, resolveCurrentSeasonId } from "./blizzard-mythic-plus.normalizer.js";
 
 describe("normalizeBlizzardMythicPlus", () => {
   it("represents a confirmed 'no Mythic Keystone profile' (null) as hasProfile:false, not a fabricated zero score", () => {
@@ -9,13 +9,12 @@ describe("normalizeBlizzardMythicPlus", () => {
       hasProfile: false,
       rating: null,
       rawRating: null,
-      periodId: null,
-      seasonIds: [],
-      bestRuns: []
+      currentPeriod: { periodId: null, bestRuns: [] },
+      season: { seasonId: null, bestRuns: [] }
     });
   });
 
-  it("floors the decimal rating (Phase D4 rounding rule, matching the addon's own math.floor())", () => {
+  it("floors the decimal rating (rounding rule, matching the addon's own math.floor())", () => {
     const result = normalizeBlizzardMythicPlus({
       current_mythic_rating: { rating: 3125.5818 }
     });
@@ -24,7 +23,7 @@ describe("normalizeBlizzardMythicPlus", () => {
     expect(result.rawRating).toBe(3125.5818);
   });
 
-  it("normalizes a real live-shaped best run (2026-09-04 Synblast capture) with dungeon id, affixes, and completedInTime", () => {
+  it("normalizes a real live-shaped current_period best run (2026-09-04 Synblast capture) with dungeon id, affixes, and completedInTime", () => {
     const result = normalizeBlizzardMythicPlus({
       current_period: {
         period: { id: 1079 },
@@ -48,8 +47,8 @@ describe("normalizeBlizzardMythicPlus", () => {
       }
     });
 
-    expect(result.periodId).toBe(1079);
-    expect(result.bestRuns).toEqual([
+    expect(result.currentPeriod.periodId).toBe(1079);
+    expect(result.currentPeriod.bestRuns).toEqual([
       {
         dungeonId: 585,
         dungeonName: "Arena der Leerennarbe",
@@ -71,26 +70,59 @@ describe("normalizeBlizzardMythicPlus", () => {
       }
     });
 
-    expect(result.bestRuns[0]?.completedInTime).toBeNull();
+    expect(result.currentPeriod.bestRuns[0]?.completedInTime).toBeNull();
   });
 
-  it("keeps seasonIds as raw evidence without acting on the linked season sub-resource", () => {
+  it("keeps season.seasonId/bestRuns null/empty when no season sub-resource was fetched", () => {
     const result = normalizeBlizzardMythicPlus({
       seasons: [{ id: 14 }, { id: 15 }]
     });
 
-    expect(result.seasonIds).toEqual([14, 15]);
+    expect(result.season).toEqual({ seasonId: null, bestRuns: [] });
     expect(result.hasProfile).toBe(true);
-    expect(result.bestRuns).toEqual([]);
   });
 
-  it("returns a real profile with zero best runs (current period has none) distinctly from hasProfile:false", () => {
+  it("normalizes a real live-shaped season sub-resource (2026-09-04 Synblast season/18 capture), including an untimed + timed pair for the same dungeon", () => {
+    const result = normalizeBlizzardMythicPlus(
+      { current_period: { period: { id: 1079 } } },
+      {
+        season: { id: 18 },
+        best_runs: [
+          {
+            completed_timestamp: 1788016028000,
+            duration: 2644085,
+            keystone_level: 15,
+            dungeon: { id: 584, name: "Das blendende Tal" },
+            is_completed_within_time: false,
+            mythic_rating: { rating: 0.0 }
+          },
+          {
+            completed_timestamp: 1787843333000,
+            duration: 1520488,
+            keystone_level: 13,
+            dungeon: { id: 584, name: "Das blendende Tal" },
+            is_completed_within_time: true,
+            mythic_rating: { rating: 385.82318 }
+          }
+        ]
+      }
+    );
+
+    expect(result.season.seasonId).toBe(18);
+    expect(result.season.bestRuns).toHaveLength(2);
+    expect(result.season.bestRuns.map((run) => run.completedInTime)).toEqual([false, true]);
+    expect(result.season.bestRuns.map((run) => run.keystoneLevel)).toEqual([15, 13]);
+    // current_period stays untouched by the season fetch, per its own object.
+    expect(result.currentPeriod).toEqual({ periodId: 1079, bestRuns: [] });
+  });
+
+  it("returns a real profile with zero current-period best runs (current period has none) distinctly from hasProfile:false", () => {
     const result = normalizeBlizzardMythicPlus({
       current_period: { period: { id: 1079 } }
     });
 
     expect(result.hasProfile).toBe(true);
-    expect(result.bestRuns).toEqual([]);
+    expect(result.currentPeriod.bestRuns).toEqual([]);
   });
 
   it("tolerates a fully empty profile object without throwing", () => {
@@ -98,9 +130,20 @@ describe("normalizeBlizzardMythicPlus", () => {
       hasProfile: true,
       rating: null,
       rawRating: null,
-      periodId: null,
-      seasonIds: [],
-      bestRuns: []
+      currentPeriod: { periodId: null, bestRuns: [] },
+      season: { seasonId: null, bestRuns: [] }
     });
+  });
+});
+
+describe("resolveCurrentSeasonId", () => {
+  it("picks the highest numeric season id regardless of array order (live-verified: Synblast returned [18, 14, 15, 13])", () => {
+    expect(
+      resolveCurrentSeasonId({ seasons: [{ id: 18 }, { id: 14 }, { id: 15 }, { id: 13 }] })
+    ).toBe(18);
+  });
+
+  it("returns null when the profile has no seasons link at all", () => {
+    expect(resolveCurrentSeasonId({})).toBeNull();
   });
 });

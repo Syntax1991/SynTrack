@@ -109,12 +109,16 @@ export class CharacterMythicPlusAuthorityService {
     fetchedAt: Date,
     isStale: boolean
   ): AuthoritativeMythicPlusResult {
+    // Optional chaining guards against a legacy-shaped snapshot row
+    // written before Phase D.2 introduced the nested currentPeriod/season
+    // structure - falls back to "no current-period evidence yet" rather
+    // than throwing, until the next refresh overwrites it.
     return {
       source: "BLIZZARD",
       rating: payload.rating,
       hasProfile: payload.hasProfile,
-      bestRuns: payload.hasProfile ? payload.bestRuns : [],
-      periodId: payload.periodId,
+      bestRuns: payload.hasProfile ? (payload.currentPeriod?.bestRuns ?? []) : [],
+      periodId: payload.currentPeriod?.periodId ?? null,
       fetchedAt,
       isStale
     };

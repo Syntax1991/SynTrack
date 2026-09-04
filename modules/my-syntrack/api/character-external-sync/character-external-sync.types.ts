@@ -243,12 +243,20 @@ export type ProfessionsRefreshSummary = {
  * completely separate model family this module never imports.
  * `dungeonId` is the same stable Blizzard Challenge Mode Map id space the
  * addon already reports as `mapChallengeModeId` - no separate SynTrack
- * dungeon catalog exists today (verified during the Phase D audit), so
- * none is invented here; `dungeonName` is Blizzard's raw (possibly
+ * dungeon catalog exists today (verified during the Phase D/D.1 audits),
+ * so none is invented here; `dungeonName` is Blizzard's raw (possibly
  * localized) display text, presentation only, never a join key.
- * `periodId`/`seasonIds` are Blizzard's own weekly-period/season
- * identifiers, kept as raw evidence - never to be confused with
- * SynTrack's own weekly periodKey used by the addon's gameplay snapshots.
+ *
+ * Phase D.2: `currentPeriod` (WEEKLY, period.id) and `season` (Blizzard's
+ * season id) are two explicitly separate objects, never merged into one
+ * ambiguous `bestRuns` array - live-verified (Phase D.1) that
+ * current_period.best_runs is WEEKLY-scoped while season/{id}.best_runs
+ * is genuinely season-wide. `season.bestRuns` may contain MORE THAN ONE
+ * entry per dungeon (a best untimed/depleted attempt plus a separate
+ * best timed one) - NOT deduplicated to "the" best run per dungeon; a
+ * consumer must filter on `completedInTime` explicitly (see
+ * MythicPlusSeasonProgressService - Vault/current-week code reads neither
+ * object).
  */
 export type NormalizedBlizzardMythicPlusBestRun = {
   dungeonId: number | null;
@@ -279,9 +287,24 @@ export type NormalizedBlizzardMythicPlusPayload = {
   rating: number | null;
   /** The unrounded Blizzard value, kept as evidence. */
   rawRating: number | null;
-  periodId: number | null;
-  seasonIds: number[];
-  bestRuns: NormalizedBlizzardMythicPlusBestRun[];
+  currentPeriod: {
+    periodId: number | null;
+    bestRuns: NormalizedBlizzardMythicPlusBestRun[];
+  };
+  season: {
+    /**
+     * The season this snapshot's `bestRuns` were fetched for - resolved
+     * as the highest numeric id in the profile's own `seasons[]` link
+     * (see resolveCurrentSeasonId in the normalizer) - a documented
+     * heuristic, same philosophy as Phase C's Midnight-tier resolution:
+     * Blizzard assigns season ids monotonically as seasons ship, so the
+     * highest one a character has ever participated in is its current
+     * season. Null when the character has no `seasons[]` link at all
+     * (never done Mythic+ this season or any other).
+     */
+    seasonId: number | null;
+    bestRuns: NormalizedBlizzardMythicPlusBestRun[];
+  };
 };
 
 export type AuthoritativeMythicPlusBestRun = NormalizedBlizzardMythicPlusBestRun;
@@ -291,7 +314,7 @@ export type AuthoritativeMythicPlusResult = {
   rating: number | null;
   /** True only when source="BLIZZARD" and Blizzard confirmed a real profile exists. */
   hasProfile: boolean;
-  /** Always empty unless source="BLIZZARD" - Blizzard is the only source of per-run evidence in this domain. */
+  /** Current-period (this week) best runs only - always empty unless source="BLIZZARD". */
   bestRuns: AuthoritativeMythicPlusBestRun[];
   periodId: number | null;
   fetchedAt: Date | null;
@@ -303,7 +326,8 @@ export type MythicPlusRefreshOutcome =
       status: "SUCCESS";
       characterId: string;
       hasMythicPlusProfile: boolean;
-      bestRunCount: number;
+      currentPeriodBestRunCount: number;
+      seasonBestRunCount: number;
     }
   | {
       status: "FAILED";

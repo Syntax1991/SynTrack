@@ -61,7 +61,8 @@ function createHarness() {
     status: "SUCCESS",
     characterId: "char-1",
     hasMythicPlusProfile: true,
-    bestRunCount: 1
+    currentPeriodBestRunCount: 1,
+    seasonBestRunCount: 1
   }));
 
   const service = new BattleNetImportService(
