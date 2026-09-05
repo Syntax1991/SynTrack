@@ -312,5 +312,29 @@ describe("mapProfessionRecipeCatalog", () => {
 
       expect(result.items[0]!.crafters[0]!.skill).toBe(90);
     });
+
+    it("Phase F3 follow-up: renders the fresh Blizzard className instead of the raw addon-captured Character row (ProfessionRecipeCard / ProfessionRecipeDetailPanel / Find Craft)", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(
+        catalog,
+        new Map(),
+        new Map([["char-1", "Enhancement Shaman"]])
+      );
+
+      expect(result.items[0]!.crafters[0]!.className).toBe("Enhancement Shaman");
+    });
+
+    it("falls back to the persisted className when no usable Blizzard profile exists", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(catalog, new Map(), new Map());
+
+      expect(result.items[0]!.crafters[0]!.className).toBe("Shaman");
+    });
   });
 });

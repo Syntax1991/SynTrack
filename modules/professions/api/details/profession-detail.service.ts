@@ -71,7 +71,7 @@ export class ProfessionDetailService {
       ])
     );
 
-    const [effectiveSkillByCharacterId, identityByCharacterId] =
+    const [effectiveSkillByCharacterId, effectiveClassNameByCharacterId] =
       await Promise.all([
         resolveEffectivePublicSkillByCharacterId(
           crafters,
@@ -79,18 +79,10 @@ export class ProfessionDetailService {
           profession.name,
           this.professionAuthorityService
         ),
-        resolveEffectiveCharacterIdentities(
-          [...distinctCharacters.values()],
-          this.profileAuthorityService
+        this.resolveEffectiveClassNameByCharacterId(
+          [...distinctCharacters.values()]
         )
       ]);
-
-    const effectiveClassNameByCharacterId = new Map(
-      [...identityByCharacterId.entries()].map(([characterId, identity]) => [
-        characterId,
-        identity.className
-      ])
-    );
 
     return mapProfessionDetail(
       profession,
@@ -123,17 +115,50 @@ export class ProfessionDetailService {
         }))
     );
 
-    const effectiveSkillByCharacterId =
-      await resolveEffectivePublicSkillByCharacterId(
-        crafters,
-        profession.key,
-        profession.name,
-        this.professionAuthorityService
-      );
+    // One effective-identity lookup per distinct character across every
+    // recipe/crafter row, not per crafter.
+    const distinctCharacters = new Map(
+      profession.recipes.flatMap((recipe) =>
+        recipe.characters.map((relation) => [
+          relation.characterProfession.character.id,
+          relation.characterProfession.character
+        ] as const)
+      )
+    );
+
+    const [effectiveSkillByCharacterId, effectiveClassNameByCharacterId] =
+      await Promise.all([
+        resolveEffectivePublicSkillByCharacterId(
+          crafters,
+          profession.key,
+          profession.name,
+          this.professionAuthorityService
+        ),
+        this.resolveEffectiveClassNameByCharacterId(
+          [...distinctCharacters.values()]
+        )
+      ]);
 
     return mapProfessionRecipeCatalog(
       profession,
-      effectiveSkillByCharacterId
+      effectiveSkillByCharacterId,
+      effectiveClassNameByCharacterId
+    );
+  }
+
+  private async resolveEffectiveClassNameByCharacterId(
+    characters: Parameters<typeof resolveEffectiveCharacterIdentities>[0]
+  ): Promise<Map<string, string>> {
+    const identityByCharacterId = await resolveEffectiveCharacterIdentities(
+      characters,
+      this.profileAuthorityService
+    );
+
+    return new Map(
+      [...identityByCharacterId.entries()].map(([characterId, identity]) => [
+        characterId,
+        identity.className
+      ])
     );
   }
 }

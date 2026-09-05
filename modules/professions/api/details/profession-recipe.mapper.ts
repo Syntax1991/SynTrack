@@ -46,11 +46,17 @@ type RecipeRecord =
 
 export function mapProfessionRecipeCatalog(
   record: RecipeCatalogRecord,
-  effectiveSkillByCharacterId: Map<string, number> = new Map()
+  effectiveSkillByCharacterId: Map<string, number> = new Map(),
+  effectiveClassNameByCharacterId: Map<string, string> = new Map()
 ): ProfessionRecipeCatalog {
   const items =
     record.recipes.map(
-      (recipe) => mapRecipe(recipe, effectiveSkillByCharacterId)
+      (recipe) =>
+        mapRecipe(
+          recipe,
+          effectiveSkillByCharacterId,
+          effectiveClassNameByCharacterId
+        )
     );
 
   return {
@@ -69,7 +75,8 @@ export function mapProfessionRecipeCatalog(
 
 function mapRecipe(
   recipe: RecipeRecord,
-  effectiveSkillByCharacterId: Map<string, number>
+  effectiveSkillByCharacterId: Map<string, number>,
+  effectiveClassNameByCharacterId: Map<string, string>
 ): ProfessionRecipeCatalogItem {
   const capabilities =
     recipe.capabilities
@@ -87,7 +94,8 @@ function mapRecipe(
           mapCrafter(
             recipe.baseDifficulty,
             relation,
-            effectiveSkillByCharacterId
+            effectiveSkillByCharacterId,
+            effectiveClassNameByCharacterId
           )
       )
       .sort(
@@ -158,7 +166,8 @@ function mapCrafter(
   baseDifficulty: number | null,
   relation:
     RecipeRecord["characters"][number],
-  effectiveSkillByCharacterId: Map<string, number>
+  effectiveSkillByCharacterId: Map<string, number>,
+  effectiveClassNameByCharacterId: Map<string, string>
 ): ProfessionRecipeCrafter {
   const assignment =
     relation.characterProfession;
@@ -221,7 +230,12 @@ function mapCrafter(
       assignment.character.name,
     realm:
       assignment.character.realm,
+    // Public identity (Phase F3 follow-up): BLIZZARD-primary/ADDON-
+    // fallback, resolved by the caller via CharacterProfileAuthorityService.
+    // `level` is not currently rendered by any consumer of this crafter
+    // type, so it stays read straight from the Character row.
     className:
+      effectiveClassNameByCharacterId.get(assignment.character.id) ??
       assignment.character.className,
     level:
       assignment.character.level,
