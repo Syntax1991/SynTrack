@@ -86,6 +86,29 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  * (non-scaled) Blizzard equipment is BLIZZARD-primary/ADDON-fallback
  * with no additional freshness gate - see the Phase F1 corrective
  * review's second report for the full reasoning.
+ *
+ * ITEM-IDENTITY COMPATIBILITY (Phase F2 corrective review): Group B
+ * evidence (enchantName, notes, expansionId, setEvidenceResolved,
+ * setBonusResolved, setBonusSpellIds, uniqueCategoryId,
+ * uniqueCategoryCount, uniquenessResolved) and the addon `setId`
+ * fallback all describe a SPECIFIC physical item the addon observed -
+ * they must never be attached to a *different* item Blizzard now
+ * reports for the same slot. Live-verified this phase: Synlight's HEAD
+ * slot showed Blizzard itemId 271465 vs. the addon's stale itemId
+ * 277768 (a real regear the addon hadn't synced yet, two days old).
+ * `isConfirmedSameItem()` below requires BOTH sides to report a
+ * non-null WoW item id that match exactly before any addon evidence is
+ * trusted; a null id on either side can never prove sameness, so the
+ * conservative default (treat as a different item) applies rather than
+ * guessing. This does NOT change the SAME-item case at all - Synbeast's
+ * Timewalking HEAD (Blizzard and addon both report itemId 219749) still
+ * gets its itemLevel from the addon fallback exactly as before, since
+ * identity is confirmed there. Only `itemLevel`'s own existing
+ * null-triggered fallback and `itemName`'s null-triggered fallback are
+ * NOT gated by this check - no live case has shown either field
+ * fabricating a value across a genuine item swap, and gating them was
+ * out of this narrow fix's scope; see the Phase F2 corrective review
+ * report's follow-up note.
  */
 
 export type EffectiveGearItem = {
@@ -140,6 +163,25 @@ export type AddonGearSlotRow = {
   uniqueCategoryCount: number | null;
   uniquenessResolved: boolean | null;
 };
+
+/*
+ * Both sides must report a non-null WoW item id, and they must match,
+ * before the addon's item-specific evidence for this slot is trusted
+ * alongside a Blizzard-identified item. A null id on either side can
+ * never prove sameness - the conservative default (not the same item)
+ * applies rather than guessing. See the module doc comment's Phase F2
+ * corrective review section for the live Synlight case this fixes.
+ */
+function isConfirmedSameItem(
+  blizzardItemId: number | null,
+  addonItemId: number | null
+): boolean {
+  return (
+    blizzardItemId !== null &&
+    addonItemId !== null &&
+    blizzardItemId === addonItemId
+  );
+}
 
 function fromAddon(addonItem: AddonGearSlotRow): EffectiveGearItem {
   return {
@@ -196,17 +238,33 @@ function fromBlizzard(
         : null;
 
   /*
+   * Item-identity compatibility gate (Phase F2 corrective review): the
+   * addon's Group B evidence (and its setId fallback) only describes
+   * the item the addon last observed in this slot - if Blizzard now
+   * reports a DIFFERENT item id, that evidence belongs to a stale item
+   * and must not be attached to the current one. `trustedAddonItem` is
+   * `addonItem` when identity is confirmed, `undefined` otherwise - every
+   * addon-sourced field below reads through it, never `addonItem`
+   * directly, so a mismatch can never leak.
+   */
+  const sameItem = isConfirmedSameItem(
+    blizzardSlot.itemId,
+    addonItem?.itemId ?? null
+  );
+  const trustedAddonItem = sameItem ? addonItem : undefined;
+
+  /*
    * PHASE F2: setId is field-specific authority (BLIZZARD-primary,
    * ADDON-fallback) - the one Group B evidence field proven equivalent
    * (see module doc comment). Falls back to the addon's setId only when
-   * Blizzard reports none for this slot (e.g. no tier piece equipped, or
-   * a Blizzard snapshot that predates this phase's setId capture).
+   * Blizzard reports none for this slot AND the addon's item is
+   * confirmed to be the same one Blizzard is describing.
    */
-  const setId = blizzardSlot.setId ?? addonItem?.setId ?? null;
+  const setId = blizzardSlot.setId ?? trustedAddonItem?.setId ?? null;
   const setIdSource: EffectiveGearItem["setIdSource"] =
     blizzardSlot.setId !== null
       ? "BLIZZARD"
-      : addonItem?.setId != null
+      : trustedAddonItem?.setId != null
         ? "ADDON"
         : null;
 
@@ -217,24 +275,24 @@ function fromBlizzard(
     itemLevel,
     itemLevelSource,
     enchantStatus,
-    // No Blizzard equivalent (only a numeric enchantment id, no display text).
-    enchantName: addonItem?.enchantName ?? null,
+    // No Blizzard equivalent (only a numeric enchantment id, no display text) - only trusted when the item is confirmed the same.
+    enchantName: trustedAddonItem?.enchantName ?? null,
     socketCount: blizzardSlot.socketCount,
     gemCount: blizzardSlot.filledSocketCount ?? 0,
-    notes: addonItem?.notes ?? null,
+    notes: trustedAddonItem?.notes ?? null,
     source: "BLIZZARD",
     lastSyncedAt: addonItem?.lastSyncedAt?.toISOString() ?? null,
     updatedAt: addonItem?.updatedAt.toISOString() ?? new Date().toISOString(),
     setId,
     setIdSource,
-    // Remaining tier-set/embellishment evidence: always addon-sourced (see module doc comment).
-    expansionId: addonItem?.expansionId ?? null,
-    setEvidenceResolved: addonItem?.setEvidenceResolved ?? null,
-    setBonusResolved: addonItem?.setBonusResolved ?? null,
-    setBonusSpellIds: parseSpellIds(addonItem?.setBonusSpellIds ?? null),
-    uniqueCategoryId: addonItem?.uniqueCategoryId ?? null,
-    uniqueCategoryCount: addonItem?.uniqueCategoryCount ?? null,
-    uniquenessResolved: addonItem?.uniquenessResolved ?? null
+    // Remaining tier-set/embellishment evidence: addon-sourced, only when the item is confirmed the same (see module doc comment).
+    expansionId: trustedAddonItem?.expansionId ?? null,
+    setEvidenceResolved: trustedAddonItem?.setEvidenceResolved ?? null,
+    setBonusResolved: trustedAddonItem?.setBonusResolved ?? null,
+    setBonusSpellIds: parseSpellIds(trustedAddonItem?.setBonusSpellIds ?? null),
+    uniqueCategoryId: trustedAddonItem?.uniqueCategoryId ?? null,
+    uniqueCategoryCount: trustedAddonItem?.uniqueCategoryCount ?? null,
+    uniquenessResolved: trustedAddonItem?.uniquenessResolved ?? null
   };
 }
 

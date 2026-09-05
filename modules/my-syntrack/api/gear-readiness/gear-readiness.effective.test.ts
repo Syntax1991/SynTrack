@@ -7,7 +7,11 @@ function addonRow(overrides: Partial<AddonGearSlotRow> = {}): AddonGearSlotRow {
   return {
     id: "row-cuid-1",
     slotKey: "HEAD",
-    itemId: 1000,
+    // Matches freshBlizzard's default HEAD itemId below - the default
+    // fixture represents the common "same item" case; tests exercising
+    // the Phase F2 corrective review's item-identity mismatch override
+    // this explicitly.
+    itemId: 271483,
     itemName: "Old Addon Helm",
     itemLevel: 300,
     enchantStatus: "READY",

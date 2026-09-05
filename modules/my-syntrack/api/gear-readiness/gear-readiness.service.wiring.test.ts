@@ -24,7 +24,9 @@ function characterRow() {
       {
         id: "row-cuid-1",
         slotKey: "HEAD",
-        itemId: 1000,
+        // Matches the harness's Blizzard mock HEAD itemId (271483) below -
+        // represents the common "same item" case for these wiring tests.
+        itemId: 271483,
         itemName: "Old Addon Helm",
         itemLevel: 300,
         enchantStatus: "READY",
