@@ -13,6 +13,7 @@ function characterEntry(
       region: "eu",
       className: "Shaman",
       level: 80,
+      lastSyncedAt: null,
       ...overrides
     }
   } as unknown as CharacterWeeklyState;
@@ -125,5 +126,34 @@ describe("applyAuthoritativeProfile", () => {
 
     expect(characters[0]!.character.level).toBe(90);
     expect(characters[1]!.character.level).toBe(85);
+  });
+
+  it("passes the character's own addon lastSyncedAt into the authority lookup, for its recency guard", async () => {
+    const getAuthoritativeProfile = vi.fn(async () => ({
+      source: "NONE" as const,
+      fetchedAt: null,
+      isStale: false,
+      name: "Synblast",
+      realm: "Antonidas",
+      region: "eu",
+      level: 80,
+      class: "Shaman",
+      race: null,
+      faction: null,
+      activeSpec: null,
+      guild: null,
+      averageItemLevel: null,
+      equippedItemLevel: null,
+      lastLoginAt: null
+    }));
+
+    const lastSyncedAt = new Date("2026-09-04T00:25:40.000Z");
+    const characters = [characterEntry({ lastSyncedAt })];
+    await applyAuthoritativeProfile(characters, { getAuthoritativeProfile } as never);
+
+    expect(getAuthoritativeProfile).toHaveBeenCalledWith(
+      "char-1",
+      expect.objectContaining({ lastSyncedAt })
+    );
   });
 });

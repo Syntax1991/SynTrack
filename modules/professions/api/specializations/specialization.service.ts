@@ -1,4 +1,7 @@
+import { CharacterExternalSnapshotRepository } from "../../../my-syntrack/api/character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfessionAuthorityService } from "../../../my-syntrack/api/character-external-sync/character-profession-authority.service.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { resolveEffectiveSkillByProfessionKey } from "./specialization-effective-skill.js";
 import { SpecializationRepository } from "./specialization.repository.js";
 import type {
   SpecializationNodeView,
@@ -8,24 +11,25 @@ import type {
 
 export class SpecializationService {
   constructor(
-    private readonly repository:
-      SpecializationRepository
+    private readonly repository: SpecializationRepository,
+    private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
-  async getCharacterOverview(
-    characterId: string
-  ) {
-    const character =
-      await this.repository.findCharacter(
-        characterId
-      );
+  async getCharacterOverview(characterId: string) {
+    const character = await this.repository.findCharacter(characterId);
 
     if (!character) {
-      throw new AppError(
-        404,
-        "Charakter nicht gefunden."
-      );
+      throw new AppError(404, "Charakter nicht gefunden.");
     }
+
+    const effectiveSkillByProfessionKey =
+      await resolveEffectiveSkillByProfessionKey(
+        characterId,
+        character.professions,
+        this.professionAuthorityService
+      );
 
     const professionIds =
       character.professions.map(
@@ -79,7 +83,10 @@ export class SpecializationService {
 
           return {
             id: assignment.id,
-            skill: assignment.skill,
+            skill:
+              effectiveSkillByProfessionKey.get(
+                assignment.profession.key
+              ) ?? assignment.skill,
             knowledgePoints:
               assignment.knowledgePoints,
             specializationSummary:

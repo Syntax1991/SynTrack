@@ -100,13 +100,21 @@ export class OverviewService {
     new WeeklyGameplayRepository()
   );
 
-  private readonly profileAuthorityService = new CharacterProfileAuthorityService(
-    new CharacterExternalSnapshotRepository()
-  );
-
-  private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
-    new CharacterExternalSnapshotRepository()
-  );
+  /*
+   * Constructor-injectable (unlike the field-initialized dependencies
+   * above) specifically so service-level wiring tests can supply a fake
+   * authority service and prove Phase F1's Blizzard-primary override
+   * actually reaches the final served character/profession - see
+   * overview.service.wiring.test.ts.
+   */
+  constructor(
+    private readonly profileAuthorityService: CharacterProfileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    ),
+    private readonly professionAuthorityService: CharacterProfessionAuthorityService = new CharacterProfessionAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
+  ) {}
 
   async getOverview(): Promise<OverviewResponse> {
     const activeScope =
@@ -181,7 +189,8 @@ export class OverviewService {
         realm: character.realm,
         region: character.region,
         className: character.className,
-        level: character.level
+        level: character.level,
+        lastSyncedAt: character.lastSyncedAt
       })),
       weeklyByCharacterId,
       vaultByCharacterId: new Map(),

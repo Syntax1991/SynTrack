@@ -17,8 +17,17 @@ export function normalizeBlizzardEquipment(
     }
 
     const level = item.level?.value ?? null;
+    const timewalkerLevel = item.timewalker_level ?? null;
 
-    if (typeof level === "number") {
+    /*
+     * A scaled-bracket item (Timewalking, etc.) is excluded from the
+     * average - its `level.value` reflects the bracket, not the item's
+     * real item level, so summing it in would silently drag the whole
+     * character's average down (see the Phase F1 corrective review's
+     * Synbeast finding: an entire equipped set scaled to a Timewalking
+     * dungeon, averaging ~278 instead of anywhere near the real gear).
+     */
+    if (typeof level === "number" && timewalkerLevel === null) {
       itemLevelSum += level;
       itemLevelCount += 1;
     }
@@ -55,7 +64,10 @@ export function normalizeBlizzardEquipment(
         setId: item.set?.item_set?.id ?? null,
         setName: item.set?.item_set?.name ?? null,
         upgradeCurrent: item.upgrades?.value ?? null,
-        upgradeMax: item.upgrades?.max_value ?? null
+        upgradeMax: item.upgrades?.max_value ?? null,
+        // See BattleNetEquippedItem.timewalker_level - presence means
+        // `level` above is a scaled-bracket value, not the item's real one.
+        timewalkerLevel
       }
     ];
   });

@@ -192,7 +192,10 @@ export function resolveCharacterState(
         : "unknown";
 
   return {
-    character,
+    character: {
+      ...character,
+      lastSyncedAt: character.lastSyncedAt ?? null
+    },
     weekly: weeklyResult.weekly,
     weeklySummary: weeklySummaryResult.weeklySummary,
     weeklyAction: weeklyAction

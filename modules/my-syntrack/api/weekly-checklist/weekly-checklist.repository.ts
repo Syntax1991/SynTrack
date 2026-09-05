@@ -67,6 +67,7 @@ export class WeeklyChecklistRepository {
         region: true,
         className: true,
         level: true,
+        lastSyncedAt: true,
         weeklyCompletions: {
           where: {
             periodKey

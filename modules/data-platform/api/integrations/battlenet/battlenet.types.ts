@@ -123,6 +123,8 @@ export type BattleNetCharacterProfile = {
   };
   average_item_level?: number;
   equipped_item_level?: number;
+  /** Epoch ms of the character's last recorded login - Blizzard's own attestation, distinct from when SynTrack polled. See character-blizzard-recency.ts. */
+  last_login_timestamp?: number;
 };
 
 export type BattleNetGuildRosterMember = {
@@ -202,6 +204,9 @@ export type BattleNetEquippedItem = {
   };
   bonus_list?: number[];
   set?: BattleNetEquippedItemSetReference;
+  /** Present only for a scaled-bracket item (e.g. Timewalking) - `level.value` is then the bracket's scaled level, not the item's real one. */
+  timewalker_level?: number;
+  context?: number;
 };
 
 export type BattleNetCharacterEquipment = {

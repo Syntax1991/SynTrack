@@ -30,6 +30,7 @@ export type OverviewAggregationInput = {
     region: string;
     className: string;
     level: number;
+    lastSyncedAt?: Date | null;
   }[];
   weeklyByCharacterId: Map<string, OverviewWeeklyCharacterInput>;
   vaultByCharacterId: Map<string, OverviewVaultCharacterInput>;

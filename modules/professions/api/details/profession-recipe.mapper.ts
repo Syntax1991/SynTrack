@@ -45,11 +45,12 @@ type RecipeRecord =
   RecipeCatalogRecord["recipes"][number];
 
 export function mapProfessionRecipeCatalog(
-  record: RecipeCatalogRecord
+  record: RecipeCatalogRecord,
+  effectiveSkillByCharacterId: Map<string, number> = new Map()
 ): ProfessionRecipeCatalog {
   const items =
     record.recipes.map(
-      mapRecipe
+      (recipe) => mapRecipe(recipe, effectiveSkillByCharacterId)
     );
 
   return {
@@ -67,7 +68,8 @@ export function mapProfessionRecipeCatalog(
 }
 
 function mapRecipe(
-  recipe: RecipeRecord
+  recipe: RecipeRecord,
+  effectiveSkillByCharacterId: Map<string, number>
 ): ProfessionRecipeCatalogItem {
   const capabilities =
     recipe.capabilities
@@ -84,7 +86,8 @@ function mapRecipe(
         (relation) =>
           mapCrafter(
             recipe.baseDifficulty,
-            relation
+            relation,
+            effectiveSkillByCharacterId
           )
       )
       .sort(
@@ -154,13 +157,27 @@ function mapCapability(
 function mapCrafter(
   baseDifficulty: number | null,
   relation:
-    RecipeRecord["characters"][number]
+    RecipeRecord["characters"][number],
+  effectiveSkillByCharacterId: Map<string, number>
 ): ProfessionRecipeCrafter {
   const assignment =
     relation.characterProfession;
 
+  /*
+   * PUBLIC skill (Phase F1 corrective review, Section 4): the same
+   * Blizzard-primary/addon-fallback value Overview already shows, not a
+   * second competing raw-addon truth - falls back to the addon's own
+   * skill when no authoritative entry was resolved for this character.
+   * skillModifier stays addon-private and is still added on top exactly
+   * as before.
+   */
+  const publicSkill =
+    effectiveSkillByCharacterId.get(
+      assignment.character.id
+    ) ?? assignment.skill;
+
   const effectiveSkill =
-    assignment.skill +
+    publicSkill +
     assignment.skillModifier;
 
   const readiness =
@@ -209,7 +226,7 @@ function mapCrafter(
     level:
       assignment.character.level,
     skill:
-      assignment.skill,
+      publicSkill,
     skillModifier:
       assignment.skillModifier,
     effectiveSkill,

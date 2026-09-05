@@ -107,7 +107,19 @@ export class CharacterEquipmentAuthorityService {
         slotKey: slot.slotKey,
         itemId: slot.itemId,
         itemName: slot.itemName,
-        itemLevel: slot.itemLevel,
+        /*
+         * A scaled-bracket item (Timewalking, etc.) never reports its
+         * real item level here - null means "no trustworthy Blizzard
+         * item level for this slot", so the effective-equipment
+         * composition layer (gear-readiness.effective.ts) falls back to
+         * the addon's own item level for this specific slot, the same
+         * way it already does when Blizzard has no slot coverage at
+         * all. See the Phase F1 corrective review's Synbeast finding
+         * (an entire equipped set scaled to a Timewalking dungeon:
+         * addon ilvl 473, Blizzard's scaled ilvl 76, same item id).
+         */
+        itemLevel:
+          typeof slot.timewalkerLevel === "number" ? null : slot.itemLevel,
         hasEnchant: slot.hasEnchant,
         socketCount: slot.socketCount,
         filledSocketCount: slot.filledSocketCount

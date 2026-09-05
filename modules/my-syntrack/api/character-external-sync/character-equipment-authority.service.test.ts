@@ -100,6 +100,31 @@ describe("CharacterEquipmentAuthorityService", () => {
     expect(result.isStale).toBe(true);
   });
 
+  it("nulls out a scaled-bracket item's level (real Synbeast Timewalking evidence) so the effective layer falls back to addon for that field", async () => {
+    const scaledSnapshot = {
+      payload: {
+        averageItemLevel: 76,
+        slots: [
+          { slotKey: "HEAD", itemId: 219749, itemName: "Charred Nerubian Helm", itemLevel: 76, timewalkerLevel: 72 },
+          { slotKey: "CHEST", itemId: 1, itemName: "Normal chest", itemLevel: 320, timewalkerLevel: null }
+        ]
+      },
+      fetchedAt: new Date(),
+      lastStatus: "SUCCESS" as const,
+      lastAttemptAt: new Date(),
+      lastError: null
+    };
+
+    const harness = createHarness(scaledSnapshot);
+    const result = await harness.service.getAuthoritativeEquipment("char-1");
+
+    const head = result.slots.find((slot) => slot.slotKey === "HEAD");
+    const chest = result.slots.find((slot) => slot.slotKey === "CHEST");
+
+    expect(head).toMatchObject({ itemId: 219749, itemLevel: null });
+    expect(chest).toMatchObject({ itemLevel: 320 });
+  });
+
   it("returns NONE, not a fabricated value, when neither source has any data", async () => {
     const harness = createHarness(null, []);
 

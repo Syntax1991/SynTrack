@@ -57,9 +57,12 @@ export class SeasonChecklistService {
 
   private readonly achievementAuthorityService = new CharacterAchievementAuthorityService(new CharacterExternalSnapshotRepository());
 
-  private readonly mythicPlusAuthorityService = new CharacterMythicPlusAuthorityService(new CharacterExternalSnapshotRepository());
-
   private readonly seasonGoalPreferenceService = new SeasonGoalPreferenceService();
+
+  // Constructor-injectable so wiring tests can prove the effective M+ rating path is used.
+  constructor(
+    private readonly mythicPlusAuthorityService = new CharacterMythicPlusAuthorityService(new CharacterExternalSnapshotRepository())
+  ) {}
 
   async getChecklist(): Promise<SeasonChecklistResponse> {
     const [weekliesScopeKey, evidenceScopeKey] = await Promise.all([

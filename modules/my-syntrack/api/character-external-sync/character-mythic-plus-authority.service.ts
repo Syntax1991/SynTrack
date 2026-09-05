@@ -1,5 +1,7 @@
+import { isBlizzardObservationBehindAddon } from "./character-blizzard-recency.js";
 import { CharacterMythicPlusAddonFallbackRepository } from "./character-mythic-plus-addon-fallback.repository.js";
 import { CharacterExternalSnapshotRepository } from "./character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "./character-profile-authority.service.js";
 import {
   EXTERNAL_DOMAIN_MYTHIC_PLUS,
   EXTERNAL_SOURCE_BLIZZARD
@@ -51,24 +53,44 @@ export const NONE_AUTHORITATIVE_MYTHIC_PLUS: AuthoritativeMythicPlusResult = {
 export class CharacterMythicPlusAuthorityService {
   constructor(
     private readonly snapshotRepository: CharacterExternalSnapshotRepository,
-    private readonly addonFallbackRepository: CharacterMythicPlusAddonFallbackRepository = new CharacterMythicPlusAddonFallbackRepository()
+    private readonly addonFallbackRepository: CharacterMythicPlusAddonFallbackRepository = new CharacterMythicPlusAddonFallbackRepository(),
+    private readonly profileAuthorityService: CharacterProfileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
   async getAuthoritativeMythicPlusMap(
     characterIds: string[]
   ): Promise<Map<string, AuthoritativeMythicPlusResult>> {
+    const blizzardLastLoginAtByCharacterId =
+      await this.profileAuthorityService.getLastLoginAtMap(characterIds);
+
     const entries = await Promise.all(
       characterIds.map(
         async (characterId) =>
-          [characterId, await this.getAuthoritativeMythicPlus(characterId)] as const
+          [
+            characterId,
+            await this.getAuthoritativeMythicPlus(
+              characterId,
+              blizzardLastLoginAtByCharacterId.get(characterId) ?? null
+            )
+          ] as const
       )
     );
 
     return new Map(entries);
   }
 
+  /*
+   * `blizzardLastLoginAt` is optional (Phase F1 corrective review's
+   * recency guard) - the batch method above always supplies it;
+   * character.service.ts's direct single-character call does not, and
+   * simply degrades to the pre-existing fetchedAt-only staleness check,
+   * the same graceful-degradation pattern as CharacterProfileAuthorityService.
+   */
   async getAuthoritativeMythicPlus(
-    characterId: string
+    characterId: string,
+    blizzardLastLoginAt: Date | null = null
   ): Promise<AuthoritativeMythicPlusResult> {
     const snapshot =
       await this.snapshotRepository.findOne<NormalizedBlizzardMythicPlusPayload>(
@@ -88,7 +110,16 @@ export class CharacterMythicPlusAuthorityService {
         BLIZZARD_MYTHIC_PLUS_STALE_THRESHOLD_MS;
 
       if (!isStale && snapshot.payload!.hasProfile) {
-        return this.toBlizzardResult(snapshot.payload!, snapshot.fetchedAt!, false);
+        const addonObservedAt =
+          await this.addonFallbackRepository.findSeasonRatingObservedAt(
+            characterId
+          );
+
+        if (
+          !isBlizzardObservationBehindAddon(blizzardLastLoginAt, addonObservedAt)
+        ) {
+          return this.toBlizzardResult(snapshot.payload!, snapshot.fetchedAt!, false);
+        }
       }
     }
 

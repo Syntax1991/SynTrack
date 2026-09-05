@@ -51,6 +51,8 @@ export type NormalizedBlizzardEquipmentSlot = {
   setName: string | null;
   upgradeCurrent: number | null;
   upgradeMax: number | null;
+  /** Non-null means `itemLevel` is a scaled-bracket value (e.g. Timewalking) - see BattleNetEquippedItem.timewalker_level. */
+  timewalkerLevel: number | null;
 };
 
 export type NormalizedBlizzardEquipmentPayload = {
@@ -123,6 +125,8 @@ export type NormalizedBlizzardProfilePayload = {
   guildRealmSlug: string | null;
   averageItemLevel: number | null;
   equippedItemLevel: number | null;
+  /** Raw epoch ms from Blizzard's own `last_login_timestamp` - see character-blizzard-recency.ts. */
+  lastLoginTimestamp: number | null;
 };
 
 export type AuthoritativeProfileResult = {
@@ -143,6 +147,8 @@ export type AuthoritativeProfileResult = {
   guild: { name: string; realmSlug: string | null } | null;
   averageItemLevel: number | null;
   equippedItemLevel: number | null;
+  /** Blizzard's own attested last-login moment - see character-blizzard-recency.ts. */
+  lastLoginAt: Date | null;
 };
 
 export type ProfileRefreshOutcome =

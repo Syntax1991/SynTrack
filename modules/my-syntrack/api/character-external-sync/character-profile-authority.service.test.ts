@@ -113,4 +113,78 @@ describe("CharacterProfileAuthorityService", () => {
     expect(result.race).toBe("Dark Iron Dwarf");
     expect(result.guild).toEqual({ name: "Before the Storm", realmSlug: "thrall" });
   });
+
+  it("exposes Blizzard's last-login timestamp for cross-domain recency comparisons", async () => {
+    const harness = createHarness({
+      ...freshSnapshot,
+      payload: { ...freshSnapshot.payload, lastLoginTimestamp: 1788481543000 }
+    });
+
+    const result = await harness.service.getAuthoritativeProfile("char-1", characterRow);
+
+    expect(result.lastLoginAt).toEqual(new Date(1788481543000));
+  });
+
+  it("falls back to the Character row's level/class when the addon observed a newer login than Blizzard's snapshot reflects, even though the snapshot itself is not stale", async () => {
+    const blizzardLastLogin = new Date("2026-09-01T00:00:00Z");
+    const addonLastSyncedAt = new Date("2026-09-04T00:00:00Z");
+
+    const harness = createHarness({
+      ...freshSnapshot,
+      payload: { ...freshSnapshot.payload, lastLoginTimestamp: blizzardLastLogin.getTime() }
+    });
+
+    const result = await harness.service.getAuthoritativeProfile("char-1", {
+      ...characterRow,
+      lastSyncedAt: addonLastSyncedAt
+    });
+
+    expect(result.isStale).toBe(false); // fetch itself is fresh
+    expect(result.level).toBe(88); // but addon fallback wins: it observed a newer login
+    expect(result.class).toBe("Shaman");
+    // race/guild have no fallback - still served from Blizzard regardless
+    expect(result.race).toBe("Dark Iron Dwarf");
+  });
+
+  it("keeps using BLIZZARD level/class when the addon's own sync is not newer than Blizzard's last login", async () => {
+    const blizzardLastLogin = new Date("2026-09-04T00:25:43.000Z");
+    const addonLastSyncedAt = new Date("2026-09-04T00:25:40.000Z");
+
+    const harness = createHarness({
+      ...freshSnapshot,
+      payload: { ...freshSnapshot.payload, lastLoginTimestamp: blizzardLastLogin.getTime() }
+    });
+
+    const result = await harness.service.getAuthoritativeProfile("char-1", {
+      ...characterRow,
+      lastSyncedAt: addonLastSyncedAt
+    });
+
+    expect(result.level).toBe(90); // Blizzard's value, unaffected
+  });
+
+  it("degrades gracefully to the pre-existing fetchedAt-only check when the caller doesn't supply lastSyncedAt", async () => {
+    const harness = createHarness({
+      ...freshSnapshot,
+      payload: { ...freshSnapshot.payload, lastLoginTimestamp: Date.now() }
+    });
+
+    const result = await harness.service.getAuthoritativeProfile("char-1", characterRow);
+
+    expect(result.level).toBe(90); // no addonObservedAt to compare -> guard never triggers
+  });
+
+  it("getLastLoginAtMap returns each character's Blizzard last-login moment without resolving level/class", async () => {
+    const findOne = vi.fn(async (characterId: string) =>
+      characterId === "char-1"
+        ? { ...freshSnapshot, payload: { ...freshSnapshot.payload, lastLoginTimestamp: 1000 } }
+        : null
+    );
+    const service = new CharacterProfileAuthorityService({ findOne } as never);
+
+    const map = await service.getLastLoginAtMap(["char-1", "char-2"]);
+
+    expect(map.get("char-1")).toEqual(new Date(1000));
+    expect(map.get("char-2")).toBeNull();
+  });
 });

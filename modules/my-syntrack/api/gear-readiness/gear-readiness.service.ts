@@ -2,6 +2,7 @@ import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { CharacterEquipmentAddonFallbackRepository } from "../character-external-sync/character-equipment-addon-fallback.repository.js";
 import { CharacterEquipmentAuthorityService } from "../character-external-sync/character-equipment-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
 import { gearSlotCatalog } from "./gear-readiness.catalog.js";
 import { resolveEffectiveGearItem } from "./gear-readiness.effective.js";
 import { GearReadinessRepository } from "./gear-readiness.repository.js";
@@ -21,37 +22,47 @@ export class GearReadinessService {
     private readonly equipmentAuthorityService = new CharacterEquipmentAuthorityService(
       new CharacterExternalSnapshotRepository(),
       new CharacterEquipmentAddonFallbackRepository()
+    ),
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
     )
   ) {}
 
   async getOverview() {
     const characters = await this.repository.findCharacters();
+    const characterIds = characters.map((character) => character.id);
 
-    const equipmentByCharacterId = new Map(
-      await Promise.all(
-        characters.map(
-          async (character) =>
-            [
-              character.id,
-              await this.equipmentAuthorityService.getAuthoritativeEquipment(
-                character.id
-              )
-            ] as const
-        )
-      )
-    );
+    const [equipmentEntries, blizzardLastLoginAtByCharacterId] =
+      await Promise.all([
+        Promise.all(
+          characterIds.map(
+            async (characterId) =>
+              [
+                characterId,
+                await this.equipmentAuthorityService.getAuthoritativeEquipment(
+                  characterId
+                )
+              ] as const
+          )
+        ),
+        this.profileAuthorityService.getLastLoginAtMap(characterIds)
+      ]);
+    const equipmentByCharacterId = new Map(equipmentEntries);
 
     const characterItems = characters.map((character) => {
       const storedSlots = new Map(
         character.gearSlots.map((slot) => [slot.slotKey, slot])
       );
       const blizzardEquipment = equipmentByCharacterId.get(character.id);
+      const blizzardLastLoginAt =
+        blizzardLastLoginAtByCharacterId.get(character.id) ?? null;
       const slots = gearSlotCatalog.map((definition) => {
         const storedItem = storedSlots.get(definition.key);
         const item = resolveEffectiveGearItem(
           definition.key,
           storedItem,
-          blizzardEquipment
+          blizzardEquipment,
+          blizzardLastLoginAt
         );
         const missingEnchant = Boolean(
           item &&

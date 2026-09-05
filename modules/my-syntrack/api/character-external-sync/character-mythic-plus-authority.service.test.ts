@@ -3,15 +3,17 @@ import { CharacterMythicPlusAuthorityService } from "./character-mythic-plus-aut
 
 function createHarness(
   snapshot: unknown,
-  addonRating: number | null = null
+  addonRating: number | null = null,
+  addonObservedAt: Date | null = null
 ) {
   const findOne = vi.fn(async () => snapshot);
   const findSeasonRating = vi.fn(async () => addonRating);
+  const findSeasonRatingObservedAt = vi.fn(async () => addonObservedAt);
   const service = new CharacterMythicPlusAuthorityService(
     { findOne } as never,
-    { findSeasonRating } as never
+    { findSeasonRating, findSeasonRatingObservedAt } as never
   );
-  return { service, findOne, findSeasonRating };
+  return { service, findOne, findSeasonRating, findSeasonRatingObservedAt };
 }
 
 const freshSnapshotWithProfile = {
@@ -138,6 +140,44 @@ describe("CharacterMythicPlusAuthorityService", () => {
       periodId: null,
       fetchedAt: null,
       isStale: false
+    });
+  });
+
+  describe("recency guard (Phase F1 corrective review)", () => {
+    it("falls back to ADDON when the addon observed a rating after Blizzard's last recorded login, even though the Blizzard snapshot is otherwise fresh", async () => {
+      const blizzardLastLoginAt = new Date("2026-09-01T00:00:00Z");
+      const addonObservedAt = new Date("2026-09-04T00:00:00Z");
+      const harness = createHarness(freshSnapshotWithProfile, 3100, addonObservedAt);
+
+      const result = await harness.service.getAuthoritativeMythicPlus(
+        "char-1",
+        blizzardLastLoginAt
+      );
+
+      expect(result.source).toBe("ADDON");
+      expect(result.rating).toBe(3100);
+    });
+
+    it("keeps using BLIZZARD when the addon's observation is not newer than Blizzard's last login", async () => {
+      const blizzardLastLoginAt = new Date("2026-09-04T00:25:43.000Z");
+      const addonObservedAt = new Date("2026-09-04T00:25:40.000Z");
+      const harness = createHarness(freshSnapshotWithProfile, 3100, addonObservedAt);
+
+      const result = await harness.service.getAuthoritativeMythicPlus(
+        "char-1",
+        blizzardLastLoginAt
+      );
+
+      expect(result.source).toBe("BLIZZARD");
+      expect(result.rating).toBe(3125);
+    });
+
+    it("degrades to the pre-existing fetchedAt-only check when blizzardLastLoginAt is not supplied (direct single-character call)", async () => {
+      const harness = createHarness(freshSnapshotWithProfile, 3100, new Date());
+
+      const result = await harness.service.getAuthoritativeMythicPlus("char-1");
+
+      expect(result.source).toBe("BLIZZARD");
     });
   });
 

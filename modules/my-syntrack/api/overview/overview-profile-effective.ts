@@ -34,7 +34,8 @@ export async function applyAuthoritativeProfile(
           realm: entry.character.realm,
           region: entry.character.region,
           level: entry.character.level,
-          className: entry.character.className
+          className: entry.character.className,
+          lastSyncedAt: entry.character.lastSyncedAt
         }
       );
 

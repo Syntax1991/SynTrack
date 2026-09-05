@@ -1,3 +1,4 @@
+import { isBlizzardObservationBehindAddon } from "../character-external-sync/character-blizzard-recency.js";
 import type { AuthoritativeEquipmentResult, AuthoritativeEquipmentSlot } from "../character-external-sync/character-external-sync.types.js";
 import { findGearSlotDefinition } from "./gear-readiness.catalog.js";
 import { parseSpellIds } from "./gear-readiness.service.helpers.js";
@@ -36,12 +37,53 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  * over a fresh Blizzard snapshot. Blizzard/addon are both read-only,
  * automatically-captured facts; a human's explicit entry is never
  * silently overwritten by either.
+ *
+ * PHASE F1 CORRECTIVE REVIEW additions:
+ *
+ * ITEM ID CONTRACT: `id` and `itemId` are deliberately two different
+ * identity domains, never conflated. `id` is the underlying
+ * CharacterGearSlot database row's own cuid - null when no such row
+ * exists (a slot covered by Blizzard alone, with no addon capture ever
+ * recorded for it). `itemId` is the actual World of Warcraft item id,
+ * from Blizzard when available, else the addon's own captured value.
+ * Pre-Phase-F1 code used the addon row's own database `id` for this
+ * field; Phase F1 initially overloaded that same field with the WoW
+ * item id instead, which is the bug this split corrects - see the Phase
+ * F1 corrective review report.
+ *
+ * SCALED-LEVEL / RECENCY GUARD: a Blizzard-reported item level is not
+ * used outright just because a Blizzard snapshot exists for this
+ * character. Two independent checks can defer to the addon's own value
+ * for a slot even while Blizzard is otherwise "PRIMARY":
+ *   (1) the authority layer already nulls out `itemLevel` for a slot
+ *       whose equipped item was reported inside a level-scaling bracket
+ *       (Timewalking, etc.) - see character-equipment-authority.service.ts.
+ *       Item identity (id/name/enchant/socket) is still trusted since
+ *       it genuinely is that equipped item; only its level is suspect.
+ *   (2) the recency guard: when the addon has synced this exact slot
+ *       AFTER Blizzard's own last recorded login for this character,
+ *       Blizzard's whole snapshot for this slot is skipped outright -
+ *       the addon has observed a newer state Blizzard hasn't caught up
+ *       to yet. Live-verified this phase: a real character (Synbeast)
+ *       had an ENTIRE equipped set reported at Timewalking-scaled
+ *       levels (e.g. HEAD reported as ilvl 76 vs. the addon's real 473
+ *       for the exact same item id) - case (1) is what actually fixes
+ *       that specific character, since the addon and Blizzard observed
+ *       it within 3 seconds of each other (case (2) does not trigger
+ *       there). Both checks exist because they catch different failure
+ *       modes - see character-blizzard-recency.ts and the Phase F1
+ *       corrective review report's policy section for the full design.
  */
 
 export type EffectiveGearItem = {
-  id: number | null;
+  /** The underlying CharacterGearSlot row's own id - null when no addon row exists for this slot at all. */
+  id: string | null;
+  /** The real World of Warcraft item id (Blizzard-primary, addon-fallback) - never a database identity. */
+  itemId: number | null;
   itemName: string;
   itemLevel: number | null;
+  /** Which provider the served itemLevel actually came from - null only when neither source has one. */
+  itemLevelSource: "BLIZZARD" | "ADDON" | null;
   enchantStatus: EnchantStatus;
   enchantName: string | null;
   socketCount: number | null;
@@ -61,6 +103,7 @@ export type EffectiveGearItem = {
 };
 
 export type AddonGearSlotRow = {
+  id: string;
   slotKey: string;
   itemId: number | null;
   itemName: string | null;
@@ -85,9 +128,11 @@ export type AddonGearSlotRow = {
 
 function fromAddon(addonItem: AddonGearSlotRow): EffectiveGearItem {
   return {
-    id: addonItem.itemId,
+    id: addonItem.id,
+    itemId: addonItem.itemId,
     itemName: addonItem.itemName ?? "",
     itemLevel: addonItem.itemLevel,
+    itemLevelSource: addonItem.itemLevel !== null ? "ADDON" : null,
     enchantStatus: addonItem.enchantStatus as EnchantStatus,
     enchantName: addonItem.enchantName,
     socketCount: addonItem.socketCount,
@@ -119,10 +164,27 @@ function fromBlizzard(
       ? "READY"
       : "MISSING";
 
+  /*
+   * blizzardSlot.itemLevel is already null when the authority layer
+   * detected a scaled-bracket item - falling back to the addon's own
+   * item level for THIS FIELD ONLY, while identity (itemId/name/
+   * enchant/socket) still comes from Blizzard, since the item itself
+   * is genuinely correct even when its reported level isn't.
+   */
+  const itemLevel = blizzardSlot.itemLevel ?? addonItem?.itemLevel ?? null;
+  const itemLevelSource: EffectiveGearItem["itemLevelSource"] =
+    blizzardSlot.itemLevel !== null
+      ? "BLIZZARD"
+      : addonItem?.itemLevel != null
+        ? "ADDON"
+        : null;
+
   return {
-    id: blizzardSlot.itemId,
+    id: addonItem?.id ?? null,
+    itemId: blizzardSlot.itemId,
     itemName: blizzardSlot.itemName ?? addonItem?.itemName ?? "",
-    itemLevel: blizzardSlot.itemLevel,
+    itemLevel,
+    itemLevelSource,
     enchantStatus,
     // No Blizzard equivalent (only a numeric enchantment id, no display text).
     enchantName: addonItem?.enchantName ?? null,
@@ -151,18 +213,32 @@ function fromBlizzard(
  * addon row always wins regardless, and any other Blizzard source
  * (ADDON/NONE, or simply no Blizzard slot for this specific key) falls
  * through to the existing addon-only behavior unchanged.
+ *
+ * `blizzardLastLoginAt` (Phase F1 corrective review) is Blizzard's own
+ * attested last-login moment for this character (from the PROFILE
+ * domain, the only endpoint that reports it) - when this slot's addon
+ * row was synced AFTER that login, Blizzard's snapshot is skipped for
+ * this slot entirely: the addon has already observed a newer state
+ * Blizzard's servers haven't caught up to. See character-blizzard-
+ * recency.ts.
  */
 export function resolveEffectiveGearItem(
   slotKey: GearSlotKey,
   addonItem: AddonGearSlotRow | undefined,
-  blizzardEquipment: AuthoritativeEquipmentResult | undefined
+  blizzardEquipment: AuthoritativeEquipmentResult | undefined,
+  blizzardLastLoginAt: Date | null = null
 ): EffectiveGearItem | null {
   if (addonItem?.source === "MANUAL") {
     return fromAddon(addonItem);
   }
 
+  const blizzardBehindAddon = isBlizzardObservationBehindAddon(
+    blizzardLastLoginAt,
+    addonItem?.lastSyncedAt ?? null
+  );
+
   const blizzardSlot =
-    blizzardEquipment?.source === "BLIZZARD"
+    !blizzardBehindAddon && blizzardEquipment?.source === "BLIZZARD"
       ? blizzardEquipment.slots.find((slot) => slot.slotKey === slotKey)
       : undefined;
 

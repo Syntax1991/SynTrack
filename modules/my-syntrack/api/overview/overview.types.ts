@@ -234,6 +234,7 @@ export type CharacterWeeklyState = {
     region: string;
     className: string;
     level: number;
+    lastSyncedAt: Date | null;
   };
   weekly: WeeklyOverviewState;
   weeklySummary: WeeklySummaryOverviewState;

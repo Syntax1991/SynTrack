@@ -91,4 +91,32 @@ describe("normalizeBlizzardEquipment", () => {
     expect(result.averageItemLevel).toBeNull();
     expect(result.slots).toEqual([]);
   });
+
+  it("captures timewalkerLevel and excludes scaled-bracket items from the average (real Synbeast evidence)", () => {
+    const result = normalizeBlizzardEquipment({
+      equipped_items: [
+        // Real Timewalking-scaled HEAD observed live on Synbeast: item's
+        // true item level is 473 (per the addon), but Blizzard reports
+        // 76 here because the character was in a Timewalking bracket.
+        {
+          slot: { type: "HEAD" },
+          item: { id: 219749 },
+          level: { value: 76 },
+          context: 25,
+          timewalker_level: 72
+        },
+        // A normal, unscaled item in the same equipped set.
+        { slot: { type: "CHEST" }, level: { value: 320 } }
+      ]
+    });
+
+    const head = result.slots.find((slot) => slot.slotKey === "HEAD");
+    const chest = result.slots.find((slot) => slot.slotKey === "CHEST");
+
+    expect(head).toMatchObject({ itemLevel: 76, timewalkerLevel: 72 });
+    expect(chest).toMatchObject({ itemLevel: 320, timewalkerLevel: null });
+    // Only the unscaled CHEST item contributes to the average - the
+    // scaled HEAD item would otherwise drag it down to a misleading 198.
+    expect(result.averageItemLevel).toBe(320);
+  });
 });
