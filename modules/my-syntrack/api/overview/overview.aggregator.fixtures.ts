@@ -18,6 +18,12 @@ export function baseCharacter(
     region: "eu",
     className: "Shaman",
     level: 80,
+    race: null,
+    faction: null,
+    activeSpec: null,
+    guild: null,
+    averageItemLevel: null,
+    equippedItemLevel: null,
     ...overrides
   };
 }

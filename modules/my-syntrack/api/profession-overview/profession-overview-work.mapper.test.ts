@@ -13,6 +13,7 @@ function assignment(
     realm: "Silvermoon",
     region: "EU",
     className: "Mage",
+    level: 90,
     professionId: "prof-alchemy",
     professionKey: "alchemy",
     professionName: "Alchemy",

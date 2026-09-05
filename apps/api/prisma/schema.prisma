@@ -36,6 +36,7 @@ model Character {
   personalRaidTasks PersonalRaidTask[]
   gearSlots         CharacterGearSlot[]
   gearBagSetPieces CharacterGearBagSetPiece[]
+  externalSnapshots CharacterExternalSnapshot[]
   trackerValues     CharacterTrackerValue[]
   tagAssignments    CharacterTagAssignment[]
   resourceSnapshots CharacterResourceSnapshot[]
@@ -194,6 +195,37 @@ model CharacterGearBagSetPiece {
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@index([characterId, setId])
+  @@index([characterId])
+}
+
+/*
+ * One row per (character, external source, data domain) - the last
+ * SUCCESSFUL fetch's normalized payload, plus enough state to tell
+ * never-fetched / fresh / stale / last-attempt-failed apart without
+ * ever losing that last successful payload to a later failed attempt.
+ * source/domain are plain strings (matching this schema's existing
+ * convention - Character.source, CharacterGearSlot.source, etc. are
+ * never enums either) so new sources/domains never need a migration.
+ * Generic across domains by design: EQUIPMENT is the first, with
+ * PROFILE/PROFESSIONS/MYTHIC_PLUS/ACHIEVEMENTS expected to reuse the
+ * same shape later rather than each getting a bespoke model.
+ */
+model CharacterExternalSnapshot {
+  id            String    @id @default(cuid())
+  characterId   String
+  source        String
+  domain        String
+  payloadJson   String?
+  fetchedAt     DateTime?
+  lastAttemptAt DateTime  @default(now())
+  lastStatus    String
+  lastError     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([characterId, source, domain])
   @@index([characterId])
 }
 

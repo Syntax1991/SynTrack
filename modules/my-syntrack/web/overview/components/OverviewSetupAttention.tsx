@@ -14,8 +14,8 @@ export function OverviewSetupAttention({
   }
 
   return (
-    <section className="panel overview-decision-panel">
-      <p className="eyebrow">SETUP ATTENTION</p>
+    <section className="panel overview-decision-panel overview-setup-panel">
+      <p className="panel-title">SETUP ATTENTION</p>
       <table className="dense-matrix overview-decision-matrix">
         <thead>
           <tr>

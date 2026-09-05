@@ -4,6 +4,7 @@ type PageHeaderProps = {
   eyebrow: string;
   title: string;
   description?: string;
+  summary?: ReactNode;
   actions?: ReactNode;
 };
 
@@ -11,6 +12,7 @@ export function PageHeader({
   eyebrow,
   title,
   description,
+  summary,
   actions
 }: PageHeaderProps) {
   return (
@@ -22,6 +24,12 @@ export function PageHeader({
         {description && (
           <p className="page-description">
             {description}
+          </p>
+        )}
+
+        {summary && (
+          <p className="page-summary">
+            {summary}
           </p>
         )}
       </div>

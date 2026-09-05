@@ -22,7 +22,7 @@ export function SeasonPage() {
         actions={
           <>
             <button
-              className="button button-secondary"
+              className="button button-primary"
               onClick={() => setIsManagingGoals(true)}
               type="button"
             >
@@ -35,6 +35,21 @@ export function SeasonPage() {
         }
         description="Seasonal Character and Warband goals. Weekly reset work stays in Weeklies."
         eyebrow="SEASONAL CHECKLIST"
+        summary={
+          checklist && (
+            <>
+              {seasonLabel}
+              {" · "}
+              {checklist.summary.characterCount} characters
+              {" · "}
+              {checklist.summary.goalsOpen} goals open
+              {" · "}
+              {checklist.summary.goalsComplete} complete
+              {" · "}
+              {checklist.summary.goalsUnknown} unknown
+            </>
+          )
+        }
         title="Season"
       />
 
@@ -53,20 +68,8 @@ export function SeasonPage() {
         <LoadingPanel />
       ) : (
         <>
-          <p className="season-summary">
-            {seasonLabel}
-            {" · "}
-            {checklist.summary.characterCount} characters
-            {" · "}
-            {checklist.summary.goalsOpen} goals open
-            {" · "}
-            {checklist.summary.goalsComplete} complete
-            {" · "}
-            {checklist.summary.goalsUnknown} unknown
-          </p>
-
           <section className="panel matrix-panel season-matrix-panel">
-            <p className="eyebrow">CHARACTER SEASON GOALS</p>
+            <p className="panel-title">CHARACTER SEASON GOALS</p>
             <SeasonChecklistMatrix characters={checklist.characters} />
           </section>
 

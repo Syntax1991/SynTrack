@@ -2,14 +2,25 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns:
-    210px
+    224px
     minmax(0, 1fr);
+  background: var(--background);
 }
 
 .main-content {
   min-width: 0;
   grid-column: 2;
-  padding: 34px 40px 60px;
+  padding: 32px 40px 60px;
+}
+
+/* Desktop-first content container: bounded and centered in the main
+   area. A flat left-anchor was tried and rejected - on wide/ultrawide
+   monitors it dumps 100% of the leftover width onto the right edge as
+   a single lopsided gap, which reads as broken, not spacious. Centered
+   the leftover splits evenly, which reads as an intentional margin. */
+.content-container {
+  width: min(100%, 1520px);
+  margin-inline: auto;
 }
 
 .page-header {
@@ -17,6 +28,11 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 28px;
+  margin-bottom: 22px;
+}
+
+.page-header h1 {
+  font-size: 1.95rem;
 }
 
 .page-actions {
@@ -26,9 +42,21 @@
 
 .page-description {
   max-width: 720px;
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* An optional supplementary summary line (e.g. Season's goal counts) -
+   stays part of the header's left column instead of floating as its
+   own disconnected element below the header. */
+.page-summary {
   margin-top: 10px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .stats-grid {

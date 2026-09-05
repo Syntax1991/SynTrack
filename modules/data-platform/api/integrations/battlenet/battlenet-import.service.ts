@@ -3,12 +3,15 @@ import { mapWithConcurrency } from "../../../../../apps/api/src/shared/async/map
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
 import { CharacterRepository } from "../../../../my-syntrack/api/characters/character.repository.js";
 import { RemovedCharacterRepository } from "../../../../my-syntrack/api/characters/removed-character.repository.js";
-import { ProfessionRepository } from "../../../../professions/api/profession.repository.js";
+import type { CharacterProfileRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profile-refresh.service.js";
+import type { CharacterProfessionRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-profession-refresh.service.js";
+import type { CharacterMythicPlusRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-mythic-plus-refresh.service.js";
+import type { CharacterAchievementsRefreshService } from "../../../../my-syntrack/api/character-external-sync/character-achievements-refresh.service.js";
 import type { RaiderAccessTokenGuard } from "../../raider-auth/raider-auth.types.js";
+import type { BattleNetAppTokenService } from "./battlenet-app-token.service.js";
 import { BattleNetClient } from "./battlenet.client.js";
 import {
   createBattleNetCharacterKey,
-  createBattleNetProfessionAssignments,
   normalizeBattleNetCharacters,
   type ImportableBattleNetCharacter
 } from "./battlenet-import.mapper.js";
@@ -36,11 +39,29 @@ export class BattleNetImportService {
     private readonly characterRepository:
       CharacterRepository,
 
-    private readonly professionRepository:
-      ProfessionRepository,
-
+    /*
+     * Only ever used for /profile/user/wow (account character discovery)
+     * - the one endpoint Phase 0 confirmed genuinely requires a user
+     * token. Every other Blizzard call this service makes uses the app
+     * token below.
+     */
     private readonly raiderAuth:
-      RaiderAccessTokenGuard
+      RaiderAccessTokenGuard,
+
+    private readonly appTokenService:
+      BattleNetAppTokenService,
+
+    private readonly profileRefreshService:
+      CharacterProfileRefreshService,
+
+    private readonly professionRefreshService:
+      CharacterProfessionRefreshService,
+
+    private readonly mythicPlusRefreshService:
+      CharacterMythicPlusRefreshService,
+
+    private readonly achievementsRefreshService:
+      CharacterAchievementsRefreshService
   ) {}
 
   async listCharacters(
@@ -167,9 +188,6 @@ export class BattleNetImportService {
       );
     }
 
-    const professionIdByKey =
-      await this.createProfessionIdMap();
-
     const outcomes =
       await mapWithConcurrency(
         selectedCharacters,
@@ -177,8 +195,6 @@ export class BattleNetImportService {
         async (character) =>
           this.importCharacter(
             character,
-            accessToken,
-            professionIdByKey,
             raiderAccountId
           )
       );
@@ -209,9 +225,6 @@ export class BattleNetImportService {
   private async importCharacter(
     character:
       ImportableBattleNetCharacter,
-    accessToken: string,
-    professionIdByKey:
-      Map<string, string>,
     raiderAccountId: string
   ): Promise<ImportOutcome> {
     try {
@@ -233,28 +246,73 @@ export class BattleNetImportService {
         };
       }
 
-      const professionData =
-        await this.client
-          .getCharacterProfessions(
-            accessToken,
-            character.realmSlug,
-            character.name
-          );
+      /*
+       * Identity only here - no professions payload at all. Public
+       * profession enrichment (learned profession/tier/skill/max-skill)
+       * goes through the same app-token PROFESSIONS refresh pipeline as
+       * a manual refresh, below, instead of writing directly into
+       * CharacterProfession here. The old path
+       * (getCharacterProfessions + a direct upsertFromBattleNet
+       * professions[] write) used to unconditionally overwrite
+       * knowledgePoints with a hardcoded 0 on every re-import, silently
+       * zeroing real addon-captured Knowledge Points - this removes that
+       * write path entirely rather than trying to patch it, since
+       * Knowledge Points must never be touched by anything Blizzard-
+       * sourced (see CharacterProfessionAuthorityService).
+       */
+      const savedCharacter =
+        await this.characterRepository
+          .upsertFromBattleNet({
+            ...character,
+            region:
+              env.BATTLENET_REGION,
+            professions: []
+          });
 
-      const professionAssignments =
-        createBattleNetProfessionAssignments(
-          professionData,
-          professionIdByKey
+      /*
+       * Public profile/profession enrichment uses the same app-token
+       * refresh pipelines as a manual refresh. Both already catch
+       * Blizzard-side failures internally and never throw for them -
+       * these try/catches are an extra guard so that even a genuinely
+       * unexpected error here can never turn an already-successful
+       * import into a reported failure; the character is tracked
+       * regardless of whether either enrichment step succeeds.
+       */
+      try {
+        await this.profileRefreshService.refreshCharacter(
+          savedCharacter.id
         );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
 
-      await this.characterRepository
-        .upsertFromBattleNet({
-          ...character,
-          region:
-            env.BATTLENET_REGION,
-          professions:
-            professionAssignments
-        });
+      try {
+        await this.professionRefreshService.refreshCharacter(
+          savedCharacter.id
+        );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
+
+      try {
+        await this.mythicPlusRefreshService.refreshCharacter(
+          savedCharacter.id
+        );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
+
+      try {
+        await this.achievementsRefreshService.refreshCharacter(
+          savedCharacter.id
+        );
+      }
+      catch {
+        // Non-fatal by design - see comment above.
+      }
 
       return {
         imported: true,
@@ -283,22 +341,6 @@ export class BattleNetImportService {
         }
       };
     }
-  }
-
-  private async createProfessionIdMap():
-    Promise<Map<string, string>> {
-    const professions =
-      await this.professionRepository
-        .findAll();
-
-    return new Map(
-      professions.map(
-        (profession) => [
-          profession.key,
-          profession.id
-        ]
-      )
-    );
   }
 
 }

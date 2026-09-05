@@ -1,23 +1,10 @@
 import { env } from "../../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
-import type {
-  BattleNetAccountProfile,
-  BattleNetCharacterEquipment,
-  BattleNetCharacterProfile,
-  BattleNetGuildRoster,
-  BattleNetProfessionsResponse,
-  BattleNetTokenResponse,
-  BattleNetUserInfo
-} from "./battlenet.types.js";
+import type { BattleNetAccountProfile, BattleNetCharacterAchievements, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetGuildRoster, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
 
-const authorizationUrl =
-  "https://oauth.battle.net/authorize";
-
-const tokenUrl =
-  "https://oauth.battle.net/token";
-
-const userInfoUrl =
-  "https://oauth.battle.net/userinfo";
+const authorizationUrl = "https://oauth.battle.net/authorize";
+const tokenUrl = "https://oauth.battle.net/token";
+const userInfoUrl = "https://oauth.battle.net/userinfo";
 
 export class BattleNetClient {
   createAuthorizationUrl(
@@ -66,26 +53,19 @@ export class BattleNetClient {
       method: "POST",
       headers: {
         Accept: "application/json",
-        Authorization:
-          `Basic ${basicCredentials}`,
-        "Content-Type":
-          "application/x-www-form-urlencoded"
+        Authorization: `Basic ${basicCredentials}`,
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri:
-          redirectUri
+        redirect_uri: redirectUri
       })
     });
 
-    const payload =
-      await this.readJsonResponse(response);
+    const payload = await this.readJsonResponse(response);
 
-    if (
-      !response.ok ||
-      !this.isTokenResponse(payload)
-    ) {
+    if (!response.ok || !this.isTokenResponse(payload)) {
       throw new AppError(
         502,
         "Battle.net konnte den Autorisierungscode nicht einlösen.",
@@ -99,19 +79,14 @@ export class BattleNetClient {
   async getUserInfo(
     accessToken: string
   ): Promise<BattleNetUserInfo> {
-    const response = await fetch(
-      userInfoUrl,
-      {
-        headers: {
-          Accept: "application/json",
-          Authorization:
-            `Bearer ${accessToken}`
-        }
+    const response = await fetch(userInfoUrl, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
       }
-    );
+    });
 
-    const payload =
-      await this.readJsonResponse(response);
+    const payload = await this.readJsonResponse(response);
 
     if (!response.ok) {
       throw new AppError(
@@ -150,27 +125,15 @@ export class BattleNetClient {
     realmSlug: string,
     characterName: string
   ): Promise<BattleNetProfessionsResponse> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    const result = await this.getProfileResource<BattleNetProfessionsResponse>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/professions`,
+      accessToken,
+      true
     );
 
-    const encodedName = encodeURIComponent(
-      characterName.toLowerCase()
-    );
-
-    const result =
-      await this.getProfileResource<
-        BattleNetProfessionsResponse
-      >(
-        `/profile/wow/character/${encodedRealm}/${encodedName}/professions`,
-        accessToken,
-        true
-      );
-
-    return result ?? {
-      primaries: [],
-      secondaries: []
-    };
+    return result ?? { primaries: [], secondaries: [] };
   }
 
   async getCharacterProfile(
@@ -178,17 +141,9 @@ export class BattleNetClient {
     realmSlug: string,
     characterName: string
   ): Promise<BattleNetCharacterProfile | null> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
-    );
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
 
-    const encodedName = encodeURIComponent(
-      characterName.toLowerCase()
-    );
-
-    return this.getProfileResource<
-      BattleNetCharacterProfile
-    >(
+    return this.getProfileResource<BattleNetCharacterProfile>(
       `/profile/wow/character/${encodedRealm}/${encodedName}`,
       accessToken,
       true
@@ -222,21 +177,72 @@ export class BattleNetClient {
     realmSlug: string,
     characterName: string
   ): Promise<BattleNetCharacterEquipment | null> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
-    );
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
 
-    const encodedName = encodeURIComponent(
-      characterName.toLowerCase()
-    );
-
-    return this.getProfileResource<
-      BattleNetCharacterEquipment
-    >(
+    return this.getProfileResource<BattleNetCharacterEquipment>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/equipment`,
       accessToken,
       true
     );
+  }
+
+  // null = no Mythic Keystone profile (same allowNotFound contract as
+  // getCharacterProfile/getCharacterEquipment; genuine "never done M+").
+  async getCharacterMythicKeystoneProfile(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string
+  ): Promise<BattleNetMythicKeystoneProfile | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetMythicKeystoneProfile>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile`,
+      accessToken,
+      true
+    );
+  }
+
+  // Season-wide per-dungeon best runs (Phase D.2) - same null/404
+  // contract as getCharacterMythicKeystoneProfile.
+  async getCharacterMythicKeystoneProfileSeason(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string,
+    seasonId: number
+  ): Promise<BattleNetMythicKeystoneSeasonProfile | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetMythicKeystoneSeasonProfile>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile/season/${seasonId}`,
+      accessToken,
+      true
+    );
+  }
+
+  // null = no achievements profile at all (same allowNotFound contract as
+  // the other character endpoints).
+  async getCharacterAchievements(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string
+  ): Promise<BattleNetCharacterAchievements | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetCharacterAchievements>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/achievements`,
+      accessToken,
+      true
+    );
+  }
+
+  private encodeCharacterSlugs(
+    realmSlug: string,
+    characterName: string
+  ): [string, string] {
+    return [
+      encodeURIComponent(realmSlug.toLowerCase()),
+      encodeURIComponent(characterName.toLowerCase())
+    ];
   }
 
   private async getProfileResource<T>(

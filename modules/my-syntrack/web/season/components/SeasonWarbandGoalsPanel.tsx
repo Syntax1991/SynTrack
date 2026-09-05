@@ -27,35 +27,22 @@ export function SeasonWarbandGoalsPanel({
         on every Character.
       </p>
 
-      <div className="table-scroll matrix-scroll">
-        <table className="dense-matrix">
-          <thead>
-            <tr>
-              <th>Goal</th>
-              <th className="matrix-col-narrow">State</th>
-              <th>Detail</th>
-            </tr>
-          </thead>
-          <tbody>
-            {warbandGoals.map((goal) => (
-              <tr key={goal.key}>
-                <td>{goal.title}</td>
-                <td className="matrix-col-narrow">
-                  <StatusToken
-                    token={{
-                      symbol: goal.label,
-                      tone: weekliesSignalTone(
-                        goal.state as WeekliesSignalState
-                      ),
-                      title: goal.detail
-                    }}
-                  />
-                </td>
-                <td>{goal.detail}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="warband-goal-grid">
+        {warbandGoals.map((goal) => (
+          <div className="warband-goal-item" key={goal.key}>
+            <div className="warband-goal-heading">
+              <span className="warband-goal-title">{goal.title}</span>
+              <StatusToken
+                token={{
+                  symbol: goal.label,
+                  tone: weekliesSignalTone(goal.state as WeekliesSignalState),
+                  title: goal.detail
+                }}
+              />
+            </div>
+            <p className="warband-goal-detail">{goal.detail}</p>
+          </div>
+        ))}
       </div>
     </section>
   );

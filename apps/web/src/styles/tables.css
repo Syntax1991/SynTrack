@@ -112,9 +112,11 @@ tbody tr:last-child td {
 .text-button {
   padding: 4px;
   border: 0;
-  color: #c9b9ef;
+  color: var(--primary-hover);
   background: transparent;
-  font-size: 0.73rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: normal;
 }
 
 .text-button:hover {

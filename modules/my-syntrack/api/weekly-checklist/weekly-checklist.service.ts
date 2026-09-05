@@ -1,4 +1,7 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
 import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
 import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
@@ -98,7 +101,12 @@ export class WeeklyChecklistService {
 
   constructor(
     private readonly repository:
-      WeeklyChecklistRepository
+      WeeklyChecklistRepository,
+    // Constructor-injectable so service-boundary tests can prove the
+    // effective level/className path is used without a real Prisma round trip.
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
   async getChecklist() {
@@ -128,6 +136,12 @@ export class WeeklyChecklistService {
         this.weeklyGameplayService.getOverview()
       ]);
 
+    const identityByCharacterId =
+      await resolveEffectiveCharacterIdentities(
+        characters,
+        this.profileAuthorityService
+      );
+
     const professionWeeklyByCharacterId = new Map(
       professionWeeklyOverview.characters.map((character) => [
         character.id,
@@ -148,14 +162,15 @@ export class WeeklyChecklistService {
         const trackingProfile = resolveCharacterTrackingProfile(
           tagsByCharacterId.get(character.id) ?? []
         );
+        const identity = identityByCharacterId.get(character.id);
 
         return {
           id: character.id,
           name: character.name,
           realm: character.realm,
           region: character.region,
-          className: character.className,
-          level: character.level,
+          className: identity?.className ?? character.className,
+          level: identity?.level ?? character.level,
           trackingProfile,
           completedTaskKeys: character.weeklyCompletions.map(
             (completion) => completion.task.key

@@ -39,7 +39,7 @@ export function OverviewGameplayPriorities({
 }: OverviewGameplayPrioritiesProps) {
   return (
     <section className="panel overview-decision-panel">
-      <p className="eyebrow">GAMEPLAY PRIORITIES</p>
+      <p className="panel-title">GAMEPLAY PRIORITIES</p>
       <table className="dense-matrix overview-decision-matrix">
         <thead>
           <tr>

@@ -1,13 +1,15 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
-import {
-  findGearSlotDefinition,
-  gearSlotCatalog
-} from "./gear-readiness.catalog.js";
+import { CharacterEquipmentAddonFallbackRepository } from "../character-external-sync/character-equipment-addon-fallback.repository.js";
+import { CharacterEquipmentAuthorityService } from "../character-external-sync/character-equipment-authority.service.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
+import { gearSlotCatalog } from "./gear-readiness.catalog.js";
+import { resolveEffectiveGearItem } from "./gear-readiness.effective.js";
 import { GearReadinessRepository } from "./gear-readiness.repository.js";
 import {
   average,
   normalizeInput,
-  parseSpellIds,
   resolveCurrentExpansionId
 } from "./gear-readiness.service.helpers.js";
 import type {
@@ -17,18 +19,47 @@ import type {
 
 export class GearReadinessService {
   constructor(
-    private readonly repository: GearReadinessRepository
+    private readonly repository: GearReadinessRepository,
+    private readonly equipmentAuthorityService = new CharacterEquipmentAuthorityService(
+      new CharacterExternalSnapshotRepository(),
+      new CharacterEquipmentAddonFallbackRepository()
+    ),
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
   async getOverview() {
     const characters = await this.repository.findCharacters();
 
+    const [equipmentByCharacterId, identityByCharacterId] = await Promise.all([
+      Promise.all(
+        characters.map(
+          async (character) =>
+            [
+              character.id,
+              await this.equipmentAuthorityService.getAuthoritativeEquipment(
+                character.id
+              )
+            ] as const
+        )
+      ).then((entries) => new Map(entries)),
+      resolveEffectiveCharacterIdentities(characters, this.profileAuthorityService)
+    ]);
+
     const characterItems = characters.map((character) => {
+      const identity = identityByCharacterId.get(character.id);
       const storedSlots = new Map(
         character.gearSlots.map((slot) => [slot.slotKey, slot])
       );
+      const blizzardEquipment = equipmentByCharacterId.get(character.id);
       const slots = gearSlotCatalog.map((definition) => {
-        const item = storedSlots.get(definition.key);
+        const storedItem = storedSlots.get(definition.key);
+        const item = resolveEffectiveGearItem(
+          definition.key,
+          storedItem,
+          blizzardEquipment
+        );
         const missingEnchant = Boolean(
           item &&
             definition.supportsEnchant &&
@@ -47,32 +78,7 @@ export class GearReadinessService {
 
         return {
           ...definition,
-          item: item
-            ? {
-                id: item.id,
-                itemName: item.itemName,
-                itemLevel: item.itemLevel,
-                enchantStatus: item.enchantStatus,
-                enchantName: item.enchantName,
-                socketCount: item.socketCount,
-                gemCount: item.gemCount,
-                notes: item.notes,
-                source: item.source,
-                lastSyncedAt:
-                  item.lastSyncedAt?.toISOString() ?? null,
-                updatedAt: item.updatedAt.toISOString(),
-                setId: item.setId,
-                expansionId: item.expansionId,
-                setEvidenceResolved: item.setEvidenceResolved,
-                setBonusResolved: item.setBonusResolved,
-                setBonusSpellIds: parseSpellIds(
-                  item.setBonusSpellIds
-                ),
-                uniqueCategoryId: item.uniqueCategoryId,
-                uniqueCategoryCount: item.uniqueCategoryCount,
-                uniquenessResolved: item.uniquenessResolved
-              }
-            : null,
+          item,
           issues: {
             missingEnchant,
             missingGemCount,
@@ -114,8 +120,8 @@ export class GearReadinessService {
         name: character.name,
         realm: character.realm,
         region: character.region,
-        className: character.className,
-        level: character.level,
+        className: identity?.className ?? character.className,
+        level: identity?.level ?? character.level,
         slots,
         trackedSlotCount: trackedSlots.length,
         averageItemLevel: average(
