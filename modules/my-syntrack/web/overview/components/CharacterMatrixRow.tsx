@@ -101,6 +101,18 @@ export function CharacterMatrixRow({
                 color: getClassColor(state.character.className)
               }}
               to={`/characters/${state.character.id}`}
+              /*
+               * Phase F2: surfaces the newly-available Blizzard
+               * activeSpec/guild as a hover tooltip rather than a new
+               * visible column - the dense matrix is deliberately
+               * compact, and this is available-but-not-forced-onscreen
+               * data (see the Phase F2 report).
+               */
+              title={
+                [state.character.activeSpec, state.character.guild?.name]
+                  .filter((value): value is string => Boolean(value))
+                  .join(" · ") || undefined
+              }
             >
               {state.character.name}
             </Link>

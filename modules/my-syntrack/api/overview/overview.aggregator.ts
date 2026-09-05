@@ -30,6 +30,20 @@ export type OverviewAggregationInput = {
     region: string;
     className: string;
     level: number;
+    /*
+     * Phase F2: seeded null here (no addon equivalent exists for these
+     * public profile facts) - applyAuthoritativeProfile (the LAST step
+     * before OverviewService.getOverview() returns) fills them from
+     * CharacterProfileAuthorityService when a Blizzard snapshot exists,
+     * exactly the same "seed then override" pattern level/className
+     * already use.
+     */
+    race: string | null;
+    faction: string | null;
+    activeSpec: string | null;
+    guild: { name: string; realmSlug: string | null } | null;
+    averageItemLevel: number | null;
+    equippedItemLevel: number | null;
   }[];
   weeklyByCharacterId: Map<string, OverviewWeeklyCharacterInput>;
   vaultByCharacterId: Map<string, OverviewVaultCharacterInput>;

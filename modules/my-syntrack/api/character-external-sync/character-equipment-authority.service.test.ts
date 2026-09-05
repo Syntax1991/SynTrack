@@ -125,6 +125,31 @@ describe("CharacterEquipmentAuthorityService", () => {
     expect(chest).toMatchObject({ itemLevel: 320 });
   });
 
+  it("passes through Blizzard's setId (Phase F2, live-verified equivalent to the addon's own setId)", async () => {
+    const snapshot = {
+      payload: {
+        averageItemLevel: 315,
+        slots: [
+          { slotKey: "HEAD", itemId: 271483, itemName: "Schlangenkrone", itemLevel: 315, setId: 2065 },
+          { slotKey: "NECK", itemId: 1, itemName: "Necklace", itemLevel: 300, setId: null }
+        ]
+      },
+      fetchedAt: new Date(),
+      lastStatus: "SUCCESS" as const,
+      lastAttemptAt: new Date(),
+      lastError: null
+    };
+
+    const harness = createHarness(snapshot);
+    const result = await harness.service.getAuthoritativeEquipment("char-1");
+
+    const head = result.slots.find((slot) => slot.slotKey === "HEAD");
+    const neck = result.slots.find((slot) => slot.slotKey === "NECK");
+
+    expect(head).toMatchObject({ setId: 2065 });
+    expect(neck).toMatchObject({ setId: null });
+  });
+
   it("returns NONE, not a fabricated value, when neither source has any data", async () => {
     const harness = createHarness(null, []);
 

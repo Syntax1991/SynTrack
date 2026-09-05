@@ -41,7 +41,8 @@ const freshBlizzard: AuthoritativeEquipmentResult = {
       itemLevel: 315,
       hasEnchant: false,
       socketCount: 0,
-      filledSocketCount: 0
+      filledSocketCount: 0,
+      setId: 2065
     }
   ],
   fetchedAt: new Date(),
@@ -75,14 +76,14 @@ describe("resolveEffectiveGearItem", () => {
 
     const enchantableBlizzard: AuthoritativeEquipmentResult = {
       ...freshBlizzard,
-      slots: [{ slotKey: "LEGS", itemId: 1, itemName: "Legs", itemLevel: 300, hasEnchant: true, socketCount: 0, filledSocketCount: 0 }]
+      slots: [{ slotKey: "LEGS", itemId: 1, itemName: "Legs", itemLevel: 300, hasEnchant: true, socketCount: 0, filledSocketCount: 0, setId: null }]
     };
     const legsResult = resolveEffectiveGearItem("LEGS", addonRow({ slotKey: "LEGS" }), enchantableBlizzard);
     expect(legsResult?.enchantStatus).toBe("READY");
 
     const missingEnchantBlizzard: AuthoritativeEquipmentResult = {
       ...freshBlizzard,
-      slots: [{ slotKey: "LEGS", itemId: 1, itemName: "Legs", itemLevel: 300, hasEnchant: false, socketCount: 0, filledSocketCount: 0 }]
+      slots: [{ slotKey: "LEGS", itemId: 1, itemName: "Legs", itemLevel: 300, hasEnchant: false, socketCount: 0, filledSocketCount: 0, setId: null }]
     };
     const missingResult = resolveEffectiveGearItem("LEGS", addonRow({ slotKey: "LEGS" }), missingEnchantBlizzard);
     expect(missingResult?.enchantStatus).toBe("MISSING");
@@ -98,6 +99,86 @@ describe("resolveEffectiveGearItem", () => {
       setBonusResolved: true,
       setBonusSpellIds: [1296629, 1296630],
       uniquenessResolved: true
+    });
+  });
+
+  describe("setId field-specific authority (Phase F2, live-verified equivalent)", () => {
+    it("Blizzard setId wins when present, even when the addon reports a different one for the same slot", () => {
+      const blizzardWithSetId: AuthoritativeEquipmentResult = {
+        ...freshBlizzard,
+        slots: [{ ...freshBlizzard.slots[0]!, setId: 2065 }]
+      };
+      const addonWithDifferentSetId = addonRow({ setId: 9999 });
+
+      const result = resolveEffectiveGearItem("HEAD", addonWithDifferentSetId, blizzardWithSetId);
+
+      expect(result).toMatchObject({ setId: 2065, setIdSource: "BLIZZARD" });
+    });
+
+    it("falls back to the addon's setId when Blizzard reports none for this slot", () => {
+      const blizzardWithoutSetId: AuthoritativeEquipmentResult = {
+        ...freshBlizzard,
+        slots: [{ ...freshBlizzard.slots[0]!, setId: null }]
+      };
+      const addonWithSetId = addonRow({ setId: 2065 });
+
+      const result = resolveEffectiveGearItem("HEAD", addonWithSetId, blizzardWithoutSetId);
+
+      expect(result).toMatchObject({ setId: 2065, setIdSource: "ADDON" });
+    });
+
+    it("reports setId/setIdSource as null when neither source has one", () => {
+      const blizzardWithoutSetId: AuthoritativeEquipmentResult = {
+        ...freshBlizzard,
+        slots: [{ ...freshBlizzard.slots[0]!, setId: null }]
+      };
+      const addonWithoutSetId = addonRow({ setId: null });
+
+      const result = resolveEffectiveGearItem("HEAD", addonWithoutSetId, blizzardWithoutSetId);
+
+      expect(result).toMatchObject({ setId: null, setIdSource: null });
+    });
+
+    it("preserves addon set-bonus evidence independently of which source wins setId", () => {
+      const blizzardWithSetId: AuthoritativeEquipmentResult = {
+        ...freshBlizzard,
+        slots: [{ ...freshBlizzard.slots[0]!, setId: 2065 }]
+      };
+      const addonRowWithEvidence = addonRow({
+        setId: 2065,
+        setBonusResolved: true,
+        setBonusSpellIds: "[1296629,1296630]",
+        uniqueCategoryId: 512,
+        uniqueCategoryCount: 1,
+        uniquenessResolved: true
+      });
+
+      const result = resolveEffectiveGearItem("HEAD", addonRowWithEvidence, blizzardWithSetId);
+
+      // setId came from Blizzard, but the addon's own set-bonus/uniqueness
+      // evidence (unproven Blizzard equivalence - see module doc comment)
+      // is preserved untouched, independently of the setId source.
+      expect(result).toMatchObject({
+        setId: 2065,
+        setIdSource: "BLIZZARD",
+        setBonusResolved: true,
+        setBonusSpellIds: [1296629, 1296630],
+        uniqueCategoryId: 512,
+        uniqueCategoryCount: 1,
+        uniquenessResolved: true
+      });
+    });
+
+    it("does not bypass MANUAL precedence - a hand-entered slot's own setId always wins outright", () => {
+      const blizzardWithDifferentSetId: AuthoritativeEquipmentResult = {
+        ...freshBlizzard,
+        slots: [{ ...freshBlizzard.slots[0]!, setId: 9999 }]
+      };
+      const manualRow = addonRow({ source: "MANUAL", setId: 2065 });
+
+      const result = resolveEffectiveGearItem("HEAD", manualRow, blizzardWithDifferentSetId);
+
+      expect(result).toMatchObject({ setId: 2065, setIdSource: "ADDON", source: "MANUAL" });
     });
   });
 
@@ -158,7 +239,8 @@ describe("resolveEffectiveGearItem", () => {
           itemLevel: null, // authority layer already distrusted this
           hasEnchant: false,
           socketCount: 0,
-          filledSocketCount: 0
+          filledSocketCount: 0,
+          setId: null
         }
       ],
       fetchedAt: new Date(),

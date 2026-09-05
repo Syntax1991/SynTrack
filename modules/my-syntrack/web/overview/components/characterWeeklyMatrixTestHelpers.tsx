@@ -23,7 +23,13 @@ export function buildCharacter(
       realm: "Antonidas",
       region: "eu",
       className: "Shaman",
-      level: 80
+      level: 80,
+      race: null,
+      faction: null,
+      activeSpec: null,
+      guild: null,
+      averageItemLevel: null,
+      equippedItemLevel: null
     },
     weekly: {
       state: "IN_PROGRESS",

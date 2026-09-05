@@ -27,6 +27,12 @@
   font-size: 0.82rem;
 }
 
+.character-detail-guild {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
 .character-detail-tags {
   margin-top: 4px;
   color: var(--text-muted);

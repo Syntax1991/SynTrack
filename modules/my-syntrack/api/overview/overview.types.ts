@@ -234,6 +234,9 @@ export type CharacterWeeklyState = {
     region: string;
     className: string;
     level: number;
+    race: string | null; faction: string | null; activeSpec: string | null;
+    guild: { name: string; realmSlug: string | null } | null;
+    averageItemLevel: number | null; equippedItemLevel: number | null;
   };
   weekly: WeeklyOverviewState;
   weeklySummary: WeeklySummaryOverviewState;

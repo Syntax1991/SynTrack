@@ -225,4 +225,43 @@ describe("OverviewService.getOverview - service-level wiring", () => {
     const alchemy = entry!.professions.items.find((p) => p.key === "alchemy");
     expect(alchemy?.skill).toBe(90); // addon's own raw skill, untouched
   });
+
+  it("Phase F2: reaches the final served character with race/faction/activeSpec/guild/averageItemLevel/equippedItemLevel", async () => {
+    const { OverviewService } = await import("./overview.service.js");
+
+    const getAuthoritativeProfile = vi.fn(async () => ({
+      source: "BLIZZARD" as const,
+      fetchedAt: new Date(),
+      isStale: false,
+      name: "Synblast",
+      realm: "Antonidas",
+      region: "eu",
+      level: 90,
+      class: "Shaman",
+      race: "Dark Iron Dwarf",
+      faction: "ALLIANCE",
+      activeSpec: "Restoration",
+      guild: { name: "Before the Storm", realmSlug: "thrall" },
+      averageItemLevel: 317.9375,
+      equippedItemLevel: 315
+    }));
+
+    const getAuthoritativeProfessions = vi.fn(async () => []);
+
+    const service = new OverviewService(
+      { getAuthoritativeProfile } as never,
+      { getAuthoritativeProfessions } as never
+    );
+
+    const overview = await service.getOverview();
+    const entry = overview.characters.find((c) => c.character.id === "char-1");
+
+    expect(entry!.character.race).toBe("Dark Iron Dwarf");
+    expect(entry!.character.faction).toBe("ALLIANCE");
+    expect(entry!.character.activeSpec).toBe("Restoration");
+    expect(entry!.character.guild).toEqual({ name: "Before the Storm", realmSlug: "thrall" });
+    // Profile summary ilvl stays distinct - both values present, not collapsed into one.
+    expect(entry!.character.averageItemLevel).toBe(317.9375);
+    expect(entry!.character.equippedItemLevel).toBe(315);
+  });
 });

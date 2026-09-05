@@ -189,7 +189,14 @@ export class OverviewService {
         realm: character.realm,
         region: character.region,
         className: character.className,
-        level: character.level
+        level: character.level,
+        // Phase F2: no addon equivalent - applyAuthoritativeProfile fills these below.
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
       })),
       weeklyByCharacterId,
       vaultByCharacterId: new Map(),

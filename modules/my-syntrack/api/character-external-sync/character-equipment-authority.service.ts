@@ -130,7 +130,9 @@ export class CharacterEquipmentAuthorityService {
           typeof slot.timewalkerLevel === "number" ? null : slot.itemLevel,
         hasEnchant: slot.hasEnchant,
         socketCount: slot.socketCount,
-        filledSocketCount: slot.filledSocketCount
+        filledSocketCount: slot.filledSocketCount,
+        // Phase F2: proven equivalent to the addon's setId - see gear-readiness.effective.ts.
+        setId: slot.setId
       })),
       fetchedAt,
       isStale

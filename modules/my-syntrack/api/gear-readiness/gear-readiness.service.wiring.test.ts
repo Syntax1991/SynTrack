@@ -49,7 +49,7 @@ function characterRow() {
   };
 }
 
-function createHarness(options: { blizzardItemLevel: number | null }) {
+function createHarness(options: { blizzardItemLevel: number | null; blizzardSetId?: number | null }) {
   const findCharacters = vi.fn(async () => [characterRow()]);
   const getAuthoritativeEquipment = vi.fn(async () => ({
     source: "BLIZZARD" as const,
@@ -62,7 +62,8 @@ function createHarness(options: { blizzardItemLevel: number | null }) {
         itemLevel: options.blizzardItemLevel,
         hasEnchant: false,
         socketCount: 0,
-        filledSocketCount: 0
+        filledSocketCount: 0,
+        setId: options.blizzardSetId ?? null
       }
     ],
     fetchedAt: new Date(),
@@ -112,9 +113,19 @@ describe("GearReadinessService.getOverview - service-level wiring", () => {
     const head = overview.characters[0]!.slots.find((slot) => slot.key === "HEAD");
 
     expect(head!.item).toMatchObject({
-      setId: 2065,
+      setId: 2065, // no Blizzard setId in this harness call -> addon fallback
+      setIdSource: "ADDON",
       setBonusSpellIds: [1296629, 1296630],
       uniquenessResolved: true
     });
+  });
+
+  it("Phase F2: reflects Blizzard's setId end to end when present, live-verified equivalent to the addon's own setId", async () => {
+    const harness = createHarness({ blizzardItemLevel: 315, blizzardSetId: 2065 });
+
+    const overview = await harness.service.getOverview();
+    const head = overview.characters[0]!.slots.find((slot) => slot.key === "HEAD");
+
+    expect(head!.item).toMatchObject({ setId: 2065, setIdSource: "BLIZZARD" });
   });
 });

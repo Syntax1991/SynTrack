@@ -21,7 +21,8 @@ export class CharacterEquipmentAddonFallbackRepository {
         itemLevel: true,
         enchantStatus: true,
         socketCount: true,
-        gemCount: true
+        gemCount: true,
+        setId: true
       }
     });
 
@@ -32,7 +33,8 @@ export class CharacterEquipmentAddonFallbackRepository {
       itemLevel: row.itemLevel,
       hasEnchant: row.enchantStatus === "READY",
       socketCount: row.socketCount,
-      filledSocketCount: row.socketCount !== null ? row.gemCount : null
+      filledSocketCount: row.socketCount !== null ? row.gemCount : null,
+      setId: row.setId
     }));
   }
 }

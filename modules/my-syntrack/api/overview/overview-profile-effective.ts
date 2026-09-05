@@ -17,9 +17,18 @@ import type { CharacterWeeklyState } from "./overview.types.js";
  * silently reverted by that precedence. This is the one place override
  * that is guaranteed not to be undone by anything downstream.
  *
+ * Phase F2: also fills race/faction/activeSpec/guild/averageItemLevel/
+ * equippedItemLevel - these have no addon equivalent at all (unlike
+ * level/className, which fall back to the Character row), so they stay
+ * null whenever no Blizzard snapshot exists, rather than ever being
+ * fabricated. race/activeSpec/guild.name are Blizzard's localized
+ * display strings (BATTLENET_LOCALE) - never keyed for business logic
+ * here or anywhere downstream; faction is the stable "ALLIANCE"/"HORDE"
+ * type, not a localized string.
+ *
  * Character.id/ownership/tags/tracked state/preferences/profession
- * assignments are never touched - only the two rendered display fields
- * this type actually exposes.
+ * assignments are never touched - only the rendered/available display
+ * fields this type exposes.
  */
 export async function applyAuthoritativeProfile(
   characters: CharacterWeeklyState[],
@@ -40,6 +49,12 @@ export async function applyAuthoritativeProfile(
 
       entry.character.level = authoritative.level;
       entry.character.className = authoritative.class;
+      entry.character.race = authoritative.race;
+      entry.character.faction = authoritative.faction;
+      entry.character.activeSpec = authoritative.activeSpec;
+      entry.character.guild = authoritative.guild;
+      entry.character.averageItemLevel = authoritative.averageItemLevel;
+      entry.character.equippedItemLevel = authoritative.equippedItemLevel;
     })
   );
 }

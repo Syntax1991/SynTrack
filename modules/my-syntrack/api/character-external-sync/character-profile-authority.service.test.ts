@@ -113,4 +113,21 @@ describe("CharacterProfileAuthorityService", () => {
     expect(result.race).toBe("Dark Iron Dwarf");
     expect(result.guild).toEqual({ name: "Before the Storm", realmSlug: "thrall" });
   });
+
+  it("Phase F2 regression: a stray last_login_timestamp on the stored payload has no effect on source selection (the freshness guard was removed, not reintroduced)", async () => {
+    // Simulates a snapshot payload that happens to carry a
+    // last_login_timestamp-shaped key (e.g. from before the Phase F1
+    // corrective review removed this concept, or any future accidental
+    // reintroduction) - the service must never read it.
+    const harness = createHarness({
+      ...freshSnapshot,
+      payload: { ...freshSnapshot.payload, lastLoginTimestamp: Date.now() - 999_999_999 }
+    });
+
+    const result = await harness.service.getAuthoritativeProfile("char-1", characterRow);
+
+    expect(result.source).toBe("BLIZZARD");
+    expect(result.level).toBe(90); // still Blizzard's fresher value, unaffected
+    expect(result).not.toHaveProperty("lastLoginAt");
+  });
 });

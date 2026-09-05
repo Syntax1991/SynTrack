@@ -18,18 +18,28 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  *   is complete and safe, not a guess).
  *   ADDON-ONLY, always preserved regardless of provider: enchantName (no
  *   Blizzard equivalent - only a numeric enchantment id, no display
- *   text), notes, and all tier-set/embellishment evidence (setId,
- *   expansionId, setEvidenceResolved, setBonusResolved,
+ *   text), notes, and the REMAINING tier-set/embellishment evidence
+ *   (expansionId, setEvidenceResolved, setBonusResolved,
  *   setBonusSpellIds, uniqueCategoryId, uniqueCategoryCount,
- *   uniquenessResolved). Live-verified this phase: Blizzard's `set.
- *   item_set.id` DOES match the addon's `setId` exactly for a real
- *   character's real tier pieces, and `set.effects[].is_active` could
- *   express the addon's setBonusResolved concept - but NEITHER
- *   setBonusSpellIds (Blizzard gives display text, not a spell id) NOR
+ *   uniquenessResolved) - none of these have a proven Blizzard
+ *   equivalent: `set.effects[].is_active` could express the addon's
+ *   setBonusResolved concept but at different granularity, neither
+ *   setBonusSpellIds (Blizzard gives display text, not a spell id) nor
  *   embellishment/unique-category evidence (absent from Blizzard's
- *   response entirely) can be derived, so the whole evidence group stays
- *   addon-only this phase rather than migrating one field of a group
- *   piecemeal (see the Phase F1 report for the full finding).
+ *   response entirely) can be derived, so this evidence stays addon-only
+ *   rather than migrating on unproven equivalence (see the Phase F1
+ *   report for the full finding).
+ *
+ * PHASE F2: `setId` is now its OWN field-specific authority
+ * (BLIZZARD-primary/ADDON-fallback), split out of the Group B evidence
+ * bundle above - live-verified across 4 characters/13 real tier-piece
+ * slots this phase with zero mismatches (Blizzard's `set.item_set.id`
+ * exactly equals the addon's `setId` for every slot where both sources
+ * observed the SAME item). This is the one Group B field proven
+ * equivalent; the rest remain addon-only exactly as before - see the
+ * Phase F2 report's live equivalence matrix and its note on the one
+ * excluded row (a real item swap the addon hadn't synced yet, not a
+ * setId disagreement).
  *
  * USER PRECEDENCE: a MANUAL row (an officer/player hand-entered a slot,
  * e.g. for a character the addon can't see) always wins outright - even
@@ -96,6 +106,8 @@ export type EffectiveGearItem = {
   lastSyncedAt: string | null;
   updatedAt: string;
   setId: number | null;
+  /** Which provider the served setId actually came from - null only when neither source has one. */
+  setIdSource: "BLIZZARD" | "ADDON" | null;
   expansionId: number | null;
   setEvidenceResolved: boolean | null;
   setBonusResolved: boolean | null;
@@ -145,6 +157,7 @@ function fromAddon(addonItem: AddonGearSlotRow): EffectiveGearItem {
     lastSyncedAt: addonItem.lastSyncedAt?.toISOString() ?? null,
     updatedAt: addonItem.updatedAt.toISOString(),
     setId: addonItem.setId,
+    setIdSource: addonItem.setId !== null ? "ADDON" : null,
     expansionId: addonItem.expansionId,
     setEvidenceResolved: addonItem.setEvidenceResolved,
     setBonusResolved: addonItem.setBonusResolved,
@@ -182,6 +195,21 @@ function fromBlizzard(
         ? "ADDON"
         : null;
 
+  /*
+   * PHASE F2: setId is field-specific authority (BLIZZARD-primary,
+   * ADDON-fallback) - the one Group B evidence field proven equivalent
+   * (see module doc comment). Falls back to the addon's setId only when
+   * Blizzard reports none for this slot (e.g. no tier piece equipped, or
+   * a Blizzard snapshot that predates this phase's setId capture).
+   */
+  const setId = blizzardSlot.setId ?? addonItem?.setId ?? null;
+  const setIdSource: EffectiveGearItem["setIdSource"] =
+    blizzardSlot.setId !== null
+      ? "BLIZZARD"
+      : addonItem?.setId != null
+        ? "ADDON"
+        : null;
+
   return {
     id: addonItem?.id ?? null,
     itemId: blizzardSlot.itemId,
@@ -197,8 +225,9 @@ function fromBlizzard(
     source: "BLIZZARD",
     lastSyncedAt: addonItem?.lastSyncedAt?.toISOString() ?? null,
     updatedAt: addonItem?.updatedAt.toISOString() ?? new Date().toISOString(),
-    // Tier-set/embellishment evidence: always addon-sourced (see module doc comment).
-    setId: addonItem?.setId ?? null,
+    setId,
+    setIdSource,
+    // Remaining tier-set/embellishment evidence: always addon-sourced (see module doc comment).
     expansionId: addonItem?.expansionId ?? null,
     setEvidenceResolved: addonItem?.setEvidenceResolved ?? null,
     setBonusResolved: addonItem?.setBonusResolved ?? null,

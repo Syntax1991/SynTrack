@@ -68,6 +68,8 @@ export type AuthoritativeEquipmentSlot = {
   hasEnchant: boolean | null;
   socketCount: number | null;
   filledSocketCount: number | null;
+  /** Phase F2: Blizzard `set.item_set.id`, empirically proven equivalent to the addon's own setId - see the Phase F2 report's live equivalence matrix. */
+  setId: number | null;
 };
 
 export type AuthoritativeEquipmentResult = {
