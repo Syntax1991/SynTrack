@@ -1,11 +1,35 @@
 import { describe, expect, it, vi } from "vitest";
 import { SpecializationService } from "./specialization.service.js";
 
+// No Blizzard PROFILE snapshot exists for this fake character id - the
+// authority service falls back to the addon-provided level/className
+// unchanged, keeping these tests hermetic (no real Prisma-backed
+// CharacterExternalSnapshotRepository round trip).
+function noSnapshotProfileAuthorityService() {
+  return { getAuthoritativeProfile: async (_id: string, character: { name: string; realm: string; region: string; level: number; className: string }) => ({
+    source: "NONE" as const,
+    fetchedAt: null,
+    isStale: false,
+    name: character.name,
+    realm: character.realm,
+    region: character.region,
+    level: character.level,
+    class: character.className,
+    race: null,
+    faction: null,
+    activeSpec: null,
+    guild: null,
+    averageItemLevel: null,
+    equippedItemLevel: null
+  }) } as never;
+}
+
 function characterRow(skill: number, knowledgePoints = 66) {
   return {
     id: "char-1",
     name: "Synblast",
     realm: "Antonidas",
+    region: "eu",
     className: "Shaman",
     level: 90,
     professions: [
@@ -32,7 +56,8 @@ describe("SpecializationService.getCharacterOverview", () => {
 
     const service = new SpecializationService(
       { findCharacter, findTreesByProfessionIds } as never,
-      { getAuthoritativeProfessions } as never
+      { getAuthoritativeProfessions } as never,
+      noSnapshotProfileAuthorityService()
     );
 
     const result = await service.getCharacterOverview("char-1");
@@ -47,7 +72,8 @@ describe("SpecializationService.getCharacterOverview", () => {
 
     const service = new SpecializationService(
       { findCharacter, findTreesByProfessionIds } as never,
-      { getAuthoritativeProfessions } as never
+      { getAuthoritativeProfessions } as never,
+      noSnapshotProfileAuthorityService()
     );
 
     const result = await service.getCharacterOverview("char-1");
@@ -64,7 +90,8 @@ describe("SpecializationService.getCharacterOverview", () => {
 
     const service = new SpecializationService(
       { findCharacter, findTreesByProfessionIds } as never,
-      { getAuthoritativeProfessions } as never
+      { getAuthoritativeProfessions } as never,
+      noSnapshotProfileAuthorityService()
     );
 
     const result = await service.getCharacterOverview("char-1");
@@ -79,7 +106,8 @@ describe("SpecializationService.getCharacterOverview", () => {
 
     const service = new SpecializationService(
       { findCharacter, findTreesByProfessionIds } as never,
-      { getAuthoritativeProfessions } as never
+      { getAuthoritativeProfessions } as never,
+      noSnapshotProfileAuthorityService()
     );
 
     await service.getCharacterOverview("char-1");
@@ -87,5 +115,114 @@ describe("SpecializationService.getCharacterOverview", () => {
     expect(getAuthoritativeProfessions).toHaveBeenCalledWith("char-1", [
       { professionKey: "alchemy", professionName: "Alchemy", skill: 90 }
     ]);
+  });
+
+  it("Phase F3 follow-up: renders the fresh Blizzard level/className instead of the raw addon-captured Character row", async () => {
+    const findCharacter = vi.fn(async () => characterRow(90));
+    const findTreesByProfessionIds = vi.fn(async () => []);
+    const getAuthoritativeProfessions = vi.fn(async () => []);
+    const profileAuthorityService = {
+      getAuthoritativeProfile: async () => ({
+        source: "BLIZZARD" as const,
+        fetchedAt: new Date(),
+        isStale: false,
+        name: "Synblast",
+        realm: "Antonidas",
+        region: "eu",
+        level: 91,
+        class: "Enhancement Shaman",
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
+      })
+    } as never;
+
+    const service = new SpecializationService(
+      { findCharacter, findTreesByProfessionIds } as never,
+      { getAuthoritativeProfessions } as never,
+      profileAuthorityService
+    );
+
+    const result = await service.getCharacterOverview("char-1");
+
+    expect(result.character).toMatchObject({
+      id: "char-1",
+      level: 91,
+      className: "Enhancement Shaman"
+    });
+  });
+
+  it("falls back to the persisted level/className when no usable Blizzard profile exists", async () => {
+    const findCharacter = vi.fn(async () => characterRow(90));
+    const findTreesByProfessionIds = vi.fn(async () => []);
+    const getAuthoritativeProfessions = vi.fn(async () => []);
+
+    const service = new SpecializationService(
+      { findCharacter, findTreesByProfessionIds } as never,
+      { getAuthoritativeProfessions } as never,
+      noSnapshotProfileAuthorityService()
+    );
+
+    const result = await service.getCharacterOverview("char-1");
+
+    expect(result.character).toMatchObject({
+      id: "char-1",
+      level: 90,
+      className: "Shaman"
+    });
+  });
+
+  it("never writes to the Character row and leaves private specialization/knowledge state untouched while overriding level/className", async () => {
+    const findCharacter = vi.fn(async () => characterRow(90, 66));
+    const findTreesByProfessionIds = vi.fn(async () => []);
+    const getAuthoritativeProfessions = vi.fn(async () => [
+      {
+        source: "BLIZZARD" as const,
+        professionKey: "alchemy",
+        professionId: 171,
+        professionName: "Alchemy",
+        tierId: 1,
+        tierName: "Tier",
+        skill: 97,
+        maxSkill: 100,
+        fetchedAt: new Date(),
+        isStale: false
+      }
+    ]);
+    const update = vi.fn();
+    const profileAuthorityService = {
+      getAuthoritativeProfile: async () => ({
+        source: "BLIZZARD" as const,
+        fetchedAt: new Date(),
+        isStale: false,
+        name: "Synblast",
+        realm: "Antonidas",
+        region: "eu",
+        level: 91,
+        class: "Enhancement Shaman",
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
+      })
+    } as never;
+
+    const service = new SpecializationService(
+      { findCharacter, findTreesByProfessionIds, update } as never,
+      { getAuthoritativeProfessions } as never,
+      profileAuthorityService
+    );
+
+    const result = await service.getCharacterOverview("char-1");
+
+    expect(result.character).toMatchObject({ level: 91, className: "Enhancement Shaman" });
+    expect(result.professions[0]!.knowledgePoints).toBe(66); // addon-private, untouched
+    expect(result.professions[0]!.skill).toBe(97); // effective public skill, unaffected by the identity override
+    expect(update).not.toHaveBeenCalled(); // no Character row write of any kind
   });
 });
