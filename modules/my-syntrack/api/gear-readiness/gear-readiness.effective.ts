@@ -87,32 +87,44 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  * with no additional freshness gate - see the Phase F1 corrective
  * review's second report for the full reasoning.
  *
- * ITEM-IDENTITY COMPATIBILITY (Phase F2 corrective review): Group B
- * evidence (enchantName, notes, expansionId, setEvidenceResolved,
- * setBonusResolved, setBonusSpellIds, uniqueCategoryId,
- * uniqueCategoryCount, uniquenessResolved) and the addon `setId`
- * fallback all describe a SPECIFIC physical item the addon observed -
- * they must never be attached to a *different* item Blizzard now
- * reports for the same slot. Live-verified this phase: Synlight's HEAD
- * slot showed Blizzard itemId 271465 vs. the addon's stale itemId
+ * ITEM-IDENTITY COMPATIBILITY (Phase F2 corrective review): every
+ * addon-sourced field composed onto a Blizzard-identified slot -
+ * itemLevel, itemName, enchantName, notes, expansionId,
+ * setEvidenceResolved, setBonusResolved, setBonusSpellIds,
+ * uniqueCategoryId, uniqueCategoryCount, uniquenessResolved, and the
+ * addon `setId` fallback - describes a SPECIFIC physical item the addon
+ * observed. None of it may be attached to a *different* item Blizzard
+ * now reports for the same slot. Live-verified this phase: Synlight's
+ * HEAD slot showed Blizzard itemId 271465 vs. the addon's stale itemId
  * 277768 (a real regear the addon hadn't synced yet, two days old).
  * `isConfirmedSameItem()` below requires BOTH sides to report a
- * non-null WoW item id that match exactly before any addon evidence is
+ * non-null WoW item id that match exactly before any addon field is
  * trusted; a null id on either side can never prove sameness, so the
  * conservative default (treat as a different item) applies rather than
- * guessing. This does NOT change the SAME-item case at all - Synbeast's
- * Timewalking HEAD (Blizzard and addon both report itemId 219749) still
- * gets its itemLevel from the addon fallback exactly as before, since
- * identity is confirmed there. Only `itemLevel`'s own existing
- * null-triggered fallback and `itemName`'s null-triggered fallback are
- * NOT gated by this check - no live case has shown either field
- * fabricating a value across a genuine item swap, and gating them was
- * out of this narrow fix's scope; see the Phase F2 corrective review
- * report's follow-up note.
+ * guessing - missing information is preferable to false information
+ * (e.g. itemName resolves to `""`/unknown rather than a stale name, and
+ * itemLevel resolves to `null` rather than a stale number). This does
+ * NOT change the SAME-item case at all - Synbeast's Timewalking HEAD
+ * (Blizzard and addon both report itemId 219749) still gets its
+ * itemLevel from the addon fallback exactly as before, since identity
+ * is confirmed there. The addon row's own bookkeeping (`id`,
+ * `lastSyncedAt`, `updatedAt`) is deliberately NOT gated by this check -
+ * see the AddonGearSlotRow.id doc comment for why displaying it
+ * alongside a mismatched Blizzard item carries no mutation risk.
  */
 
 export type EffectiveGearItem = {
-  /** The underlying CharacterGearSlot row's own id - null when no addon row exists for this slot at all. */
+  /**
+   * The underlying CharacterGearSlot row's own id - null when no addon
+   * row exists for this slot at all. Deliberately NOT gated by the
+   * item-identity check below: it can be genuinely useful even when
+   * Blizzard's item differs from the addon's (there IS an editable row
+   * for this slot). No mutation risk - GearReadinessRepository.
+   * upsertSlot() targets rows by the (characterId, slotKey) unique
+   * constraint, never by this id, so editing a slot always correctly
+   * replaces the addon's own row for that slot regardless of which
+   * item was displayed as "effective" at read time.
+   */
   id: string | null;
   /** The real World of Warcraft item id (Blizzard-primary, addon-fallback) - never a database identity. */
   itemId: number | null;
@@ -223,35 +235,39 @@ function fromBlizzard(
       : "MISSING";
 
   /*
-   * blizzardSlot.itemLevel is already null when the authority layer
-   * detected a scaled-bracket item - falling back to the addon's own
-   * item level for THIS FIELD ONLY, while identity (itemId/name/
-   * enchant/socket) still comes from Blizzard, since the item itself
-   * is genuinely correct even when its reported level isn't.
-   */
-  const itemLevel = blizzardSlot.itemLevel ?? addonItem?.itemLevel ?? null;
-  const itemLevelSource: EffectiveGearItem["itemLevelSource"] =
-    blizzardSlot.itemLevel !== null
-      ? "BLIZZARD"
-      : addonItem?.itemLevel != null
-        ? "ADDON"
-        : null;
-
-  /*
-   * Item-identity compatibility gate (Phase F2 corrective review): the
-   * addon's Group B evidence (and its setId fallback) only describes
-   * the item the addon last observed in this slot - if Blizzard now
-   * reports a DIFFERENT item id, that evidence belongs to a stale item
-   * and must not be attached to the current one. `trustedAddonItem` is
-   * `addonItem` when identity is confirmed, `undefined` otherwise - every
-   * addon-sourced field below reads through it, never `addonItem`
-   * directly, so a mismatch can never leak.
+   * Item-identity compatibility gate (Phase F2 corrective review): every
+   * addon-sourced field below - including itemLevel/itemName's own
+   * fallback - only describes the item the addon last observed in this
+   * slot. If Blizzard now reports a DIFFERENT item id, that data belongs
+   * to a stale item and must not be attached to the current one.
+   * `trustedAddonItem` is `addonItem` when identity is confirmed,
+   * `undefined` otherwise - every addon-sourced field below reads
+   * through it, never `addonItem` directly, so a mismatch can never
+   * leak. See the module doc comment for the live Synlight case this
+   * fixes, and Synbeast's Timewalking HEAD for why the SAME-item case
+   * (identity confirmed, only the level is stale/scaled) is unaffected.
    */
   const sameItem = isConfirmedSameItem(
     blizzardSlot.itemId,
     addonItem?.itemId ?? null
   );
   const trustedAddonItem = sameItem ? addonItem : undefined;
+
+  /*
+   * blizzardSlot.itemLevel is already null when the authority layer
+   * detected a scaled-bracket item - falling back to the addon's own
+   * item level for THIS FIELD ONLY, while identity (itemId/enchant/
+   * socket) still comes from Blizzard, since the item itself is
+   * genuinely correct even when its reported level isn't - but only
+   * when the addon's item is confirmed to be that same item.
+   */
+  const itemLevel = blizzardSlot.itemLevel ?? trustedAddonItem?.itemLevel ?? null;
+  const itemLevelSource: EffectiveGearItem["itemLevelSource"] =
+    blizzardSlot.itemLevel !== null
+      ? "BLIZZARD"
+      : trustedAddonItem?.itemLevel != null
+        ? "ADDON"
+        : null;
 
   /*
    * PHASE F2: setId is field-specific authority (BLIZZARD-primary,
@@ -271,7 +287,9 @@ function fromBlizzard(
   return {
     id: addonItem?.id ?? null,
     itemId: blizzardSlot.itemId,
-    itemName: blizzardSlot.itemName ?? addonItem?.itemName ?? "",
+    // Missing information is preferable to false information: an addon
+    // name fallback is only trusted when the item is confirmed the same.
+    itemName: blizzardSlot.itemName ?? trustedAddonItem?.itemName ?? "",
     itemLevel,
     itemLevelSource,
     enchantStatus,
