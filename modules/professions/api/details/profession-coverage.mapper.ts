@@ -36,7 +36,8 @@ export function mapProfessionCharacterCoverage(
     SpecializationNodeCatalogEntry
   >,
   professionKey: string,
-  effectiveSkill: number
+  effectiveSkill: number,
+  effectiveClassName: string
 ): ProfessionCharacterCoverage {
   const craftableEquipment =
     mapProfessionEquipmentCoverage(
@@ -101,8 +102,13 @@ export function mapProfessionCharacterCoverage(
       realm:
         assignment.character.realm,
 
+      // Public identity (Phase F3 follow-up): BLIZZARD-primary/ADDON-
+      // fallback, resolved by the caller via
+      // CharacterProfileAuthorityService. `level` is not currently
+      // rendered by any consumer of this coverage type, so it stays
+      // read straight from the Character row.
       className:
-        assignment.character.className,
+        effectiveClassName,
 
       level:
         assignment.character.level

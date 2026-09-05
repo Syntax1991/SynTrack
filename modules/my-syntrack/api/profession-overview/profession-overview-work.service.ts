@@ -3,6 +3,8 @@ import { ProfessionDetailService } from "../../../professions/api/details/profes
 import { ProfessionRecipeRepository } from "../../../professions/api/details/profession-recipe.repository.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
 import { ProfessionKnowledgeTreasureStatusRepository } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.repository.js";
 import { ProfessionKnowledgeTreasureStatusService } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.service.js";
 import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
@@ -48,6 +50,10 @@ export class ProfessionOverviewWorkService {
     private readonly professionAuthorityService =
       new CharacterProfessionAuthorityService(
         new CharacterExternalSnapshotRepository()
+      ),
+    private readonly profileAuthorityService =
+      new CharacterProfileAuthorityService(
+        new CharacterExternalSnapshotRepository()
       )
   ) {}
 
@@ -64,21 +70,46 @@ export class ProfessionOverviewWorkService {
       this.craftLookup.getOverview()
     ]);
 
-    const effectiveSkillByCharacterProfession =
-      await resolveEffectiveProfessionOverviewSkills(
-        rawAssignments,
-        this.professionAuthorityService
-      );
+    const distinctCharacters = new Map(
+      rawAssignments.map((assignment) => [
+        assignment.characterId,
+        {
+          id: assignment.characterId,
+          name: assignment.characterName,
+          realm: assignment.realm,
+          region: assignment.region,
+          level: assignment.level,
+          className: assignment.className
+        }
+      ])
+    );
 
-    // Public base skill only - knowledgePoints (addon-private) passes
-    // through unchanged.
-    const assignments = rawAssignments.map((assignment) => ({
-      ...assignment,
-      skill:
-        effectiveSkillByCharacterProfession.get(
-          `${assignment.characterId}:${assignment.professionKey}`
-        ) ?? assignment.skill
-    }));
+    const [effectiveSkillByCharacterProfession, identityByCharacterId] =
+      await Promise.all([
+        resolveEffectiveProfessionOverviewSkills(
+          rawAssignments,
+          this.professionAuthorityService
+        ),
+        resolveEffectiveCharacterIdentities(
+          [...distinctCharacters.values()],
+          this.profileAuthorityService
+        )
+      ]);
+
+    // Public base skill/className only - knowledgePoints (addon-private)
+    // passes through unchanged.
+    const assignments = rawAssignments.map((assignment) => {
+      const identity = identityByCharacterId.get(assignment.characterId);
+
+      return {
+        ...assignment,
+        className: identity?.className ?? assignment.className,
+        skill:
+          effectiveSkillByCharacterProfession.get(
+            `${assignment.characterId}:${assignment.professionKey}`
+          ) ?? assignment.skill
+      };
+    });
 
     const weeklyByCharacterProfession = new Map<
       string,

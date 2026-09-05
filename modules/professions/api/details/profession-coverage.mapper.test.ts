@@ -22,7 +22,8 @@ describe("mapProfessionCharacterCoverage", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     expect(
@@ -45,7 +46,8 @@ describe("mapProfessionCharacterCoverage", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     expect(coverage.dataStatus).toBe(
@@ -66,7 +68,8 @@ describe("mapProfessionCharacterCoverage", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     expect(coverage.dataStatus).toBe(
@@ -101,7 +104,8 @@ describe("mapProfessionCharacterCoverage", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     expect(coverage.dataStatus).toBe(
@@ -149,7 +153,8 @@ describe("mapProfessionCharacterCoverage", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     const capabilityTypes =
@@ -212,7 +217,8 @@ describe("mapProfessionCharacterCoverage", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     expect(

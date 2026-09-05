@@ -1,5 +1,7 @@
 import { CharacterExternalSnapshotRepository } from "../../../my-syntrack/api/character-external-sync/character-external-snapshot.repository.js";
 import { CharacterProfessionAuthorityService } from "../../../my-syntrack/api/character-external-sync/character-profession-authority.service.js";
+import { CharacterProfileAuthorityService } from "../../../my-syntrack/api/character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../../../my-syntrack/api/character-external-sync/character-profile-effective-identity.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { mapProfessionDetail } from "./profession-detail.mapper.js";
 import { ProfessionDetailRepository } from "./profession-detail.repository.js";
@@ -17,6 +19,10 @@ export class ProfessionDetailService {
       ProfessionRecipeRepository,
 
     private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    ),
+
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
       new CharacterExternalSnapshotRepository()
     )
   ) {}
@@ -55,17 +61,41 @@ export class ProfessionDetailService {
       })
     );
 
-    const effectiveSkillByCharacterId =
-      await resolveEffectivePublicSkillByCharacterId(
-        crafters,
-        profession.key,
-        profession.name,
-        this.professionAuthorityService
-      );
+    // One effective-identity lookup per distinct character (a profession's
+    // assignments already carry one row per character, but this stays
+    // defensive rather than assuming that invariant).
+    const distinctCharacters = new Map(
+      profession.assignments.map((assignment) => [
+        assignment.character.id,
+        assignment.character
+      ])
+    );
+
+    const [effectiveSkillByCharacterId, identityByCharacterId] =
+      await Promise.all([
+        resolveEffectivePublicSkillByCharacterId(
+          crafters,
+          profession.key,
+          profession.name,
+          this.professionAuthorityService
+        ),
+        resolveEffectiveCharacterIdentities(
+          [...distinctCharacters.values()],
+          this.profileAuthorityService
+        )
+      ]);
+
+    const effectiveClassNameByCharacterId = new Map(
+      [...identityByCharacterId.entries()].map(([characterId, identity]) => [
+        characterId,
+        identity.className
+      ])
+    );
 
     return mapProfessionDetail(
       profession,
-      effectiveSkillByCharacterId
+      effectiveSkillByCharacterId,
+      effectiveClassNameByCharacterId
     );
   }
 

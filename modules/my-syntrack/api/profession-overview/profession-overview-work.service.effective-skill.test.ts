@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
 import { ProfessionOverviewWorkService } from "./profession-overview-work.service.js";
 import type { ProfessionOverviewWorkAssignment } from "./profession-overview-work.types.js";
+
+// No Blizzard PROFILE snapshot exists for these fake character ids - the
+// authority service falls back to the addon-provided className unchanged,
+// keeping this skill-focused test file hermetic (no real Prisma-backed
+// CharacterExternalSnapshotRepository round trip).
+function noSnapshotProfileAuthorityService() {
+  return new CharacterProfileAuthorityService({
+    findOne: async () => null
+  } as never);
+}
 
 /*
  * Service-level wiring test (Phase F3), split out from
@@ -35,6 +46,7 @@ function assignment(
     realm: "Antonidas",
     region: "eu",
     className: "Shaman",
+    level: 90,
     professionId: "prof-alchemy",
     professionKey: "alchemy",
     professionName: "Alchemy",
@@ -74,7 +86,8 @@ describe("ProfessionOverviewWorkService.getOverview - Phase F3 effective public 
       fakeWeeklyStatusService(),
       fakeTreasureStatusService(),
       fakeCraftLookup(),
-      professionAuthorityService
+      professionAuthorityService,
+      noSnapshotProfileAuthorityService()
     );
 
     const overview = await service.getOverview();
@@ -94,7 +107,8 @@ describe("ProfessionOverviewWorkService.getOverview - Phase F3 effective public 
       fakeWeeklyStatusService(),
       fakeTreasureStatusService(),
       fakeCraftLookup(),
-      professionAuthorityService
+      professionAuthorityService,
+      noSnapshotProfileAuthorityService()
     );
 
     const overview = await service.getOverview();
@@ -141,7 +155,8 @@ describe("ProfessionOverviewWorkService.getOverview - Phase F3 effective public 
       fakeWeeklyStatusService(),
       fakeTreasureStatusService(),
       fakeCraftLookup(),
-      professionAuthorityService
+      professionAuthorityService,
+      noSnapshotProfileAuthorityService()
     );
 
     const overview = await service.getOverview();

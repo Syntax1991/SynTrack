@@ -20,7 +20,8 @@ type DetailRecord =
 
 export function mapProfessionDetail(
   profession: DetailRecord,
-  effectiveSkillByCharacterId: Map<string, number>
+  effectiveSkillByCharacterId: Map<string, number>,
+  effectiveClassNameByCharacterId: Map<string, string>
 ): ProfessionDetailView {
   const hasSpecializationCatalog =
     profession
@@ -60,7 +61,9 @@ export function mapProfessionDetail(
             specializationNodeCatalog,
             profession.key,
             effectiveSkillByCharacterId.get(assignment.character.id) ??
-              assignment.skill
+              assignment.skill,
+            effectiveClassNameByCharacterId.get(assignment.character.id) ??
+              assignment.character.className
           )
       )
       .sort(

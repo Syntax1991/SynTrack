@@ -49,7 +49,8 @@ describe("mapProfessionCharacterCoverage - explicitSlotNodeRanks", () => {
         true,
         nodeCatalog,
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     const wrist =
@@ -97,7 +98,8 @@ describe("mapProfessionCharacterCoverage - explicitSlotNodeRanks", () => {
         false,
         new Map(),
         "leatherworking",
-        assignment.skill
+        assignment.skill,
+        assignment.character.className
       );
 
     expect(

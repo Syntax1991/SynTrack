@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
 import { FakeProfessionKnowledgeTreasureStatusRepository } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.fakes.js";
 import { ProfessionKnowledgeTreasureStatusService } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.service.js";
 import { FakeProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.fakes.js";
@@ -14,6 +15,12 @@ import type { ProfessionOverviewWorkAssignment } from "./profession-overview-wor
 // touching a real Prisma-backed CharacterExternalSnapshotRepository.
 function createNoSnapshotProfessionAuthorityService() {
   return new CharacterProfessionAuthorityService({
+    findOne: async () => null
+  } as never);
+}
+
+function createNoSnapshotProfileAuthorityService() {
+  return new CharacterProfileAuthorityService({
     findOne: async () => null
   } as never);
 }
@@ -177,6 +184,7 @@ describe("ProfessionOverviewWorkService roster rows", () => {
           realm: "Silvermoon",
           region: "EU",
           className: "Mage",
+          level: 90,
           professionId: "prof-alchemy",
           professionKey: "alchemy",
           professionName: "Alchemy",
@@ -190,6 +198,7 @@ describe("ProfessionOverviewWorkService roster rows", () => {
           realm: "Silvermoon",
           region: "EU",
           className: "Mage",
+          level: 90,
           professionId: "prof-lw",
           professionKey: "leatherworking",
           professionName: "Leatherworking",
@@ -203,6 +212,7 @@ describe("ProfessionOverviewWorkService roster rows", () => {
           realm: "Silvermoon",
           region: "EU",
           className: "Priest",
+          level: 90,
           professionId: "prof-tailoring",
           professionKey: "tailoring",
           professionName: "Tailoring",
@@ -214,7 +224,8 @@ describe("ProfessionOverviewWorkService roster rows", () => {
       weeklyService,
       treasureService,
       new FakeProfessionCraftLookup(),
-      createNoSnapshotProfessionAuthorityService()
+      createNoSnapshotProfessionAuthorityService(),
+      createNoSnapshotProfileAuthorityService()
     );
 
     const overview = await service.getOverview();
