@@ -60,8 +60,12 @@ export type NormalizedBlizzardEquipmentPayload = {
 
 export type AuthoritativeEquipmentSlot = {
   slotKey: string;
+  itemId: number | null;
   itemName: string | null;
   itemLevel: number | null;
+  hasEnchant: boolean | null;
+  socketCount: number | null;
+  filledSocketCount: number | null;
 };
 
 export type AuthoritativeEquipmentResult = {
@@ -73,21 +77,9 @@ export type AuthoritativeEquipmentResult = {
 };
 
 export type EquipmentRefreshOutcome =
-  | {
-      status: "SUCCESS";
-      characterId: string;
-      slotCount: number;
-      averageItemLevel: number | null;
-    }
-  | {
-      status: "FAILED";
-      characterId: string;
-      reason: string;
-    }
-  | {
-      status: "NOT_FOUND";
-      characterId: string;
-    };
+  | { status: "SUCCESS"; characterId: string; slotCount: number; averageItemLevel: number | null }
+  | { status: "FAILED"; characterId: string; reason: string }
+  | { status: "NOT_FOUND"; characterId: string };
 
 export type EquipmentRefreshSummary = {
   totalCharacters: number;
@@ -154,20 +146,9 @@ export type AuthoritativeProfileResult = {
 };
 
 export type ProfileRefreshOutcome =
-  | {
-      status: "SUCCESS";
-      characterId: string;
-      identityMismatch: boolean;
-    }
-  | {
-      status: "FAILED";
-      characterId: string;
-      reason: string;
-    }
-  | {
-      status: "NOT_FOUND";
-      characterId: string;
-    };
+  | { status: "SUCCESS"; characterId: string; identityMismatch: boolean }
+  | { status: "FAILED"; characterId: string; reason: string }
+  | { status: "NOT_FOUND"; characterId: string };
 
 export type ProfileRefreshSummary = {
   totalCharacters: number;

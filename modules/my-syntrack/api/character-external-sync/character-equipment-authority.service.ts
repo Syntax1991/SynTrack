@@ -105,8 +105,12 @@ export class CharacterEquipmentAuthorityService {
       averageItemLevel: payload.averageItemLevel,
       slots: payload.slots.map((slot) => ({
         slotKey: slot.slotKey,
+        itemId: slot.itemId,
         itemName: slot.itemName,
-        itemLevel: slot.itemLevel
+        itemLevel: slot.itemLevel,
+        hasEnchant: slot.hasEnchant,
+        socketCount: slot.socketCount,
+        filledSocketCount: slot.filledSocketCount
       })),
       fetchedAt,
       isStale

@@ -16,15 +16,23 @@ export class CharacterEquipmentAddonFallbackRepository {
       where: { characterId },
       select: {
         slotKey: true,
+        itemId: true,
         itemName: true,
-        itemLevel: true
+        itemLevel: true,
+        enchantStatus: true,
+        socketCount: true,
+        gemCount: true
       }
     });
 
     return rows.map((row) => ({
       slotKey: row.slotKey,
+      itemId: row.itemId,
       itemName: row.itemName,
-      itemLevel: row.itemLevel
+      itemLevel: row.itemLevel,
+      hasEnchant: row.enchantStatus === "READY",
+      socketCount: row.socketCount,
+      filledSocketCount: row.socketCount !== null ? row.gemCount : null
     }));
   }
 }

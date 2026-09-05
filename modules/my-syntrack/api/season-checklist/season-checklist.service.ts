@@ -18,10 +18,12 @@ import { ensureWeekliesTrackerDefinitionsForImport } from "../weekly-checklist/w
 import { WEEKLIES_MYTHIC_PLUS_RATING_TRACKER_KEY } from "../weekly-checklist/weeklies-tracker-keys.js";
 import { MythicPlusSeasonProgressService } from "../weekly-gameplay/mythic-plus-season-progress.service.js";
 import { CharacterAchievementAuthorityService } from "../character-external-sync/character-achievement-authority.service.js";
+import { CharacterMythicPlusAuthorityService } from "../character-external-sync/character-mythic-plus-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { SeasonGoalPreferenceService } from "../season-goal-preference/season-goal-preference.service.js";
 import type { SeasonGoalPreferenceValue } from "../season-goal-preference/season-goal-preference.types.js";
 import { resolveMergedCharacterEvidence } from "./season-achievement-blizzard-merge.js";
+import { withAuthoritativeMythicPlusRating } from "./season-mythic-plus-rating-effective.js";
 import { applyGoalEnabledGate, deriveSeasonMythicPlusGoal, summarizeSeasonGoals } from "./season-checklist.goals.js";
 import { deriveBooleanEvidenceGoal, deriveRaidGoal, type SeasonRaidGoalTarget } from "./season-checklist.evidence.js";
 import { deriveSeasonEmbellishmentGoal } from "./season-checklist.embellishment.js";
@@ -42,29 +44,22 @@ export class SeasonChecklistService {
     new GearReadinessRepository()
   );
 
-  private readonly trackerScopeProfileService =
-    new TrackerScopeProfileService(
-      new TrackerScopeProfileRepository()
-    );
+  private readonly trackerScopeProfileService = new TrackerScopeProfileService(new TrackerScopeProfileRepository());
 
-  private readonly trackerDefinitionRepository =
-    new TrackerDefinitionRepository();
+  private readonly trackerDefinitionRepository = new TrackerDefinitionRepository();
 
   private readonly trackerValueService = new TrackerValueService(
     new TrackerValueRepository(),
     new TrackerDefinitionRepository()
   );
 
-  private readonly mythicPlusSeasonProgressService =
-    new MythicPlusSeasonProgressService();
+  private readonly mythicPlusSeasonProgressService = new MythicPlusSeasonProgressService();
 
-  private readonly achievementAuthorityService =
-    new CharacterAchievementAuthorityService(
-      new CharacterExternalSnapshotRepository()
-    );
+  private readonly achievementAuthorityService = new CharacterAchievementAuthorityService(new CharacterExternalSnapshotRepository());
 
-  private readonly seasonGoalPreferenceService =
-    new SeasonGoalPreferenceService();
+  private readonly mythicPlusAuthorityService = new CharacterMythicPlusAuthorityService(new CharacterExternalSnapshotRepository());
+
+  private readonly seasonGoalPreferenceService = new SeasonGoalPreferenceService();
 
   async getChecklist(): Promise<SeasonChecklistResponse> {
     const [weekliesScopeKey, evidenceScopeKey] = await Promise.all([
@@ -164,7 +159,8 @@ export class SeasonChecklistService {
       mythicPlusSeasonProgressByCharacterId,
       goalPreferencesByCharacterId,
       warbandGoalPreferences,
-      blizzardEarnedByCharacterMaps
+      blizzardEarnedByCharacterMaps,
+      mythicPlusRatingByCharacterId
     ] =
       characterIds.length > 0
         ? await Promise.all([
@@ -185,9 +181,12 @@ export class SeasonChecklistService {
             this.seasonGoalPreferenceService.getEffectiveWarbandPreferences(),
             this.achievementAuthorityService.getBlizzardEarnedByCharacterMaps(
               characterIds
+            ),
+            this.mythicPlusAuthorityService.getAuthoritativeMythicPlusMap(
+              gameplayCharacters.map((character) => character.id)
             )
           ])
-        : [[], new Map(), new Map(), new Map(), new Map()];
+        : [[], new Map(), new Map(), new Map(), new Map(), new Map()];
 
     const statesByCharacterId = new Map<
       string,
@@ -217,7 +216,11 @@ export class SeasonChecklistService {
       const scorePreference = preferenceFor("mythic-plus-score");
       const mythicPlus = applyGoalEnabledGate(
         deriveSeasonMythicPlusGoal(
-          buildResolvedTracker(ratingDefinition, statesByDefinitionId),
+          withAuthoritativeMythicPlusRating(
+            buildResolvedTracker(ratingDefinition, statesByDefinitionId),
+            character.id,
+            mythicPlusRatingByCharacterId
+          ),
           scorePreference.numericTarget ?? 2000
         ),
         scorePreference.enabled

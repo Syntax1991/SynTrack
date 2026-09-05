@@ -16,6 +16,17 @@ import type {
  */
 const BLIZZARD_MYTHIC_PLUS_STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
+/** Shared "nothing known yet" result - avoids re-typing this literal at every call site. */
+export const NONE_AUTHORITATIVE_MYTHIC_PLUS: AuthoritativeMythicPlusResult = {
+  source: "NONE",
+  rating: null,
+  hasProfile: false,
+  bestRuns: [],
+  periodId: null,
+  fetchedAt: null,
+  isStale: false
+};
+
 /*
  * PUBLIC/SEASONAL Mythic+ rating and best-runs: PRIMARY=BLIZZARD,
  * FALLBACK=the addon's own seasonal rating tracker value. Provider
@@ -42,6 +53,19 @@ export class CharacterMythicPlusAuthorityService {
     private readonly snapshotRepository: CharacterExternalSnapshotRepository,
     private readonly addonFallbackRepository: CharacterMythicPlusAddonFallbackRepository = new CharacterMythicPlusAddonFallbackRepository()
   ) {}
+
+  async getAuthoritativeMythicPlusMap(
+    characterIds: string[]
+  ): Promise<Map<string, AuthoritativeMythicPlusResult>> {
+    const entries = await Promise.all(
+      characterIds.map(
+        async (characterId) =>
+          [characterId, await this.getAuthoritativeMythicPlus(characterId)] as const
+      )
+    );
+
+    return new Map(entries);
+  }
 
   async getAuthoritativeMythicPlus(
     characterId: string

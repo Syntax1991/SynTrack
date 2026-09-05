@@ -22,6 +22,11 @@ import { DataHealthRepository } from "../data-health/data-health.repository.js";
 import { DataHealthService } from "../data-health/data-health.service.js";
 import { WeeklyGameplayRepository } from "../weekly-gameplay/weekly-gameplay.repository.js";
 import { WeeklyGameplayService } from "../weekly-gameplay/weekly-gameplay.service.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { applyAuthoritativeProfile } from "./overview-profile-effective.js";
+import { applyAuthoritativeProfessionSkill } from "./overview-profession-effective.js";
 import {
   attachCharacterExtras,
   buildTagsByCharacterId
@@ -95,6 +100,14 @@ export class OverviewService {
     new WeeklyGameplayRepository()
   );
 
+  private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+    new CharacterExternalSnapshotRepository()
+  );
+
+  private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
+    new CharacterExternalSnapshotRepository()
+  );
+
   async getOverview(): Promise<OverviewResponse> {
     const activeScope =
       await this.trackerScopeProfileService.getActive();
@@ -127,6 +140,11 @@ export class OverviewService {
       this.tagService.listAllAssignments(),
       this.weeklyGameplayService.getOverview()
     ]);
+
+    await applyAuthoritativeProfessionSkill(
+      professionIssuesByCharacter,
+      this.professionAuthorityService
+    );
 
     const trackerColumns = combinePinnedTrackerColumns(
       seasonalTrackerDefinitions,
@@ -202,6 +220,11 @@ export class OverviewService {
       characters,
       tagsByCharacterId,
       healthByCharacterId
+    );
+
+    await applyAuthoritativeProfile(
+      charactersWithExtras,
+      this.profileAuthorityService
     );
 
     return {

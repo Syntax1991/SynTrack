@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const seasonChecklistDir = join(here, "..", "season-checklist");
 
 const mythicPlusFiles = [
   "blizzard-mythic-plus.normalizer.ts",
@@ -100,5 +101,30 @@ describe("Mythic+ / Great Vault firewall", () => {
     expect(content).not.toMatch(/CharacterWeeklyVaultActivity/);
     expect(content).not.toMatch(/vaultActivities/);
     expect(content).not.toMatch(/VaultActivitySlot/);
+  });
+
+  it("Phase F1's season Mythic+ rating read path has no import route into Vault/current-week M+ state", () => {
+    // season-mythic-plus-rating-effective.ts wires the SEASONAL rating
+    // tracker into the checklist's mythicPlus goal; season-checklist.service.ts
+    // is the file that now calls it. Neither may *import* the Vault models
+    // or current-week capture/highest concepts that the firewall above
+    // already protects for the refresh pipeline itself. (Import lines only,
+    // like the checks above - the effective file's own doc comment names
+    // these models by way of explicitly disclaiming the relationship.)
+    const filesToCheck = ["season-mythic-plus-rating-effective.ts", "season-checklist.service.ts"];
+
+    for (const file of filesToCheck) {
+      const importLines = readFileSync(join(seasonChecklistDir, file), "utf8")
+        .split("\n")
+        .filter((line) => /^\s*import\b/.test(line));
+
+      for (const line of importLines) {
+        expect(line).not.toMatch(/CharacterWeeklyVaultActivity/);
+        expect(line).not.toMatch(/CharacterWeeklyGameplaySnapshot/);
+        expect(line).not.toMatch(/CharacterWeeklyMythicPlusCapture/);
+        expect(line).not.toMatch(/vaultActivities/);
+        expect(line).not.toMatch(/VaultActivitySlot/);
+      }
+    }
   });
 });
