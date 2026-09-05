@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
 import { FakeProfessionKnowledgeTreasureStatusRepository } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.fakes.js";
 import { ProfessionKnowledgeTreasureStatusService } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.service.js";
 import { FakeProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.fakes.js";
@@ -6,6 +7,16 @@ import { ProfessionWeeklyStatusService } from "../profession-weekly/profession-w
 import type { ProfessionWeeklySourceDefinitionView } from "../profession-weekly/profession-weekly-definition.types.js";
 import { ProfessionOverviewWorkService } from "./profession-overview-work.service.js";
 import type { ProfessionOverviewWorkAssignment } from "./profession-overview-work.types.js";
+
+// No Blizzard snapshot ever exists for these fake character ids - the
+// authority service falls back to the addon-provided skill unchanged
+// (source: "ADDON"), so this fake keeps the test hermetic without ever
+// touching a real Prisma-backed CharacterExternalSnapshotRepository.
+function createNoSnapshotProfessionAuthorityService() {
+  return new CharacterProfessionAuthorityService({
+    findOne: async () => null
+  } as never);
+}
 
 class FakeProfessionOverviewWorkRepository {
   constructor(
@@ -202,7 +213,8 @@ describe("ProfessionOverviewWorkService roster rows", () => {
       ]),
       weeklyService,
       treasureService,
-      new FakeProfessionCraftLookup()
+      new FakeProfessionCraftLookup(),
+      createNoSnapshotProfessionAuthorityService()
     );
 
     const overview = await service.getOverview();

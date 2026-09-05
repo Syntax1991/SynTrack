@@ -48,8 +48,24 @@ export class ProfessionDetailService {
       );
     }
 
+    const crafters = profession.assignments.map(
+      (assignment) => ({
+        characterId: assignment.character.id,
+        skill: assignment.skill
+      })
+    );
+
+    const effectiveSkillByCharacterId =
+      await resolveEffectivePublicSkillByCharacterId(
+        crafters,
+        profession.key,
+        profession.name,
+        this.professionAuthorityService
+      );
+
     return mapProfessionDetail(
-      profession
+      profession,
+      effectiveSkillByCharacterId
     );
   }
 

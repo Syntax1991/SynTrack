@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
 import { resolveProfessionWeeklyOverviewState } from "../overview/overview-profession-weekly-state.mapper.js";
 import { FakeProfessionKnowledgeTreasureStatusRepository } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.fakes.js";
 import { ProfessionKnowledgeTreasureStatusService } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.service.js";
@@ -134,7 +135,14 @@ describe("ProfessionOverviewWork Weeklies consistency", () => {
       ]),
       weeklyService,
       treasureService,
-      new FakeProfessionCraftLookup()
+      new FakeProfessionCraftLookup(),
+      // No Blizzard snapshot exists for this fake character id - the
+      // authority service falls back to the addon-provided skill unchanged,
+      // keeping this test hermetic (no real Prisma-backed
+      // CharacterExternalSnapshotRepository round trip).
+      new CharacterProfessionAuthorityService({
+        findOne: async () => null
+      } as never)
     );
 
     const [weeklyOverview, professionOverview] =

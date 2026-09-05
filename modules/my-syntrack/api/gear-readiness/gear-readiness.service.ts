@@ -2,6 +2,8 @@ import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import { CharacterEquipmentAddonFallbackRepository } from "../character-external-sync/character-equipment-addon-fallback.repository.js";
 import { CharacterEquipmentAuthorityService } from "../character-external-sync/character-equipment-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
 import { gearSlotCatalog } from "./gear-readiness.catalog.js";
 import { resolveEffectiveGearItem } from "./gear-readiness.effective.js";
 import { GearReadinessRepository } from "./gear-readiness.repository.js";
@@ -21,14 +23,17 @@ export class GearReadinessService {
     private readonly equipmentAuthorityService = new CharacterEquipmentAuthorityService(
       new CharacterExternalSnapshotRepository(),
       new CharacterEquipmentAddonFallbackRepository()
+    ),
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
     )
   ) {}
 
   async getOverview() {
     const characters = await this.repository.findCharacters();
 
-    const equipmentByCharacterId = new Map(
-      await Promise.all(
+    const [equipmentByCharacterId, identityByCharacterId] = await Promise.all([
+      Promise.all(
         characters.map(
           async (character) =>
             [
@@ -38,10 +43,12 @@ export class GearReadinessService {
               )
             ] as const
         )
-      )
-    );
+      ).then((entries) => new Map(entries)),
+      resolveEffectiveCharacterIdentities(characters, this.profileAuthorityService)
+    ]);
 
     const characterItems = characters.map((character) => {
+      const identity = identityByCharacterId.get(character.id);
       const storedSlots = new Map(
         character.gearSlots.map((slot) => [slot.slotKey, slot])
       );
@@ -113,8 +120,8 @@ export class GearReadinessService {
         name: character.name,
         realm: character.realm,
         region: character.region,
-        className: character.className,
-        level: character.level,
+        className: identity?.className ?? character.className,
+        level: identity?.level ?? character.level,
         slots,
         trackedSlotCount: trackedSlots.length,
         averageItemLevel: average(

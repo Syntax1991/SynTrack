@@ -145,4 +145,78 @@ describe("SeasonChecklistService.getChecklist - service-level wiring", () => {
     expect(checklist.characters[0]).not.toHaveProperty("vaultProgress");
     expect(checklist.characters[0]).not.toHaveProperty("currentWeekRuns");
   });
+
+  it("Phase F3: renders the fresh Blizzard level/className instead of the raw addon-captured Character row", async () => {
+    const { SeasonChecklistService } = await import("./season-checklist.service.js");
+
+    const getAuthoritativeMythicPlusMap = vi.fn(async () => new Map());
+    const profileAuthorityService = {
+      getAuthoritativeProfile: async () => ({
+        source: "BLIZZARD" as const,
+        fetchedAt: new Date(),
+        isStale: false,
+        name: "Synblast",
+        realm: "Antonidas",
+        region: "eu",
+        level: 91,
+        class: "Enhancement Shaman",
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
+      })
+    } as never;
+
+    const service = new SeasonChecklistService(
+      { getAuthoritativeMythicPlusMap } as never,
+      profileAuthorityService
+    );
+
+    const checklist = await service.getChecklist();
+    const entry = checklist.characters.find((c) => c.id === "char-1");
+
+    expect(entry).toMatchObject({
+      level: 91,
+      className: "Enhancement Shaman"
+    });
+  });
+
+  it("Phase F3: falls back to the persisted level/className when no usable Blizzard profile exists", async () => {
+    const { SeasonChecklistService } = await import("./season-checklist.service.js");
+
+    const getAuthoritativeMythicPlusMap = vi.fn(async () => new Map());
+    const profileAuthorityService = {
+      getAuthoritativeProfile: async () => ({
+        source: "NONE" as const,
+        fetchedAt: null,
+        isStale: false,
+        name: "Synblast",
+        realm: "Antonidas",
+        region: "eu",
+        level: 90,
+        class: "Shaman",
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
+      })
+    } as never;
+
+    const service = new SeasonChecklistService(
+      { getAuthoritativeMythicPlusMap } as never,
+      profileAuthorityService
+    );
+
+    const checklist = await service.getChecklist();
+    const entry = checklist.characters.find((c) => c.id === "char-1");
+
+    expect(entry).toMatchObject({
+      level: 90,
+      className: "Shaman"
+    });
+  });
 });

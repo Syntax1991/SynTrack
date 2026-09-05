@@ -1,4 +1,3 @@
-import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
 import { GearReadinessRepository } from "../gear-readiness/gear-readiness.repository.js";
 import { GearReadinessService } from "../gear-readiness/gear-readiness.service.js";
@@ -20,8 +19,10 @@ import { MythicPlusSeasonProgressService } from "../weekly-gameplay/mythic-plus-
 import { CharacterAchievementAuthorityService } from "../character-external-sync/character-achievement-authority.service.js";
 import { CharacterMythicPlusAuthorityService } from "../character-external-sync/character-mythic-plus-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
 import { SeasonGoalPreferenceService } from "../season-goal-preference/season-goal-preference.service.js";
 import type { SeasonGoalPreferenceValue } from "../season-goal-preference/season-goal-preference.types.js";
+import { resolveActiveSeasonCharacters } from "./season-checklist.identity.js";
 import { resolveMergedCharacterEvidence } from "./season-achievement-blizzard-merge.js";
 import { withAuthoritativeMythicPlusRating } from "./season-mythic-plus-rating-effective.js";
 import { applyGoalEnabledGate, deriveSeasonMythicPlusGoal, summarizeSeasonGoals } from "./season-checklist.goals.js";
@@ -59,9 +60,10 @@ export class SeasonChecklistService {
 
   private readonly seasonGoalPreferenceService = new SeasonGoalPreferenceService();
 
-  // Constructor-injectable so wiring tests can prove the effective M+ rating path is used.
+  // Constructor-injectable so wiring tests can prove the effective M+ rating/level-class paths are used.
   constructor(
-    private readonly mythicPlusAuthorityService = new CharacterMythicPlusAuthorityService(new CharacterExternalSnapshotRepository())
+    private readonly mythicPlusAuthorityService = new CharacterMythicPlusAuthorityService(new CharacterExternalSnapshotRepository()),
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(new CharacterExternalSnapshotRepository())
   ) {}
 
   async getChecklist(): Promise<SeasonChecklistResponse> {
@@ -96,24 +98,11 @@ export class SeasonChecklistService {
       tagAssignments
     );
 
-    // Active SynTrack Characters only (RemovedCharacter rows are deleted
-    // from Character). Warband evidence uses this full roster; the Season
-    // Character table still filters to gameplay-applicable Characters.
-    const activeCharacters = characters.map((character) => {
-      const trackingProfile = resolveCharacterTrackingProfile(
-        tagsByCharacterId.get(character.id) ?? []
-      );
-
-      return {
-        id: character.id,
-        name: character.name,
-        realm: character.realm,
-        region: character.region,
-        className: character.className,
-        level: character.level,
-        trackingProfile
-      };
-    });
+    const activeCharacters = await resolveActiveSeasonCharacters(
+      characters,
+      tagsByCharacterId,
+      this.profileAuthorityService
+    );
 
     const gameplayCharacters = activeCharacters.filter((character) =>
       isWeeklyGameplayEnabled(character.trackingProfile)

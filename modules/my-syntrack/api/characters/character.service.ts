@@ -32,20 +32,24 @@ export class CharacterService {
    * skill, source per entry), and an `authoritativeMythicPlus` field
    * (PUBLIC/SEASONAL rating + current-period best runs, source per
    * result) with whatever Blizzard-authoritative public facts are
-   * available - without touching name/realm/level/className, the
-   * existing `professions` relation (still the addon's own
-   * CharacterProfession rows, untouched), or any current-week Vault/
-   * Weeklies gameplay data (permanently addon-only, see Phase D8's Great
-   * Vault firewall - this service never imports the weekly-gameplay
-   * module).
+   * available - without touching name/realm identity, the existing
+   * `professions` relation (still the addon's own CharacterProfession
+   * rows, untouched), or any current-week Vault/Weeklies gameplay data
+   * (permanently addon-only, see Phase D8's Great Vault firewall - this
+   * service never imports the weekly-gameplay module).
+   *
+   * Phase F3: the rendered `level`/`className` now come from the same
+   * `profile` object (BLIZZARD-primary/ADDON-fallback), overridden
+   * in-memory only - the underlying Character row is never rewritten,
+   * matching the pattern already established in
+   * overview-profile-effective.ts.
    */
   async list() {
     const characters = await this.characterRepository.findAll();
 
     return Promise.all(
-      characters.map(async (character) => ({
-        ...character,
-        profile: await this.profileAuthorityService.getAuthoritativeProfile(
+      characters.map(async (character) => {
+        const profile = await this.profileAuthorityService.getAuthoritativeProfile(
           character.id,
           {
             name: character.name,
@@ -54,21 +58,33 @@ export class CharacterService {
             level: character.level,
             className: character.className
           }
-        ),
-        authoritativeProfessions:
-          await this.professionAuthorityService.getAuthoritativeProfessions(
-            character.id,
-            character.professions.map((assignment) => ({
-              professionKey: assignment.profession.key,
-              professionName: assignment.profession.name,
-              skill: assignment.skill
-            }))
-          ),
-        authoritativeMythicPlus:
-          await this.mythicPlusAuthorityService.getAuthoritativeMythicPlus(
-            character.id
-          )
-      }))
+        );
+
+        return {
+          ...character,
+          // Phase F3: the rendered level/className are the SAME
+          // BLIZZARD-primary/ADDON-fallback value already computed just
+          // above for `profile` - overridden here (not persisted) so the
+          // Characters list stops rendering the raw, addon-only Character
+          // row directly, matching Overview's established pattern.
+          level: profile.level,
+          className: profile.class,
+          profile,
+          authoritativeProfessions:
+            await this.professionAuthorityService.getAuthoritativeProfessions(
+              character.id,
+              character.professions.map((assignment) => ({
+                professionKey: assignment.profession.key,
+                professionName: assignment.profession.name,
+                skill: assignment.skill
+              }))
+            ),
+          authoritativeMythicPlus:
+            await this.mythicPlusAuthorityService.getAuthoritativeMythicPlus(
+              character.id
+            )
+        };
+      })
     );
   }
 

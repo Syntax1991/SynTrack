@@ -35,7 +35,8 @@ export function mapProfessionCharacterCoverage(
     string,
     SpecializationNodeCatalogEntry
   >,
-  professionKey: string
+  professionKey: string,
+  effectiveSkill: number
 ): ProfessionCharacterCoverage {
   const craftableEquipment =
     mapProfessionEquipmentCoverage(
@@ -107,8 +108,11 @@ export function mapProfessionCharacterCoverage(
         assignment.character.level
     },
 
+    // Public base skill (Phase F3): BLIZZARD-primary/ADDON-fallback,
+    // resolved by the caller via CharacterProfessionAuthorityService.
+    // knowledgePoints stays addon-private, untouched.
     skill:
-      assignment.skill,
+      effectiveSkill,
 
     knowledgePoints:
       assignment.knowledgePoints,

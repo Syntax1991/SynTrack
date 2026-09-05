@@ -1,5 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
 import { GearReadinessService } from "./gear-readiness.service.js";
+
+// No Blizzard PROFILE snapshot exists for these fake character ids - the
+// authority service falls back to the addon-provided level/className
+// unchanged, keeping this equipment-focused wiring test hermetic (no real
+// Prisma-backed CharacterExternalSnapshotRepository round trip).
+function createNoSnapshotProfileAuthorityService() {
+  return new CharacterProfileAuthorityService({
+    findOne: async () => null
+  } as never);
+}
 
 /*
  * Service-level wiring test (Phase F1 corrective review, Section 6):
@@ -74,7 +85,8 @@ function createHarness(options: { blizzardItemLevel: number | null; blizzardSetI
 
   const service = new GearReadinessService(
     { findCharacters } as never,
-    { getAuthoritativeEquipment } as never
+    { getAuthoritativeEquipment } as never,
+    createNoSnapshotProfileAuthorityService()
   );
 
   return { service, findCharacters, getAuthoritativeEquipment };
@@ -129,5 +141,75 @@ describe("GearReadinessService.getOverview - service-level wiring", () => {
     const head = overview.characters[0]!.slots.find((slot) => slot.key === "HEAD");
 
     expect(head!.item).toMatchObject({ setId: 2065, setIdSource: "BLIZZARD" });
+  });
+});
+
+describe("GearReadinessService.getOverview - Phase F3 effective level/className", () => {
+  it("renders the character's Blizzard-primary level/className, distinct from the equipment path", async () => {
+    const findCharacters = vi.fn(async () => [characterRow()]);
+    const getAuthoritativeEquipment = vi.fn(async () => ({
+      source: "ADDON" as const,
+      averageItemLevel: null,
+      slots: [],
+      fetchedAt: null,
+      isStale: false
+    }));
+    const profileAuthorityService = {
+      getAuthoritativeProfile: async () => ({
+        source: "BLIZZARD" as const,
+        fetchedAt: new Date(),
+        isStale: false,
+        name: "Synblast",
+        realm: "Antonidas",
+        region: "eu",
+        level: 91,
+        class: "Enhancement Shaman",
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
+      })
+    } as never;
+
+    const service = new GearReadinessService(
+      { findCharacters } as never,
+      { getAuthoritativeEquipment } as never,
+      profileAuthorityService
+    );
+
+    const overview = await service.getOverview();
+
+    expect(overview.characters[0]).toMatchObject({
+      id: "char-1",
+      level: 91,
+      className: "Enhancement Shaman"
+    });
+  });
+
+  it("falls back to the persisted level/className when no usable Blizzard profile exists", async () => {
+    const findCharacters = vi.fn(async () => [characterRow()]);
+    const getAuthoritativeEquipment = vi.fn(async () => ({
+      source: "ADDON" as const,
+      averageItemLevel: null,
+      slots: [],
+      fetchedAt: null,
+      isStale: false
+    }));
+
+    const service = new GearReadinessService(
+      { findCharacters } as never,
+      { getAuthoritativeEquipment } as never,
+      createNoSnapshotProfileAuthorityService()
+    );
+
+    const overview = await service.getOverview();
+
+    expect(overview.characters[0]).toMatchObject({
+      id: "char-1",
+      level: 90,
+      className: "Shaman"
+    });
   });
 });
