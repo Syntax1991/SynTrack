@@ -26,6 +26,14 @@ const BLIZZARD_EQUIPMENT_STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
  * comparing across sources). BLIZZARD automatically regains authority
  * the moment a fresh snapshot exists again - there is no one-way
  * handoff to track.
+ *
+ * The one exception is per-field, not cross-provider-freshness-based:
+ * toBlizzardResult() below nulls a scaled-bracket item's level (real
+ * evidence - Blizzard's own `timewalker_level` field - not a timestamp
+ * comparison), so the composition layer falls back to the addon's value
+ * for that one field. See the Phase F1 corrective review report for why
+ * a `last_login_timestamp`-based cross-provider guard was tried and then
+ * removed from this domain.
  */
 export class CharacterEquipmentAuthorityService {
   constructor(

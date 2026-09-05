@@ -33,7 +33,6 @@ const character = {
   region: "eu",
   className: "Shaman",
   level: 80,
-  lastSyncedAt: new Date("2026-09-01T00:00:00Z"),
   weeklyCompletions: [],
   gearSlots: [],
   gearBagSetPieces: [],
@@ -154,8 +153,7 @@ describe("OverviewService.getOverview - service-level wiring", () => {
       activeSpec: null,
       guild: null,
       averageItemLevel: null,
-      equippedItemLevel: null,
-      lastLoginAt: null
+      equippedItemLevel: null
     }));
 
     const getAuthoritativeProfessions = vi.fn(async () => [
@@ -208,8 +206,7 @@ describe("OverviewService.getOverview - service-level wiring", () => {
       activeSpec: null,
       guild: null,
       averageItemLevel: null,
-      equippedItemLevel: null,
-      lastLoginAt: null
+      equippedItemLevel: null
     }));
 
     const getAuthoritativeProfessions = vi.fn(async () => []); // no Blizzard match at all

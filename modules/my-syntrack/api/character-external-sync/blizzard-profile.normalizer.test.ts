@@ -38,15 +38,6 @@ describe("normalizeBlizzardProfile", () => {
     });
   });
 
-  it("captures the raw last_login_timestamp for cross-domain recency comparisons", () => {
-    const result = normalizeBlizzardProfile(
-      { name: "Synbeast", realm: { name: "Antonidas" }, last_login_timestamp: 1788481543000 },
-      { requestedName: "Synbeast", requestedRealm: "Antonidas" }
-    );
-
-    expect(result.lastLoginTimestamp).toBe(1788481543000);
-  });
-
   it("uses the canonical English class name regardless of the configured API locale", () => {
     const result = normalizeBlizzardProfile(
       { character_class: { id: 12, name: "Demonenjäger" } },
@@ -108,7 +99,6 @@ describe("normalizeBlizzardProfile", () => {
       guildName: null,
       averageItemLevel: null,
       equippedItemLevel: null,
-      lastLoginTimestamp: null,
       identityMismatch: false
     });
   });

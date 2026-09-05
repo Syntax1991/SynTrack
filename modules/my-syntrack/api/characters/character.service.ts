@@ -52,8 +52,7 @@ export class CharacterService {
             realm: character.realm,
             region: character.region,
             level: character.level,
-            className: character.className,
-            lastSyncedAt: character.lastSyncedAt
+            className: character.className
           }
         ),
         authoritativeProfessions:

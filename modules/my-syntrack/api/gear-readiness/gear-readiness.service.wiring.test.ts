@@ -49,10 +49,7 @@ function characterRow() {
   };
 }
 
-function createHarness(options: {
-  blizzardItemLevel: number | null;
-  blizzardLastLoginAt?: Date | null;
-}) {
+function createHarness(options: { blizzardItemLevel: number | null }) {
   const findCharacters = vi.fn(async () => [characterRow()]);
   const getAuthoritativeEquipment = vi.fn(async () => ({
     source: "BLIZZARD" as const,
@@ -71,17 +68,13 @@ function createHarness(options: {
     fetchedAt: new Date(),
     isStale: false
   }));
-  const getLastLoginAtMap = vi.fn(
-    async () => new Map([["char-1", options.blizzardLastLoginAt ?? null]])
-  );
 
   const service = new GearReadinessService(
     { findCharacters } as never,
-    { getAuthoritativeEquipment } as never,
-    { getLastLoginAtMap } as never
+    { getAuthoritativeEquipment } as never
   );
 
-  return { service, findCharacters, getAuthoritativeEquipment, getLastLoginAtMap };
+  return { service, findCharacters, getAuthoritativeEquipment };
 }
 
 describe("GearReadinessService.getOverview - service-level wiring", () => {
@@ -110,18 +103,6 @@ describe("GearReadinessService.getOverview - service-level wiring", () => {
       itemLevel: 300, // the addon's real value
       itemLevelSource: "ADDON"
     });
-  });
-
-  it("honors the recency guard: skips Blizzard for this slot when the addon synced after Blizzard's last recorded login", async () => {
-    const harness = createHarness({
-      blizzardItemLevel: 315,
-      blizzardLastLoginAt: new Date("2026-08-01T00:00:00Z") // before the addon's 2026-09-01 sync
-    });
-
-    const overview = await harness.service.getOverview();
-    const head = overview.characters[0]!.slots.find((slot) => slot.key === "HEAD");
-
-    expect(head!.item).toMatchObject({ itemLevel: 300, source: "ADDON" });
   });
 
   it("preserves addon-only tier/embellishment evidence through the full orchestration, even when Blizzard supplies the core fields", async () => {

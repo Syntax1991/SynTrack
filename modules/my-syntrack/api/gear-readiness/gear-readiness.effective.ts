@@ -1,4 +1,3 @@
-import { isBlizzardObservationBehindAddon } from "../character-external-sync/character-blizzard-recency.js";
 import type { AuthoritativeEquipmentResult, AuthoritativeEquipmentSlot } from "../character-external-sync/character-external-sync.types.js";
 import { findGearSlotDefinition } from "./gear-readiness.catalog.js";
 import { parseSpellIds } from "./gear-readiness.service.helpers.js";
@@ -51,28 +50,32 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  * item id instead, which is the bug this split corrects - see the Phase
  * F1 corrective review report.
  *
- * SCALED-LEVEL / RECENCY GUARD: a Blizzard-reported item level is not
- * used outright just because a Blizzard snapshot exists for this
- * character. Two independent checks can defer to the addon's own value
- * for a slot even while Blizzard is otherwise "PRIMARY":
- *   (1) the authority layer already nulls out `itemLevel` for a slot
- *       whose equipped item was reported inside a level-scaling bracket
- *       (Timewalking, etc.) - see character-equipment-authority.service.ts.
- *       Item identity (id/name/enchant/socket) is still trusted since
- *       it genuinely is that equipped item; only its level is suspect.
- *   (2) the recency guard: when the addon has synced this exact slot
- *       AFTER Blizzard's own last recorded login for this character,
- *       Blizzard's whole snapshot for this slot is skipped outright -
- *       the addon has observed a newer state Blizzard hasn't caught up
- *       to yet. Live-verified this phase: a real character (Synbeast)
- *       had an ENTIRE equipped set reported at Timewalking-scaled
- *       levels (e.g. HEAD reported as ilvl 76 vs. the addon's real 473
- *       for the exact same item id) - case (1) is what actually fixes
- *       that specific character, since the addon and Blizzard observed
- *       it within 3 seconds of each other (case (2) does not trigger
- *       there). Both checks exist because they catch different failure
- *       modes - see character-blizzard-recency.ts and the Phase F1
- *       corrective review report's policy section for the full design.
+ * SCALED-LEVEL INVALIDITY (Phase F1 corrective review, 2nd pass): a
+ * Blizzard-reported item level is not used outright just because a
+ * Blizzard snapshot exists for this character. The authority layer
+ * already nulls out `itemLevel` for a slot whose equipped item was
+ * reported inside a level-scaling bracket (Timewalking, etc.) - see
+ * character-equipment-authority.service.ts. Item identity (id/name/
+ * enchant/socket) is still trusted since it genuinely is that equipped
+ * item; only its level is suspect. Live-verified: a real character
+ * (Synbeast) had 13 of 15 equipped items reported at Timewalking-scaled
+ * levels (e.g. HEAD reported as ilvl 76 vs. the addon's real 473 for the
+ * exact same item id).
+ *
+ * An earlier version of this fix also added a cross-provider "recency
+ * guard" comparing the addon's own sync time against Blizzard's
+ * `last_login_timestamp`, treating a newer addon sync as proof Blizzard
+ * was behind. That was removed: `last_login_timestamp` only means "the
+ * character logged in at this moment" - it is not Blizzard's guarantee
+ * of when its Equipment/Profile/Mythic+ resources were last refreshed, so
+ * "addon synced after last_login" does not actually prove Blizzard is
+ * stale (Blizzard could easily have caught up to a later in-session
+ * change despite an old login timestamp, or still be behind despite a
+ * recent one). No real Equipment failure case beyond the scaling
+ * artifact above was ever found that this guard fixed, so normal
+ * (non-scaled) Blizzard equipment is BLIZZARD-primary/ADDON-fallback
+ * with no additional freshness gate - see the Phase F1 corrective
+ * review's second report for the full reasoning.
  */
 
 export type EffectiveGearItem = {
@@ -213,32 +216,18 @@ function fromBlizzard(
  * addon row always wins regardless, and any other Blizzard source
  * (ADDON/NONE, or simply no Blizzard slot for this specific key) falls
  * through to the existing addon-only behavior unchanged.
- *
- * `blizzardLastLoginAt` (Phase F1 corrective review) is Blizzard's own
- * attested last-login moment for this character (from the PROFILE
- * domain, the only endpoint that reports it) - when this slot's addon
- * row was synced AFTER that login, Blizzard's snapshot is skipped for
- * this slot entirely: the addon has already observed a newer state
- * Blizzard's servers haven't caught up to. See character-blizzard-
- * recency.ts.
  */
 export function resolveEffectiveGearItem(
   slotKey: GearSlotKey,
   addonItem: AddonGearSlotRow | undefined,
-  blizzardEquipment: AuthoritativeEquipmentResult | undefined,
-  blizzardLastLoginAt: Date | null = null
+  blizzardEquipment: AuthoritativeEquipmentResult | undefined
 ): EffectiveGearItem | null {
   if (addonItem?.source === "MANUAL") {
     return fromAddon(addonItem);
   }
 
-  const blizzardBehindAddon = isBlizzardObservationBehindAddon(
-    blizzardLastLoginAt,
-    addonItem?.lastSyncedAt ?? null
-  );
-
   const blizzardSlot =
-    !blizzardBehindAddon && blizzardEquipment?.source === "BLIZZARD"
+    blizzardEquipment?.source === "BLIZZARD"
       ? blizzardEquipment.slots.find((slot) => slot.slotKey === slotKey)
       : undefined;
 

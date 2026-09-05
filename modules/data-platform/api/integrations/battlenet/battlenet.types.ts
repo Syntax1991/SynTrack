@@ -123,8 +123,6 @@ export type BattleNetCharacterProfile = {
   };
   average_item_level?: number;
   equipped_item_level?: number;
-  /** Epoch ms of the character's last recorded login - Blizzard's own attestation, distinct from when SynTrack polled. See character-blizzard-recency.ts. */
-  last_login_timestamp?: number;
 };
 
 export type BattleNetGuildRosterMember = {

@@ -47,10 +47,6 @@ export function normalizeBlizzardProfile(
     equippedItemLevel:
       typeof profile.equipped_item_level === "number"
         ? profile.equipped_item_level
-        : null,
-    lastLoginTimestamp:
-      typeof profile.last_login_timestamp === "number"
-        ? profile.last_login_timestamp
         : null
   };
 }

@@ -184,29 +184,17 @@ describe("resolveEffectiveGearItem", () => {
     });
   });
 
-  describe("recency guard (Phase F1 corrective review)", () => {
-    it("skips Blizzard for this slot entirely when the addon synced it after Blizzard's last recorded login", () => {
-      const blizzardLastLoginAt = new Date("2026-09-01T00:00:00Z");
-      const addonRowSyncedLater = addonRow({ lastSyncedAt: new Date("2026-09-04T00:00:00Z"), itemLevel: 473 });
+  it("normal (non-scaled) Blizzard equipment stays Blizzard-primary with no additional freshness gate", () => {
+    // Phase F1 corrective review (2nd pass): a cross-provider recency
+    // guard based on Blizzard's last_login_timestamp was removed - it
+    // does not actually prove Blizzard's Equipment resource is stale
+    // (see the corrective review report). No further gate exists beyond
+    // the scaled-level check above, even when the addon has a very
+    // recent sync of its own.
+    const veryRecentAddonRow = addonRow({ lastSyncedAt: new Date() });
 
-      const result = resolveEffectiveGearItem("HEAD", addonRowSyncedLater, freshBlizzard, blizzardLastLoginAt);
+    const result = resolveEffectiveGearItem("HEAD", veryRecentAddonRow, freshBlizzard);
 
-      expect(result).toMatchObject({ itemLevel: 473, source: "ADDON" });
-    });
-
-    it("still uses Blizzard when the addon's sync is not newer than Blizzard's last login", () => {
-      const blizzardLastLoginAt = new Date("2026-09-04T00:25:43.000Z");
-      const addonRowSyncedEarlier = addonRow({ lastSyncedAt: new Date("2026-09-04T00:25:40.000Z") });
-
-      const result = resolveEffectiveGearItem("HEAD", addonRowSyncedEarlier, freshBlizzard, blizzardLastLoginAt);
-
-      expect(result).toMatchObject({ itemId: 271483, source: "BLIZZARD" });
-    });
-
-    it("does not apply the recency guard when blizzardLastLoginAt is unavailable (default behavior unchanged)", () => {
-      const result = resolveEffectiveGearItem("HEAD", addonRow(), freshBlizzard);
-
-      expect(result?.source).toBe("BLIZZARD");
-    });
+    expect(result).toMatchObject({ itemId: 271483, itemLevel: 315, source: "BLIZZARD" });
   });
 });

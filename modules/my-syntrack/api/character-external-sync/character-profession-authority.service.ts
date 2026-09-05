@@ -39,6 +39,18 @@ export type AddonProfessionRow = {
  * the current Blizzard snapshot doesn't (a swap, or stale/incomplete
  * Blizzard data) is never dropped - it's still returned, source="ADDON",
  * with whatever the addon last captured. Nothing is ever deleted here.
+ *
+ * Phase F1 corrective review (2nd pass): Equipment/Profile/Mythic+ each
+ * briefly gained a cross-provider "recency guard" comparing Blizzard's
+ * `last_login_timestamp` against an addon-observed timestamp - since
+ * removed everywhere, because a login timestamp does not actually attest
+ * to when Blizzard's underlying resource was last refreshed (see the
+ * corrective review report). This service was deliberately never given
+ * that guard in the first place, and stays on the same simple, proven
+ * BLIZZARD-primary/ADDON-fallback policy (gated only by fetch-age
+ * staleness, above) as every other domain now is - not an oversight,
+ * consistent by design, pending any real incorrect-value case that would
+ * justify something more.
  */
 export class CharacterProfessionAuthorityService {
   constructor(

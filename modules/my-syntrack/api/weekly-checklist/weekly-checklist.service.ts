@@ -156,7 +156,6 @@ export class WeeklyChecklistService {
           region: character.region,
           className: character.className,
           level: character.level,
-          lastSyncedAt: character.lastSyncedAt,
           trackingProfile,
           completedTaskKeys: character.weeklyCompletions.map(
             (completion) => completion.task.key

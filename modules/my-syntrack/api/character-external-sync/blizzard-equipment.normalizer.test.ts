@@ -119,4 +119,52 @@ describe("normalizeBlizzardEquipment", () => {
     // scaled HEAD item would otherwise drag it down to a misleading 198.
     expect(result.averageItemLevel).toBe(320);
   });
+
+  it("returns null (not a fabricated average of scaled values) when every reported item is scaling-marked", () => {
+    // Real Synbeast evidence, corrected: 13 of her 15 equipped items
+    // carried timewalker_level, not all 15 - a prior report overstated
+    // this. This test covers the case the overstatement implied: if
+    // EVERY item really were scaled, there would be zero valid normal-
+    // level observations, and the average must be null, never computed
+    // from scaled numbers.
+    const result = normalizeBlizzardEquipment({
+      equipped_items: [
+        { slot: { type: "HEAD" }, level: { value: 76 }, timewalker_level: 72 },
+        { slot: { type: "CHEST" }, level: { value: 159 }, timewalker_level: 85 }
+      ]
+    });
+
+    expect(result.averageItemLevel).toBeNull();
+  });
+
+  it("real Synbeast evidence: 13 of 15 equipped items scaled, average computed only from the 2 unscaled ones (WAIST 128, WRIST 101)", () => {
+    const result = normalizeBlizzardEquipment({
+      equipped_items: [
+        { slot: { type: "HEAD" }, level: { value: 76 }, timewalker_level: 72 },
+        { slot: { type: "NECK" }, level: { value: 189 }, timewalker_level: 88 },
+        { slot: { type: "SHOULDER" }, level: { value: 198 }, timewalker_level: 89 },
+        { slot: { type: "CHEST" }, level: { value: 159 }, timewalker_level: 85 },
+        { slot: { type: "WAIST" }, level: { value: 128 } }, // no timewalker_level - unscaled
+        { slot: { type: "LEGS" }, level: { value: 145 }, timewalker_level: 82 },
+        { slot: { type: "FEET" }, level: { value: 171 }, timewalker_level: 86 },
+        { slot: { type: "WRIST" }, level: { value: 101 } }, // no timewalker_level - unscaled
+        { slot: { type: "HANDS" }, level: { value: 171 }, timewalker_level: 86 },
+        { slot: { type: "FINGER_1" }, level: { value: 171 }, timewalker_level: 86 },
+        { slot: { type: "FINGER_2" }, level: { value: 171 }, timewalker_level: 86 },
+        { slot: { type: "TRINKET_1" }, level: { value: 159 }, timewalker_level: 85 },
+        { slot: { type: "TRINKET_2" }, level: { value: 180 }, timewalker_level: 87 },
+        { slot: { type: "BACK" }, level: { value: 180 }, timewalker_level: 87 },
+        { slot: { type: "MAIN_HAND" }, level: { value: 180 }, timewalker_level: 87 }
+      ]
+    });
+
+    expect(result.slots).toHaveLength(15);
+    const scaled = result.slots.filter((slot) => slot.timewalkerLevel !== null);
+    const unscaled = result.slots.filter((slot) => slot.timewalkerLevel === null);
+    expect(scaled).toHaveLength(13);
+    expect(unscaled).toHaveLength(2);
+    expect(unscaled.map((slot) => slot.slotKey).sort()).toEqual(["WAIST", "WRIST"]);
+    // (128 + 101) / 2 = 114.5 - matches the live-verified value exactly.
+    expect(result.averageItemLevel).toBe(114.5);
+  });
 });

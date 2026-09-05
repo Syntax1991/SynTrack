@@ -189,8 +189,7 @@ export class OverviewService {
         realm: character.realm,
         region: character.region,
         className: character.className,
-        level: character.level,
-        lastSyncedAt: character.lastSyncedAt
+        level: character.level
       })),
       weeklyByCharacterId,
       vaultByCharacterId: new Map(),
