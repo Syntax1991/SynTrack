@@ -138,21 +138,28 @@ model PersonalRaidTask {
   @@index([dueAt])
 }
 
+/*
+ * Phase G3D: itemLink, quality, enchantId, gemIds, and
+ * uniqueCategoryCount were dropped from this table (see the G3D
+ * migration) after G3A stopped writing them and G3C proved zero
+ * runtime reads against real live traffic. itemLink transport/parsing
+ * and the in-memory enchantId/gemIds intermediate values used to derive
+ * enchantStatus/gemCount are UNCHANGED and still required - only their
+ * database columns on this model are gone. See docs/ingest-observation.md
+ * for how raw itemLink/quality/etc. remain inspectable via the separate
+ * ingest-observation.db.
+ */
 model CharacterGearSlot {
   id                   String    @id @default(cuid())
   characterId          String
   slotKey              String
   itemId               Int?
-  itemLink             String?
   itemName             String?
   itemLevel            Int?
-  quality              Int?
   enchantStatus        String    @default("NOT_APPLICABLE")
   enchantName          String?
-  enchantId            Int?
   socketCount          Int?
   gemCount             Int       @default(0)
-  gemIds               String?
   notes                String?
   source               String    @default("MANUAL")
   lastSyncedAt         DateTime?
@@ -167,7 +174,6 @@ model CharacterGearSlot {
   setBonusResolved     Boolean?
   setBonusSpellIds     String?
   uniqueCategoryId     Int?
-  uniqueCategoryCount  Int?
   uniquenessResolved   Boolean?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
