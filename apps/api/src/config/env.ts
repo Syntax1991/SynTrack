@@ -2,6 +2,10 @@ import "dotenv/config";
 import { z } from "zod";
 
 const environmentSchema = z.object({
+  NODE_ENV: z
+    .enum(["development", "test", "production"])
+    .default("development"),
+
   PORT: z.coerce
     .number()
     .int()
@@ -62,15 +66,19 @@ const environmentSchema = z.object({
 
   /*
    * Phase G3B: best-effort raw-ingest diagnostics DB (separate from
-   * dev.db). "false"/"0" disables it explicitly; any other value (and
-   * the default) leaves it enabled - see ingest-observation.config.ts.
+   * dev.db) - see ingest-observation.config.ts. Left unvalidated as an
+   * environment-sensitive default below rather than a plain zod
+   * `.default()`, since "enabled" must depend on NODE_ENV, not be a
+   * fixed value. Only the exact strings "true"/"1"/"false"/"0" are
+   * accepted when set at all - an unrecognized value fails startup
+   * instead of being silently treated as enabled.
    */
   INGEST_OBSERVATION_ENABLED: z
     .string()
     .trim()
     .toLowerCase()
-    .default("true")
-    .transform((value) => value !== "false" && value !== "0"),
+    .pipe(z.enum(["true", "1", "false", "0"]))
+    .optional(),
 
   INGEST_OBSERVATION_DB_PATH: z
     .string()
@@ -88,4 +96,25 @@ if (!parsedEnvironment.success) {
   );
 }
 
-export const env = parsedEnvironment.data;
+/*
+ * Production must never start recording raw provider/addon payloads
+ * implicitly - it stays disabled unless INGEST_OBSERVATION_ENABLED is
+ * explicitly set. The `test` NODE_ENV (set automatically by Vitest)
+ * gets the same safe-by-default posture rather than development's
+ * debugging convenience, so tests never touch a shared file unless a
+ * test explicitly opts back in (as every ingest-observation test does).
+ * An explicit true/false always wins outright, in every environment.
+ */
+const ingestObservationDefaultEnabled =
+  parsedEnvironment.data.NODE_ENV === "development";
+
+const ingestObservationEnabled =
+  parsedEnvironment.data.INGEST_OBSERVATION_ENABLED === undefined
+    ? ingestObservationDefaultEnabled
+    : parsedEnvironment.data.INGEST_OBSERVATION_ENABLED === "true" ||
+      parsedEnvironment.data.INGEST_OBSERVATION_ENABLED === "1";
+
+export const env = {
+  ...parsedEnvironment.data,
+  INGEST_OBSERVATION_ENABLED: ingestObservationEnabled
+};

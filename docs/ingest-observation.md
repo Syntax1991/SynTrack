@@ -10,10 +10,11 @@ evidence for the same character/slot, and verify DB-cleanup transitions
 (e.g. confirming [Phase G3A](../PHASE_G3A_STOP_PERSISTING_RAW_GEAR_FIELDS_REPORT.md)
 actually stopped receiving/needing the columns it stopped persisting).
 
-**It is never a source of truth.** It is not read by any normalizer,
-mapper, authority/effective-composition service, or persistence code,
-and it is not exposed through any product API or UI. The only supported
-way to read it is the `observations:*` CLI below.
+**It is never a source of truth.** It stores raw diagnostic payloads
+only - it is not read by any normalizer, mapper,
+authority/effective-composition service, or persistence code, and it is
+not exposed through any product API or UI. The only supported way to
+read it is the `observations:*` CLI below.
 
 ## Database location
 
@@ -32,9 +33,23 @@ INGEST_OBSERVATION_ENABLED=true
 INGEST_OBSERVATION_DB_PATH=./prisma/ingest-observation.db
 ```
 
-Set `INGEST_OBSERVATION_ENABLED=false` (or `0`) to disable capture
-entirely - no file is even created. The path is resolved relative to
-`apps/api`, exactly like `DATABASE_URL`.
+`INGEST_OBSERVATION_DB_PATH` is resolved relative to `apps/api`, exactly
+like `DATABASE_URL`.
+
+`INGEST_OBSERVATION_ENABLED` is **environment-sensitive** when left
+unset (only the exact strings `true`/`1`/`false`/`0` are accepted when
+set at all - anything else fails startup rather than being silently
+treated as enabled):
+
+| `NODE_ENV` | Variable unset | Variable explicit |
+|---|---|---|
+| `development` (default) | **enabled** - local debugging convenience | explicit value always wins |
+| `test` | **disabled** - safest/deterministic, matches `dev.db` never being touched by tests | explicit value always wins |
+| `production` | **disabled** - production must never start recording raw provider/addon payloads implicitly | explicit value always wins |
+
+In other words: Production requires setting `INGEST_OBSERVATION_ENABLED=true`
+explicitly to opt in. Setting it to `false`/`0` always disables capture
+outright, in every environment - no file is even created when disabled.
 
 ## What gets captured
 
