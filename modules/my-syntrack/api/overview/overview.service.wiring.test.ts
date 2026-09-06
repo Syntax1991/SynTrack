@@ -6,9 +6,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * F1 exists to change - it must prove Blizzard-authoritative profile
  * level/class and profession public skill actually reach the FINAL
  * served character, while Knowledge Points stay addon-owned. Not a
- * duplicate of overview-profile-effective.test.ts/overview-profession-
- * effective.test.ts's exhaustive pure-function coverage - only the
- * wiring itself.
+ * duplicate of overview-profile-effective.test.ts's exhaustive
+ * pure-function coverage - only the wiring itself.
+ *
+ * G1: profession skill now reaches this test's assertions through a
+ * SINGLE authority round trip (ProfessionDetailService.getDetail(), via
+ * loadProfessionIssuesByCharacter(this.professionAuthorityService)) -
+ * overview-profession-effective.ts's second, redundant overlay was
+ * removed. See the call-count assertion below.
  *
  * OverviewService's ~11 other dependencies are plain field initializers
  * (not constructor-injected, unlike profileAuthorityService/
@@ -185,6 +190,12 @@ describe("OverviewService.getOverview - service-level wiring", () => {
 
     const alchemy = entry!.professions.items.find((p) => p.key === "alchemy");
     expect(alchemy?.skill).toBe(12345);
+    // G1: exactly one profession-authority round trip for this one
+    // character/profession pair - overview-profession-effective.ts's
+    // second, redundant overlay was removed; ProfessionDetailService
+    // .getDetail() (called via loadProfessionIssuesByCharacter) is now
+    // the ONLY place that resolves effective profession skill.
+    expect(getAuthoritativeProfessions).toHaveBeenCalledTimes(1);
     // Knowledge Points remain addon-owned - never touched by the authority overlay.
     expect(alchemy?.knowledgePoints).toBe(66);
   });

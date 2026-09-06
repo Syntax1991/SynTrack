@@ -127,4 +127,23 @@ describe("Mythic+ / Great Vault firewall", () => {
       }
     }
   });
+
+  it("G1: Overview's served vault.highestKeyLevel has no import route into the BLIZZARD MYTHIC_PLUS pipeline", () => {
+    // overview.aggregator.character.ts builds the final vault.highestKeyLevel
+    // from weeklyGameplayByCharacterId ONLY (addon-sourced, via
+    // WeeklyGameplayService) - the old data-driven MANUAL_LOG fallback
+    // (resolveVaultOverviewState/vaultByCharacterId, G1) never had a Blizzard
+    // route either, but this pins the invariant explicitly now that the
+    // dead branch is gone: there must be exactly one source for this field.
+    const filePath = join(here, "..", "overview", "overview.aggregator.character.ts");
+    const importLines = readFileSync(filePath, "utf8")
+      .split("\n")
+      .filter((line) => /^\s*import\b/.test(line));
+
+    for (const line of importLines) {
+      expect(line).not.toMatch(/character-mythic-plus-authority/);
+      expect(line).not.toMatch(/EXTERNAL_DOMAIN_MYTHIC_PLUS/);
+      expect(line).not.toMatch(/CharacterExternalSnapshot/);
+    }
+  });
 });

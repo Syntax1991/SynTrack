@@ -5,7 +5,6 @@ import type { OverviewProfessionCharacterInput } from "./overview-profession-sta
 import type { OverviewProfessionKnowledgeTreasureCharacterInput } from "./overview-profession-knowledge-treasure-state.mapper.js";
 import type { OverviewProfessionWeeklyCharacterInput } from "./overview-profession-weekly-state.mapper.js";
 import type { OverviewResourceCharacterInput } from "./overview-resource-state.mapper.js";
-import type { OverviewVaultCharacterInput } from "./overview-vault-state.mapper.js";
 import type { OverviewWeeklyCharacterInput } from "./overview-weekly-state.mapper.js";
 import { resolveCharacterState } from "./overview.aggregator.character.js";
 import { sortCharacterWeeklyStates } from "./overview.sorting.js";
@@ -46,7 +45,6 @@ export type OverviewAggregationInput = {
     equippedItemLevel: number | null;
   }[];
   weeklyByCharacterId: Map<string, OverviewWeeklyCharacterInput>;
-  vaultByCharacterId: Map<string, OverviewVaultCharacterInput>;
   gearByCharacterId: Map<string, OverviewGearCharacterInput>;
   professionByCharacterId: Map<
     string,

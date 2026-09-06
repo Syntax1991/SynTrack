@@ -36,7 +36,6 @@ export function baseInput(
     weeklyTaskCount: 5,
     characters: [baseCharacter()],
     weeklyByCharacterId: new Map(),
-    vaultByCharacterId: new Map(),
     gearByCharacterId: new Map(),
     professionByCharacterId:
       new Map(),

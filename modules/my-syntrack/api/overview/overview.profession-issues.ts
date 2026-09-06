@@ -1,6 +1,7 @@
 import { ProfessionDetailRepository } from "../../../professions/api/details/profession-detail.repository.js";
 import { ProfessionDetailService } from "../../../professions/api/details/profession-detail.service.js";
 import { ProfessionRecipeRepository } from "../../../professions/api/details/profession-recipe.repository.js";
+import type { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
 import type { CharacterProfessionSummary } from "./overview.types.js";
 
 export type ProfessionIssuesByCharacter =
@@ -19,12 +20,21 @@ export type ProfessionIssuesByCharacter =
  * existing per-(character, profession) dataStatus, never recomputing it.
  * Bounded by profession count (a handful), not character count, so this
  * stays a small number of queries regardless of roster size.
+ *
+ * G1: accepts OverviewService's own professionAuthorityService so
+ * getDetail()'s effective-skill resolution (Phase F1/F3) is the ONLY
+ * authority round trip for profession skill - Overview used to apply a
+ * second, redundant overlay (overview-profession-effective.ts, removed)
+ * on top of this already-effective result.
  */
-export async function loadProfessionIssuesByCharacter(): Promise<ProfessionIssuesByCharacter> {
+export async function loadProfessionIssuesByCharacter(
+  professionAuthorityService?: CharacterProfessionAuthorityService
+): Promise<ProfessionIssuesByCharacter> {
   const service =
     new ProfessionDetailService(
       new ProfessionDetailRepository(),
-      new ProfessionRecipeRepository()
+      new ProfessionRecipeRepository(),
+      professionAuthorityService
     );
 
   const { items: professions } =

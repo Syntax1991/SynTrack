@@ -26,7 +26,6 @@ import { CharacterProfileAuthorityService } from "../character-external-sync/cha
 import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
 import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
 import { applyAuthoritativeProfile } from "./overview-profile-effective.js";
-import { applyAuthoritativeProfessionSkill } from "./overview-profession-effective.js";
 import {
   attachCharacterExtras,
   buildTagsByCharacterId
@@ -139,7 +138,7 @@ export class OverviewService {
       this.resourceReadinessService.getOverview(),
       this.professionWeeklyStatusService.getOverview(),
       this.professionKnowledgeTreasureStatusService.getOverview(),
-      loadProfessionIssuesByCharacter(),
+      loadProfessionIssuesByCharacter(this.professionAuthorityService),
       seasonalScopeKey
         ? this.trackerDefinitionService.listByScope(seasonalScopeKey)
         : Promise.resolve<TrackerDefinitionView[]>([]),
@@ -148,11 +147,6 @@ export class OverviewService {
       this.tagService.listAllAssignments(),
       this.weeklyGameplayService.getOverview()
     ]);
-
-    await applyAuthoritativeProfessionSkill(
-      professionIssuesByCharacter,
-      this.professionAuthorityService
-    );
 
     const trackerColumns = combinePinnedTrackerColumns(
       seasonalTrackerDefinitions,
@@ -199,7 +193,6 @@ export class OverviewService {
         equippedItemLevel: null
       })),
       weeklyByCharacterId,
-      vaultByCharacterId: new Map(),
       gearByCharacterId: buildCharacterIdMap(gearOverview.characters),
       professionByCharacterId: buildProfessionByCharacterId(
         professionIssuesByCharacter,
