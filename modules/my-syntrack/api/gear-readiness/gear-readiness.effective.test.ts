@@ -28,7 +28,6 @@ function addonRow(overrides: Partial<AddonGearSlotRow> = {}): AddonGearSlotRow {
     setBonusResolved: true,
     setBonusSpellIds: "[1296629,1296630]",
     uniqueCategoryId: null,
-    uniqueCategoryCount: null,
     uniquenessResolved: true,
     ...overrides
   };
@@ -153,7 +152,6 @@ describe("resolveEffectiveGearItem", () => {
         setBonusResolved: true,
         setBonusSpellIds: "[1296629,1296630]",
         uniqueCategoryId: 512,
-        uniqueCategoryCount: 1,
         uniquenessResolved: true
       });
 
@@ -168,7 +166,6 @@ describe("resolveEffectiveGearItem", () => {
         setBonusResolved: true,
         setBonusSpellIds: [1296629, 1296630],
         uniqueCategoryId: 512,
-        uniqueCategoryCount: 1,
         uniquenessResolved: true
       });
     });

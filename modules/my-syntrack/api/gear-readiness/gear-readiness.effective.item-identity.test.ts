@@ -31,7 +31,6 @@ function addonRow(overrides: Partial<AddonGearSlotRow> = {}): AddonGearSlotRow {
     setBonusResolved: true,
     setBonusSpellIds: "[1296629,1296630]",
     uniqueCategoryId: null,
-    uniqueCategoryCount: null,
     uniquenessResolved: true,
     ...overrides
   };
@@ -88,7 +87,6 @@ describe("resolveEffectiveGearItem - item-identity compatibility (Phase F2 corre
     setBonusResolved: true,
     setBonusSpellIds: "[1296629,1296630]",
     uniqueCategoryId: 512,
-    uniqueCategoryCount: 1,
     uniquenessResolved: true,
     enchantName: "Old Enchant"
   });
@@ -111,12 +109,11 @@ describe("resolveEffectiveGearItem - item-identity compatibility (Phase F2 corre
     expect(result?.setBonusSpellIds).toBeNull();
   });
 
-  it("suppresses uniqueCategoryId/uniqueCategoryCount/uniquenessResolved when item ids differ", () => {
+  it("suppresses uniqueCategoryId/uniquenessResolved when item ids differ", () => {
     const result = resolveEffectiveGearItem("HEAD", addonOldItem, blizzardNewItem);
 
     expect(result).toMatchObject({
       uniqueCategoryId: null,
-      uniqueCategoryCount: null,
       uniquenessResolved: null
     });
   });

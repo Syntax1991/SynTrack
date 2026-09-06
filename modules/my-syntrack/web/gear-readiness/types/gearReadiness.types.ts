@@ -39,7 +39,6 @@ export type GearSlotItem = {
   setBonusResolved: boolean | null;
   setBonusSpellIds: number[] | null;
   uniqueCategoryId: number | null;
-  uniqueCategoryCount: number | null;
   uniquenessResolved: boolean | null;
 };
 

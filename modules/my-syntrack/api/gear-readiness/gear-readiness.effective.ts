@@ -20,8 +20,8 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  *   Blizzard equivalent - only a numeric enchantment id, no display
  *   text), notes, and the REMAINING tier-set/embellishment evidence
  *   (expansionId, setEvidenceResolved, setBonusResolved,
- *   setBonusSpellIds, uniqueCategoryId, uniqueCategoryCount,
- *   uniquenessResolved) - none of these have a proven Blizzard
+ *   setBonusSpellIds, uniqueCategoryId, uniquenessResolved) - none of
+ *   these have a proven Blizzard
  *   equivalent: `set.effects[].is_active` could express the addon's
  *   setBonusResolved concept but at different granularity, neither
  *   setBonusSpellIds (Blizzard gives display text, not a spell id) nor
@@ -91,8 +91,8 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  * addon-sourced field composed onto a Blizzard-identified slot -
  * itemLevel, itemName, enchantName, notes, expansionId,
  * setEvidenceResolved, setBonusResolved, setBonusSpellIds,
- * uniqueCategoryId, uniqueCategoryCount, uniquenessResolved, and the
- * addon `setId` fallback - describes a SPECIFIC physical item the addon
+ * uniqueCategoryId, uniquenessResolved, and the addon `setId` fallback -
+ * describes a SPECIFIC physical item the addon
  * observed. None of it may be attached to a *different* item Blizzard
  * now reports for the same slot. Live-verified this phase: Synlight's
  * HEAD slot showed Blizzard itemId 271465 vs. the addon's stale itemId
@@ -111,6 +111,15 @@ import type { EnchantStatus, GearSlotKey } from "./gear-readiness.types.js";
  * `lastSyncedAt`, `updatedAt`) is deliberately NOT gated by this check -
  * see the AddonGearSlotRow.id doc comment for why displaying it
  * alongside a mismatched Blizzard item carries no mutation risk.
+ *
+ * G3A CORRECTIVE FOLLOW-UP: `uniqueCategoryCount` is no longer part of
+ * this effective read model at all (previously composed here with zero
+ * functional consumer, per the G2/G3A audit). `GearReadinessRepository.
+ * findCharacters()` now explicitly excludes it from the underlying
+ * Prisma select, so it is never read out of the database on this path
+ * either - the DB column itself remains, only its runtime propagation
+ * was removed. `uniqueCategoryId`/`uniquenessResolved`, the fields
+ * embellishment detection actually uses, are unaffected.
  */
 
 export type EffectiveGearItem = {
@@ -148,7 +157,6 @@ export type EffectiveGearItem = {
   setBonusResolved: boolean | null;
   setBonusSpellIds: number[] | null;
   uniqueCategoryId: number | null;
-  uniqueCategoryCount: number | null;
   uniquenessResolved: boolean | null;
 };
 
@@ -172,7 +180,6 @@ export type AddonGearSlotRow = {
   setBonusResolved: boolean | null;
   setBonusSpellIds: string | null;
   uniqueCategoryId: number | null;
-  uniqueCategoryCount: number | null;
   uniquenessResolved: boolean | null;
 };
 
@@ -217,7 +224,6 @@ function fromAddon(addonItem: AddonGearSlotRow): EffectiveGearItem {
     setBonusResolved: addonItem.setBonusResolved,
     setBonusSpellIds: parseSpellIds(addonItem.setBonusSpellIds),
     uniqueCategoryId: addonItem.uniqueCategoryId,
-    uniqueCategoryCount: addonItem.uniqueCategoryCount,
     uniquenessResolved: addonItem.uniquenessResolved
   };
 }
@@ -309,7 +315,6 @@ function fromBlizzard(
     setBonusResolved: trustedAddonItem?.setBonusResolved ?? null,
     setBonusSpellIds: parseSpellIds(trustedAddonItem?.setBonusSpellIds ?? null),
     uniqueCategoryId: trustedAddonItem?.uniqueCategoryId ?? null,
-    uniqueCategoryCount: trustedAddonItem?.uniqueCategoryCount ?? null,
     uniquenessResolved: trustedAddonItem?.uniquenessResolved ?? null
   };
 }

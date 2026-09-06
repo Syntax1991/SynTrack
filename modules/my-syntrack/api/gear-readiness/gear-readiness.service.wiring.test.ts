@@ -54,7 +54,6 @@ function characterRow() {
         setBonusResolved: true,
         setBonusSpellIds: "[1296629,1296630]",
         uniqueCategoryId: null,
-        uniqueCategoryCount: null,
         uniquenessResolved: true
       }
     ],
