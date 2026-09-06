@@ -58,7 +58,24 @@ const environmentSchema = z.object({
   WARCRAFTLOGS_CLIENT_SECRET: z
     .string()
     .trim()
-    .default("")
+    .default(""),
+
+  /*
+   * Phase G3B: best-effort raw-ingest diagnostics DB (separate from
+   * dev.db). "false"/"0" disables it explicitly; any other value (and
+   * the default) leaves it enabled - see ingest-observation.config.ts.
+   */
+  INGEST_OBSERVATION_ENABLED: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .default("true")
+    .transform((value) => value !== "false" && value !== "0"),
+
+  INGEST_OBSERVATION_DB_PATH: z
+    .string()
+    .trim()
+    .default("./prisma/ingest-observation.db")
 });
 
 const parsedEnvironment = environmentSchema.safeParse(

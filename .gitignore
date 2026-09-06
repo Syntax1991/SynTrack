@@ -8,6 +8,10 @@ coverage/
 
 apps/api/prisma/dev.db
 apps/api/prisma/dev.db-journal
+apps/api/prisma/ingest-observation.db
+apps/api/prisma/ingest-observation.db-journal
+apps/api/prisma/ingest-observation.db-wal
+apps/api/prisma/ingest-observation.db-shm
 apps/api/src/generated/
 
 apps/web/node_modules/

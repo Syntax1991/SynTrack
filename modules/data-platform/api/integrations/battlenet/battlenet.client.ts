@@ -1,5 +1,8 @@
 import { env } from "../../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
+import { isTokenResponse, readJsonResponse } from "./battlenet.client.http.js";
+import { captureBlizzardObservation } from "./battlenet.client.observation.js";
+import type { BlizzardObservationDescriptor } from "./battlenet.client.observation.js";
 import type { BattleNetAccountProfile, BattleNetCharacterAchievements, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetGuildRoster, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
 
 const authorizationUrl = "https://oauth.battle.net/authorize";
@@ -63,9 +66,9 @@ export class BattleNetClient {
       })
     });
 
-    const payload = await this.readJsonResponse(response);
+    const payload = await readJsonResponse(response);
 
-    if (!response.ok || !this.isTokenResponse(payload)) {
+    if (!response.ok || !isTokenResponse(payload)) {
       throw new AppError(
         502,
         "Battle.net konnte den Autorisierungscode nicht einlösen.",
@@ -86,7 +89,7 @@ export class BattleNetClient {
       }
     });
 
-    const payload = await this.readJsonResponse(response);
+    const payload = await readJsonResponse(response);
 
     if (!response.ok) {
       throw new AppError(
@@ -130,7 +133,10 @@ export class BattleNetClient {
     const result = await this.getProfileResource<BattleNetProfessionsResponse>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/professions`,
       accessToken,
-      true
+      true,
+      { domain: "PROFESSIONS", endpoint: "character-professions" },
+      realmSlug,
+      characterName
     );
 
     return result ?? { primaries: [], secondaries: [] };
@@ -146,7 +152,10 @@ export class BattleNetClient {
     return this.getProfileResource<BattleNetCharacterProfile>(
       `/profile/wow/character/${encodedRealm}/${encodedName}`,
       accessToken,
-      true
+      true,
+      { domain: "PROFILE", endpoint: "character-profile" },
+      realmSlug,
+      characterName
     );
   }
 
@@ -182,7 +191,10 @@ export class BattleNetClient {
     return this.getProfileResource<BattleNetCharacterEquipment>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/equipment`,
       accessToken,
-      true
+      true,
+      { domain: "EQUIPMENT", endpoint: "character-equipment" },
+      realmSlug,
+      characterName
     );
   }
 
@@ -198,7 +210,10 @@ export class BattleNetClient {
     return this.getProfileResource<BattleNetMythicKeystoneProfile>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile`,
       accessToken,
-      true
+      true,
+      { domain: "MYTHIC_PLUS", endpoint: "mythic-keystone-profile" },
+      realmSlug,
+      characterName
     );
   }
 
@@ -215,7 +230,10 @@ export class BattleNetClient {
     return this.getProfileResource<BattleNetMythicKeystoneSeasonProfile>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile/season/${seasonId}`,
       accessToken,
-      true
+      true,
+      { domain: "MYTHIC_PLUS", endpoint: "mythic-keystone-profile-season" },
+      realmSlug,
+      characterName
     );
   }
 
@@ -248,7 +266,10 @@ export class BattleNetClient {
   private async getProfileResource<T>(
     path: string,
     accessToken: string,
-    allowNotFound = false
+    allowNotFound = false,
+    observe?: BlizzardObservationDescriptor,
+    realmSlug?: string,
+    characterName?: string
   ): Promise<T | null> {
     const baseUrl =
       `https://${env.BATTLENET_REGION}.api.blizzard.com`;
@@ -284,7 +305,7 @@ export class BattleNetClient {
     }
 
     const payload =
-      await this.readJsonResponse(response);
+      await readJsonResponse(response);
 
     if (response.status === 401) {
       throw new AppError(
@@ -301,46 +322,25 @@ export class BattleNetClient {
       );
     }
 
+    /*
+     * Phase G3B: RAW OBSERVATION DB - captured here, the single shared
+     * fetch path for every public character-domain call, right after
+     * the decoded JSON body is confirmed successful and BEFORE the
+     * caller's own normalizer (blizzard-*.normalizer.ts) maps it. See
+     * battlenet.client.observation.ts for exactly what is (and is not)
+     * passed on.
+     */
+    if (observe) {
+      captureBlizzardObservation(
+        observe,
+        env.BATTLENET_REGION,
+        realmSlug,
+        characterName,
+        response.status,
+        payload
+      );
+    }
+
     return payload as T;
-  }
-
-  private async readJsonResponse(
-    response: Response
-  ): Promise<unknown> {
-    const text = await response.text();
-
-    if (!text) {
-      return {};
-    }
-
-    try {
-      return JSON.parse(text) as unknown;
-    }
-    catch {
-      return {
-        response: text.slice(0, 500)
-      };
-    }
-  }
-
-  private isTokenResponse(
-    payload: unknown
-  ): payload is BattleNetTokenResponse {
-    if (
-      typeof payload !== "object" ||
-      payload === null
-    ) {
-      return false;
-    }
-
-    const candidate =
-      payload as Record<string, unknown>;
-
-    return (
-      typeof candidate.access_token ===
-        "string" &&
-      typeof candidate.token_type ===
-        "string"
-    );
   }
 }
