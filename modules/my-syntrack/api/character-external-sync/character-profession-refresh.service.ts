@@ -1,4 +1,4 @@
-import { slugifyRealmName } from "../../../guild/api/audit/audit.realm-slug.js";
+import { slugifyRealmName } from "./character-realm-slug.js";
 import { mapWithConcurrency } from "../../../../apps/api/src/shared/async/mapWithConcurrency.js";
 import type { BattleNetAppTokenService } from "../../../data-platform/api/integrations/battlenet/battlenet-app-token.service.js";
 import type { BattleNetClient } from "../../../data-platform/api/integrations/battlenet/battlenet.client.js";

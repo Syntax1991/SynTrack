@@ -25,12 +25,16 @@ SynTrack (active navigation)
 +-- Settings
 ```
 
-Guild, Loot, Recruitment and Automation are **no longer part of the active
+Loot, Recruitment and Automation are **no longer part of the active
 navigation surface** - their backend routes/services/Prisma models still
 exist (see their own sections below) pending a deliberate later cleanup, but
 they are not reachable from the sidebar. "Raid Tasks" is likewise no longer
 a primary navigation domain; `PersonalRaidTask` remains as a Character-based
 model, reusable later as generic personal Custom Tasks.
+
+Guild is no longer a module at all (removed in Phase G4B, 2026-09-07) -
+see the "Guild (removed)" section below for what was deleted and the
+one small piece of genuinely non-Guild infrastructure that was kept.
 
 The underlying module/business-ownership map (unchanged - navigation is a
 presentation concern, not a module-ownership one):
@@ -44,15 +48,6 @@ SynTrack
 |   +-- Weeklies (Weekly Checklist, Vault / M+)
 |   +-- Gear
 |   +-- Professions (composed, owned by the Professions module)
-|
-+-- Guild                    (backend only - not in active navigation)
-|   +-- Dashboard
-|   +-- Roster
-|   +-- Teams
-|   +-- Attendance
-|   +-- Weekly Progress
-|   +-- Requirements
-|   +-- Officer Notes
 |
 +-- Loot                     (backend only - not in active navigation)
 |   +-- Wishlist
@@ -119,7 +114,7 @@ owning their underlying business rules.
 
 ### Dependency rule
 
-My SynTrack may read projections from Guild, Loot and Professions.
+My SynTrack may read projections from Loot and Professions.
 
 It must not implement duplicate profession or loot logic.
 
@@ -135,96 +130,14 @@ Profession, tracker, attention and next-action projection. The Character
 Detail frontend consumes this through one request; it does not issue one
 request per domain or card.
 
-## 2. Guild
+## 2. Guild (removed)
 
-### Responsibility
-
-Guild organization and persistent guild state.
-
-### Owns
-
-- guild roster
-- guild leadership verification
-- gear audit (live item level / enchant / socket compliance)
-- teams
-- weekly guild progress
-- guild requirements
-- officer notes
-
-### Does not own
-
-- loot decisions
-- recruitment application lifecycle
-- the Battle.net OAuth connection itself (Data Platform owns that;
-  Guild only consumes it to verify leadership)
-
-### Existing implementation
-
-Guild is fully implemented — all seven planned capabilities exist,
-plus a Gear Audit added afterward.
-
-Web:
-
-- `modules/guild/web/dashboard`
-- `modules/guild/web/roster`
-- `modules/guild/web/audit`
-- `modules/guild/web/verification`
-- `modules/guild/web/teams`
-- `modules/guild/web/requirements`
-- `modules/guild/web/officer-notes`
-- `modules/guild/web/weekly-progress`
-
-API:
-
-- `modules/guild/api/roster`
-- `modules/guild/api/roster-import`
-- `modules/guild/api/verification`
-- `modules/guild/api/audit`
-- `modules/guild/api/teams`
-- `modules/guild/api/requirements`
-- `modules/guild/api/officer-notes`
-- `modules/guild/api/weekly-progress`
-
-Module-owned addon:
-
-- `modules/guild/addons/SynTrack_Guild`
-
-Guild members can be managed manually through the Roster API or
-synced from the `SynTrack_Guild` WoW addon, but only once the guild's
-leadership has been verified through Blizzard's official Battle.net
-APIs (see `modules/guild/api/verification`). Verification reuses Data
-Platform's existing Battle.net client and connection rather than
-duplicating OAuth handling — this is Guild consuming a Data Platform
-contract, not Data Platform making a business decision. The addon
-keeps its own `SynTrack_GuildDB` SavedVariables and registers with
-`SynTrack_Core` only for status visibility; roster data is
-transported through the dedicated roster-import endpoints, reusing
-Data Platform's generic Lua SavedVariables parser.
-
-Teams group existing roster members into persistent units (e.g. a
-Mythic core team) independent of any specific raid event; they only
-reference `GuildMember` by ID. The Gear Audit pulls every roster
-member's live equipped gear straight from Blizzard (average item
-level, missing enchants on commonly-enchantable slots, socket fill)
-via the verified officer's Battle.net connection — unlike Weekly
-Progress it does not require a matching My SynTrack `Character`,
-since it works off the roster's own name/realm directly (resolving
-the realm slug with a lowercase/hyphenate heuristic, since
-`GuildMember` only stores the realm display name). Requirements are a
-documented list of expectations (gear, keystone, attendance, ...); a
-`GEAR` requirement may set a minimum item level, in which case it is
-checked live against the Gear Audit data — other categories remain
-plain documentation. Officer Notes are freeform per-member
-commentary, stamped server-side with the verified officer's character
-name — never taken from client input. Weekly Progress is a read-only
-cross-reference against My SynTrack's `Character` /
-`WeeklyChecklistCompletion` / `WeeklyMythicPlusRun` data, matched by
-exact name/realm/region identity — an identity match, not a deeper
-integration. Requirements, Officer Notes and the Gear Audit refresh
-all go through the same verification gate as the roster; Weekly
-Progress and the Dashboard are read-only and stay open. (Attendance
-was tracked by the Raid module's own event/per-member records, not a
-separate Guild-owned feature — see the removal note below.)
+**Removed entirely in Phase G4B (2026-09-07).** SynTrack is not a
+guild-management product. Guild Dashboard, Roster, Teams, Gear Audit,
+Requirements, Officer Notes, Weekly Progress, guild leadership
+verification, `modules/guild/web/**`, and the `SynTrack_Guild` addon
+were all deleted. See git history and the G4A/G4B phase reports for
+the full prior implementation and removal rationale.
 
 > The Raid main module (Raid Planner, Boss Rosters, Setups,
 > Attendance, Signups, Cooldown Planning) existed from 2026-08-14
@@ -232,6 +145,20 @@ separate Guild-owned feature — see the removal note below.)
 > personal multi-character tracking focus and the entire Raid
 > product segment was removed. See git history for its prior
 > implementation.
+
+**What remains, and why:** `modules/guild/api/raider-link` and
+`modules/guild/api/roster/roster.repository.ts` (+ `roster.types.ts`)
+survive because they are not actually Guild-management functionality —
+`GuildRaiderLinkService` resolves "which `GuildMember` a signed-in
+Battle.net account is linked to," and Loot's Wishlist/Droptimizer
+features use that resolution as their real ownership key
+(`memberId` on `LootTierPreference`/`LootTrinketChoice`/
+`LootSimReport`). Removing it would have broken Loot, a genuinely
+separate product feature, so it was kept as-is (just unmounted from
+any `/guild/**` HTTP route, since nothing called it there anymore).
+The `GuildMember` Prisma model is therefore still required, not dead —
+see the G4B report's Prisma readiness section for the full per-model
+breakdown of what is actually safe to drop in a future schema cleanup.
 
 ## 3. Loot
 
@@ -250,8 +177,11 @@ Loot planning and distribution.
 
 ### Dependency rule
 
-Loot references Guild members through stable identifiers or
-contracts.
+Loot's self-service Wishlist and Droptimizer resolve ownership through
+`GuildRaiderLinkService` (`modules/guild/api/raider-link`) - the one
+piece of former Guild infrastructure kept after Phase G4B specifically
+because Loot depends on it as a stable identifier, not because it is
+Guild-management functionality. See the Guild section above.
 
 ## 4. Professions
 
@@ -315,8 +245,9 @@ Applicant and trial lifecycle.
 
 ### Dependency rule
 
-Accepted recruits may transition into Guild membership through an
-explicit application service.
+Not yet implemented. Its original dependency rule assumed a Guild
+module (removed in Phase G4B) that accepted recruits would transition
+into; this needs reconsidering if/when Recruitment is actually built.
 
 ## 6. Automation
 
@@ -371,12 +302,14 @@ Addon:
 
 Data Platform no longer has its own top-level sidebar nav module or
 standalone routes (2026-08-14) — its two built web capabilities (WoW
-Addon Sync, Battle.net character sync) are composed into Guild's
-Settings pages instead (`/settings` and `/guild/settings`
-respectively), following dependency principle 3 below ("frontend
-pages may compose read models from multiple modules"). Business
-ownership is unchanged: the underlying hooks/API calls/components
-still live under `modules/data-platform/web/integrations`, just
+Addon Sync, Battle.net character sync) are composed into the personal
+`SettingsPage` instead (`/settings`, now living at
+`modules/data-platform/web/settings/pages/SettingsPage.tsx` since
+Phase G4B relocated it out of the removed Guild module - it was always
+general account settings, never Guild-specific), following dependency
+principle 3 below ("frontend pages may compose read models from
+multiple modules"). Business ownership is unchanged: the underlying
+hooks/API calls/components still live under `modules/data-platform/web/integrations`, just
 without their own page/route/nav entry. See
 `modules/data-platform/README.md`'s "No standalone nav presence"
 section for the full reasoning.
@@ -615,10 +548,11 @@ addon exists. The directory itself is only the module boundary; each
 real addon must be placed in a separate technical-name subdirectory so
 several addons can coexist without mixing source files.
 
-The profession and guild addons therefore live under Professions and
-Guild respectively. Future personal-tracking or loot addons can live
-under their own main modules without growing one global addon
-directory.
+The profession addons therefore live under Professions. (The Guild
+module's `SynTrack_Guild` addon followed the same convention before
+Phase G4B removed it along with the rest of Guild.) Future
+personal-tracking or loot addons can live under their own main modules
+without growing one global addon directory.
 
 `SynTrack_Core` is the shared Data Platform runtime used for stable
 identity, module registration, events and SavedVariables transport. It

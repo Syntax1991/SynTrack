@@ -62,9 +62,10 @@ outright, in every environment - no file is even created when disabled.
 | BLIZZARD | MYTHIC_PLUS | `BattleNetClient.getCharacterMythicKeystoneProfile()` / `...Season()` |
 
 Deliberately **not** captured: `getAccountProfile`/`getUserInfo`/
-`exchangeAuthorizationCode` (user-OAuth account-discovery boundary) and
-`getGuildRoster` (out of the character-domain scope) - see
-`battlenet.client.ts`'s module doc comment.
+`exchangeAuthorizationCode` (user-OAuth account-discovery boundary) -
+see `battlenet.client.observation.ts`'s module doc comment. (Phase G4B
+removed `getGuildRoster` entirely along with the rest of SynTrack's
+Guild product surface, so it no longer exists to exclude.)
 
 Only `stage = "RAW"` exists today. The schema leaves room for a future
 `NORMALIZED`/`EFFECTIVE` stage without a migration, but nothing writes

@@ -1,19 +1,9 @@
 # Guild Addons
 
-WoW addons for guild-side roster, team and attendance capabilities
-belong here.
-
-Each addon uses its own technical directory:
-
-```text
-modules/guild/addons/<AddonName>
-```
-
-## Current addon
-
-- `modules/guild/addons/SynTrack_Guild` — captures the guild roster
-  (name, class, level, rank, notes) and registers itself with
-  `SynTrack_Core`.
-
-Future Teams and Attendance capabilities may extend this addon or add
-their own technical directory here without mixing source files.
+**Removed (Phase G4B, 2026-09-07).** `SynTrack_Guild`, the only addon
+that ever lived here (guild roster capture), was deleted along with
+the rest of SynTrack's Guild product surface — see
+`modules/guild/README.md`. This directory is kept empty (aside from
+this file) so the repository's addon-boundary convention
+(`modules/<slug>/addons/README.md` must exist) still holds for the
+`guild` module slug.

@@ -5,7 +5,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { SettingsPage } from "../../../../guild/web/raider-link/pages/SettingsPage";
+import { SettingsPage } from "./SettingsPage";
 
 vi.mock(
   "../../../../data-platform/web/settings/hooks/useSettingsTrust",

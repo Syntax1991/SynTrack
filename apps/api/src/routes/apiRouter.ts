@@ -1,12 +1,4 @@
 import { Router } from "express";
-import { guildAuditRouter } from "../../../../modules/guild/api/audit/audit.routes.js";
-import { guildOfficerNoteRouter } from "../../../../modules/guild/api/officer-notes/officer-note.routes.js";
-import { guildRequirementRouter } from "../../../../modules/guild/api/requirements/requirement.routes.js";
-import { guildRosterRouter } from "../../../../modules/guild/api/roster/roster.routes.js";
-import { guildRosterImportRouter } from "../../../../modules/guild/api/roster-import/roster-import.routes.js";
-import { guildTeamRouter } from "../../../../modules/guild/api/teams/team.routes.js";
-import { guildVerificationRouter } from "../../../../modules/guild/api/verification/verification.routes.js";
-import { guildWeeklyProgressRouter } from "../../../../modules/guild/api/weekly-progress/weekly-progress.routes.js";
 import { lootWishlistRouter } from "../../../../modules/loot/api/wishlist/wishlist.routes.js";
 import { lootDroptimizerRouter } from "../../../../modules/loot/api/droptimizer/droptimizer.routes.js";
 import { characterRouter } from "../../../../modules/my-syntrack/api/characters/character.routes.js";
@@ -34,7 +26,6 @@ import { clientImportRouter } from "../../../../modules/data-platform/api/client
 import { clientProfileRouter } from "../../../../modules/data-platform/api/client-profile/client-profile.routes.js";
 import { clientCharactersRouter } from "../../../../modules/data-platform/api/client-characters/client-characters.routes.js";
 import { settingsTrustRouter } from "../../../../modules/data-platform/api/settings-trust/settings-trust.routes.js";
-import { guildRaiderLinkRouter } from "../../../../modules/guild/api/raider-link/raider-link.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
 import { professionRouter } from "../../../../modules/professions/api/profession.routes.js";
 import { specializationRouter } from "../../../../modules/professions/api/specializations/specialization.routes.js";
@@ -160,46 +151,6 @@ apiRouter.use(
 );
 
 apiRouter.use(
-  "/guild/verification",
-  guildVerificationRouter
-);
-
-apiRouter.use(
-  "/guild/teams",
-  guildTeamRouter
-);
-
-apiRouter.use(
-  "/guild/roster",
-  guildRosterRouter
-);
-
-apiRouter.use(
-  "/guild/audit",
-  guildAuditRouter
-);
-
-apiRouter.use(
-  "/guild/roster-import",
-  guildRosterImportRouter
-);
-
-apiRouter.use(
-  "/guild/requirements",
-  guildRequirementRouter
-);
-
-apiRouter.use(
-  "/guild/officer-notes",
-  guildOfficerNoteRouter
-);
-
-apiRouter.use(
-  "/guild/weekly-progress",
-  guildWeeklyProgressRouter
-);
-
-apiRouter.use(
   "/loot/wishlist",
   lootWishlistRouter
 );
@@ -222,11 +173,6 @@ apiRouter.use(
 apiRouter.use(
   "/auth/raider",
   raiderAuthRouter
-);
-
-apiRouter.use(
-  "/guild/raider-link",
-  guildRaiderLinkRouter
 );
 
 apiRouter.use(

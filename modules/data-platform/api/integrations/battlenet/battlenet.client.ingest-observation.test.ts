@@ -151,16 +151,6 @@ describe("BattleNetClient - G3B raw observation capture", () => {
     expect(readAllRows(databasePath)).toHaveLength(0);
   });
 
-  it("does NOT capture guild roster calls - out of G3B's character-domain scope", async () => {
-    const databasePath = setUpObservation();
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse({ members: [] })));
-
-    const client = new BattleNetClient();
-    await client.getGuildRoster(REAL_ACCESS_TOKEN, "antonidas", "some-guild");
-
-    expect(readAllRows(databasePath)).toHaveLength(0);
-  });
-
   it("never persists the Authorization header or the raw access token, even if the payload happens to contain a same-named key", async () => {
     const databasePath = setUpObservation();
     // A deliberately pathological response - real Blizzard never sends

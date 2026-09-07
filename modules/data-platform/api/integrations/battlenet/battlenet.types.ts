@@ -125,27 +125,6 @@ export type BattleNetCharacterProfile = {
   equipped_item_level?: number;
 };
 
-export type BattleNetGuildRosterMember = {
-  character?: {
-    name?: string;
-    id?: number;
-    level?: number;
-    realm?: {
-      name?: string;
-      slug?: string;
-    };
-    playable_class?: {
-      name?: string;
-    };
-  };
-  rank?: number;
-};
-
-export type BattleNetGuildRoster = {
-  guild?: BattleNetGuildReference;
-  members?: BattleNetGuildRosterMember[];
-};
-
 export type BattleNetEquippedItemSlot = {
   type?: string;
   name?: string;

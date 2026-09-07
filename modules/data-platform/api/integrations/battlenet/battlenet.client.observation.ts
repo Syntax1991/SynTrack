@@ -6,10 +6,9 @@ import type { IngestDomain } from "../../ingest-observation/ingest-observation.t
  * capture a RAW observation, and under which logical endpoint id (never
  * the literal URL - a stable, safe diagnostic label is all that's
  * needed). Deliberately excludes getAccountProfile/getUserInfo/
- * exchangeAuthorizationCode/getGuildRoster - the user-OAuth
- * account-discovery boundary and guild roster are out of G3B's scope.
- * Split out of battlenet.client.ts to stay under the 350-line
- * architecture cap.
+ * exchangeAuthorizationCode - the user-OAuth account-discovery
+ * boundary is out of G3B's scope. Split out of battlenet.client.ts to
+ * stay under the 350-line architecture cap.
  */
 export type BlizzardObservationDescriptor = {
   domain: IngestDomain;

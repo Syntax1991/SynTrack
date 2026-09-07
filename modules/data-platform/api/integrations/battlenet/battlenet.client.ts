@@ -3,7 +3,7 @@ import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js"
 import { isTokenResponse, readJsonResponse } from "./battlenet.client.http.js";
 import { captureBlizzardObservation } from "./battlenet.client.observation.js";
 import type { BlizzardObservationDescriptor } from "./battlenet.client.observation.js";
-import type { BattleNetAccountProfile, BattleNetCharacterAchievements, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetGuildRoster, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
+import type { BattleNetAccountProfile, BattleNetCharacterAchievements, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
 
 const authorizationUrl = "https://oauth.battle.net/authorize";
 const tokenUrl = "https://oauth.battle.net/token";
@@ -156,28 +156,6 @@ export class BattleNetClient {
       { domain: "PROFILE", endpoint: "character-profile" },
       realmSlug,
       characterName
-    );
-  }
-
-  async getGuildRoster(
-    accessToken: string,
-    realmSlug: string,
-    guildSlug: string
-  ): Promise<BattleNetGuildRoster | null> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
-    );
-
-    const encodedGuild = encodeURIComponent(
-      guildSlug.toLowerCase()
-    );
-
-    return this.getProfileResource<
-      BattleNetGuildRoster
-    >(
-      `/data/wow/guild/${encodedRealm}/${encodedGuild}/roster`,
-      accessToken,
-      true
     );
   }
 
