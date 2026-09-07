@@ -21,9 +21,12 @@ apps/client/**/bin/
 apps/client/**/obj/
 apps/client/**/.vs/
 apps/client/publish/
+apps/client/installer/Output/
 
 .vscode/
 .idea/
+.claude/
+.cursor/
 .DS_Store
 Thumbs.db
 
