@@ -130,7 +130,10 @@ export class CharacterService {
       );
     }
 
-    return this.characterRepository.create(normalizedInput);
+    return this.characterRepository.create(
+      normalizedInput,
+      raiderAccountId
+    );
   }
 
   async update(characterId: string, input: CharacterInput) {
@@ -165,11 +168,24 @@ export class CharacterService {
    * Safe removal: upsert account-scoped suppression, then delete Character
    * (child rows cascade via schema). Never deletes Character before
    * suppression is written.
+   *
+   * Ownership:
+   * - Matching raiderAccountId → remove
+   * - Null raiderAccountId (orphan roster row) → remove and claim
+   *   suppression under the acting account
+   * - Different non-null owner → 404 (no cross-account mutation)
    */
   async remove(characterId: string, raiderAccountId: string): Promise<void> {
     const character = await this.characterRepository.findById(characterId);
 
-    if (!character || character.raiderAccountId !== raiderAccountId) {
+    if (!character) {
+      throw new AppError(404, "Charakter nicht gefunden.");
+    }
+
+    if (
+      character.raiderAccountId !== null &&
+      character.raiderAccountId !== raiderAccountId
+    ) {
       throw new AppError(404, "Charakter nicht gefunden.");
     }
 
