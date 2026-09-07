@@ -13,9 +13,16 @@ const sourceRoots = [
   "scripts"
 ];
 
+/*
+ * Guild was a main module through Phase G4B, when it was removed
+ * entirely (SynTrack is not a guild-management product) - see
+ * modules/loot/shared/member-link for the one genuinely non-Guild
+ * piece of its old raider-link infrastructure that survived, relocated
+ * under Loot instead. Not listed here anymore since modules/guild no
+ * longer exists at all.
+ */
 const mainModuleSlugs = [
   "my-syntrack",
-  "guild",
   "loot",
   "professions",
   "recruitment",

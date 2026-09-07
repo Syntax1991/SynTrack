@@ -32,9 +32,11 @@ they are not reachable from the sidebar. "Raid Tasks" is likewise no longer
 a primary navigation domain; `PersonalRaidTask` remains as a Character-based
 model, reusable later as generic personal Custom Tasks.
 
-Guild is no longer a module at all (removed in Phase G4B, 2026-09-07) -
-see the "Guild (removed)" section below for what was deleted and the
-one small piece of genuinely non-Guild infrastructure that was kept.
+Guild is no longer a module at all (removed in Phase G4B, 2026-09-07,
+finished the same day by a corrective pass) - `modules/guild` does not
+exist. See the "Guild (removed)" section below for what was deleted
+and where the one genuinely non-Guild piece of its old infrastructure
+ended up instead.
 
 The underlying module/business-ownership map (unchanged - navigation is a
 presentation concern, not a module-ownership one):
@@ -132,12 +134,25 @@ request per domain or card.
 
 ## 2. Guild (removed)
 
-**Removed entirely in Phase G4B (2026-09-07).** SynTrack is not a
-guild-management product. Guild Dashboard, Roster, Teams, Gear Audit,
-Requirements, Officer Notes, Weekly Progress, guild leadership
-verification, `modules/guild/web/**`, and the `SynTrack_Guild` addon
-were all deleted. See git history and the G4A/G4B phase reports for
-the full prior implementation and removal rationale.
+**Removed entirely, in two passes.** SynTrack is not a
+guild-management product. Phase G4B (2026-09-07) deleted Guild
+Dashboard, Roster, Teams, Gear Audit, Requirements, Officer Notes,
+Weekly Progress, guild leadership verification, `modules/guild/web/**`,
+and the `SynTrack_Guild` addon. A same-day corrective pass then finished
+the job: `modules/guild/api/raider-link` and
+`modules/guild/api/roster/roster.repository.ts` had briefly survived
+G4B's first pass because Loot's Wishlist/Droptimizer depended on
+`GuildRaiderLinkService` to resolve "which member a signed-in
+Battle.net account is linked to" (their real ownership key for
+`LootTierPreference`/`LootTrinketChoice`/`LootSimReport.memberId`) -
+but that dependency was itself never guild-management functionality,
+just generic identity-resolution code that happened to be misplaced
+under the Guild module. It was relocated to
+`modules/loot/shared/member-link` (`LootMemberLinkService`, exposing
+only the one read Loot ever needed) and `modules/guild` was deleted in
+full - not even a stub directory remains. See git history and the
+G4A/G4B phase reports for the complete prior implementation and
+removal rationale.
 
 > The Raid main module (Raid Planner, Boss Rosters, Setups,
 > Attendance, Signups, Cooldown Planning) existed from 2026-08-14
@@ -146,19 +161,13 @@ the full prior implementation and removal rationale.
 > product segment was removed. See git history for its prior
 > implementation.
 
-**What remains, and why:** `modules/guild/api/raider-link` and
-`modules/guild/api/roster/roster.repository.ts` (+ `roster.types.ts`)
-survive because they are not actually Guild-management functionality —
-`GuildRaiderLinkService` resolves "which `GuildMember` a signed-in
-Battle.net account is linked to," and Loot's Wishlist/Droptimizer
-features use that resolution as their real ownership key
-(`memberId` on `LootTierPreference`/`LootTrinketChoice`/
-`LootSimReport`). Removing it would have broken Loot, a genuinely
-separate product feature, so it was kept as-is (just unmounted from
-any `/guild/**` HTTP route, since nothing called it there anymore).
-The `GuildMember` Prisma model is therefore still required, not dead —
-see the G4B report's Prisma readiness section for the full per-model
-breakdown of what is actually safe to drop in a future schema cleanup.
+**What still isn't fully neutral:** the underlying Prisma model both
+`LootMemberLinkService` and Loot's own tables key off is still named
+`GuildMember` - renaming/neutralizing that is a deliberate G4C schema
+decision (see that section's readiness report), not something this
+runtime-only pass could safely do. No live application code treats it
+as a guild roster anymore, but the table name itself hasn't caught up
+yet.
 
 ## 3. Loot
 
@@ -178,10 +187,9 @@ Loot planning and distribution.
 ### Dependency rule
 
 Loot's self-service Wishlist and Droptimizer resolve ownership through
-`GuildRaiderLinkService` (`modules/guild/api/raider-link`) - the one
-piece of former Guild infrastructure kept after Phase G4B specifically
-because Loot depends on it as a stable identifier, not because it is
-Guild-management functionality. See the Guild section above.
+`LootMemberLinkService` (`modules/loot/shared/member-link`) - the
+identity-resolution code relocated out of the (now fully removed)
+Guild module. See the Guild section above.
 
 ## 4. Professions
 

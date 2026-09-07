@@ -16,11 +16,11 @@ const tokenExpiryBufferMilliseconds =
 
 /*
  * Public entry point the rest of the app depends on (controller, plus
- * device-auth/guild routes that only ever call requireSession /
- * requireUsableAccessToken). OAuth-round-trip orchestration is delegated
- * to RaiderAuthCallbackService - see that file for why - everything here
- * is either a thin forward or operates on an already-established
- * RaiderSession.
+ * device-auth and Loot's member-link service, which only ever call
+ * requireSession / requireUsableAccessToken). OAuth-round-trip
+ * orchestration is delegated to RaiderAuthCallbackService - see that
+ * file for why - everything here is either a thin forward or operates
+ * on an already-established RaiderSession.
  */
 export class RaiderAuthService {
   private readonly callbackService:

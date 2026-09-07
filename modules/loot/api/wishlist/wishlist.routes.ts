@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.js";
-import { guildRaiderLinkService } from "../../../guild/api/raider-link/raider-link.routes.js";
+import { lootMemberLinkService } from "../../shared/member-link/member-link.instance.js";
 import { LootWishlistController } from "./wishlist.controller.js";
 import { LootWishlistRepository } from "./wishlist.repository.js";
 import { LootWishlistService } from "./wishlist.service.js";
@@ -10,7 +10,7 @@ const repository =
 
 const service = new LootWishlistService(
   repository,
-  guildRaiderLinkService
+  lootMemberLinkService
 );
 
 const controller =
