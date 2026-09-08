@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
@@ -20,18 +19,23 @@ export function SeasonPage() {
     <>
       <PageHeader
         actions={
-          <>
-            <button
-              className="button button-primary"
-              onClick={() => setIsManagingGoals(true)}
-              type="button"
+          <button
+            aria-label="Manage Goals"
+            className="page-icon-button"
+            onClick={() => setIsManagingGoals(true)}
+            title="Manage Goals"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              className="nav-icon"
+              fill="none"
+              viewBox="0 0 24 24"
             >
-              Manage Goals
-            </button>
-            <Link className="button button-secondary" to="/weekly-checklist">
-              Open Weeklies
-            </Link>
-          </>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+            </svg>
+          </button>
         }
         description="Seasonal Character and Warband goals. Weekly reset work stays in Weeklies."
         eyebrow="SEASONAL CHECKLIST"

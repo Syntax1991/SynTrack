@@ -16,15 +16,19 @@ const DEFAULT_PREFERENCE: SeasonGoalPreferenceValue = {
 };
 
 export function ManageGoalsModal({ onClose }: ManageGoalsModalProps) {
-  const { view, isLoading, error, save, reset } = useManageGoals(true);
+  const { view, error, save, reset } = useManageGoals(true);
   const [selectedCharacterId, setSelectedCharacterId] = useState<
     string | null
   >(null);
 
-  if (isLoading || !view) {
+  if (!view) {
     return (
       <Drawer onClose={onClose} title="Manage Goals">
-        {error ? <StatusMessage type="error">{error}</StatusMessage> : <p>Loading…</p>}
+        {error ? (
+          <StatusMessage type="error">{error}</StatusMessage>
+        ) : (
+          <p>Loading…</p>
+        )}
       </Drawer>
     );
   }
@@ -99,7 +103,10 @@ export function ManageGoalsModal({ onClose }: ManageGoalsModalProps) {
 
         {warbandDefinitions.map((definition) => {
           const value = view.warband[definition.key] ?? DEFAULT_PREFERENCE;
-          const isOverridden = value.enabled !== definition.defaultEnabled;
+          const isOverridden =
+            value.enabled !== definition.defaultEnabled ||
+            value.numericTarget !== definition.defaultNumericTarget ||
+            value.enumTarget !== definition.defaultEnumTarget;
 
           return (
             <SeasonGoalRow

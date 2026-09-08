@@ -26,6 +26,7 @@ import { clientImportRouter } from "../../../../modules/data-platform/api/client
 import { clientProfileRouter } from "../../../../modules/data-platform/api/client-profile/client-profile.routes.js";
 import { clientCharactersRouter } from "../../../../modules/data-platform/api/client-characters/client-characters.routes.js";
 import { settingsTrustRouter } from "../../../../modules/data-platform/api/settings-trust/settings-trust.routes.js";
+import { wowMediaRouter } from "../../../../modules/data-platform/api/wow-media/wow-media.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
 import { professionRouter } from "../../../../modules/professions/api/profession.routes.js";
 import { specializationRouter } from "../../../../modules/professions/api/specializations/specialization.routes.js";
@@ -198,4 +199,9 @@ apiRouter.use(
 apiRouter.use(
   "/settings",
   settingsTrustRouter
+);
+
+apiRouter.use(
+  "/wow-media",
+  wowMediaRouter
 );

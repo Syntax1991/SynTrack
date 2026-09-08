@@ -31,3 +31,14 @@ export function getClassColor(
     "var(--text)"
   );
 }
+
+export function getClassInitials(
+  className: string
+): string {
+  return className
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}

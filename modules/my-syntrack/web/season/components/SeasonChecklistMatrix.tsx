@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import { weekliesSignalTone } from "../../../api/weekly-checklist/weeklies-gameplay-signals.mapper.js";
@@ -88,15 +89,17 @@ export function SeasonChecklistMatrix({
                 <tr key={character.id}>
                   <td className="season-col-character">
                     <div className="matrix-identity">
-                      <Link
-                        className="matrix-character-link"
-                        style={{
-                          color: getClassColor(character.className)
-                        }}
-                        to={`/characters/${character.id}`}
-                      >
-                        {character.name}
-                      </Link>
+                      <CharacterNameWithIcon wowClassName={character.className}>
+                        <Link
+                          className="matrix-character-link"
+                          style={{
+                            color: getClassColor(character.className)
+                          }}
+                          to={`/characters/${character.id}`}
+                        >
+                          {character.name}
+                        </Link>
+                      </CharacterNameWithIcon>
                       <span>
                         {character.className}
                         {" · "}

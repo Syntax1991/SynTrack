@@ -122,6 +122,34 @@ export const SEASON_GOAL_DEFINITIONS: SeasonGoalDefinition[] = [
     minNumericTarget: null
   },
   {
+    key: "warband-mythic-plus-score",
+    label: "Mythic+ Score",
+    detail:
+      "Best current-season Mythic+ rating across gameplay Characters toward this Warband target",
+    scope: "WARBAND",
+    targetType: "NUMBER",
+    defaultEnabled: true,
+    defaultNumericTarget: 2000,
+    defaultEnumTarget: null,
+    numericPresets: [2000, 2500, 3000],
+    enumOptions: null,
+    minNumericTarget: 1
+  },
+  {
+    key: "warband-resilient-keystone",
+    label: "Resilient Keystone",
+    detail:
+      "Best known Resilient Keystone floor across gameplay Characters toward this Warband target",
+    scope: "WARBAND",
+    targetType: "NUMBER",
+    defaultEnabled: false,
+    defaultNumericTarget: null,
+    defaultEnumTarget: null,
+    numericPresets: [12, 13, 14, 15],
+    enumOptions: null,
+    minNumericTarget: 12
+  },
+  {
     key: "portals",
     label: "Dungeon Portals",
     detail: "Timed +10 dungeon portals for Midnight Season 2 (Warband-wide)",

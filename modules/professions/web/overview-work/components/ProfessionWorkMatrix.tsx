@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
-import { FamilyIcon } from "../../shared/components/ProfessionIcons";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
+import { WowProfessionIcon } from "../../../../../apps/web/src/shared/components/WowProfessionIcon";
 import type {
   ProfessionOverviewWorkRow,
   ProfessionWorkFilter
@@ -135,17 +136,21 @@ export function ProfessionWorkMatrix({
                   >
                     <td className="profession-work-character-cell">
                       <div className="matrix-identity profession-work-identity">
-                        <Link
-                          className="matrix-character-link"
-                          style={{
-                            color: getClassColor(
-                              row.character.className
-                            )
-                          }}
-                          to={`/characters/${row.character.id}`}
+                        <CharacterNameWithIcon
+                          wowClassName={row.character.className}
                         >
-                          {row.character.name}
-                        </Link>
+                          <Link
+                            className="matrix-character-link"
+                            style={{
+                              color: getClassColor(
+                                row.character.className
+                              )
+                            }}
+                            to={`/characters/${row.character.id}`}
+                          >
+                            {row.character.name}
+                          </Link>
+                        </CharacterNameWithIcon>
 
                         <span>
                           {row.character.className}
@@ -160,8 +165,9 @@ export function ProfessionWorkMatrix({
                         className="profession-work-profession-link"
                         to={`/professions/${row.profession.id}`}
                       >
-                        <FamilyIcon
-                          familyName={row.profession.name}
+                        <WowProfessionIcon
+                          name={row.profession.name}
+                          professionKey={row.profession.key}
                         />
                         <span>{row.profession.name}</span>
                       </Link>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { WowClassIcon } from "../../../../../apps/web/src/shared/components/WowClassIcon";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { CharacterWeeklyState } from "../../overview/types/overview.types";
 import type { TagView } from "../../tags/types/tag.types";
@@ -40,15 +41,18 @@ export function CharacterDetailHeader({
         ← Characters
       </Link>
 
-      <h1
-        style={{
-          color: getClassColor(
-            character.className
-          )
-        }}
-      >
-        {character.name}
-      </h1>
+      <div className="character-detail-title">
+        <WowClassIcon size="lg" wowClassName={character.className} />
+        <h1
+          style={{
+            color: getClassColor(
+              character.className
+            )
+          }}
+        >
+          {character.name}
+        </h1>
+      </div>
 
       <p className="character-detail-subline">
         {classLabel}

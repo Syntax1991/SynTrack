@@ -34,3 +34,20 @@ export function resolveCanonicalClassName(
 
   return CLASS_NAME_BY_BLIZZARD_ID[classId] ?? null;
 }
+
+const PLAYABLE_CLASS_ID_BY_NAME: Record<string, number> = Object.fromEntries(
+  Object.entries(CLASS_NAME_BY_BLIZZARD_ID).map(([id, name]) => [
+    name,
+    Number(id)
+  ])
+);
+
+export function playableClassIdForCanonicalName(
+  className: string
+): number | null {
+  return PLAYABLE_CLASS_ID_BY_NAME[className] ?? null;
+}
+
+export function canonicalPlayableClassNames(): string[] {
+  return Object.values(CLASS_NAME_BY_BLIZZARD_ID);
+}

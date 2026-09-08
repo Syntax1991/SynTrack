@@ -22,6 +22,8 @@ apps/client/**/obj/
 apps/client/**/.vs/
 apps/client/publish/
 apps/client/installer/Output/
+apps/client/msix/Output/
+apps/client/msix/stage/
 
 .vscode/
 .idea/
@@ -31,3 +33,10 @@ apps/client/installer/Output/
 Thumbs.db
 
 .syntrack-backups/
+
+# Local agent/task reports — do not commit
+/*_REPORT.md
+/*_AUDIT.md
+/*_AUDIT_*.md
+/*ACCEPTANCE_REPORT*
+/PHASE_0_*.md

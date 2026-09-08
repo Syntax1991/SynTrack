@@ -23,6 +23,28 @@ const RESILIENT_DUNGEON_COUNT = 8;
  * NOT the same as fabricating a value for missing capture, which still
  * returns UNKNOWN via `progress.captured`.
  */
+/** Known floor, or null when capture is missing/untrusted. 0 means
+ * captured but no dungeon has been timed at the Resilient start yet. */
+export function resilientKeystoneFloor(
+  progress: MythicPlusSeasonProgress | null
+): number | null {
+  if (!progress || !progress.captured) {
+    return null;
+  }
+
+  if (progress.dungeonBests.length > RESILIENT_DUNGEON_COUNT) {
+    return null;
+  }
+
+  const missing = RESILIENT_DUNGEON_COUNT - progress.dungeonBests.length;
+  const levels = [
+    ...progress.dungeonBests.map((dungeon) => dungeon.bestKeyLevel),
+    ...Array(missing).fill(0)
+  ];
+
+  return Math.min(...levels);
+}
+
 export function deriveResilientKeystoneGoal(
   progress: MythicPlusSeasonProgress | null,
   target: number | null = null
@@ -38,24 +60,15 @@ export function deriveResilientKeystoneGoal(
     actionLabel: null
   };
 
-  if (!progress || !progress.captured) {
+  const minLevel = resilientKeystoneFloor(progress);
+
+  if (minLevel === null) {
     return unknown;
   }
 
-  if (progress.dungeonBests.length > RESILIENT_DUNGEON_COUNT) {
-    // More distinct dungeons than the season defines — don't trust the shape.
-    return unknown;
-  }
-
-  const missing = RESILIENT_DUNGEON_COUNT - progress.dungeonBests.length;
-  const levels = [
-    ...progress.dungeonBests.map((dungeon) => dungeon.bestKeyLevel),
-    ...Array(missing).fill(0)
-  ];
-  const minLevel = Math.min(...levels);
-  const atOrAboveFloor = levels.filter(
-    (level) => level >= RESILIENT_START
-  ).length;
+  const atOrAboveFloor = (
+    progress?.dungeonBests.map((dungeon) => dungeon.bestKeyLevel) ?? []
+  ).filter((level) => level >= RESILIENT_START).length;
   const label =
     minLevel >= RESILIENT_START
       ? String(minLevel)

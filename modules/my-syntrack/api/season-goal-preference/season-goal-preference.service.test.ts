@@ -70,6 +70,16 @@ describe("SeasonGoalPreferenceService defaults", () => {
     const warband = await service.getEffectiveWarbandPreferences();
     expect(warband.get("portals")?.enabled).toBe(true);
     expect(warband.get("valeera-80")?.enabled).toBe(true);
+    expect(warband.get("warband-mythic-plus-score")).toEqual({
+      enabled: true,
+      numericTarget: 2000,
+      enumTarget: null
+    });
+    expect(warband.get("warband-resilient-keystone")).toEqual({
+      enabled: false,
+      numericTarget: null,
+      enumTarget: null
+    });
   });
 
   it("does not eagerly create rows just from reading defaults", async () => {
@@ -182,6 +192,39 @@ describe("SeasonGoalPreferenceService overrides", () => {
     const warband = await service.getEffectiveWarbandPreferences();
     expect(warband.get("portals")?.enabled).toBe(false);
   });
+
+  it("keeps Character Score and Warband Score as independent targets", async () => {
+    const service = new SeasonGoalPreferenceService(fakeRepository() as any);
+
+    await service.savePreference({
+      goalKey: "mythic-plus-score",
+      characterId: "char-1",
+      enabled: true,
+      numericTarget: 3000,
+      enumTarget: null
+    });
+    await service.savePreference({
+      goalKey: "warband-mythic-plus-score",
+      characterId: null,
+      enabled: true,
+      numericTarget: 2500,
+      enumTarget: null
+    });
+
+    const byCharacter = await service.getEffectivePreferencesByCharacter([
+      "char-1",
+      "char-2"
+    ]);
+    expect(byCharacter.get("char-1")?.get("mythic-plus-score")?.numericTarget).toBe(
+      3000
+    );
+    expect(byCharacter.get("char-2")?.get("mythic-plus-score")?.numericTarget).toBe(
+      2000
+    );
+
+    const warband = await service.getEffectiveWarbandPreferences();
+    expect(warband.get("warband-mythic-plus-score")?.numericTarget).toBe(2500);
+  });
 });
 
 describe("SeasonGoalPreferenceService validation", () => {
@@ -222,6 +265,16 @@ describe("SeasonGoalPreferenceService validation", () => {
         characterId: "char-1",
         enabled: true,
         numericTarget: null,
+        enumTarget: null
+      })
+    ).rejects.toThrow();
+
+    await expect(
+      service.savePreference({
+        goalKey: "warband-mythic-plus-score",
+        characterId: "char-1",
+        enabled: true,
+        numericTarget: 2000,
         enumTarget: null
       })
     ).rejects.toThrow();

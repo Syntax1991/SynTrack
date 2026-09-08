@@ -1,3 +1,4 @@
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { VaultGameplayCharacter } from "../types/vaultMythicPlus.types";
@@ -48,14 +49,16 @@ export function VaultMatrix({
               >
                 <td>
                   <div className="matrix-identity">
-                    <button
-                      className="matrix-character-link text-button"
-                      onClick={() => onSelectCharacter(character.id)}
-                      style={{ color: getClassColor(character.className) }}
-                      type="button"
-                    >
-                      {character.name}
-                    </button>
+                    <CharacterNameWithIcon wowClassName={character.className}>
+                      <button
+                        className="matrix-character-link text-button"
+                        onClick={() => onSelectCharacter(character.id)}
+                        style={{ color: getClassColor(character.className) }}
+                        type="button"
+                      >
+                        {character.name}
+                      </button>
+                    </CharacterNameWithIcon>
                     <span>
                       {character.className}
                       {" · "}

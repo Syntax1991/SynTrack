@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { WowClassIcon } from "../../../../../apps/web/src/shared/components/WowClassIcon";
 import type { GearCharacter } from "../types/gearReadiness.types";
 
 type GearCharacterRosterProps = {
@@ -48,9 +49,10 @@ export function GearCharacterRoster({
             type="button"
           >
             <span className="gear-character-avatar">
-              {character.name
-                .slice(0, 2)
-                .toUpperCase()}
+              <WowClassIcon
+                size="lg"
+                wowClassName={character.className}
+              />
             </span>
 
             <span className="gear-character-copy">

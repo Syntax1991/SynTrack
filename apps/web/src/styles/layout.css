@@ -35,9 +35,42 @@
   font-size: 1.95rem;
 }
 
+.page-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-header-title-row h1 {
+  margin: 0;
+}
+
 .page-actions {
   display: flex;
   gap: 10px;
+}
+
+.page-icon-button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  color: var(--text-secondary);
+  background: transparent;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.page-icon-button:hover {
+  color: var(--primary-hover);
+  border-color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .page-description {

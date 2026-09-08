@@ -9,6 +9,9 @@ import {
   PageHeader
 } from "../../../../../apps/web/src/shared/components/PageHeader";
 import {
+  WowProfessionIcon
+} from "../../../../../apps/web/src/shared/components/WowProfessionIcon";
+import {
   StatusMessage
 } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import {
@@ -94,6 +97,13 @@ export function ProfessionDetailPage() {
           `${getCategoryLabel(detail.profession.category)} · Manage crafting data at a glance`
         }
         eyebrow="PROFESSION DETAILS"
+        icon={
+          <WowProfessionIcon
+            name={detail.profession.name}
+            professionKey={detail.profession.key}
+            size="lg"
+          />
+        }
         title={
           detail.profession.name
         }

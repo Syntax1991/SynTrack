@@ -4,6 +4,7 @@ import type {
   TrackerDefinitionView
 } from "../types/overview.types";
 import type { OverviewMatrixColumn } from "../utils/overviewMatrixColumns";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { getClassColor } from "../utils/classColors";
 import {
   formatEmbellishmentToken,
@@ -95,12 +96,13 @@ export function CharacterMatrixRow({
       {show("character") && (
         <td>
           <div className="overview-character-identity">
-            <Link
-              className="matrix-character-link"
-              style={{
-                color: getClassColor(state.character.className)
-              }}
-              to={`/characters/${state.character.id}`}
+            <CharacterNameWithIcon wowClassName={state.character.className}>
+              <Link
+                className="matrix-character-link"
+                style={{
+                  color: getClassColor(state.character.className)
+                }}
+                to={`/characters/${state.character.id}`}
               /*
                * Phase F2: surfaces the newly-available Blizzard
                * activeSpec/guild as a hover tooltip rather than a new
@@ -116,6 +118,7 @@ export function CharacterMatrixRow({
             >
               {state.character.name}
             </Link>
+            </CharacterNameWithIcon>
             <span>
               {state.character.className}
               {state.tags.length > 0 &&

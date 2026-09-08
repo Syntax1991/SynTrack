@@ -4,7 +4,7 @@ import type { CellToken } from "../../../../../apps/web/src/shared/types/cellTok
 import type {
   ProfessionOverviewItem
 } from "../types/professionDetail.types";
-import { FamilyIcon } from "../../shared/components/ProfessionIcons";
+import { WowProfessionIcon } from "../../../../../apps/web/src/shared/components/WowProfessionIcon";
 import { getProfessionOverviewRowPresentation } from "../utils/professionOverviewPresentation";
 
 type ProfessionOverviewRowProps = {
@@ -77,13 +77,10 @@ function getStatusToken(
 }
 
 /*
- * One profession = one compact full-row click target. No exact
- * Blizzard-backed profession icon exists in the current data model
- * (audited: neither the Profession table nor ProfessionOverviewItem
- * has an icon field, and this task does not expand into a new API/
- * schema project to add one) - FamilyIcon's existing neutral glyph
- * fallback (a stable 2-letter initial, never a guessed picture) is
- * reused here rather than inventing a new icon component.
+ * One profession = one compact full-row click target. The profession
+ * icon is the Blizzard Game Data media URL keyed by catalog profession
+ * key (resolved server-side). Missing URLs fall back to a 2-letter
+ * glyph - never a guessed CDN filename.
  */
 export function ProfessionOverviewRow({
   profession
@@ -101,10 +98,9 @@ export function ProfessionOverviewRow({
       }
     >
       <span className="profession-overview-row-identity">
-        <FamilyIcon
-          familyName={
-            profession.name
-          }
+        <WowProfessionIcon
+          name={profession.name}
+          professionKey={profession.key}
         />
 
         <h3>

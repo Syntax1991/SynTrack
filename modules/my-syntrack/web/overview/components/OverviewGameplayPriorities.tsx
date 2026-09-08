@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { OverviewGameplayPriorityRow } from "../types/overviewDecision.types";
 
@@ -53,13 +54,15 @@ export function OverviewGameplayPriorities({
           {rows.map((row) => (
             <tr key={row.characterId}>
               <td className="overview-col-character">
-                <Link
-                  className="matrix-character-link"
-                  style={{ color: getClassColor(row.className) }}
-                  to={`/characters/${row.characterId}`}
-                >
-                  {row.characterName}
-                </Link>
+                <CharacterNameWithIcon wowClassName={row.className}>
+                  <Link
+                    className="matrix-character-link"
+                    style={{ color: getClassColor(row.className) }}
+                    to={`/characters/${row.characterId}`}
+                  >
+                    {row.characterName}
+                  </Link>
+                </CharacterNameWithIcon>
               </td>
               <td className="overview-col-next">
                 <ActionCell

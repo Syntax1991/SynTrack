@@ -12,13 +12,24 @@ const professionKeyByBattleNetId = new Map<number, string>([
   [773, "inscription"]
 ]);
 
+const battleNetIdByProfessionKey = new Map<string, number>(
+  [...professionKeyByBattleNetId.entries()].map(([id, key]) => [key, id])
+);
+
 export function getProfessionKeyByBattleNetId(
   professionId: number
 ): string | null {
-  return (
-    professionKeyByBattleNetId.get(professionId) ??
-    null
-  );
+  return professionKeyByBattleNetId.get(professionId) ?? null;
+}
+
+export function getBattleNetIdByProfessionKey(
+  professionKey: string
+): number | null {
+  return battleNetIdByProfessionKey.get(professionKey) ?? null;
+}
+
+export function catalogProfessionKeys(): string[] {
+  return [...battleNetIdByProfessionKey.keys()];
 }
 
 /*
