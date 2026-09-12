@@ -1,7 +1,6 @@
 import { useState } from "react";
+import { WowClassIcon } from "../../../../../apps/web/src/shared/components/WowClassIcon";
 import {
-  getClassColor,
-  getClassInitials,
   getCraftStatusGlyph,
   getFamilyGlyph
 } from "./professionIcons.helpers";
@@ -76,24 +75,7 @@ export function ClassIcon({
   className: string;
 }) {
   return (
-    <span
-      className="syntrack-icon syntrack-icon-class"
-      style={
-        {
-          "--syntrack-icon-color":
-            getClassColor(
-              className
-            )
-        } as never
-      }
-      title={className}
-    >
-      {
-        getClassInitials(
-          className
-        )
-      }
-    </span>
+    <WowClassIcon wowClassName={className} />
   );
 }
 

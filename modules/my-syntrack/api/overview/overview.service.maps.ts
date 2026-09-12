@@ -84,7 +84,6 @@ export function buildProfessionKnowledgeTreasureByCharacterId(
 export type OverviewServiceAggregationMaps = Pick<
   OverviewAggregationInput,
   | "weeklyByCharacterId"
-  | "vaultByCharacterId"
   | "gearByCharacterId"
   | "professionByCharacterId"
   | "resourceByCharacterId"

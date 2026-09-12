@@ -12,7 +12,12 @@ Loot planning and distribution.
 - Tier / Token Planning (planned)
 - Split Planning (planned)
 
-Loot references Guild members through stable contracts. (Prior to the
+Loot resolves the caller's own member identity through
+`modules/loot/shared/member-link` (`LootMemberLinkService`), relocated
+there in Phase G4B's corrective pass when the Guild product was
+removed - the underlying Prisma model is still named `GuildMember`
+(a G4C schema decision), but no live Loot code treats it as a guild
+roster; it only ever needed a stable member id. (Prior to the
 2026-08-25 removal of the Raid product segment, this also referenced
 Raid events — see git history.)
 
@@ -36,10 +41,10 @@ expcarry.com loot-table breakdown and the user's own WoWAudit
 screenshots of the same raid, which confirmed most item→slot→boss
 assignments directly). Follows the same "static catalog, no DB table"
 pattern as `modules/raid/shared/catalog/raidCatalog.ts`: this is
-reference data, not per-guild interactive state, so it doesn't need a
+reference data, not per-member interactive state, so it doesn't need a
 migration. Item `slot` values match Blizzard's real equipped-item
-vocabulary (`enchantableSlotTypes` in
-`modules/guild/api/audit/audit.stats.ts`). Tier-token items carry a
+vocabulary (`enchantableSlotTypes`, formerly in the now-removed
+`modules/guild/api/audit/audit.stats.ts` - see git history). Tier-token items carry a
 `tierSlot` (which of the five tier slots they represent); Ula'tek's
 flexible "Slumbering Coil Curio" uses `tierSlot: "ANY"` since it can
 be exchanged for any tier slot rather than being tied to one.
@@ -96,10 +101,10 @@ Self-service, member-owned data — nobody else has a legitimate reason
 to set another raider's loot preferences, unlike Boss Rosters/
 Cooldowns where officers assign other people. Mirrors
 `raid/api/signups`'s exact pattern: `wishlist.service.ts` resolves the
-caller's own `GuildMember` via `guildRaiderLinkService.getLinkedMember
-(token)` rather than trusting an officer-supplied `memberId`, and
-carries no `GuildVerificationGuard` dependency at all since nothing
-here needs officer gating.
+caller's own member id via `lootMemberLinkService.getLinkedMember
+(token)` (`modules/loot/shared/member-link`) rather than trusting an
+officer-supplied `memberId`, and carries no officer-verification
+dependency at all since nothing here needs officer gating.
 
 Two Prisma models, kept separate because they're different shapes
 (slot-status vs. ranked-item), same reasoning that already keeps
@@ -147,9 +152,9 @@ real report before building anything: e.g. item 268205 at 311 ilvl
 computed to +5277 dps / +61.78%, a real best-in-slot weapon upgrade.
 
 Self-service, same pattern as Wishlist — `modules/loot/api/
-droptimizer/` resolves the caller's own `GuildMember` via
-`guildRaiderLinkService.getLinkedMember(token)`, no
-`GuildVerificationGuard`. "Upload" is pasting the report URL, not a
+droptimizer/` resolves the caller's own member id via
+`lootMemberLinkService.getLinkedMember(token)`, no officer-verification
+dependency. "Upload" is pasting the report URL, not a
 file attachment — `raidbots.client.ts` (mirrors `BattleNetClient`'s
 plain-class-with-`AppError`-on-failure shape) fetches the report
 server-side. One `LootSimReport` row per member (latest report only,

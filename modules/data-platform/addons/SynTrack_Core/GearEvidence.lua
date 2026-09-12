@@ -141,11 +141,15 @@ function GearEvidence.getSetBonusSpellIds(itemId)
     return result, true
 end
 
+-- G1: uniqueCategoryCount is no longer sent - zero downstream server/
+-- web consumer ever read it (uniqueCategoryId + uniquenessResolved are
+-- what embellishment detection actually uses). C_Item.GetItemUniquenessByID
+-- still returns a limitCategoryCount value positionally; it is simply
+-- discarded here rather than exposed on the slot.
 function GearEvidence.getUniqueness(itemLink, itemId)
     if not C_Item or not C_Item.GetItemUniquenessByID then
         return {
             uniqueCategoryId = nil,
-            uniqueCategoryCount = nil,
             uniquenessResolved = false
         }
     end
@@ -155,7 +159,6 @@ function GearEvidence.getUniqueness(itemLink, itemId)
     if not itemInfo then
         return {
             uniqueCategoryId = nil,
-            uniqueCategoryCount = nil,
             uniquenessResolved = false
         }
     end
@@ -166,7 +169,6 @@ function GearEvidence.getUniqueness(itemLink, itemId)
     if not succeeded then
         return {
             uniqueCategoryId = nil,
-            uniqueCategoryCount = nil,
             uniquenessResolved = false
         }
     end
@@ -174,14 +176,12 @@ function GearEvidence.getUniqueness(itemLink, itemId)
     if isUnique == nil and limitCategoryCount == nil and limitCategoryID == nil then
         return {
             uniqueCategoryId = nil,
-            uniqueCategoryCount = nil,
             uniquenessResolved = false
         }
     end
 
     return {
         uniqueCategoryId = type(limitCategoryID) == "number" and limitCategoryID or nil,
-        uniqueCategoryCount = type(limitCategoryCount) == "number" and limitCategoryCount or nil,
         uniquenessResolved = true
     }
 end
@@ -218,7 +218,6 @@ function GearEvidence.enrichEquippedSlot(slot)
     slot.setBonusResolved = setBonusResolved
     slot.setBonusSpellIds = setBonusSpellIds
     slot.uniqueCategoryId = uniqueness.uniqueCategoryId
-    slot.uniqueCategoryCount = uniqueness.uniqueCategoryCount
     slot.uniquenessResolved = uniqueness.uniquenessResolved
 
     return slot

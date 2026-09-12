@@ -21,7 +21,7 @@ function goalSignal(
   };
 }
 
-function booleanValue(
+export function booleanValue(
   resolved: ResolvedTrackerDefinition | null
 ): boolean | null {
   const value = resolved?.state?.value;

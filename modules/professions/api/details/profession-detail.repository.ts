@@ -209,6 +209,7 @@ export class ProfessionDetailRepository {
                 id: true,
                 name: true,
                 realm: true,
+                region: true,
                 className: true,
                 level: true
               }

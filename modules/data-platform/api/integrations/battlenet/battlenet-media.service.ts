@@ -6,7 +6,9 @@ import type {
 
 type BattleNetMediaKind =
   | "item"
-  | "spell";
+  | "spell"
+  | "playable-class"
+  | "profession";
 
 /*
  * Resolves a real Blizzard-hosted icon URL from a stable Blizzard ID via
@@ -36,6 +38,24 @@ export class BattleNetMediaService {
     return this.resolveMediaIconUrl(
       "spell",
       spellId
+    );
+  }
+
+  async resolvePlayableClassIconUrl(
+    classId: number
+  ): Promise<string | null> {
+    return this.resolveMediaIconUrl(
+      "playable-class",
+      classId
+    );
+  }
+
+  async resolveProfessionIconUrl(
+    professionId: number
+  ): Promise<string | null> {
+    return this.resolveMediaIconUrl(
+      "profession",
+      professionId
     );
   }
 

@@ -3,14 +3,7 @@ import {
   Route,
   Routes
 } from "react-router-dom";
-import { GuildDashboardPage } from "../../../../modules/guild/web/dashboard/pages/GuildDashboardPage";
-import { OfficerNotesPage } from "../../../../modules/guild/web/officer-notes/pages/OfficerNotesPage";
-import { SettingsPage } from "../../../../modules/guild/web/raider-link/pages/SettingsPage";
-import { RequirementsPage } from "../../../../modules/guild/web/requirements/pages/RequirementsPage";
-import { RosterPage } from "../../../../modules/guild/web/roster/pages/RosterPage";
-import { GuildSettingsPage } from "../../../../modules/guild/web/settings/pages/GuildSettingsPage";
-import { TeamsPage } from "../../../../modules/guild/web/teams/pages/TeamsPage";
-import { WeeklyProgressPage } from "../../../../modules/guild/web/weekly-progress/pages/WeeklyProgressPage";
+import { SettingsPage } from "../../../../modules/data-platform/web/settings/pages/SettingsPage";
 import { CharacterDetailPage } from "../../../../modules/my-syntrack/web/characters/pages/CharacterDetailPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
 import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages/OverviewPage";
@@ -24,6 +17,8 @@ import { LoginPage } from "../../../../modules/data-platform/web/raider-auth/pag
 import { RegisterPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterPage";
 import { RegisterConfirmPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterConfirmPage";
 import { ClientConnectPage } from "../../../../modules/data-platform/web/device-auth/pages/ClientConnectPage";
+import { ImprintPage } from "../../../../modules/data-platform/web/legal/pages/ImprintPage";
+import { PrivacyPolicyPage } from "../../../../modules/data-platform/web/legal/pages/PrivacyPolicyPage";
 import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTablePage";
 import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
 import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
@@ -67,16 +62,6 @@ export function AppRouter() {
         <Route
           path="settings"
           element={<SettingsPage />}
-        />
-
-        <Route
-          path="raider-link"
-          element={
-            <Navigate
-              replace
-              to="/settings"
-            />
-          }
         />
 
         <Route
@@ -160,61 +145,6 @@ export function AppRouter() {
         />
 
         <Route
-          path="guild"
-          element={<GuildDashboardPage />}
-        />
-
-        <Route
-          path="guild/roster"
-          element={<RosterPage />}
-        />
-
-        <Route
-          path="guild/audit"
-          element={
-            <Navigate
-              replace
-              to="/guild/roster"
-            />
-          }
-        />
-
-        <Route
-          path="guild/teams"
-          element={<TeamsPage />}
-        />
-
-        <Route
-          path="guild/weekly-progress"
-          element={<WeeklyProgressPage />}
-        />
-
-        <Route
-          path="guild/requirements"
-          element={<RequirementsPage />}
-        />
-
-        <Route
-          path="guild/officer-notes"
-          element={<OfficerNotesPage />}
-        />
-
-        <Route
-          path="guild/settings"
-          element={<GuildSettingsPage />}
-        />
-
-        <Route
-          path="guild/raider-link"
-          element={
-            <Navigate
-              replace
-              to="/settings"
-            />
-          }
-        />
-
-        <Route
           path="loot"
           element={<LootTablePage />}
         />
@@ -273,6 +203,16 @@ export function AppRouter() {
       <Route
         element={<ClientConnectPage />}
         path="client/connect"
+      />
+
+      <Route
+        element={<ImprintPage />}
+        path="impressum"
+      />
+
+      <Route
+        element={<PrivacyPolicyPage />}
+        path="datenschutz"
       />
 
       <Route

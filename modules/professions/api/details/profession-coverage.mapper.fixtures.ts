@@ -100,6 +100,7 @@ export function createAssignment(
       id: "character-1",
       name: "Synblast",
       realm: "Test Realm",
+      region: "eu",
       className: "Hunter",
       level: 80
     },

@@ -13,16 +13,16 @@
 
 .overview-decision-metric {
   display: grid;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 15px 18px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-small);
+  border-radius: var(--radius-medium);
   background: var(--surface-elevated);
 }
 
 .overview-decision-metric-label {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -30,8 +30,8 @@
 
 .overview-decision-metric strong {
   color: var(--text);
-  font-size: 0.82rem;
-  font-weight: 650;
+  font-size: 0.98rem;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -46,8 +46,19 @@
   padding: 16px 18px 14px;
 }
 
-.overview-decision-panel > .eyebrow {
+.overview-decision-panel > .panel-title {
   margin: 0 0 12px;
+}
+
+/* Setup Attention is often a single row - it should read as a small
+   supplementary note, not another full-size major panel. */
+.overview-setup-panel {
+  padding-bottom: 10px;
+}
+
+.overview-setup-panel > .panel-title {
+  margin-bottom: 8px;
+  font-size: 0.85rem;
 }
 
 .overview-decision-section-head {
@@ -58,7 +69,7 @@
   margin-bottom: 12px;
 }
 
-.overview-decision-section-head > .eyebrow {
+.overview-decision-section-head > .panel-title {
   margin: 0;
 }
 
@@ -77,6 +88,16 @@
 
 .overview-decision-matrix {
   width: 100%;
+}
+
+/* Profession Work reads as secondary to Gameplay Priorities via a
+   slightly denser row, not by hiding rows the user hasn't asked to
+   collapse. */
+.overview-decision-matrix-compact th,
+.overview-decision-matrix-compact td {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  font-size: 0.78rem;
 }
 
 .overview-col-character {

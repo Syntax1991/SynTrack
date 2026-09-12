@@ -1,3 +1,7 @@
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import type { EffectiveCharacterIdentity } from "../character-external-sync/character-profile-effective-identity.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
 import { resolveCharacterTrackingProfile } from "../character-tracking/character-tracking-profile.js";
 import { isWeeklyGameplayEnabled } from "../character-tracking/domain-applicability.js";
 import { getWeeklyPeriod } from "../shared/weekly-period.js";
@@ -59,15 +63,16 @@ function unresolvedCharacter(
     className: string;
     level: number;
   },
-  trackingProfile: ReturnType<typeof resolveCharacterTrackingProfile>
+  trackingProfile: ReturnType<typeof resolveCharacterTrackingProfile>,
+  identity: EffectiveCharacterIdentity | undefined
 ): VaultGameplayCharacter {
   return {
     id: character.id,
     name: character.name,
     realm: character.realm,
     region: character.region,
-    className: character.className,
-    level: character.level,
+    className: identity?.className ?? character.className,
+    level: identity?.level ?? character.level,
     trackingProfile,
     vault: toProgress(unknownDomain("Vault")),
     mythicPlus: toProgress(unknownDomain("M+")),
@@ -88,7 +93,14 @@ function unresolvedCharacter(
 export class VaultMythicPlusService {
   private readonly weeklyGameplayRepository = new WeeklyGameplayRepository();
 
-  constructor(private readonly repository: VaultMythicPlusRepository) {}
+  constructor(
+    private readonly repository: VaultMythicPlusRepository,
+    // Constructor-injectable so service-boundary tests can prove the
+    // effective level/className path is used without a real Prisma round trip.
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
+  ) {}
 
   async getOverview(): Promise<VaultMythicPlusResponse> {
     const period = getWeeklyPeriod();
@@ -96,6 +108,11 @@ export class VaultMythicPlusService {
       this.repository.findCharactersWithTags(),
       this.weeklyGameplayRepository.findSnapshotsForPeriod(period.key)
     ]);
+
+    const identityByCharacterId = await resolveEffectiveCharacterIdentities(
+      characters,
+      this.profileAuthorityService
+    );
 
     const detailByCharacterId = new Map(
       snapshots.map((snapshot) => [
@@ -117,10 +134,11 @@ export class VaultMythicPlusService {
           return null;
         }
 
+        const identity = identityByCharacterId.get(character.id);
         const detail = detailByCharacterId.get(character.id);
 
         if (!detail) {
-          return unresolvedCharacter(character, trackingProfile);
+          return unresolvedCharacter(character, trackingProfile, identity);
         }
 
         return {
@@ -128,8 +146,8 @@ export class VaultMythicPlusService {
           name: character.name,
           realm: character.realm,
           region: character.region,
-          className: character.className,
-          level: character.level,
+          className: identity?.className ?? character.className,
+          level: identity?.level ?? character.level,
           trackingProfile,
           vault: toProgress(detail.gameplay.vault),
           mythicPlus: toProgress(detail.gameplay.mythicPlus),

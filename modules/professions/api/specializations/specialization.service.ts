@@ -1,31 +1,44 @@
+import { CharacterExternalSnapshotRepository } from "../../../my-syntrack/api/character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfessionAuthorityService } from "../../../my-syntrack/api/character-external-sync/character-profession-authority.service.js";
+import { CharacterProfileAuthorityService } from "../../../my-syntrack/api/character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../../../my-syntrack/api/character-external-sync/character-profile-effective-identity.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { resolveEffectiveSkillByProfessionKey } from "./specialization-effective-skill.js";
+import { createTreeView } from "./specialization-tree-view.mapper.js";
 import { SpecializationRepository } from "./specialization.repository.js";
-import type {
-  SpecializationNodeView,
-  SpecializationProgressInput,
-  SpecializationTreeView
-} from "./specialization.types.js";
+import type { SpecializationProgressInput } from "./specialization.types.js";
 
 export class SpecializationService {
   constructor(
-    private readonly repository:
-      SpecializationRepository
+    private readonly repository: SpecializationRepository,
+    private readonly professionAuthorityService = new CharacterProfessionAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    ),
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
-  async getCharacterOverview(
-    characterId: string
-  ) {
-    const character =
-      await this.repository.findCharacter(
-        characterId
-      );
+  async getCharacterOverview(characterId: string) {
+    const character = await this.repository.findCharacter(characterId);
 
     if (!character) {
-      throw new AppError(
-        404,
-        "Charakter nicht gefunden."
-      );
+      throw new AppError(404, "Charakter nicht gefunden.");
     }
+
+    const [effectiveSkillByProfessionKey, identityByCharacterId] =
+      await Promise.all([
+        resolveEffectiveSkillByProfessionKey(
+          characterId,
+          character.professions,
+          this.professionAuthorityService
+        ),
+        resolveEffectiveCharacterIdentities(
+          [character],
+          this.profileAuthorityService
+        )
+      ]);
+    const identity = identityByCharacterId.get(character.id);
 
     const professionIds =
       character.professions.map(
@@ -79,7 +92,10 @@ export class SpecializationService {
 
           return {
             id: assignment.id,
-            skill: assignment.skill,
+            skill:
+              effectiveSkillByProfessionKey.get(
+                assignment.profession.key
+              ) ?? assignment.skill,
             knowledgePoints:
               assignment.knowledgePoints,
             specializationSummary:
@@ -97,7 +113,7 @@ export class SpecializationService {
             trees:
               professionTrees.map(
                 (tree) =>
-                  this.createTreeView(
+                  createTreeView(
                     tree,
                     progressByNodeId
                   )
@@ -117,9 +133,12 @@ export class SpecializationService {
         id: character.id,
         name: character.name,
         realm: character.realm,
+        // Phase F3 follow-up: same BLIZZARD-primary/ADDON-fallback
+        // identity every other real consumer now shares - overridden
+        // here (not persisted), never touching the Character row itself.
         className:
-          character.className,
-        level: character.level
+          identity?.className ?? character.className,
+        level: identity?.level ?? character.level
       },
       professions
     };
@@ -221,119 +240,5 @@ export class SpecializationService {
     return this.getCharacterOverview(
       characterId
     );
-  }
-
-  private createTreeView(
-    tree: Awaited<
-      ReturnType<
-        SpecializationRepository["findTreesByProfessionIds"]
-      >
-    >[number],
-    progressByNodeId: Map<
-      string,
-      {
-        rank: number;
-        source: string;
-        lastSyncedAt: Date | null;
-      }
-    >
-  ): SpecializationTreeView {
-    const nodeViews =
-      new Map<
-        string,
-        SpecializationNodeView
-      >();
-
-    for (const node of tree.nodes) {
-      const progress =
-        progressByNodeId.get(
-          node.id
-        );
-
-      nodeViews.set(
-        node.id,
-        {
-          id: node.id,
-          key: node.key,
-          name: node.name,
-          description:
-            node.description,
-          maxRank:
-            node.maxRank,
-          sortOrder:
-            node.sortOrder,
-          parentNodeId:
-            node.parentNodeId,
-          rank:
-            progress?.rank ?? 0,
-          source:
-            progress?.source ?? null,
-          lastSyncedAt:
-            progress?.lastSyncedAt
-              ?.toISOString() ?? null,
-          children: []
-        }
-      );
-    }
-
-    const rootNodes:
-      SpecializationNodeView[] = [];
-
-    for (
-      const node of
-      nodeViews.values()
-    ) {
-      if (
-        node.parentNodeId &&
-        nodeViews.has(
-          node.parentNodeId
-        )
-      ) {
-        nodeViews
-          .get(
-            node.parentNodeId
-          )!
-          .children.push(node);
-      }
-      else {
-        rootNodes.push(node);
-      }
-    }
-
-    this.sortNodes(rootNodes);
-
-    return {
-      id: tree.id,
-      key: tree.key,
-      name: tree.name,
-      description:
-        tree.description,
-      expansion:
-        tree.expansion,
-      sortOrder:
-        tree.sortOrder,
-      nodes:
-        rootNodes
-    };
-  }
-
-  private sortNodes(
-    nodes: SpecializationNodeView[]
-  ): void {
-    nodes.sort(
-      (left, right) =>
-        left.sortOrder -
-          right.sortOrder ||
-        left.name.localeCompare(
-          right.name,
-          "de"
-        )
-    );
-
-    for (const node of nodes) {
-      this.sortNodes(
-        node.children
-      );
-    }
   }
 }

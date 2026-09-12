@@ -72,6 +72,27 @@ export class AddonGearPersistence {
         continue;
       }
 
+      /*
+       * G3A (DB cleanup readiness, transition step): itemLink/quality/
+       * enchantId/gemIds/uniqueCategoryCount are no longer written to
+       * CharacterGearSlot - G2 proved none of the five is ever read back
+       * after import. `slot.itemLink`/`slot.enchantId`/`slot.gemIds` are
+       * still used right here, in memory, to derive `enchantStatus` and
+       * `gemCount` - the actual facts everything downstream needs -
+       * exactly as before. Only the raw intermediate values themselves
+       * stop being persisted; the addon must keep sending itemLink (the
+       * normalizer still parses it) and old addon builds may keep
+       * sending all five fields without issue, since they simply aren't
+       * placed into this write.
+       *
+       * Omitting a field here (rather than setting it to `null`) is
+       * deliberate: in the `update` branch below, an omitted key leaves
+       * that column completely untouched in the database, so a row's
+       * historical value survives every future re-import unless a real
+       * schema migration removes the column - the `create` branch omits
+       * the same keys too, so a brand-new row simply gets the column's
+       * default (`null`, since none of the five has a `@default`).
+       */
       const enchantStatus =
         !enchantCapableSlotKeys.has(slot.slotKey)
           ? "NOT_APPLICABLE"
@@ -81,19 +102,12 @@ export class AddonGearPersistence {
 
       const data = {
         itemId: slot.itemId,
-        itemLink: slot.itemLink,
         itemName: null,
         itemLevel: slot.itemLevel,
-        quality: slot.quality,
         enchantStatus,
         enchantName: null,
-        enchantId: slot.enchantId,
         socketCount: slot.socketCount,
         gemCount: slot.gemIds.length,
-        gemIds:
-          slot.gemIds.length > 0
-            ? JSON.stringify(slot.gemIds)
-            : null,
         notes: null,
         source: "ADDON",
         lastSyncedAt: capturedAt,
@@ -106,7 +120,6 @@ export class AddonGearPersistence {
             ? JSON.stringify(slot.setBonusSpellIds)
             : null,
         uniqueCategoryId: slot.uniqueCategoryId,
-        uniqueCategoryCount: slot.uniqueCategoryCount,
         uniquenessResolved: slot.uniquenessResolved
       };
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.js";
-import { guildRaiderLinkService } from "../../../guild/api/raider-link/raider-link.routes.js";
+import { lootMemberLinkService } from "../../shared/member-link/member-link.instance.js";
 import { LootDroptimizerController } from "./droptimizer.controller.js";
 import { LootDroptimizerRepository } from "./droptimizer.repository.js";
 import { LootDroptimizerService } from "./droptimizer.service.js";
@@ -14,7 +14,7 @@ const raidbots = new RaidbotsClient();
 const service = new LootDroptimizerService(
   repository,
   raidbots,
-  guildRaiderLinkService
+  lootMemberLinkService
 );
 
 const controller =

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { WeeklyChecklistCharacter } from "../types/weeklyChecklist.types";
@@ -130,17 +131,21 @@ export function WeeklyChecklistMatrix({
                       return (
                         <td key={column}>
                           <div className="matrix-identity">
-                            <Link
-                              className="matrix-character-link"
-                              style={{
-                                color: getClassColor(
-                                  character.className
-                                )
-                              }}
-                              to={`/characters/${character.id}`}
+                            <CharacterNameWithIcon
+                              wowClassName={character.className}
                             >
-                              {character.name}
-                            </Link>
+                              <Link
+                                className="matrix-character-link"
+                                style={{
+                                  color: getClassColor(
+                                    character.className
+                                  )
+                                }}
+                                to={`/characters/${character.id}`}
+                              >
+                                {character.name}
+                              </Link>
+                            </CharacterNameWithIcon>
                             <span>
                               {character.className}
                               {" · "}

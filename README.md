@@ -8,21 +8,23 @@ guild-management side (roster, teams, loot, requirements). As of
 2026-08-25 the product direction is personal multi-character tracking
 first — the guild raid-planning segment (Raid Planner, Boss Rosters,
 Cooldown Planning, Attendance, Signups) was removed rather than
-continued; see git history for its prior implementation. The platform
-still uses explicit main-module boundaries so features stay decoupled
-from each other.
+continued; see git history for its prior implementation. As of
+2026-09-07 (Phase G4B) the remaining Guild-management product surface
+(Roster, Teams, Gear Audit, Requirements, Officer Notes, Weekly
+Progress) was removed as well — SynTrack is not a guild-management
+product. The platform still uses explicit main-module boundaries so
+features stay decoupled from each other.
 
 ## Main modules
 
-SynTrack is divided into seven primary domains:
+SynTrack is divided into six primary domains:
 
 1. My SynTrack
-2. Guild
-3. Loot
-4. Professions
-5. Recruitment
-6. Automation
-7. Data Platform
+2. Loot
+3. Professions
+4. Recruitment
+5. Automation
+6. Data Platform
 
 The complete capability map and dependency rules are documented in:
 
@@ -39,9 +41,6 @@ The existing production code currently covers parts of:
   - Vault / Mythic+
   - Raid Tasks (personal per-character tasks, not guild raid planning)
   - Gear / Enchants / Gems
-- Guild
-  - Roster, Teams, Gear Audit, Requirements, Officer Notes, Weekly
-    Progress
 - Loot
   - Loot Table, Wishlist, Droptimizer
 - Professions
@@ -93,8 +92,8 @@ check.
 ## Platform ownership
 
 My SynTrack is a personalized projection layer. It may present data
-from Guild, Loot and Professions, but does not duplicate their
-business rules.
+from Loot and Professions, but does not duplicate their business
+rules.
 
 Data Platform owns external data ingestion and synchronization.
 

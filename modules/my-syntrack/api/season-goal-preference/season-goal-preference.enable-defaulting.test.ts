@@ -207,4 +207,22 @@ describe("SeasonGoalPreferenceService default-on-enable (Resi enable bug)", () =
 
     expect(value.numericTarget).toBeNull();
   });
+
+  it("default-on-enable also applies to Warband Resi (independent of Character Resi)", async () => {
+    const service = new SeasonGoalPreferenceService(fakeRepository() as any);
+
+    const value = await service.savePreference({
+      goalKey: "warband-resilient-keystone",
+      characterId: null,
+      enabled: true,
+      numericTarget: null,
+      enumTarget: null
+    });
+
+    expect(value).toEqual({
+      enabled: true,
+      numericTarget: 12,
+      enumTarget: null
+    });
+  });
 });

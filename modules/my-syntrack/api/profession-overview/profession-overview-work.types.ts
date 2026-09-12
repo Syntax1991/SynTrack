@@ -89,6 +89,9 @@ export type ProfessionOverviewWorkAssignment = {
   realm: string;
   region: string;
   className: string;
+  // Not exposed on ProfessionOverviewWorkCharacter - only used as the
+  // fallback-candidate input to the effective-identity lookup.
+  level: number;
   professionId: string;
   professionKey: string;
   professionName: string;

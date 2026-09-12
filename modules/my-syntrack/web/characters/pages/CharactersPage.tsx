@@ -118,6 +118,8 @@ export function CharactersPage() {
       removeFromSelection(pendingRemoval.id);
       await reloadRemoved();
       setPendingRemoval(null);
+    } catch {
+      // Error banner is set by useCharacters; keep the dialog open.
     } finally {
       setIsRemoving(false);
     }

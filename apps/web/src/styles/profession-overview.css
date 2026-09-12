@@ -212,40 +212,47 @@
   table-layout: fixed;
 }
 
+/*
+ * Character/Profession/Action all carry real meaningful text (a name,
+ * a profession, a next-step instruction) - they get the bulk of the
+ * width, with the seven compact status columns staying narrow. None of
+ * these three wrap forcibly; they're allowed to wrap onto a second
+ * line rather than ellipsis-truncating, since a real profession name
+ * or action string must never silently disappear.
+ */
 .profession-work-col-character {
-  width: 15%;
+  width: 14%;
 }
 
 .profession-work-col-profession {
-  width: 12%;
+  width: 11%;
 }
 
 .profession-work-col-compact {
-  width: 5.5%;
+  width: 8%;
 }
 
 .profession-work-col-action {
-  width: 18%;
-}
-
-.profession-work-character-cell,
-.profession-work-profession-cell {
-  overflow: hidden;
+  width: 19%;
 }
 
 .profession-work-identity {
   min-width: 0;
+  white-space: normal;
 }
 
 .profession-work-identity span,
 .profession-work-profession-link span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .profession-work-action-header,
 .profession-work-action-cell {
   text-align: left;
+}
+
+.profession-work-action-cell .overview-next-action {
+  white-space: normal;
 }
 
 .profession-work-action-cell {

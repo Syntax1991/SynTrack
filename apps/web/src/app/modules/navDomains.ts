@@ -24,9 +24,11 @@ export type NavDomain = {
  * (Vault / M+ inside Weeklies; Find Craft and Specializations inside
  * Professions) live as page-level tabs within their domain - see
  * WeekliesTabNav and ProfessionsTabNav - rather than as permanent
- * sidebar entries. Guild/Loot/Recruitment/Raid Tasks/Automation are not
+ * sidebar entries. Loot/Recruitment/Raid Tasks/Automation are not
  * part of the active personal product surface (their backend/routes
- * remain for a later deliberate cleanup).
+ * remain for a later deliberate cleanup). Guild was removed entirely
+ * in Phase G4B - it is not merely absent from navigation, it no
+ * longer exists as a product.
  *
  * Gear is intentionally absent from primary navigation: Seasonal Tier /
  * Embellishment setup live on /season; detailed gear remains Character

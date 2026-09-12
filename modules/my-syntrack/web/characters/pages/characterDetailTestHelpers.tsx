@@ -23,7 +23,13 @@ export function buildDetail(): CharacterControlDetailResponse {
         realm: "Antonidas",
         region: "eu",
         className: "Druid",
-        level: 80
+        level: 80,
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
       },
       weekly: {
         state: "IN_PROGRESS",

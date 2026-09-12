@@ -4,7 +4,6 @@ import type { OverviewProfessionCharacterInput } from "./overview-profession-sta
 import type { OverviewProfessionKnowledgeTreasureCharacterInput } from "./overview-profession-knowledge-treasure-state.mapper.js";
 import type { OverviewProfessionWeeklyCharacterInput } from "./overview-profession-weekly-state.mapper.js";
 import type { OverviewResourceCharacterInput } from "./overview-resource-state.mapper.js";
-import type { OverviewVaultCharacterInput } from "./overview-vault-state.mapper.js";
 import type { OverviewWeeklyCharacterInput } from "./overview-weekly-state.mapper.js";
 
 const emptyWeeklyAggregate = {
@@ -23,21 +22,6 @@ export function resolveWeeklyInput(
       id: character.id,
       name: character.name,
       completedTaskKeys: []
-    }
-  );
-}
-
-export function resolveVaultInput(
-  character: OverviewAggregationInput["characters"][number],
-  input: OverviewAggregationInput
-): OverviewVaultCharacterInput {
-  return (
-    input.vaultByCharacterId.get(character.id) ?? {
-      id: character.id,
-      name: character.name,
-      runs: [],
-      vaultSlots: [],
-      highestKeyLevel: null
     }
   );
 }

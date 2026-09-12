@@ -106,6 +106,7 @@ export class ProfessionRecipeRepository {
                         id: true,
                         name: true,
                         realm: true,
+                        region: true,
                         className: true,
                         level: true
                       }

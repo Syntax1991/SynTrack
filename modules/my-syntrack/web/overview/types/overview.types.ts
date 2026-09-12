@@ -226,6 +226,8 @@ export type CharacterWeeklyState = {
     region: string;
     className: string;
     level: number;
+    // Phase F2, optional so pre-existing fixtures don't need touching:
+    race?: string | null; faction?: string | null; activeSpec?: string | null; guild?: { name: string; realmSlug: string | null } | null; averageItemLevel?: number | null; equippedItemLevel?: number | null;
   };
   weekly: WeeklyOverviewState;
   weeklySummary: WeeklySummaryOverviewState;

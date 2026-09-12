@@ -1,18 +1,15 @@
 import { Router } from "express";
-import { guildAuditRouter } from "../../../../modules/guild/api/audit/audit.routes.js";
-import { guildOfficerNoteRouter } from "../../../../modules/guild/api/officer-notes/officer-note.routes.js";
-import { guildRequirementRouter } from "../../../../modules/guild/api/requirements/requirement.routes.js";
-import { guildRosterRouter } from "../../../../modules/guild/api/roster/roster.routes.js";
-import { guildRosterImportRouter } from "../../../../modules/guild/api/roster-import/roster-import.routes.js";
-import { guildTeamRouter } from "../../../../modules/guild/api/teams/team.routes.js";
-import { guildVerificationRouter } from "../../../../modules/guild/api/verification/verification.routes.js";
-import { guildWeeklyProgressRouter } from "../../../../modules/guild/api/weekly-progress/weekly-progress.routes.js";
 import { lootWishlistRouter } from "../../../../modules/loot/api/wishlist/wishlist.routes.js";
 import { lootDroptimizerRouter } from "../../../../modules/loot/api/droptimizer/droptimizer.routes.js";
 import { characterRouter } from "../../../../modules/my-syntrack/api/characters/character.routes.js";
 import { overviewRouter } from "../../../../modules/my-syntrack/api/overview/overview.routes.js";
 import { tagRouter } from "../../../../modules/my-syntrack/api/tags/tag.routes.js";
 import { gearReadinessRouter } from "../../../../modules/my-syntrack/api/gear-readiness/gear-readiness.routes.js";
+import { characterEquipmentRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-equipment-refresh.routes.js";
+import { characterProfileRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-profile-refresh.routes.js";
+import { characterProfessionsRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-professions-refresh.routes.js";
+import { characterMythicPlusRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-mythic-plus-refresh.routes.js";
+import { characterAchievementsRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-achievements-refresh.routes.js";
 import { raidTaskRouter } from "../../../../modules/my-syntrack/api/raid-tasks/raid-task.routes.js";
 import { weeklyChecklistRouter } from "../../../../modules/my-syntrack/api/weekly-checklist/weekly-checklist.routes.js";
 import { seasonChecklistRouter } from "../../../../modules/my-syntrack/api/season-checklist/season-checklist.routes.js";
@@ -28,8 +25,9 @@ import { deviceLinkRouter } from "../../../../modules/data-platform/api/device-a
 import { clientImportRouter } from "../../../../modules/data-platform/api/client-import/client-import.routes.js";
 import { clientProfileRouter } from "../../../../modules/data-platform/api/client-profile/client-profile.routes.js";
 import { clientCharactersRouter } from "../../../../modules/data-platform/api/client-characters/client-characters.routes.js";
+import { clientDownloadRouter } from "../../../../modules/data-platform/api/client-download/client-download.routes.js";
 import { settingsTrustRouter } from "../../../../modules/data-platform/api/settings-trust/settings-trust.routes.js";
-import { guildRaiderLinkRouter } from "../../../../modules/guild/api/raider-link/raider-link.routes.js";
+import { wowMediaRouter } from "../../../../modules/data-platform/api/wow-media/wow-media.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
 import { professionRouter } from "../../../../modules/professions/api/profession.routes.js";
 import { specializationRouter } from "../../../../modules/professions/api/specializations/specialization.routes.js";
@@ -90,6 +88,31 @@ apiRouter.use(
 );
 
 apiRouter.use(
+  "/characters",
+  characterEquipmentRefreshRouter
+);
+
+apiRouter.use(
+  "/characters",
+  characterProfileRefreshRouter
+);
+
+apiRouter.use(
+  "/characters",
+  characterProfessionsRefreshRouter
+);
+
+apiRouter.use(
+  "/characters",
+  characterMythicPlusRefreshRouter
+);
+
+apiRouter.use(
+  "/characters",
+  characterAchievementsRefreshRouter
+);
+
+apiRouter.use(
   "/tracker-definitions",
   trackerDefinitionRouter
 );
@@ -130,46 +153,6 @@ apiRouter.use(
 );
 
 apiRouter.use(
-  "/guild/verification",
-  guildVerificationRouter
-);
-
-apiRouter.use(
-  "/guild/teams",
-  guildTeamRouter
-);
-
-apiRouter.use(
-  "/guild/roster",
-  guildRosterRouter
-);
-
-apiRouter.use(
-  "/guild/audit",
-  guildAuditRouter
-);
-
-apiRouter.use(
-  "/guild/roster-import",
-  guildRosterImportRouter
-);
-
-apiRouter.use(
-  "/guild/requirements",
-  guildRequirementRouter
-);
-
-apiRouter.use(
-  "/guild/officer-notes",
-  guildOfficerNoteRouter
-);
-
-apiRouter.use(
-  "/guild/weekly-progress",
-  guildWeeklyProgressRouter
-);
-
-apiRouter.use(
   "/loot/wishlist",
   lootWishlistRouter
 );
@@ -195,11 +178,6 @@ apiRouter.use(
 );
 
 apiRouter.use(
-  "/guild/raider-link",
-  guildRaiderLinkRouter
-);
-
-apiRouter.use(
   "/client",
   deviceLinkRouter
 );
@@ -220,6 +198,16 @@ apiRouter.use(
 );
 
 apiRouter.use(
+  "/client-download",
+  clientDownloadRouter
+);
+
+apiRouter.use(
   "/settings",
   settingsTrustRouter
+);
+
+apiRouter.use(
+  "/wow-media",
+  wowMediaRouter
 );

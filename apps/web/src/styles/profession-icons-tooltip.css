@@ -16,6 +16,73 @@
   background: var(--syntrack-icon-color, #6b6b7a);
 }
 
+.character-name-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.wow-media-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 4px;
+  object-fit: cover;
+  line-height: 1;
+}
+
+.wow-media-icon-sm {
+  width: 18px;
+  height: 18px;
+}
+
+.wow-media-icon-md {
+  width: 22px;
+  height: 22px;
+}
+
+.wow-media-icon-lg {
+  width: 32px;
+  height: 32px;
+}
+
+.wow-media-icon-image {
+  border: 1px solid var(--border);
+}
+
+.wow-media-icon-class {
+  color: #12121a;
+  background: var(--syntrack-icon-color, #6b6b7a);
+  font-size: 0.52rem;
+  font-weight: 800;
+}
+
+.wow-media-icon-profession {
+  color: var(--text-secondary);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  font-size: 0.52rem;
+  font-weight: 800;
+}
+
+.matrix-identity .wow-media-icon,
+.overview-character-identity .wow-media-icon {
+  color: #12121a;
+  font-size: 0.52rem;
+}
+
+.gear-character-avatar .wow-media-icon,
+.raid-task-character-avatar .wow-media-icon {
+  width: 100%;
+  height: 100%;
+  border-radius: 13px;
+}
+
 .syntrack-icon-family {
   color: var(--text-secondary);
   background: var(--surface-elevated);
