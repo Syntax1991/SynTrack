@@ -25,6 +25,7 @@ import { deviceLinkRouter } from "../../../../modules/data-platform/api/device-a
 import { clientImportRouter } from "../../../../modules/data-platform/api/client-import/client-import.routes.js";
 import { clientProfileRouter } from "../../../../modules/data-platform/api/client-profile/client-profile.routes.js";
 import { clientCharactersRouter } from "../../../../modules/data-platform/api/client-characters/client-characters.routes.js";
+import { clientDownloadRouter } from "../../../../modules/data-platform/api/client-download/client-download.routes.js";
 import { settingsTrustRouter } from "../../../../modules/data-platform/api/settings-trust/settings-trust.routes.js";
 import { wowMediaRouter } from "../../../../modules/data-platform/api/wow-media/wow-media.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
@@ -194,6 +195,11 @@ apiRouter.use(
 apiRouter.use(
   "/client",
   clientCharactersRouter
+);
+
+apiRouter.use(
+  "/client-download",
+  clientDownloadRouter
 );
 
 apiRouter.use(

@@ -83,7 +83,18 @@ const environmentSchema = z.object({
   INGEST_OBSERVATION_DB_PATH: z
     .string()
     .trim()
-    .default("./prisma/ingest-observation.db")
+    .default("./prisma/ingest-observation.db"),
+
+  /*
+   * Where the built desktop-client installer(s) are dropped for
+   * self-hosted download via /api/client-download - never committed
+   * (see .gitignore). Resolved relative to apps/api, same convention
+   * as DATABASE_URL/INGEST_OBSERVATION_DB_PATH.
+   */
+  CLIENT_DOWNLOAD_DIR: z
+    .string()
+    .trim()
+    .default("./public/client-downloads")
 });
 
 const parsedEnvironment = environmentSchema.safeParse(

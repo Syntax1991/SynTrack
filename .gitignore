@@ -14,6 +14,10 @@ apps/api/prisma/ingest-observation.db-wal
 apps/api/prisma/ingest-observation.db-shm
 apps/api/src/generated/
 
+# Self-hosted client-installer downloads (see apps/api/public/client-downloads/README.md)
+apps/api/public/client-downloads/*
+!apps/api/public/client-downloads/README.md
+
 apps/web/node_modules/
 apps/web/dist/
 
