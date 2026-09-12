@@ -103,6 +103,10 @@
   background: var(--surface-hover);
 }
 
+.character-status-cell-static:hover {
+  background: none;
+}
+
 .character-status-cell:last-child {
   border-right: 0;
 }

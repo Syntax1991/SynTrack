@@ -5,11 +5,10 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 
-// Guild was removed entirely in Phase G4B - see
-// scripts/check-source-files.mjs's mainModuleSlugs comment.
+// Guild was removed entirely in Phase G4B, and Loot followed later -
+// see scripts/check-source-files.mjs's mainModuleSlugs comment.
 const mainModuleSlugs = [
   "my-syntrack",
-  "loot",
   "professions",
   "recruitment",
   "automation",

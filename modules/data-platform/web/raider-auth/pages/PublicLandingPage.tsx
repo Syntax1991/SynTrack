@@ -10,7 +10,7 @@ const features: Array<{
   {
     title: "Characters",
     description:
-      "Every character you play, in one roster — gear, item level and readiness at a glance."
+      "Every character you play, in one roster — item level, tier set and readiness at a glance."
   },
   {
     title: "Weeklies & Vault",
@@ -21,11 +21,6 @@ const features: Array<{
     title: "Professions",
     description:
       "Crafter finder, recipe knowledge and specialization progress across every alt with a profession."
-  },
-  {
-    title: "Loot",
-    description:
-      "A shared loot table, a personal wishlist, and Droptimizer upgrade tracking — no spreadsheet required."
   }
 ];
 

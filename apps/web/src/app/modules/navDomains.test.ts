@@ -106,7 +106,7 @@ describe("navDomains - flat product-domain sidebar", () => {
 
     expect(
       weeklies.isActive(
-        "/gear-readiness"
+        "/professions"
       )
     ).toBe(false);
   });
@@ -143,7 +143,7 @@ describe("navDomains - flat product-domain sidebar", () => {
     ).toBe(true);
 
     expect(
-      characters.isActive("/gear-readiness")
+      characters.isActive("/professions")
     ).toBe(false);
   });
 });

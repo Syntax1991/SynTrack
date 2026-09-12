@@ -20,12 +20,11 @@ SynTrack (active navigation)
 +-- Characters
 +-- Weeklies         (page-level tabs: Weekly Checklist, Vault / M+)
 +-- Professions      (page-level tabs: Overview, Find Craft, Specializations)
-+-- Gear
 |
 +-- Settings
 ```
 
-Loot, Recruitment and Automation are **no longer part of the active
+Recruitment and Automation are **no longer part of the active
 navigation surface** - their backend routes/services/Prisma models still
 exist (see their own sections below) pending a deliberate later cleanup, but
 they are not reachable from the sidebar. "Raid Tasks" is likewise no longer
@@ -34,9 +33,17 @@ model, reusable later as generic personal Custom Tasks.
 
 Guild is no longer a module at all (removed in Phase G4B, 2026-09-07,
 finished the same day by a corrective pass) - `modules/guild` does not
-exist. See the "Guild (removed)" section below for what was deleted
-and where the one genuinely non-Guild piece of its old infrastructure
-ended up instead.
+exist. Loot followed afterward: it was never reachable from the sidebar
+either, and its remaining backend/frontend product code (Wishlist,
+Droptimizer, the Loot Table) was removed in full - `modules/loot` does
+not exist. The dedicated Gear Readiness page/route was removed the same
+pass; item level and Tier Set/Embellishment summaries remain on the
+Overview matrix and Character Detail, computed by the retained
+`modules/my-syntrack/api/gear-readiness` library code, but there is no
+standalone Gear product page anymore. See the "Guild (removed)" and
+"Loot (removed)" sections below for what was deleted and where the one
+genuinely non-Guild piece of Guild's old infrastructure ended up before
+being removed with Loot.
 
 The underlying module/business-ownership map (unchanged - navigation is a
 presentation concern, not a module-ownership one):
@@ -48,16 +55,8 @@ SynTrack
 |   +-- Overview
 |   +-- Characters (roster plus `/characters/:characterId` control hub)
 |   +-- Weeklies (Weekly Checklist, Vault / M+)
-|   +-- Gear
+|   +-- Gear (library only - item level/Tier Set computation, no page)
 |   +-- Professions (composed, owned by the Professions module)
-|
-+-- Loot                     (backend only - not in active navigation)
-|   +-- Wishlist
-|   +-- Droptimizer
-|   +-- Loot Council
-|   +-- Loot History
-|   +-- Tier / Token Planning
-|   +-- Split Planning
 |
 +-- Professions
 |   +-- Crafter Finder
@@ -116,9 +115,9 @@ owning their underlying business rules.
 
 ### Dependency rule
 
-My SynTrack may read projections from Loot and Professions.
+My SynTrack may read projections from Professions.
 
-It must not implement duplicate profession or loot logic.
+It must not implement duplicate profession logic.
 
 The Overview aggregator specifically may call Professions' own
 `ProfessionDetailService` (an explicit application service, not raw
@@ -161,35 +160,31 @@ removal rationale.
 > product segment was removed. See git history for its prior
 > implementation.
 
-**What still isn't fully neutral:** the underlying Prisma model both
-`LootMemberLinkService` and Loot's own tables key off is still named
-`GuildMember` - renaming/neutralizing that is a deliberate G4C schema
-decision (see that section's readiness report), not something this
-runtime-only pass could safely do. No live application code treats it
-as a guild roster anymore, but the table name itself hasn't caught up
-yet.
+**What still isn't fully neutral:** the underlying Prisma model,
+`GuildMember`, is still named that even though no live application code
+treats it as a guild roster anymore - renaming/neutralizing it is a
+deliberate G4C schema decision (see that section's readiness report),
+not something a runtime-only pass could safely do. It is still used by
+other domains (Characters, Overview, Professions, Blizzard sync) as a
+generic member-identity backbone; `LootMemberLinkService`, its one-time
+consumer for Loot's own ownership resolution, was removed along with
+the rest of Loot (see below).
 
-## 3. Loot
+## 3. Loot (removed)
 
-### Responsibility
+**Removed entirely.** Loot's Wishlist, Droptimizer and Loot Table were
+never reachable from the sidebar (see the module map above), and the
+product decision was made to drop the personal Loot surface rather than
+build it out further. `modules/loot` (api, web, shared, addons) was
+deleted in full, including `LootMemberLinkService` - nothing outside
+Loot ever depended on it (confirmed before deletion). The `WishlistItem`/
+`DroptimizerReport`-family Prisma models are intentionally left
+untouched for now; their schema/migration cleanup is a separate,
+deliberate later pass, not part of the runtime-code removal.
 
-Loot planning and distribution.
-
-### Owns
-
-- wishlists
-- Droptimizer data
-- loot council decisions
-- loot history
-- tier and token planning
-- split planning
-
-### Dependency rule
-
-Loot's self-service Wishlist and Droptimizer resolve ownership through
-`LootMemberLinkService` (`modules/loot/shared/member-link`) - the
-identity-resolution code relocated out of the (now fully removed)
-Guild module. See the Guild section above.
+Loot Council, Loot History, and Tier/Token/Split Planning - listed here
+previously as planned future scope - were never implemented and are no
+longer planned under this module.
 
 ## 4. Professions
 
@@ -348,7 +343,6 @@ Web:
   `/characters/:characterId` control hub)
 - `modules/my-syntrack/web/weekly-checklist`
 - `modules/my-syntrack/web/vault-mythic-plus`
-- `modules/my-syntrack/web/gear-readiness`
 - `modules/my-syntrack/web/raid-tasks` (backend/route retained; no longer
   linked from navigation)
 - `modules/my-syntrack/web/shared` (e.g. `WeekliesTabNav`, the page-level
@@ -362,7 +356,9 @@ API:
 - `modules/my-syntrack/api/characters`
 - `modules/my-syntrack/api/weekly-checklist`
 - `modules/my-syntrack/api/vault-mythic-plus`
-- `modules/my-syntrack/api/gear-readiness`
+- `modules/my-syntrack/api/gear-readiness` (library only - item
+  level/Tier Set computation consumed by Overview and Character Detail;
+  no HTTP route/page of its own anymore)
 - `modules/my-syntrack/api/raid-tasks` (backend/route retained; no longer
   linked from navigation)
 

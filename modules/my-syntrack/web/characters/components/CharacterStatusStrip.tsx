@@ -24,28 +24,25 @@ export function CharacterStatusStrip({
 }: CharacterStatusStripProps) {
   const entries: {
     label: string;
-    path: string;
+    path?: string;
     token: ReturnType<
       typeof formatWeeklyToken
     >;
   }[] = [
     {
       label: "iLvl",
-      path: "/gear-readiness",
       token: formatItemLevelToken(
         character.gear
       )
     },
     {
       label: "Set",
-      path: "/gear-readiness",
       token: formatTierToken(
         character.tier
       )
     },
     {
       label: "Emb.",
-      path: "/gear-readiness",
       token:
         formatEmbellishmentToken(
           character.embellishments
@@ -67,7 +64,6 @@ export function CharacterStatusStrip({
     },
     {
       label: "Gear",
-      path: "/gear-readiness",
       token: formatGearToken(
         character.gear
       )
@@ -76,21 +72,36 @@ export function CharacterStatusStrip({
 
   return (
     <div className="character-status-strip">
-      {entries.map((entry) => (
-        <Link
-          className="character-status-cell"
-          key={entry.label}
-          to={entry.path}
-        >
-          <span className="character-status-label">
-            {entry.label}
-          </span>
+      {entries.map((entry) =>
+        entry.path ? (
+          <Link
+            className="character-status-cell"
+            key={entry.label}
+            to={entry.path}
+          >
+            <span className="character-status-label">
+              {entry.label}
+            </span>
 
-          <StatusToken
-            token={entry.token}
-          />
-        </Link>
-      ))}
+            <StatusToken
+              token={entry.token}
+            />
+          </Link>
+        ) : (
+          <div
+            className="character-status-cell character-status-cell-static"
+            key={entry.label}
+          >
+            <span className="character-status-label">
+              {entry.label}
+            </span>
+
+            <StatusToken
+              token={entry.token}
+            />
+          </div>
+        )
+      )}
     </div>
   );
 }

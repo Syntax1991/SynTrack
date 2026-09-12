@@ -1,10 +1,7 @@
 import { Router } from "express";
-import { lootWishlistRouter } from "../../../../modules/loot/api/wishlist/wishlist.routes.js";
-import { lootDroptimizerRouter } from "../../../../modules/loot/api/droptimizer/droptimizer.routes.js";
 import { characterRouter } from "../../../../modules/my-syntrack/api/characters/character.routes.js";
 import { overviewRouter } from "../../../../modules/my-syntrack/api/overview/overview.routes.js";
 import { tagRouter } from "../../../../modules/my-syntrack/api/tags/tag.routes.js";
-import { gearReadinessRouter } from "../../../../modules/my-syntrack/api/gear-readiness/gear-readiness.routes.js";
 import { characterEquipmentRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-equipment-refresh.routes.js";
 import { characterProfileRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-profile-refresh.routes.js";
 import { characterProfessionsRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-professions-refresh.routes.js";
@@ -83,11 +80,6 @@ apiRouter.use(
 );
 
 apiRouter.use(
-  "/gear-readiness",
-  gearReadinessRouter
-);
-
-apiRouter.use(
   "/characters",
   characterEquipmentRefreshRouter
 );
@@ -150,16 +142,6 @@ apiRouter.use(
 apiRouter.use(
   "/profession-details",
   professionDetailRouter
-);
-
-apiRouter.use(
-  "/loot/wishlist",
-  lootWishlistRouter
-);
-
-apiRouter.use(
-  "/loot/droptimizer",
-  lootDroptimizerRouter
 );
 
 apiRouter.use(

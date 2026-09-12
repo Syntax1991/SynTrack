@@ -7,7 +7,6 @@ import { SettingsPage } from "../../../../modules/data-platform/web/settings/pag
 import { CharacterDetailPage } from "../../../../modules/my-syntrack/web/characters/pages/CharacterDetailPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
 import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages/OverviewPage";
-import { GearReadinessPage } from "../../../../modules/my-syntrack/web/gear-readiness/pages/GearReadinessPage";
 import { RaidTasksPage } from "../../../../modules/my-syntrack/web/raid-tasks/pages/RaidTasksPage";
 import { WeeklyChecklistPage } from "../../../../modules/my-syntrack/web/weekly-checklist/pages/WeeklyChecklistPage";
 import { SeasonPage } from "../../../../modules/my-syntrack/web/season/pages/SeasonPage";
@@ -19,9 +18,6 @@ import { RegisterConfirmPage } from "../../../../modules/data-platform/web/raide
 import { ClientConnectPage } from "../../../../modules/data-platform/web/device-auth/pages/ClientConnectPage";
 import { ImprintPage } from "../../../../modules/data-platform/web/legal/pages/ImprintPage";
 import { PrivacyPolicyPage } from "../../../../modules/data-platform/web/legal/pages/PrivacyPolicyPage";
-import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTablePage";
-import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
-import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
 import { ProfessionDetailPage } from "../../../../modules/professions/web/details/pages/ProfessionDetailPage";
 import { ProfessionFindCraftPage } from "../../../../modules/professions/web/pages/ProfessionFindCraftPage";
 import { ProfessionKnowledgePage } from "../../../../modules/professions/web/pages/ProfessionKnowledgePage";
@@ -85,13 +81,6 @@ export function AppRouter() {
         />
 
         <Route
-          // Legacy account-wide Gear page retained for Character Detail
-          // drilldowns; Gear is no longer a primary nav product module.
-          path="gear-readiness"
-          element={<GearReadinessPage />}
-        />
-
-        <Route
           path="professions"
           element={<ProfessionsPage />}
         />
@@ -142,21 +131,6 @@ export function AppRouter() {
         <Route
           path="professions/:professionId"
           element={<ProfessionDetailPage />}
-        />
-
-        <Route
-          path="loot"
-          element={<LootTablePage />}
-        />
-
-        <Route
-          path="loot/wishlist"
-          element={<WishlistPage />}
-        />
-
-        <Route
-          path="loot/droptimizer"
-          element={<DroptimizerPage />}
         />
 
         <Route

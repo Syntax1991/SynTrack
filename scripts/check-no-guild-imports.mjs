@@ -1,25 +1,23 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
 
 /*
  * Phase G4B corrective: modules/guild was deleted in full (not merely
  * unmounted from routes/nav) - this guards against it quietly
  * reappearing, or any source file importing from a "guild" path
  * segment again, without needing a full repo-wide grep every time.
+ *
+ * Relocated here from modules/loot/shared/member-link/no-guild-imports.test.ts
+ * when the Loot module was removed - this check is repo-wide and was never
+ * actually about Loot, so it belongs alongside the other architecture
+ * checks rather than disappearing with the module it happened to live in.
  */
-
-const projectRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../.."
-);
 
 const scanRoots = ["modules", "apps/api/src", "apps/web/src"];
 const checkedExtensions = new Set([".ts", ".tsx"]);
 const guildImportPattern = /from\s+["'][^"']*\/guild\/[^"']*["']/u;
 
-async function collectSourceFiles(directory: string): Promise<string[]> {
+async function collectSourceFiles(directory) {
   let entries;
 
   try {
@@ -29,7 +27,7 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
     return [];
   }
 
-  const files: string[] = [];
+  const files = [];
 
   for (const entry of entries) {
     if (entry.name === "generated" || entry.name === "node_modules") {
@@ -51,30 +49,36 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
   return files;
 }
 
-describe("no runtime module imports modules/guild", () => {
-  it("modules/guild does not exist", async () => {
-    await expect(
-      stat(path.join(projectRoot, "modules", "guild"))
-    ).rejects.toThrow();
-  });
+const violations = [];
 
-  it("no source file under modules/, apps/api/src/, or apps/web/src/ imports a /guild/ path", async () => {
-    const violations: string[] = [];
+try {
+  await stat(path.join("modules", "guild"));
+  violations.push("modules/guild exists again.");
+}
+catch {
+  // Expected: modules/guild must not exist.
+}
 
-    for (const root of scanRoots) {
-      const files = await collectSourceFiles(
-        path.join(projectRoot, root)
-      );
+for (const root of scanRoots) {
+  const files = await collectSourceFiles(root);
 
-      for (const file of files) {
-        const content = await readFile(file, "utf8");
+  for (const file of files) {
+    const content = await readFile(file, "utf8");
 
-        if (guildImportPattern.test(content)) {
-          violations.push(path.relative(projectRoot, file));
-        }
-      }
+    if (guildImportPattern.test(content)) {
+      violations.push(`${file} imports a /guild/ path.`);
     }
+  }
+}
 
-    expect(violations).toEqual([]);
-  });
-});
+if (violations.length > 0) {
+  console.error("Guild-removal regression check failed.");
+
+  for (const violation of violations) {
+    console.error(`- ${violation}`);
+  }
+
+  process.exit(1);
+}
+
+console.log("No guild imports check passed.");
