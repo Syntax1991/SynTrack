@@ -29,6 +29,10 @@ apps/client/installer/Output/
 apps/client/msix/Output/
 apps/client/msix/stage/
 
+# scripts/release-client.ps1 staging output (publish/installer/checksums per
+# version) - never a source of truth, and never committed.
+artifacts/
+
 .vscode/
 .idea/
 .claude/
