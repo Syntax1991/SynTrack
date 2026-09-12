@@ -58,6 +58,8 @@ import "./styles/profession-recipe-readiness.css";
 import "./styles/specializations.css";
 import "./styles/forms.css";
 import "./styles/tables.css";
+import "./styles/landing.css";
+import "./styles/legal.css";
 
 const rootElement =
   document.getElementById("root");

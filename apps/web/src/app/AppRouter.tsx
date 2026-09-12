@@ -17,6 +17,8 @@ import { LoginPage } from "../../../../modules/data-platform/web/raider-auth/pag
 import { RegisterPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterPage";
 import { RegisterConfirmPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterConfirmPage";
 import { ClientConnectPage } from "../../../../modules/data-platform/web/device-auth/pages/ClientConnectPage";
+import { ImprintPage } from "../../../../modules/data-platform/web/legal/pages/ImprintPage";
+import { PrivacyPolicyPage } from "../../../../modules/data-platform/web/legal/pages/PrivacyPolicyPage";
 import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTablePage";
 import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
 import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
@@ -201,6 +203,16 @@ export function AppRouter() {
       <Route
         element={<ClientConnectPage />}
         path="client/connect"
+      />
+
+      <Route
+        element={<ImprintPage />}
+        path="impressum"
+      />
+
+      <Route
+        element={<PrivacyPolicyPage />}
+        path="datenschutz"
       />
 
       <Route
