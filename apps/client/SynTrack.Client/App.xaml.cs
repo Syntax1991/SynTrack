@@ -11,9 +11,6 @@ using SynTrack.Client.Views;
 
 public partial class App : Application
 {
-    private const string ApiBaseUrl = "http://localhost:4000/api";
-    private const string WebBaseUrl = "http://localhost:5173";
-
     private HttpClient? _httpClient;
     private TrayService? _trayService;
     private MainWindow? _mainWindow;
@@ -40,7 +37,7 @@ public partial class App : Application
         var clientVersion = GetType().Assembly.GetName().Version?.ToString() ?? "0.1.0";
 
         logger.Info(
-            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType} version={clientVersion} assemblyDir={AppContext.BaseDirectory}");
+            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType} version={clientVersion} packaged={PackagedApp.IsRunningAsPackaged} api={ClientEndpoints.ApiBaseUrl} web={ClientEndpoints.WebBaseUrl} assemblyDir={AppContext.BaseDirectory}");
 
         // A raw SynTrack.Client.exe double-click landing as a second,
         // uncoordinated process while a dotnet.exe-hosted instance was
@@ -64,8 +61,8 @@ public partial class App : Application
         var autoStartService = new AutoStartService();
 
         _httpClient = new HttpClient();
-        var apiClient = new SynTrackApiClient(_httpClient, ApiBaseUrl);
-        var deviceLinkService = new DeviceLinkService(apiClient, credentialService, WebBaseUrl);
+        var apiClient = new SynTrackApiClient(_httpClient, ClientEndpoints.ApiBaseUrl);
+        var deviceLinkService = new DeviceLinkService(apiClient, credentialService, ClientEndpoints.WebBaseUrl);
         var deviceConnectionService = new DeviceConnectionService(
             apiClient,
             credentialService,
@@ -88,11 +85,11 @@ public partial class App : Application
             _watcher,
             autoStartService,
             logger,
-            WebBaseUrl);
+            ClientEndpoints.WebBaseUrl);
 
         _mainWindow = new MainWindow(viewModel);
 
-        _trayService = new TrayService(SystemIcons.Application);
+        _trayService = new TrayService(LoadApplicationIcon());
         _trayService.SyncNowRequested += () => viewModel.SyncNowCommand.Execute(null);
         _trayService.OpenSynTrackRequested += () => viewModel.OpenSynTrackCommand.Execute(null);
         _trayService.SettingsRequested += ShowMainWindow;
@@ -138,5 +135,34 @@ public partial class App : Application
         _httpClient?.Dispose();
         _instanceGuard?.Dispose();
         Shutdown();
+    }
+
+    private static Icon LoadApplicationIcon()
+    {
+        try
+        {
+            var processPath = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(processPath)
+                && !processPath.EndsWith("dotnet.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                var associated = Icon.ExtractAssociatedIcon(processPath);
+                if (associated is not null)
+                {
+                    return associated;
+                }
+            }
+
+            var resource = GetResourceStream(new Uri("pack://application:,,,/Assets/syntrack.ico"));
+            if (resource?.Stream is not null)
+            {
+                return new Icon(resource.Stream);
+            }
+        }
+        catch
+        {
+            // Tray must still appear even if the icon resource is missing.
+        }
+
+        return SystemIcons.Application;
     }
 }

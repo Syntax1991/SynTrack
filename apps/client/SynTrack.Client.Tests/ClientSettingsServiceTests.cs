@@ -16,6 +16,7 @@ public class ClientSettingsServiceTests : IDisposable
 
         Assert.Null(settings.WowPath);
         Assert.False(settings.Autostart);
+        Assert.Null(settings.LastSyncAt);
     }
 
     [Fact]
@@ -23,12 +24,14 @@ public class ClientSettingsServiceTests : IDisposable
     {
         var service = new ClientSettingsService(_tempDir);
 
+        var lastSyncAt = new DateTimeOffset(2026, 9, 7, 13, 33, 0, TimeSpan.Zero);
         var settings = new ClientSettings
         {
             WowPath = @"C:\Games\World of Warcraft",
             AccountName = "WOW1",
             StartMinimized = true,
-            Autostart = false
+            Autostart = false,
+            LastSyncAt = lastSyncAt
         };
 
         service.Save(settings);
@@ -37,6 +40,7 @@ public class ClientSettingsServiceTests : IDisposable
         Assert.Equal(settings.WowPath, loaded.WowPath);
         Assert.Equal(settings.AccountName, loaded.AccountName);
         Assert.Equal(settings.StartMinimized, loaded.StartMinimized);
+        Assert.Equal(lastSyncAt, loaded.LastSyncAt);
     }
 
     [Fact]

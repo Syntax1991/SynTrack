@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:infra="clr-namespace:SynTrack.Client.Infrastructure"
         Title="SynTrack" Width="1080" Height="700" MinWidth="920" MinHeight="580"
+        Icon="pack://application:,,,/Assets/syntrack.ico"
         Background="{StaticResource BackgroundBrush}"
         FontFamily="{StaticResource AppFontFamily}"
         ResizeMode="CanResize">
@@ -28,24 +29,17 @@
         </Grid.RowDefinitions>
 
         <!-- ===================== Header ===================== -->
-        <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,12">
+        <Border Grid.Row="0" Background="{StaticResource LogoSurfaceBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="30" Height="30" CornerRadius="8" Background="{StaticResource AccentBrush}">
-                        <TextBlock Text="S" FontSize="15" FontWeight="Bold" Foreground="White"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="SynTrack" Style="{StaticResource TitleText}" />
-                        <TextBlock Text="Personal Control Center" Style="{StaticResource MutedText}" FontSize="10" />
-                    </StackPanel>
-                </StackPanel>
+                <Image Grid.Column="0" Style="{StaticResource BrandLogo}" Height="48"
+                       HorizontalAlignment="Left" VerticalAlignment="Center"
+                       AutomationProperties.Name="SynTrack — Track Together. Progress Everywhere." />
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                             Visibility="{Binding ShowFullyConnectedIdentity, Converter={StaticResource BoolToVisibility}}">
@@ -71,20 +65,14 @@
 
         <!-- ===================== Signed-out state ===================== -->
         <StackPanel Grid.Row="1" Visibility="{Binding ShowSignedOutShell, Converter={StaticResource BoolToVisibility}}"
-                    Margin="0,60,0,0" HorizontalAlignment="Center">
+                    Margin="0,48,0,0" HorizontalAlignment="Center">
 
-            <Border Width="52" Height="52" CornerRadius="13" Background="{StaticResource AccentBrush}"
-                    HorizontalAlignment="Center">
-                <TextBlock Text="S" FontSize="24" FontWeight="Bold" Foreground="White"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-            </Border>
-
-            <TextBlock Text="SynTrack" Style="{StaticResource TitleText}" FontSize="20"
-                       Margin="0,16,0,4" HorizontalAlignment="Center" />
+            <Image Style="{StaticResource BrandLogo}" Height="88" HorizontalAlignment="Center"
+                   AutomationProperties.Name="SynTrack — Track Together. Progress Everywhere." />
 
             <TextBlock Text="Connect your SynTrack account to sync your World of Warcraft characters."
                        Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"
-                       MaxWidth="360" Margin="0,0,0,20" />
+                       MaxWidth="360" Margin="0,20,0,20" />
 
             <Button Content="Continue with Battle.net" Style="{StaticResource PrimaryButton}"
                     Command="{Binding ConnectCommand}" Padding="20,10" HorizontalAlignment="Center" />
@@ -108,7 +96,10 @@
 
         <!-- ===================== Connecting (codeless poll) ===================== -->
         <StackPanel Grid.Row="1" Visibility="{Binding ShowConnectingShell, Converter={StaticResource BoolToVisibility}}"
-                    Margin="0,60,0,0" HorizontalAlignment="Center">
+                    Margin="0,48,0,0" HorizontalAlignment="Center">
+
+            <Image Style="{StaticResource BrandLogo}" Height="72" HorizontalAlignment="Center" Margin="0,0,0,20"
+                   AutomationProperties.Name="SynTrack — Track Together. Progress Everywhere." />
 
             <TextBlock Text="Connecting to SynTrack" Style="{StaticResource TitleText}" FontSize="20"
                        HorizontalAlignment="Center" />
@@ -192,7 +183,7 @@
                             <TextBlock Text="{Binding SyncStatusLabel}" Style="{StaticResource BodyText}" />
                         </StackPanel>
                         <TextBlock Margin="15,4,0,0" Style="{StaticResource MutedText}"
-                                   Text="{Binding LastSyncAt, StringFormat='Last sync: {0:g}', TargetNullValue='Last sync: Never'}" />
+                                   Text="{Binding LastSyncLabel}" />
                         <Button Content="Sync now" Style="{StaticResource SecondaryButton}"
                                 Command="{Binding SyncNowCommand}" HorizontalAlignment="Left" Margin="12,8,0,0" />
 

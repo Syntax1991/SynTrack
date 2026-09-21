@@ -130,9 +130,51 @@ dotnet apps/client/SynTrack.Client/bin/Release/net8.0-windows/SynTrack.Client.dl
 
 ## Local packaging
 
+Build a self-contained Windows MSIX (Microsoft Store / sideload) and
+the optional Inno Setup wizard (per-user install under
+`%LOCALAPPDATA%\Programs\SynTrack`):
+
 ```powershell
-dotnet build apps/client/SynTrack.Client.sln -c Release
+powershell -File apps/client/pack.ps1
 ```
 
-Code signing for distribution is out of scope for now - this produces an
-unsigned local build only.
+Output:
+
+- published app: `apps/client/publish/win-x64/`
+- MSIX: `apps/client/msix/Output/SynTrack-<version>.msix`
+- setup (optional): `apps/client/installer/Output/SynTrackClientSetup-<version>.exe`
+
+Sideload the MSIX:
+
+```powershell
+Add-AppxPackage -Path apps/client/msix/Output/SynTrack-0.1.0.msix
+```
+
+The default pack talks to `https://syntrack.io/api` and
+`https://syntrack.io`. For a local API instead:
+
+```powershell
+powershell -File apps/client/pack.ps1 -ApiBaseUrl http://localhost:4000/api -WebBaseUrl http://localhost:5173
+```
+
+Pass `-SkipInno` to build only the MSIX.
+
+The EXE, MSIX, and setup are Authenticode-signed when a certificate is
+available. For this open-source tree the default is a **local
+self-signed** `CN=SynTrack` certificate. A Store upload is re-signed by
+Microsoft and does not keep the unknown-publisher warning.
+
+Sideloading the self-signed MSIX on a PC requires the cert in
+`LocalMachine\TrustedPeople` (one admin import). `CurrentUser\TrustedPeople`
+is not enough for AppX.
+
+To sign with a real certificate instead:
+
+```text
+SYNTRACK_CODE_SIGN_PFX=
+SYNTRACK_CODE_SIGN_PASSWORD=
+```
+
+or `SYNTRACK_CODE_SIGN_THUMBPRINT` for a cert already in
+`CurrentUser\My`. Then re-run `pack.ps1`. Use `-SkipSign` for an
+unsigned local pack.

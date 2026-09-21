@@ -154,4 +154,35 @@ public class MainViewModelAccountRestoreTests
 
         Assert.Empty(viewModel.AccountCandidates);
     }
+
+    [Fact]
+    public void APersistedLastSyncSurvivesAClientRestartInsteadOfShowingNever()
+    {
+        var lastSyncAt = new DateTimeOffset(2026, 9, 7, 13, 33, 0, TimeSpan.Zero);
+        var viewModel = BuildViewModel(new ClientSettings { LastSyncAt = lastSyncAt });
+
+        Assert.Equal(lastSyncAt, viewModel.LastSyncAt);
+        Assert.DoesNotContain("Never", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("PM", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AM", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(":", viewModel.LastSyncLabel, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASuccessfulSyncIsWrittenBackToSettingsForTheNextLaunch()
+    {
+        var settings = new ClientSettings();
+        var viewModel = BuildViewModel(settings);
+        var lastSyncAt = new DateTimeOffset(2026, 9, 7, 13, 33, 0, TimeSpan.Zero);
+
+        Assert.Equal("Last sync: Never", viewModel.LastSyncLabel);
+
+        viewModel.RememberSuccessfulSync(lastSyncAt);
+
+        Assert.Equal(lastSyncAt, settings.LastSyncAt);
+
+        var restarted = BuildViewModel(settings);
+        Assert.Equal(lastSyncAt, restarted.LastSyncAt);
+        Assert.DoesNotContain("Never", restarted.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+    }
 }

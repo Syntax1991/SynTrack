@@ -2,6 +2,7 @@ namespace SynTrack.Client.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -55,6 +56,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTimeOffset? _lastSyncAt;
+
+    public string LastSyncLabel => LastSyncDisplay.Format(
+        LastSyncAt,
+        TimeZoneInfo.Local,
+        CultureInfo.CurrentCulture);
 
     [ObservableProperty]
     private string? _pendingUserCode;
@@ -193,6 +199,7 @@ public sealed partial class MainViewModel : ObservableObject
         _accountName = _settings.AccountName;
         _startMinimized = _settings.StartMinimized;
         _autostart = _settings.Autostart;
+        _lastSyncAt = _settings.LastSyncAt;
         _connected = _credentialService.Load() is not null;
         _accountHealth = _connected ? AccountHealth.ConnectionIssue : AccountHealth.SignedOut;
 
@@ -275,6 +282,12 @@ public sealed partial class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(ShowEmptyRosterMessage));
         OnPropertyChanged(nameof(ShowRosterOwnershipBlocked));
+    }
+
+    partial void OnLastSyncAtChanged(DateTimeOffset? value)
+    {
+        _settings.LastSyncAt = value;
+        OnPropertyChanged(nameof(LastSyncLabel));
     }
 
     partial void OnCharactersErrorChanged(string? value) => OnPropertyChanged(nameof(ShowEmptyRosterMessage));
@@ -706,6 +719,7 @@ public sealed partial class MainViewModel : ObservableObject
             CharactersError = error;
             IsLoadingCharacters = false;
             OnPropertyChanged(nameof(ShowEmptyRosterMessage));
+            AdoptLatestSyncTimestamp(summaries.Select(summary => summary.LastSyncedAt));
         });
     }
 
@@ -773,7 +787,24 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnSyncCompleted(DateTimeOffset at) => _dispatcher.Invoke(() =>
     {
-        LastSyncAt = at;
+        RememberSuccessfulSync(at);
         ScheduleRosterRefresh();
     });
+
+    internal void RememberSuccessfulSync(DateTimeOffset at)
+    {
+        AdoptLatestSyncTimestamp(new DateTimeOffset?[] { at });
+    }
+
+    internal void AdoptLatestSyncTimestamp(IEnumerable<DateTimeOffset?> candidates)
+    {
+        var latest = LastSyncDisplay.Latest(LastSyncAt, candidates);
+        if (latest == LastSyncAt)
+        {
+            return;
+        }
+
+        LastSyncAt = latest;
+        _settingsService.Save(_settings);
+    }
 }

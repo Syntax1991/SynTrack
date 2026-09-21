@@ -24,6 +24,10 @@
     <Color x:Key="AccentHoverColor">#916DEB</Color>
     <Color x:Key="AccentSoftColor">#251D39</Color>
 
+    <!-- Matches the web sidebar background and the logo PNG native fill
+         so the header lockup has no visible seam. -->
+    <Color x:Key="LogoSurfaceColor">#03060F</Color>
+
     <Color x:Key="SuccessColor">#47D597</Color>
     <Color x:Key="WarningColor">#F6B94A</Color>
     <Color x:Key="DangerColor">#FF6F78</Color>
@@ -43,6 +47,7 @@
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
     <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}" />
+    <SolidColorBrush x:Key="LogoSurfaceBrush" Color="{StaticResource LogoSurfaceColor}" />
 
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />

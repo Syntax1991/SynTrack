@@ -2,16 +2,44 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Assets\syntrack.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <AssemblyTitle>SynTrack</AssemblyTitle>
+    <Product>SynTrack</Product>
+    <Company>SynTrack</Company>
+    <FileDescription>SynTrack Personal Control Center</FileDescription>
+    <Copyright>Copyright © SynTrack</Copyright>
+    <SynTrackApiBaseUrl Condition="'$(SynTrackApiBaseUrl)' == ''">https://syntrack.io/api</SynTrackApiBaseUrl>
+    <SynTrackWebBaseUrl Condition="'$(SynTrackWebBaseUrl)' == ''">https://syntrack.io</SynTrackWebBaseUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>SynTrackApiBaseUrl</_Parameter1>
+      <_Parameter2>$(SynTrackApiBaseUrl)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>SynTrackWebBaseUrl</_Parameter1>
+      <_Parameter2>$(SynTrackWebBaseUrl)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Same lockup as apps/web/public/branding/syntrack-logo.png. -->
+    <Resource Include="Assets\syntrack-logo.png" />
+    <Resource Include="Assets\syntrack.ico" />
+    <Resource Include="Assets\syntrack-app-icon.png" />
   </ItemGroup>
 
 </Project>

@@ -39,6 +39,15 @@
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
     </Style>
 
+    <!-- Canonical lockup (monogram + wordmark + tagline). Do not pair with
+         a second "SynTrack" TextBlock — the name is already in the image. -->
+    <Style x:Key="BrandLogo" TargetType="Image">
+        <Setter Property="Source" Value="/Assets/syntrack-logo.png" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality" />
+    </Style>
+
     <!-- Default TextBlock so any stray control not explicitly styled still matches the theme. -->
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
