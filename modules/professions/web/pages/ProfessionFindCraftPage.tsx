@@ -5,6 +5,9 @@ import {
   StatusMessage
 } from "../../../../apps/web/src/shared/components/StatusMessage";
 import {
+  CrafterShareControls
+} from "../crafter-share/components/CrafterShareControls";
+import {
   ProfessionFindCraftWorkspace
 } from "../details/components/ProfessionFindCraftWorkspace";
 import {
@@ -55,8 +58,10 @@ export function ProfessionFindCraftPage() {
     <>
       <ProfessionsTabNav />
 
+      <CrafterShareControls />
+
       <ProfessionModuleWorkspace
-        description="I want to craft X - who should do it? Search a recipe and compare crafters."
+        description="I want to craft X - who should do it? Search a recipe and compare crafters. Share a public card so guildmates can see what you can make."
         eyebrow="FIND CRAFT"
         title="Find Craft"
       >

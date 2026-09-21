@@ -4,6 +4,7 @@ export type NavDomainId =
   | "characters"
   | "weeklies"
   | "professions"
+  | "manage"
   | "settings";
 
 export type NavDomain = {
@@ -82,6 +83,16 @@ export const primaryNavDomains: NavDomain[] = [
       )
   }
 ];
+
+export const manageNavDomain: NavDomain =
+  {
+    id: "manage",
+    label: "Manage",
+    path: "/manage",
+    isActive: (pathname) =>
+      pathname === "/manage" ||
+      pathname.startsWith("/manage/")
+  };
 
 export const settingsNavDomain: NavDomain =
   {

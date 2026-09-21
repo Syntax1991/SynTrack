@@ -36,7 +36,17 @@ export type RaiderAccessTokenGuard = {
 export type RaiderSessionStatus = {
   battleTag: string | null;
   expiresAt: string;
+  isAdmin: boolean;
 };
+
+export type RaiderRegistrationResult =
+  | (RaiderSessionResult & {
+      outcome: "registered";
+    })
+  | {
+      outcome: "awaiting-approval";
+      battleTag: string | null;
+    };
 
 /*
  * Every branch a Battle.net OAuth callback can resolve to, once intent
@@ -55,6 +65,12 @@ export type RaiderAuthCallbackOutcome =
     }
   | {
       outcome: "login-unknown-account";
+    }
+  | {
+      outcome: "login-awaiting-approval";
+    }
+  | {
+      outcome: "login-disabled";
     }
   | {
       outcome: "register-existing-account";

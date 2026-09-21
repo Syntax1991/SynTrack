@@ -75,11 +75,18 @@ describe("RaiderAuthService — explicit registration", () => {
 
     expect(accounts.size).toBe(1);
 
-    expect(
-      confirmed.raiderAccountId
-    ).toBe(
-      Array.from(accounts.keys())[0]
+    expect(confirmed.outcome).toBe(
+      "awaiting-approval"
     );
+
+    if (confirmed.outcome !== "awaiting-approval") {
+      throw new Error("unreachable");
+    }
+
+    expect(confirmed.battleTag).toBe("Demo#1234");
+    expect(
+      Array.from(accounts.values())[0]?.status
+    ).toBe("PENDING_APPROVAL");
   });
 
   it("an already-consumed pendingToken cannot be replayed to create a second account", async () => {

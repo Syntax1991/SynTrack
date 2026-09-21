@@ -1,11 +1,14 @@
 import type {
   RequestHandler
 } from "express";
-import { env } from "../../../../apps/api/src/config/env.js";
 import { requireBearerToken } from "../../../../apps/api/src/shared/http/bearerToken.js";
 import { resolvePendingDeviceConnection } from "../device-auth/device-connection-bridge.js";
 import { isSafeInternalPath } from "./internal-path.js";
 import { RaiderAuthService } from "./raider-auth.service.js";
+import {
+  deviceConnectRedirect,
+  redirectForOutcome
+} from "./raider-auth.redirects.js";
 import type { RaiderAuthIntent } from "./raider-auth.types.js";
 
 function getQueryValue(
@@ -72,7 +75,7 @@ export class RaiderAuthController {
         // to the connect page, which will independently re-fetch the
         // token's status and render EXPIRED/INVALID itself.
         response.redirect(
-          this.deviceConnectRedirect(
+          deviceConnectRedirect(
             rawDeviceConnectionToken
           )
         );
@@ -121,9 +124,11 @@ export class RaiderAuthController {
 
       if (providerError) {
         response.redirect(
-          this.errorRedirect(
-            "login"
-          )
+          redirectForOutcome({
+            outcome: "error",
+            intent: "login",
+            message: "sign-in failed"
+          })
         );
 
         return;
@@ -136,14 +141,16 @@ export class RaiderAuthController {
         );
 
       response.redirect(
-        this.redirectForOutcome(
-          result
-        )
+        redirectForOutcome(result)
       );
     }
     catch {
       response.redirect(
-        this.errorRedirect("login")
+        redirectForOutcome({
+          outcome: "error",
+          intent: "login",
+          message: "sign-in failed"
+        })
       );
     }
   };
@@ -197,140 +204,4 @@ export class RaiderAuthController {
 
     response.status(204).send();
   };
-
-  private redirectForOutcome(
-    outcome: Awaited<
-      ReturnType<
-        RaiderAuthService["handleCallback"]
-      >
-    >
-  ): string {
-    switch (outcome.outcome) {
-      case "login-success": {
-        const target = new URL(
-          "/raider-login",
-          env.FRONTEND_ORIGIN
-        );
-
-        target.hash = `token=${outcome.token}`;
-
-        if (outcome.returnTo) {
-          target.searchParams.set(
-            "returnTo",
-            outcome.returnTo
-          );
-        }
-
-        return target.toString();
-      }
-
-      case "login-unknown-account": {
-        const target = new URL(
-          "/login",
-          env.FRONTEND_ORIGIN
-        );
-
-        target.searchParams.set(
-          "outcome",
-          "unknown-account"
-        );
-
-        return target.toString();
-      }
-
-      case "register-existing-account": {
-        const target = new URL(
-          "/register/confirm",
-          env.FRONTEND_ORIGIN
-        );
-
-        target.searchParams.set(
-          "outcome",
-          "existing"
-        );
-
-        if (outcome.returnTo) {
-          target.searchParams.set(
-            "returnTo",
-            outcome.returnTo
-          );
-        }
-
-        target.hash = `token=${outcome.token}`;
-
-        return target.toString();
-      }
-
-      case "register-pending": {
-        const target = new URL(
-          "/register/confirm",
-          env.FRONTEND_ORIGIN
-        );
-
-        target.hash = `pendingToken=${outcome.pendingToken}`;
-
-        return target.toString();
-      }
-
-      case "error":
-      default: {
-        return this.errorRedirect(
-          outcome.outcome === "error"
-            ? outcome.intent
-            : "login",
-          outcome.outcome === "error"
-            ? outcome.reason
-            : undefined
-        );
-      }
-    }
-  }
-
-  /*
-   * `error` carries a short stable code, not a sentence - the frontend
-   * (LoginPage/RegisterPage) owns the actual copy per code, so this is
-   * free to gain more distinct reasons later without the URL shape
-   * changing. "state_expired" specifically covers the "OAuth state was
-   * missing/expired when the callback arrived" case (see
-   * raider-auth-callback.service.ts / BattleNetRepository.consumeOAuthState)
-   * so a user who waited too long, double-submitted, or reused an old
-   * callback link gets an accurate message instead of a generic one -
-   * every code still resolves to a fresh /login or /register page, so
-   * "Try again" always starts a brand-new OAuth attempt rather than
-   * retrying the dead state.
-   */
-  private deviceConnectRedirect(
-    rawDeviceConnectionToken: string
-  ): string {
-    const target = new URL(
-      "/client/connect",
-      env.FRONTEND_ORIGIN
-    );
-
-    target.searchParams.set(
-      "token",
-      rawDeviceConnectionToken
-    );
-
-    return target.toString();
-  }
-
-  private errorRedirect(
-    intent: RaiderAuthIntent,
-    reason?: "state_expired"
-  ): string {
-    const target = new URL(
-      intent === "register"
-        ? "/register"
-        : "/login",
-      env.FRONTEND_ORIGIN
-    );
-
-    target.searchParams.set(
-      "error",
-      reason ?? "failed"
-    );
-
-    return target.toString();
-  }
 }

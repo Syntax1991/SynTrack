@@ -47,6 +47,35 @@ export function LoginPage() {
     );
   }
 
+  if (outcome === "awaiting-approval") {
+    return (
+      <div className="raider-session-gate">
+        <div className="raider-session-gate-card">
+          <span className="brand-mark">ST</span>
+          <h1>Waiting for approval</h1>
+          <p>
+            This SynTrack account is registered and waiting for an
+            operator to approve it.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (outcome === "disabled") {
+    return (
+      <div className="raider-session-gate">
+        <div className="raider-session-gate-card">
+          <span className="brand-mark">ST</span>
+          <h1>Account disabled</h1>
+          <p>
+            This SynTrack account has been disabled.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (outcome === "unknown-account") {
     return (
       <div className="raider-session-gate">

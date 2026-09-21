@@ -995,6 +995,13 @@ model RaiderAccount {
   tokenType          String?
   scope              String?
   tokenExpiresAt     DateTime?
+  /*
+   * ACTIVE can sign in. PENDING_APPROVAL is a completed registration
+   * waiting for an allowlisted admin. DISABLED blocks web and device
+   * access until an admin re-enables. Existing rows are backfilled
+   * ACTIVE; new inserts default to PENDING_APPROVAL.
+   */
+  status             String    @default("PENDING_APPROVAL")
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -1003,8 +1010,28 @@ model RaiderAccount {
   deviceCredentials  DeviceCredential[]
   characters         Character[]
   removedCharacters  RemovedCharacter[]
+  crafterShare       CrafterShare?
 
   @@index([battleTag])
+}
+
+/*
+ * Opt-in public crafter card. Disabled by default. The token is the
+ * only public identifier; guild members open /c/:token without login.
+ * Does not store crafts itself - the public read path loads owned
+ * characters at request time and omits private weekly/gear/vault data.
+ */
+model CrafterShare {
+  id              String   @id @default(cuid())
+  raiderAccountId String   @unique
+  token           String   @unique
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  raiderAccount RaiderAccount @relation(fields: [raiderAccountId], references: [id], onDelete: Cascade)
+
+  @@index([token, enabled])
 }
 
 /*

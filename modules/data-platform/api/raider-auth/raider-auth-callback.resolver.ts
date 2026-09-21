@@ -10,6 +10,10 @@ import type {
   RaiderAuthCallbackOutcome,
   RaiderAuthIntent
 } from "./raider-auth.types.js";
+import {
+  RAIDER_ACCOUNT_PENDING,
+  isActiveRaiderAccountStatus
+} from "../admin-users/admin-account-status.js";
 
 const pendingRegistrationLifetimeMilliseconds =
   10 * 60 * 1000;
@@ -133,6 +137,20 @@ export async function resolveRaiderAuthCallback(
   // From here, existingAccount is guaranteed (login-matched or
   // register-matched-existing) - login never creates an account.
   const account = existingAccount!;
+
+  if (
+    !isActiveRaiderAccountStatus(
+      account.status
+    )
+  ) {
+    return {
+      outcome:
+        account.status ===
+        RAIDER_ACCOUNT_PENDING
+          ? "login-awaiting-approval"
+          : "login-disabled"
+    };
+  }
 
   await repository.updateAccountToken(
     account.id,

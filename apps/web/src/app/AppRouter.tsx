@@ -4,6 +4,7 @@ import {
   Routes
 } from "react-router-dom";
 import { SettingsPage } from "../../../../modules/data-platform/web/settings/pages/SettingsPage";
+import { ManagePage } from "../../../../modules/data-platform/web/admin-users/pages/ManagePage";
 import { CharacterDetailPage } from "../../../../modules/my-syntrack/web/characters/pages/CharacterDetailPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
 import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages/OverviewPage";
@@ -19,6 +20,7 @@ import { ClientConnectPage } from "../../../../modules/data-platform/web/device-
 import { ImprintPage } from "../../../../modules/data-platform/web/legal/pages/ImprintPage";
 import { PrivacyPolicyPage } from "../../../../modules/data-platform/web/legal/pages/PrivacyPolicyPage";
 import { ProfessionDetailPage } from "../../../../modules/professions/web/details/pages/ProfessionDetailPage";
+import { PublicCrafterSharePage } from "../../../../modules/professions/web/crafter-share/pages/PublicCrafterSharePage";
 import { ProfessionFindCraftPage } from "../../../../modules/professions/web/pages/ProfessionFindCraftPage";
 import { ProfessionKnowledgePage } from "../../../../modules/professions/web/pages/ProfessionKnowledgePage";
 import { ProfessionRecipeWorkspacePage } from "../../../../modules/professions/web/pages/ProfessionRecipeWorkspacePage";
@@ -58,6 +60,11 @@ export function AppRouter() {
         <Route
           path="settings"
           element={<SettingsPage />}
+        />
+
+        <Route
+          path="manage"
+          element={<ManagePage />}
         />
 
         <Route
@@ -187,6 +194,11 @@ export function AppRouter() {
       <Route
         element={<PrivacyPolicyPage />}
         path="datenschutz"
+      />
+
+      <Route
+        element={<PublicCrafterSharePage />}
+        path="c/:token"
       />
 
       <Route

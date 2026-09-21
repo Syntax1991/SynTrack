@@ -1,12 +1,15 @@
+import { isAdminIdentity } from "../admin-users/admin-allowlist.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import type { BattleNetRepository } from "../integrations/battlenet/battlenet.repository.js";
 import { RaiderAuthCallbackService } from "./raider-auth-callback.service.js";
 import { RaiderAuthRepository } from "./raider-auth.repository.js";
+import { assertActiveRaiderAccount } from "./raider-auth.account-access.js";
 import type {
   RaiderAuthCallbackOutcome,
   RaiderAuthIntent,
   RaiderPendingRegistrationInfo,
+  RaiderRegistrationResult,
   RaiderSessionResult,
   RaiderSessionStatus
 } from "./raider-auth.types.js";
@@ -75,7 +78,7 @@ export class RaiderAuthService {
 
   confirmRegistration(
     pendingToken: string
-  ): Promise<RaiderSessionResult> {
+  ): Promise<RaiderRegistrationResult> {
     return this.callbackService.confirmRegistration(
       pendingToken
     );
@@ -95,6 +98,10 @@ export class RaiderAuthService {
         "Der Raider-Login ist ungültig oder abgelaufen. Bitte erneut mit Battle.net anmelden."
       );
     }
+
+    assertActiveRaiderAccount(
+      session.account.status
+    );
 
     return {
       token,
@@ -124,6 +131,10 @@ export class RaiderAuthService {
         "Der Raider-Login ist ungültig oder abgelaufen. Bitte erneut mit Battle.net anmelden."
       );
     }
+
+    assertActiveRaiderAccount(
+      session.account.status
+    );
 
     const account = session.account;
 
@@ -168,11 +179,21 @@ export class RaiderAuthService {
       );
     }
 
+    assertActiveRaiderAccount(
+      session.account.status
+    );
+
     return {
       battleTag:
         session.account.battleTag,
       expiresAt:
-        session.expiresAt.toISOString()
+        session.expiresAt.toISOString(),
+      isAdmin: isAdminIdentity({
+        battleNetAccountId:
+          session.account.battleNetAccountId,
+        battleTag:
+          session.account.battleTag
+      })
     };
   }
 

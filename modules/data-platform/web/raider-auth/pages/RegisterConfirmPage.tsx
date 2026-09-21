@@ -35,6 +35,7 @@ type ViewState =
     }
   | { kind: "creating" }
   | { kind: "existing" }
+  | { kind: "awaiting-approval"; battleTag: string | null }
   | { kind: "error" };
 
 /*
@@ -158,6 +159,15 @@ export function RegisterConfirmPage() {
           pendingToken
         );
 
+      if (result.outcome === "awaiting-approval") {
+        setView({
+          kind: "awaiting-approval",
+          battleTag: result.battleTag
+        });
+
+        return;
+      }
+
       setRaiderSessionToken(
         result.token
       );
@@ -227,6 +237,21 @@ export function RegisterConfirmPage() {
           >
             Try again
           </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (view.kind === "awaiting-approval") {
+    return (
+      <div className="raider-session-gate">
+        <div className="raider-session-gate-card">
+          <span className="brand-mark">ST</span>
+          <h1>Waiting for approval</h1>
+          <p>
+            {view.battleTag ?? "This Battle.net account"} was registered.
+            An operator needs to approve it before you can sign in.
+          </p>
         </div>
       </div>
     );

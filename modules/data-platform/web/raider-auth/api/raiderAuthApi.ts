@@ -6,7 +6,7 @@ import { isSafeInternalPath } from "../utils/internalPath";
 import type {
   RaiderAuthIntent,
   RaiderPendingRegistrationInfo,
-  RaiderSessionResult,
+  RaiderRegistrationResult,
   RaiderSessionStatus
 } from "../types/raiderAuth.types";
 
@@ -93,8 +93,8 @@ export function getPendingRegistration(
 
 export function confirmRegistration(
   pendingToken: string
-): Promise<RaiderSessionResult> {
-  return apiRequest<RaiderSessionResult>(
+): Promise<RaiderRegistrationResult> {
+  return apiRequest<RaiderRegistrationResult>(
     "/auth/raider/register/confirm",
     {
       method: "POST",

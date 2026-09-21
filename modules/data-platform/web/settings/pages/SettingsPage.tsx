@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHeader";
 import { Tabs } from "../../../../../apps/web/src/shared/components/Tabs";
 import { AdvancedManualDeviceLinkPanel } from "../../../../data-platform/web/device-auth/components/AdvancedManualDeviceLinkPanel";
@@ -7,7 +8,6 @@ import { BattleNetSettingsPanel } from "../../../../data-platform/web/settings/c
 import { WoWSyncTab } from "../../../../data-platform/web/settings/components/WoWSyncTab";
 import { TagManagerPanel } from "../../../../my-syntrack/web/tags/components/TagManagerPanel";
 import { SeasonSwitchPanel } from "../../../../my-syntrack/web/season/components/SeasonSwitchPanel";
-import { useState } from "react";
 
 type SettingsPageTab =
   | "account"

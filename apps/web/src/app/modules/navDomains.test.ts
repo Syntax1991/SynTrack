@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   primaryNavDomains,
+  manageNavDomain,
   settingsNavDomain
 } from "./navDomains";
 
@@ -39,6 +40,11 @@ describe("navDomains - flat product-domain sidebar", () => {
     expect(
       settingsNavDomain.label
     ).toBe("Settings");
+
+    expect(manageNavDomain.label).toBe("Manage");
+    expect(manageNavDomain.path).toBe("/manage");
+    expect(manageNavDomain.isActive("/manage")).toBe(true);
+    expect(manageNavDomain.isActive("/settings")).toBe(false);
   });
 
   it("does not register Gear as a primary product domain", () => {

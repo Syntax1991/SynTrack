@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.js";
 import { raiderAuthService } from "../raider-auth/raider-auth.routes.js";
+import { RaiderAuthRepository } from "../raider-auth/raider-auth.repository.js";
 import {
   registerDeviceConnectionBinder,
   registerDeviceConnectionResolver
@@ -71,9 +72,20 @@ registerDeviceConnectionResolver(
  * to reuse - the same credential repository backs both device-link
  * issuance/revocation and ongoing request authentication.
  */
+const raiderAccounts =
+  new RaiderAuthRepository();
+
 export const deviceCredentialAuthService =
   new DeviceCredentialAuthService(
-    credentialRepository
+    credentialRepository,
+    async (raiderAccountId) => {
+      const account =
+        await raiderAccounts.findAccountById(
+          raiderAccountId
+        );
+
+      return account?.status ?? null;
+    }
   );
 
 const controller =

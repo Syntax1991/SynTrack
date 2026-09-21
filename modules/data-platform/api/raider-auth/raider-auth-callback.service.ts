@@ -1,6 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { env } from "../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { isAdminIdentity } from "../admin-users/admin-allowlist.js";
+import {
+  RAIDER_ACCOUNT_ACTIVE,
+  RAIDER_ACCOUNT_PENDING,
+  isActiveRaiderAccountStatus
+} from "../admin-users/admin-account-status.js";
 import { bindDeviceConnection } from "../device-auth/device-connection-bridge.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import type { BattleNetRepository } from "../integrations/battlenet/battlenet.repository.js";
@@ -12,7 +18,7 @@ import type {
   RaiderAuthCallbackOutcome,
   RaiderAuthIntent,
   RaiderPendingRegistrationInfo,
-  RaiderSessionResult
+  RaiderRegistrationResult
 } from "./raider-auth.types.js";
 
 const oauthStateLifetimeMilliseconds =
@@ -172,7 +178,7 @@ export class RaiderAuthCallbackService {
    */
   async confirmRegistration(
     pendingToken: string
-  ): Promise<RaiderSessionResult> {
+  ): Promise<RaiderRegistrationResult> {
     if (!pendingToken) {
       throw new AppError(
         400,
@@ -192,12 +198,21 @@ export class RaiderAuthCallbackService {
       );
     }
 
+    const autoApprove = isAdminIdentity({
+      battleNetAccountId:
+        pending.battleNetAccountId,
+      battleTag: pending.battleTag
+    });
+
     const account =
       await this.repository.createAccount(
         {
           battleNetAccountId:
             pending.battleNetAccountId,
-          battleTag: pending.battleTag
+          battleTag: pending.battleTag,
+          status: autoApprove
+            ? RAIDER_ACCOUNT_ACTIVE
+            : RAIDER_ACCOUNT_PENDING
         }
       );
 
@@ -214,11 +229,17 @@ export class RaiderAuthCallbackService {
       }
     );
 
-    // The account has only just been created, at this exact call - safe
-    // to bind a pending codeless device connection now (unlike the
-    // existing-account paths in raider-auth-callback.resolver.ts, which
-    // can bind immediately because the account was already known).
-    // bindDeviceConnection is a no-op when deviceLinkRequestId is null.
+    if (
+      !isActiveRaiderAccountStatus(
+        account.status
+      )
+    ) {
+      return {
+        outcome: "awaiting-approval",
+        battleTag: pending.battleTag
+      };
+    }
+
     if (pending.deviceLinkRequestId) {
       await bindDeviceConnection(
         pending.deviceLinkRequestId,
@@ -238,6 +259,7 @@ export class RaiderAuthCallbackService {
       );
 
     return {
+      outcome: "registered",
       token: sessionToken,
       raiderAccountId: account.id,
       characters,

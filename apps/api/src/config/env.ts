@@ -86,6 +86,21 @@ const environmentSchema = z.object({
     .default("./prisma/ingest-observation.db"),
 
   /*
+   * Operator allowlist for Settings > Users. Empty means nobody is
+   * admin (fail-closed). Battle.net account ids are canonical; BattleTags
+   * are a mutable bootstrap fallback only.
+   */
+  SYNTRACK_ADMIN_BATTLE_NET_ACCOUNT_IDS: z
+    .string()
+    .trim()
+    .default(""),
+
+  SYNTRACK_ADMIN_BATTLE_TAGS: z
+    .string()
+    .trim()
+    .default(""),
+
+  /*
    * Where the built desktop-client installer(s) are dropped for
    * self-hosted download via /api/client-download - never committed
    * (see .gitignore). Resolved relative to apps/api, same convention

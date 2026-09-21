@@ -56,9 +56,11 @@ The existing production code currently covers parts of:
   - SynTrack Addon import
   - Addon SavedVariables capture
   - SynTrack Core addon runtime
+  - Windows desktop client (`apps/client`)
 
-Recruitment and Automation are established as platform domains and
-will be implemented incrementally.
+Loot, Recruitment, and Automation still exist as module trees, but they
+are not part of the active web navigation. Guild is not a module; it
+was removed in Phase G4B.
 
 ## Architecture
 
@@ -101,7 +103,17 @@ Automation owns triggers, reminders and notifications.
 
 Each addon belongs to the main module whose game-side capability it
 implements. Data Platform owns the shared ingestion and synchronization
-contracts used by those addons and by the future SynTrack Companion.
+contracts used by those addons and by the Windows desktop client in
+`apps/client`.
+
+## Desktop client
+
+`apps/client` is a native Windows app (C# / .NET 8 / WPF). It watches
+the WoW `SavedVariables` folder and uploads `SynTrack_Core.lua` /
+`SynTrack_Professions.lua` to the API. It does not parse Lua itself.
+
+Local run, tests, and the install wizard are documented in
+`apps/client/README.md`.
 
 ## Local development
 
@@ -146,6 +158,12 @@ BATTLENET_CLIENT_SECRET=
 ```
 
 Never commit real credentials.
+
+## Agent / editor folders
+
+`.claude/` and `.cursor/` are local to each developer machine and are
+gitignored. They are not in this repository. Shared agent notes that
+do belong in Git live in the root `CLAUDE.md`.
 
 ## WoW addon compatibility
 

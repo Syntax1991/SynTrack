@@ -106,6 +106,28 @@ describe("LoginPage — default state", () => {
   });
 });
 
+describe("LoginPage — pending and disabled accounts", () => {
+  it("explains a registration waiting for approval", async () => {
+    renderLogin("/login?outcome=awaiting-approval");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Waiting for approval"
+      })
+    ).toBeInTheDocument();
+  });
+
+  it("explains a disabled account", async () => {
+    renderLogin("/login?outcome=disabled");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Account disabled"
+      })
+    ).toBeInTheDocument();
+  });
+});
+
 describe("LoginPage — unknown-account outcome", () => {
   it("shows the no-account message with a link to registration, never auto-creating anything", async () => {
     renderLogin(

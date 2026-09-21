@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import {
   primaryNavDomains,
+  manageNavDomain,
   settingsNavDomain
 } from "../../app/modules/navDomains";
 import type {
@@ -15,11 +16,13 @@ import type {
 } from "../../app/modules/navDomains";
 import { RaiderAuthTopAction } from "../../../../../modules/data-platform/web/raider-auth/components/RaiderAuthTopAction";
 import { SidebarAccountPanel } from "../../../../../modules/data-platform/web/raider-auth/components/SidebarAccountPanel";
+import { useIsOperator } from "../../../../../modules/data-platform/web/admin-users/hooks/useIsOperator";
 import { NavIcon } from "./NavIcon";
 
 export function AppNavigation() {
   const { pathname } =
     useLocation();
+  const { isOperator } = useIsOperator();
 
   const [
     mobileOpen,
@@ -183,6 +186,9 @@ export function AppNavigation() {
           <div className="sidebar-nav-divider" />
 
           <div className="sidebar-nav-list">
+            {isOperator
+              ? renderNavItem(manageNavDomain)
+              : null}
             {renderNavItem(
               settingsNavDomain
             )}

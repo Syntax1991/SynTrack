@@ -23,7 +23,8 @@ describe("SidebarAccountPanel", () => {
     setRaiderSessionToken("token");
     vi.spyOn(raiderAuthApi, "getRaiderSessionStatus").mockResolvedValue({
       battleTag: "Syntax#21715",
-      expiresAt: "2026-12-31T00:00:00.000Z"
+      expiresAt: "2026-12-31T00:00:00.000Z",
+      isAdmin: false
     });
 
     render(<SidebarAccountPanel />);

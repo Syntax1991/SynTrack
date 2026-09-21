@@ -90,4 +90,22 @@ describe("DeviceCredentialAuthService", () => {
       "This device has been disconnected."
     );
   });
+
+  it("rejects a credential bound to a pending or disabled account", async () => {
+    const pendingService =
+      new DeviceCredentialAuthService(
+        repository,
+        async () => "PENDING_APPROVAL"
+      );
+    const { rawToken } = seed(
+      repository,
+      { raiderAccountId: "account-1" }
+    );
+
+    await expect(
+      pendingService.requireValidCredential(
+        rawToken
+      )
+    ).rejects.toThrow(/Freigabe/u);
+  });
 });
