@@ -28,7 +28,9 @@ export function getRaiderLoginUrl(
   const url = new URL(
     getApiUrl(
       "/auth/raider/connect"
-    )
+    ),
+    globalThis.location?.origin ??
+      "http://localhost"
   );
 
   if (options?.intent === "register") {

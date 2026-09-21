@@ -1,23 +1,13 @@
 import { env } from "../../../../../apps/api/src/config/env.js";
 import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js";
-import type {
-  BattleNetAccountProfile,
-  BattleNetCharacterEquipment,
-  BattleNetCharacterProfile,
-  BattleNetGuildRoster,
-  BattleNetProfessionsResponse,
-  BattleNetTokenResponse,
-  BattleNetUserInfo
-} from "./battlenet.types.js";
+import { isTokenResponse, readJsonResponse } from "./battlenet.client.http.js";
+import { captureBlizzardObservation } from "./battlenet.client.observation.js";
+import type { BlizzardObservationDescriptor } from "./battlenet.client.observation.js";
+import type { BattleNetAccountProfile, BattleNetCharacterAchievements, BattleNetCharacterEquipment, BattleNetCharacterProfile, BattleNetMythicKeystoneProfile, BattleNetMythicKeystoneSeasonProfile, BattleNetProfessionsResponse, BattleNetTokenResponse, BattleNetUserInfo } from "./battlenet.types.js";
 
-const authorizationUrl =
-  "https://oauth.battle.net/authorize";
-
-const tokenUrl =
-  "https://oauth.battle.net/token";
-
-const userInfoUrl =
-  "https://oauth.battle.net/userinfo";
+const authorizationUrl = "https://oauth.battle.net/authorize";
+const tokenUrl = "https://oauth.battle.net/token";
+const userInfoUrl = "https://oauth.battle.net/userinfo";
 
 export class BattleNetClient {
   createAuthorizationUrl(
@@ -66,26 +56,19 @@ export class BattleNetClient {
       method: "POST",
       headers: {
         Accept: "application/json",
-        Authorization:
-          `Basic ${basicCredentials}`,
-        "Content-Type":
-          "application/x-www-form-urlencoded"
+        Authorization: `Basic ${basicCredentials}`,
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri:
-          redirectUri
+        redirect_uri: redirectUri
       })
     });
 
-    const payload =
-      await this.readJsonResponse(response);
+    const payload = await readJsonResponse(response);
 
-    if (
-      !response.ok ||
-      !this.isTokenResponse(payload)
-    ) {
+    if (!response.ok || !isTokenResponse(payload)) {
       throw new AppError(
         502,
         "Battle.net konnte den Autorisierungscode nicht einlösen.",
@@ -99,19 +82,14 @@ export class BattleNetClient {
   async getUserInfo(
     accessToken: string
   ): Promise<BattleNetUserInfo> {
-    const response = await fetch(
-      userInfoUrl,
-      {
-        headers: {
-          Accept: "application/json",
-          Authorization:
-            `Bearer ${accessToken}`
-        }
+    const response = await fetch(userInfoUrl, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${accessToken}`
       }
-    );
+    });
 
-    const payload =
-      await this.readJsonResponse(response);
+    const payload = await readJsonResponse(response);
 
     if (!response.ok) {
       throw new AppError(
@@ -150,27 +128,18 @@ export class BattleNetClient {
     realmSlug: string,
     characterName: string
   ): Promise<BattleNetProfessionsResponse> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    const result = await this.getProfileResource<BattleNetProfessionsResponse>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/professions`,
+      accessToken,
+      true,
+      { domain: "PROFESSIONS", endpoint: "character-professions" },
+      realmSlug,
+      characterName
     );
 
-    const encodedName = encodeURIComponent(
-      characterName.toLowerCase()
-    );
-
-    const result =
-      await this.getProfileResource<
-        BattleNetProfessionsResponse
-      >(
-        `/profile/wow/character/${encodedRealm}/${encodedName}/professions`,
-        accessToken,
-        true
-      );
-
-    return result ?? {
-      primaries: [],
-      secondaries: []
-    };
+    return result ?? { primaries: [], secondaries: [] };
   }
 
   async getCharacterProfile(
@@ -178,42 +147,15 @@ export class BattleNetClient {
     realmSlug: string,
     characterName: string
   ): Promise<BattleNetCharacterProfile | null> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
-    );
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
 
-    const encodedName = encodeURIComponent(
-      characterName.toLowerCase()
-    );
-
-    return this.getProfileResource<
-      BattleNetCharacterProfile
-    >(
+    return this.getProfileResource<BattleNetCharacterProfile>(
       `/profile/wow/character/${encodedRealm}/${encodedName}`,
       accessToken,
-      true
-    );
-  }
-
-  async getGuildRoster(
-    accessToken: string,
-    realmSlug: string,
-    guildSlug: string
-  ): Promise<BattleNetGuildRoster | null> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
-    );
-
-    const encodedGuild = encodeURIComponent(
-      guildSlug.toLowerCase()
-    );
-
-    return this.getProfileResource<
-      BattleNetGuildRoster
-    >(
-      `/data/wow/guild/${encodedRealm}/${encodedGuild}/roster`,
-      accessToken,
-      true
+      true,
+      { domain: "PROFILE", endpoint: "character-profile" },
+      realmSlug,
+      characterName
     );
   }
 
@@ -222,27 +164,90 @@ export class BattleNetClient {
     realmSlug: string,
     characterName: string
   ): Promise<BattleNetCharacterEquipment | null> {
-    const encodedRealm = encodeURIComponent(
-      realmSlug.toLowerCase()
-    );
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
 
-    const encodedName = encodeURIComponent(
-      characterName.toLowerCase()
-    );
-
-    return this.getProfileResource<
-      BattleNetCharacterEquipment
-    >(
+    return this.getProfileResource<BattleNetCharacterEquipment>(
       `/profile/wow/character/${encodedRealm}/${encodedName}/equipment`,
+      accessToken,
+      true,
+      { domain: "EQUIPMENT", endpoint: "character-equipment" },
+      realmSlug,
+      characterName
+    );
+  }
+
+  // null = no Mythic Keystone profile (same allowNotFound contract as
+  // getCharacterProfile/getCharacterEquipment; genuine "never done M+").
+  async getCharacterMythicKeystoneProfile(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string
+  ): Promise<BattleNetMythicKeystoneProfile | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetMythicKeystoneProfile>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile`,
+      accessToken,
+      true,
+      { domain: "MYTHIC_PLUS", endpoint: "mythic-keystone-profile" },
+      realmSlug,
+      characterName
+    );
+  }
+
+  // Season-wide per-dungeon best runs (Phase D.2) - same null/404
+  // contract as getCharacterMythicKeystoneProfile.
+  async getCharacterMythicKeystoneProfileSeason(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string,
+    seasonId: number
+  ): Promise<BattleNetMythicKeystoneSeasonProfile | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetMythicKeystoneSeasonProfile>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/mythic-keystone-profile/season/${seasonId}`,
+      accessToken,
+      true,
+      { domain: "MYTHIC_PLUS", endpoint: "mythic-keystone-profile-season" },
+      realmSlug,
+      characterName
+    );
+  }
+
+  // null = no achievements profile at all (same allowNotFound contract as
+  // the other character endpoints).
+  async getCharacterAchievements(
+    accessToken: string,
+    realmSlug: string,
+    characterName: string
+  ): Promise<BattleNetCharacterAchievements | null> {
+    const [encodedRealm, encodedName] = this.encodeCharacterSlugs(realmSlug, characterName);
+
+    return this.getProfileResource<BattleNetCharacterAchievements>(
+      `/profile/wow/character/${encodedRealm}/${encodedName}/achievements`,
       accessToken,
       true
     );
   }
 
+  private encodeCharacterSlugs(
+    realmSlug: string,
+    characterName: string
+  ): [string, string] {
+    return [
+      encodeURIComponent(realmSlug.toLowerCase()),
+      encodeURIComponent(characterName.toLowerCase())
+    ];
+  }
+
   private async getProfileResource<T>(
     path: string,
     accessToken: string,
-    allowNotFound = false
+    allowNotFound = false,
+    observe?: BlizzardObservationDescriptor,
+    realmSlug?: string,
+    characterName?: string
   ): Promise<T | null> {
     const baseUrl =
       `https://${env.BATTLENET_REGION}.api.blizzard.com`;
@@ -278,7 +283,7 @@ export class BattleNetClient {
     }
 
     const payload =
-      await this.readJsonResponse(response);
+      await readJsonResponse(response);
 
     if (response.status === 401) {
       throw new AppError(
@@ -295,46 +300,25 @@ export class BattleNetClient {
       );
     }
 
+    /*
+     * Phase G3B: RAW OBSERVATION DB - captured here, the single shared
+     * fetch path for every public character-domain call, right after
+     * the decoded JSON body is confirmed successful and BEFORE the
+     * caller's own normalizer (blizzard-*.normalizer.ts) maps it. See
+     * battlenet.client.observation.ts for exactly what is (and is not)
+     * passed on.
+     */
+    if (observe) {
+      captureBlizzardObservation(
+        observe,
+        env.BATTLENET_REGION,
+        realmSlug,
+        characterName,
+        response.status,
+        payload
+      );
+    }
+
     return payload as T;
-  }
-
-  private async readJsonResponse(
-    response: Response
-  ): Promise<unknown> {
-    const text = await response.text();
-
-    if (!text) {
-      return {};
-    }
-
-    try {
-      return JSON.parse(text) as unknown;
-    }
-    catch {
-      return {
-        response: text.slice(0, 500)
-      };
-    }
-  }
-
-  private isTokenResponse(
-    payload: unknown
-  ): payload is BattleNetTokenResponse {
-    if (
-      typeof payload !== "object" ||
-      payload === null
-    ) {
-      return false;
-    }
-
-    const candidate =
-      payload as Record<string, unknown>;
-
-    return (
-      typeof candidate.access_token ===
-        "string" &&
-      typeof candidate.token_type ===
-        "string"
-    );
   }
 }

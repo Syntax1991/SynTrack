@@ -24,13 +24,16 @@ export type NavDomain = {
  * (Vault / M+ inside Weeklies; Find Craft and Specializations inside
  * Professions) live as page-level tabs within their domain - see
  * WeekliesTabNav and ProfessionsTabNav - rather than as permanent
- * sidebar entries. Guild/Loot/Recruitment/Raid Tasks/Automation are not
- * part of the active personal product surface (their backend/routes
- * remain for a later deliberate cleanup).
+ * sidebar entries. Recruitment/Raid Tasks/Automation are not part of
+ * the active personal product surface (their backend/routes remain
+ * for a later deliberate cleanup). Guild was removed entirely in
+ * Phase G4B, and Loot and the dedicated Gear Readiness page were
+ * removed in full afterward - none of the three merely absent from
+ * navigation, they no longer exist as products.
  *
- * Gear is intentionally absent from primary navigation: Seasonal Tier /
- * Embellishment setup live on /season; detailed gear remains Character
- * Detail + legacy /gear-readiness route for existing drilldowns.
+ * Item level and Tier Set / Embellishment summaries remain on Character
+ * Detail and the Overview matrix; there is no dedicated gear product
+ * page or route anymore.
  */
 export const primaryNavDomains: NavDomain[] = [
   {
@@ -88,6 +91,3 @@ export const settingsNavDomain: NavDomain =
     isActive: (pathname) =>
       pathname === "/settings"
   };
-
-/** Legacy account-wide Gear page — not a primary product domain. */
-export const LEGACY_GEAR_ROUTE_PATH = "/gear-readiness";

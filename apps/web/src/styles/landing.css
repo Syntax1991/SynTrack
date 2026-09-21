@@ -1,0 +1,131 @@
+.landing-page {
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.landing-hero {
+  display: grid;
+  place-items: center;
+  padding: 64px 24px 40px;
+}
+
+.landing-section {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.landing-section h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.landing-section-intro {
+  max-width: 620px;
+  margin: 0 auto 32px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.landing-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.landing-feature-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: var(--surface);
+}
+
+.landing-feature-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.landing-feature-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.landing-section-download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.landing-download-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: var(--surface);
+  text-align: center;
+}
+
+.landing-download-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.landing-download-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.landing-download-status {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.landing-download-meta {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.landing-footer {
+  max-width: 720px;
+  margin: 24px auto 0;
+  padding: 24px 24px 56px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.landing-disclaimer {
+  margin: 0 0 14px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.landing-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.landing-footer-links a {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.landing-footer-links a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}

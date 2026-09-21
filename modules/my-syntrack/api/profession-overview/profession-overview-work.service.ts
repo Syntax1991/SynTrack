@@ -1,6 +1,10 @@
 import { ProfessionDetailRepository } from "../../../professions/api/details/profession-detail.repository.js";
 import { ProfessionDetailService } from "../../../professions/api/details/profession-detail.service.js";
 import { ProfessionRecipeRepository } from "../../../professions/api/details/profession-recipe.repository.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
 import { ProfessionKnowledgeTreasureStatusRepository } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.repository.js";
 import { ProfessionKnowledgeTreasureStatusService } from "../profession-knowledge-treasures/profession-knowledge-treasure-status.service.js";
 import { ProfessionWeeklyStatusRepository } from "../profession-weekly/profession-weekly-status.repository.js";
@@ -12,6 +16,7 @@ import {
   buildProfessionOverviewWorkSummary,
   sortProfessionOverviewWorkRows
 } from "./profession-overview-work.mapper.js";
+import { resolveEffectiveProfessionOverviewSkills } from "./profession-overview-work-effective-skill.js";
 import { ProfessionOverviewWorkRepository } from "./profession-overview-work.repository.js";
 import type { ProfessionOverviewWorkResponse } from "./profession-overview-work.types.js";
 
@@ -41,12 +46,20 @@ export class ProfessionOverviewWorkService {
         new ProfessionKnowledgeTreasureStatusRepository()
       ),
     private readonly craftLookup: ProfessionOverviewCraftLookup =
-      createDefaultCraftLookup()
+      createDefaultCraftLookup(),
+    private readonly professionAuthorityService =
+      new CharacterProfessionAuthorityService(
+        new CharacterExternalSnapshotRepository()
+      ),
+    private readonly profileAuthorityService =
+      new CharacterProfileAuthorityService(
+        new CharacterExternalSnapshotRepository()
+      )
   ) {}
 
   async getOverview(): Promise<ProfessionOverviewWorkResponse> {
     const [
-      assignments,
+      rawAssignments,
       weeklyOverview,
       treasureOverview,
       craftOverview
@@ -56,6 +69,47 @@ export class ProfessionOverviewWorkService {
       this.treasureStatusService.getOverview(),
       this.craftLookup.getOverview()
     ]);
+
+    const distinctCharacters = new Map(
+      rawAssignments.map((assignment) => [
+        assignment.characterId,
+        {
+          id: assignment.characterId,
+          name: assignment.characterName,
+          realm: assignment.realm,
+          region: assignment.region,
+          level: assignment.level,
+          className: assignment.className
+        }
+      ])
+    );
+
+    const [effectiveSkillByCharacterProfession, identityByCharacterId] =
+      await Promise.all([
+        resolveEffectiveProfessionOverviewSkills(
+          rawAssignments,
+          this.professionAuthorityService
+        ),
+        resolveEffectiveCharacterIdentities(
+          [...distinctCharacters.values()],
+          this.profileAuthorityService
+        )
+      ]);
+
+    // Public base skill/className only - knowledgePoints (addon-private)
+    // passes through unchanged.
+    const assignments = rawAssignments.map((assignment) => {
+      const identity = identityByCharacterId.get(assignment.characterId);
+
+      return {
+        ...assignment,
+        className: identity?.className ?? assignment.className,
+        skill:
+          effectiveSkillByCharacterProfession.get(
+            `${assignment.characterId}:${assignment.professionKey}`
+          ) ?? assignment.skill
+      };
+    });
 
     const weeklyByCharacterProfession = new Map<
       string,

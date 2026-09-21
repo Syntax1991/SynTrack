@@ -22,6 +22,10 @@ import { DataHealthRepository } from "../data-health/data-health.repository.js";
 import { DataHealthService } from "../data-health/data-health.service.js";
 import { WeeklyGameplayRepository } from "../weekly-gameplay/weekly-gameplay.repository.js";
 import { WeeklyGameplayService } from "../weekly-gameplay/weekly-gameplay.service.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { CharacterProfessionAuthorityService } from "../character-external-sync/character-profession-authority.service.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { applyAuthoritativeProfile } from "./overview-profile-effective.js";
 import {
   attachCharacterExtras,
   buildTagsByCharacterId
@@ -95,6 +99,22 @@ export class OverviewService {
     new WeeklyGameplayRepository()
   );
 
+  /*
+   * Constructor-injectable (unlike the field-initialized dependencies
+   * above) specifically so service-level wiring tests can supply a fake
+   * authority service and prove Phase F1's Blizzard-primary override
+   * actually reaches the final served character/profession - see
+   * overview.service.wiring.test.ts.
+   */
+  constructor(
+    private readonly profileAuthorityService: CharacterProfileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    ),
+    private readonly professionAuthorityService: CharacterProfessionAuthorityService = new CharacterProfessionAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
+  ) {}
+
   async getOverview(): Promise<OverviewResponse> {
     const activeScope =
       await this.trackerScopeProfileService.getActive();
@@ -118,7 +138,7 @@ export class OverviewService {
       this.resourceReadinessService.getOverview(),
       this.professionWeeklyStatusService.getOverview(),
       this.professionKnowledgeTreasureStatusService.getOverview(),
-      loadProfessionIssuesByCharacter(),
+      loadProfessionIssuesByCharacter(this.professionAuthorityService),
       seasonalScopeKey
         ? this.trackerDefinitionService.listByScope(seasonalScopeKey)
         : Promise.resolve<TrackerDefinitionView[]>([]),
@@ -163,10 +183,16 @@ export class OverviewService {
         realm: character.realm,
         region: character.region,
         className: character.className,
-        level: character.level
+        level: character.level,
+        // Phase F2: no addon equivalent - applyAuthoritativeProfile fills these below.
+        race: null,
+        faction: null,
+        activeSpec: null,
+        guild: null,
+        averageItemLevel: null,
+        equippedItemLevel: null
       })),
       weeklyByCharacterId,
-      vaultByCharacterId: new Map(),
       gearByCharacterId: buildCharacterIdMap(gearOverview.characters),
       professionByCharacterId: buildProfessionByCharacterId(
         professionIssuesByCharacter,
@@ -202,6 +228,11 @@ export class OverviewService {
       characters,
       tagsByCharacterId,
       healthByCharacterId
+    );
+
+    await applyAuthoritativeProfile(
+      charactersWithExtras,
+      this.profileAuthorityService
     );
 
     return {

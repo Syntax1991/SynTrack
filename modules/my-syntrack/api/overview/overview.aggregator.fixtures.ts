@@ -18,6 +18,12 @@ export function baseCharacter(
     region: "eu",
     className: "Shaman",
     level: 80,
+    race: null,
+    faction: null,
+    activeSpec: null,
+    guild: null,
+    averageItemLevel: null,
+    equippedItemLevel: null,
     ...overrides
   };
 }
@@ -30,7 +36,6 @@ export function baseInput(
     weeklyTaskCount: 5,
     characters: [baseCharacter()],
     weeklyByCharacterId: new Map(),
-    vaultByCharacterId: new Map(),
     gearByCharacterId: new Map(),
     professionByCharacterId:
       new Map(),

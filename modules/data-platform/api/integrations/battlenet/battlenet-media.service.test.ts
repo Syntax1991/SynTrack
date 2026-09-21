@@ -193,4 +193,74 @@ describe("BattleNetMediaService", () => {
       )
     ).toBeNull();
   });
+
+  it("resolves a playable-class icon URL by class id, never by name", async () => {
+    const fetchMock = vi.fn(
+      async (url: string | URL) => {
+        expect(String(url)).toContain(
+          "/data/wow/media/playable-class/7"
+        );
+
+        return new Response(
+          JSON.stringify({
+            assets: [
+              {
+                key: "icon",
+                value:
+                  "https://render.worldofwarcraft.com/icons/56/classicon_shaman.jpg"
+              }
+            ]
+          }),
+          { status: 200 }
+        );
+      }
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const service = new BattleNetMediaService(
+      createAppTokenService() as never
+    );
+
+    expect(
+      await service.resolvePlayableClassIconUrl(7)
+    ).toBe(
+      "https://render.worldofwarcraft.com/icons/56/classicon_shaman.jpg"
+    );
+  });
+
+  it("resolves a profession icon URL by profession id, never by name", async () => {
+    const fetchMock = vi.fn(
+      async (url: string | URL) => {
+        expect(String(url)).toContain(
+          "/data/wow/media/profession/171"
+        );
+
+        return new Response(
+          JSON.stringify({
+            assets: [
+              {
+                key: "icon",
+                value:
+                  "https://render.worldofwarcraft.com/icons/56/trade_alchemy.jpg"
+              }
+            ]
+          }),
+          { status: 200 }
+        );
+      }
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const service = new BattleNetMediaService(
+      createAppTokenService() as never
+    );
+
+    expect(
+      await service.resolveProfessionIconUrl(171)
+    ).toBe(
+      "https://render.worldofwarcraft.com/icons/56/trade_alchemy.jpg"
+    );
+  });
 });

@@ -1,4 +1,7 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { CharacterExternalSnapshotRepository } from "../character-external-sync/character-external-snapshot.repository.js";
+import { CharacterProfileAuthorityService } from "../character-external-sync/character-profile-authority.service.js";
+import { resolveEffectiveCharacterIdentities } from "../character-external-sync/character-profile-effective-identity.js";
 import { RaidTaskRepository } from "./raid-task.repository.js";
 import type {
   PersonalRaidTaskInput,
@@ -35,7 +38,10 @@ function isDueSoon(
 export class RaidTaskService {
   constructor(
     private readonly repository:
-      RaidTaskRepository
+      RaidTaskRepository,
+    private readonly profileAuthorityService = new CharacterProfileAuthorityService(
+      new CharacterExternalSnapshotRepository()
+    )
   ) {}
 
   async getOverview() {
@@ -43,8 +49,16 @@ export class RaidTaskService {
       await this.repository.findCharacters();
     const now = Date.now();
 
+    const identityByCharacterId =
+      await resolveEffectiveCharacterIdentities(
+        characters,
+        this.profileAuthorityService
+      );
+
     const characterItems = characters.map(
       (character) => {
+        const identity =
+          identityByCharacterId.get(character.id);
         const tasks =
           character.personalRaidTasks
             .map((task) => ({
@@ -95,8 +109,8 @@ export class RaidTaskService {
           name: character.name,
           realm: character.realm,
           region: character.region,
-          className: character.className,
-          level: character.level,
+          className: identity?.className ?? character.className,
+          level: identity?.level ?? character.level,
           tasks,
           openTaskCount: tasks.filter(
             (task) => !task.completedAt

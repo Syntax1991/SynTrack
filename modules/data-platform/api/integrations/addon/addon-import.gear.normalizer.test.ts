@@ -64,7 +64,7 @@ describe("normalizeGearSnapshot", () => {
     ]);
   });
 
-  it("normalizes a fully-enriched equipped slot with tier evidence", () => {
+  it("normalizes a fully-enriched equipped slot with tier evidence (also proves an OLD payload still sending uniqueCategoryCount keeps importing after G1)", () => {
     const result = normalizeGearSnapshot(
       gearModule({
         currentExpansionId: 10,
@@ -111,6 +111,39 @@ describe("normalizeGearSnapshot", () => {
         uniquenessResolved: true
       }
     ]);
+  });
+
+  it("G1: imports a new-style payload that omits uniqueCategoryCount entirely, still deriving uniqueCategoryId/uniquenessResolved", () => {
+    const result = normalizeGearSnapshot(
+      gearModule({
+        currentExpansionId: 10,
+        slots: {
+          MAIN_HAND: {
+            equipped: true,
+            itemId: 12345,
+            itemLink: "item:12345:6789:111::::0:0:80",
+            itemLevel: 675,
+            quality: 4,
+            socketCount: 1,
+            expansionId: 10,
+            setId: null,
+            setEvidenceResolved: true,
+            setBonusResolved: true,
+            setBonusSpellIds: {},
+            uniqueCategoryId: 123,
+            // uniqueCategoryCount deliberately absent - the addon no
+            // longer sends it as of this phase.
+            uniquenessResolved: true
+          }
+        }
+      })
+    );
+
+    expect(result?.slots[0]).toMatchObject({
+      uniqueCategoryId: 123,
+      uniqueCategoryCount: null,
+      uniquenessResolved: true
+    });
   });
 
   it("normalizes setBonusSpellIds from a Lua array table", () => {

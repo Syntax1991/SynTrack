@@ -1,19 +1,25 @@
+/*
+ * Compact segmented control - only ever as wide as its tabs (display:
+ * inline-flex, not the .panel block it composes with), never a
+ * full-width strip.
+ */
 .app-tabs {
-  display: flex;
-  gap: 6px;
-  margin-top: 18px;
-  padding: 6px;
+  display: inline-flex;
+  gap: 4px;
+  max-width: 100%;
+  margin: 0 0 20px;
+  padding: 4px;
   overflow-x: auto;
 }
 
 .app-tab {
-  min-width: 120px;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content:
-    space-between;
-  gap: 16px;
-  padding: 10px 13px;
+    center;
+  gap: 10px;
+  padding: 8px 16px;
   border: 0;
   border-radius:
     var(--radius-small);
@@ -23,8 +29,9 @@
     transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 750;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
   transition:
     background 120ms ease,
     color 120ms ease;
@@ -66,6 +73,6 @@
 
 @media (max-width: 720px) {
   .app-tab {
-    min-width: 108px;
+    padding: 8px 12px;
   }
 }

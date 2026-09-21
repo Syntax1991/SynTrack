@@ -14,6 +14,7 @@ import type {
   NavDomain
 } from "../../app/modules/navDomains";
 import { RaiderAuthTopAction } from "../../../../../modules/data-platform/web/raider-auth/components/RaiderAuthTopAction";
+import { SidebarAccountPanel } from "../../../../../modules/data-platform/web/raider-auth/components/SidebarAccountPanel";
 import { NavIcon } from "./NavIcon";
 
 export function AppNavigation() {
@@ -152,31 +153,24 @@ export function AppNavigation() {
             }
             to="/"
           >
-            <span className="brand-mark">
-              ST
-            </span>
-
-            <span className="sidebar-brand-copy">
-              <strong>SynTrack</strong>
-              <small>Personal Control Center</small>
-            </span>
+            <img
+              alt="SynTrack — Track Together. Progress Everywhere."
+              className="sidebar-logo"
+              src="/branding/syntrack-logo.png"
+            />
           </Link>
 
-          <div className="sidebar-header-actions">
-            <RaiderAuthTopAction />
-
-            <button
-              aria-label="Close navigation"
-              className="sidebar-close-button"
-              onClick={() =>
-                setMobileOpen(false)
-              }
-              type="button"
-            >
-              <span />
-              <span />
-            </button>
-          </div>
+          <button
+            aria-label="Close navigation"
+            className="sidebar-close-button"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+            type="button"
+          >
+            <span />
+            <span />
+          </button>
         </div>
 
         <nav className="sidebar-navigation">
@@ -195,14 +189,7 @@ export function AppNavigation() {
           </div>
         </nav>
 
-        <footer className="app-sidebar-footer">
-          <span className="online-dot" />
-
-          <span>
-            <strong>Platform online</strong>
-            <small>Foundation build</small>
-          </span>
-        </footer>
+        <SidebarAccountPanel />
       </aside>
     </>
   );

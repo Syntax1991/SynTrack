@@ -236,7 +236,7 @@
 
 .overview-character-identity {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
 }
 
@@ -245,7 +245,7 @@
   font-weight: 700;
 }
 
-.overview-character-identity span {
+.overview-character-identity > span:not(.character-name-with-icon) {
   color: var(--text-muted);
   font-size: 0.64rem;
 }

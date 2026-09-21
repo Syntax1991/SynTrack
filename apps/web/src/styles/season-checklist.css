@@ -3,20 +3,12 @@
  * matrix-col-action behavior used by Weeklies / Overview / Professions.
  */
 
-.season-summary {
-  margin: 20px 0 12px;
-  color: var(--text-secondary);
-  font-size: 0.76rem;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
 .season-matrix-panel {
   margin-top: 0;
   padding: 18px 20px 16px;
 }
 
-.season-matrix-panel > .eyebrow {
+.season-matrix-panel > .panel-title {
   margin: 0 0 14px;
   line-height: 1.45;
 }
@@ -34,10 +26,15 @@
   vertical-align: middle;
 }
 
-/* Character absorbs leftover width; compact columns shrink to content
-   so Action sits next to Open (Professions-like density). */
+/*
+ * Character gets a deliberate share of the width, not "whatever is
+ * left" - on a wide page that used to mean an enormous Character
+ * column and a cramped fixed-width Action column. The compact stat
+ * columns shrink to content; Action is the one that now absorbs
+ * whatever width remains, since it carries the actual next-step text.
+ */
 .season-col-character {
-  width: auto;
+  width: 26%;
 }
 
 .season-col-mplus,
@@ -54,7 +51,7 @@
 }
 
 .season-col-action {
-  width: 1%;
+  width: auto;
   min-width: 10.5rem;
   text-align: left;
   white-space: nowrap;
@@ -68,4 +65,46 @@
 .season-col-action .overview-next-action.empty {
   color: var(--text-secondary);
   font-weight: 600;
+}
+
+/*
+ * Warband goal count is tiny (2-4 items) - a full 3-column table just
+ * reads as another spreadsheet for almost no data. Flat compact items
+ * instead, wrapping onto a new row rather than stretching to fill
+ * whatever width happens to be available.
+ */
+.warband-goal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.warband-goal-item {
+  flex: 1 1 260px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-medium);
+  background: var(--surface);
+}
+
+.warband-goal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.warband-goal-title {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.warband-goal-detail {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.5;
 }

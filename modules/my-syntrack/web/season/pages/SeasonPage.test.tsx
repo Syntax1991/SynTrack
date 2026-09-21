@@ -48,5 +48,20 @@ describe("SeasonPage", () => {
     expect(screen.queryByText(/Sssensational!/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/No achievement capture/i)).not.toBeInTheDocument();
   });
+
+  it("exposes Manage Goals as a gear icon and does not link to Weeklies", () => {
+    render(
+      <MemoryRouter>
+        <SeasonPage />
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Manage Goals" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Manage Goals")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open Weeklies" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Open Weeklies")).not.toBeInTheDocument();
+  });
 });
 

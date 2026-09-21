@@ -116,3 +116,20 @@ export function seasonEvidenceForGoal(goalKey: string) {
 export function primarySeasonEvidenceForGoal(goalKey: string) {
   return seasonEvidenceForGoal(goalKey)[0] ?? null;
 }
+
+/**
+ * Every distinct achievement id the catalog references (ACHIEVEMENT-kind
+ * entries only - QUEST entries like Cracked Keystone have no achievement
+ * id at all). Used by the Blizzard ACHIEVEMENTS refresh pipeline to keep
+ * its normalized payload limited to ids SynTrack actually needs, rather
+ * than persisting Blizzard's full 3000+-entry response (Phase E9).
+ */
+export function watchedSeasonAchievementIds(): number[] {
+  return [
+    ...new Set(
+      SEASON_EVIDENCE_CATALOG.filter(
+        (entry) => entry.evidenceKind === "ACHIEVEMENT"
+      ).map((entry) => entry.externalId)
+    )
+  ];
+}

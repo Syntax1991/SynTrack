@@ -13,10 +13,16 @@ const sourceRoots = [
   "scripts"
 ];
 
+/*
+ * Guild was a main module through Phase G4B, when it was removed
+ * entirely (SynTrack is not a guild-management product); Loot followed
+ * the same path afterward (dropped as a product surface entirely,
+ * along with the dedicated Gear Readiness page). Neither is listed
+ * here anymore since modules/guild and modules/loot no longer exist
+ * at all.
+ */
 const mainModuleSlugs = [
   "my-syntrack",
-  "guild",
-  "loot",
   "professions",
   "recruitment",
   "automation",

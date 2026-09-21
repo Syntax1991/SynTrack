@@ -3,18 +3,10 @@ import {
   Route,
   Routes
 } from "react-router-dom";
-import { GuildDashboardPage } from "../../../../modules/guild/web/dashboard/pages/GuildDashboardPage";
-import { OfficerNotesPage } from "../../../../modules/guild/web/officer-notes/pages/OfficerNotesPage";
-import { SettingsPage } from "../../../../modules/guild/web/raider-link/pages/SettingsPage";
-import { RequirementsPage } from "../../../../modules/guild/web/requirements/pages/RequirementsPage";
-import { RosterPage } from "../../../../modules/guild/web/roster/pages/RosterPage";
-import { GuildSettingsPage } from "../../../../modules/guild/web/settings/pages/GuildSettingsPage";
-import { TeamsPage } from "../../../../modules/guild/web/teams/pages/TeamsPage";
-import { WeeklyProgressPage } from "../../../../modules/guild/web/weekly-progress/pages/WeeklyProgressPage";
+import { SettingsPage } from "../../../../modules/data-platform/web/settings/pages/SettingsPage";
 import { CharacterDetailPage } from "../../../../modules/my-syntrack/web/characters/pages/CharacterDetailPage";
 import { CharactersPage } from "../../../../modules/my-syntrack/web/characters/pages/CharactersPage";
 import { OverviewPage } from "../../../../modules/my-syntrack/web/overview/pages/OverviewPage";
-import { GearReadinessPage } from "../../../../modules/my-syntrack/web/gear-readiness/pages/GearReadinessPage";
 import { RaidTasksPage } from "../../../../modules/my-syntrack/web/raid-tasks/pages/RaidTasksPage";
 import { WeeklyChecklistPage } from "../../../../modules/my-syntrack/web/weekly-checklist/pages/WeeklyChecklistPage";
 import { SeasonPage } from "../../../../modules/my-syntrack/web/season/pages/SeasonPage";
@@ -24,9 +16,8 @@ import { LoginPage } from "../../../../modules/data-platform/web/raider-auth/pag
 import { RegisterPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterPage";
 import { RegisterConfirmPage } from "../../../../modules/data-platform/web/raider-auth/pages/RegisterConfirmPage";
 import { ClientConnectPage } from "../../../../modules/data-platform/web/device-auth/pages/ClientConnectPage";
-import { LootTablePage } from "../../../../modules/loot/web/catalog/pages/LootTablePage";
-import { WishlistPage } from "../../../../modules/loot/web/wishlist/pages/WishlistPage";
-import { DroptimizerPage } from "../../../../modules/loot/web/droptimizer/pages/DroptimizerPage";
+import { ImprintPage } from "../../../../modules/data-platform/web/legal/pages/ImprintPage";
+import { PrivacyPolicyPage } from "../../../../modules/data-platform/web/legal/pages/PrivacyPolicyPage";
 import { ProfessionDetailPage } from "../../../../modules/professions/web/details/pages/ProfessionDetailPage";
 import { ProfessionFindCraftPage } from "../../../../modules/professions/web/pages/ProfessionFindCraftPage";
 import { ProfessionKnowledgePage } from "../../../../modules/professions/web/pages/ProfessionKnowledgePage";
@@ -70,16 +61,6 @@ export function AppRouter() {
         />
 
         <Route
-          path="raider-link"
-          element={
-            <Navigate
-              replace
-              to="/settings"
-            />
-          }
-        />
-
-        <Route
           path="weekly-checklist"
           element={<WeeklyChecklistPage />}
         />
@@ -97,13 +78,6 @@ export function AppRouter() {
         <Route
           path="raid-tasks"
           element={<RaidTasksPage />}
-        />
-
-        <Route
-          // Legacy account-wide Gear page retained for Character Detail
-          // drilldowns; Gear is no longer a primary nav product module.
-          path="gear-readiness"
-          element={<GearReadinessPage />}
         />
 
         <Route
@@ -160,76 +134,6 @@ export function AppRouter() {
         />
 
         <Route
-          path="guild"
-          element={<GuildDashboardPage />}
-        />
-
-        <Route
-          path="guild/roster"
-          element={<RosterPage />}
-        />
-
-        <Route
-          path="guild/audit"
-          element={
-            <Navigate
-              replace
-              to="/guild/roster"
-            />
-          }
-        />
-
-        <Route
-          path="guild/teams"
-          element={<TeamsPage />}
-        />
-
-        <Route
-          path="guild/weekly-progress"
-          element={<WeeklyProgressPage />}
-        />
-
-        <Route
-          path="guild/requirements"
-          element={<RequirementsPage />}
-        />
-
-        <Route
-          path="guild/officer-notes"
-          element={<OfficerNotesPage />}
-        />
-
-        <Route
-          path="guild/settings"
-          element={<GuildSettingsPage />}
-        />
-
-        <Route
-          path="guild/raider-link"
-          element={
-            <Navigate
-              replace
-              to="/settings"
-            />
-          }
-        />
-
-        <Route
-          path="loot"
-          element={<LootTablePage />}
-        />
-
-        <Route
-          path="loot/wishlist"
-          element={<WishlistPage />}
-        />
-
-        <Route
-          path="loot/droptimizer"
-          element={<DroptimizerPage />}
-        />
-
-        <Route
           path="addon"
           element={
             <Navigate
@@ -273,6 +177,16 @@ export function AppRouter() {
       <Route
         element={<ClientConnectPage />}
         path="client/connect"
+      />
+
+      <Route
+        element={<ImprintPage />}
+        path="impressum"
+      />
+
+      <Route
+        element={<PrivacyPolicyPage />}
+        path="datenschutz"
       />
 
       <Route

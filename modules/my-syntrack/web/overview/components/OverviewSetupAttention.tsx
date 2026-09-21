@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { OverviewSetupAttentionRow } from "../types/overviewDecision.types";
 
@@ -14,8 +15,8 @@ export function OverviewSetupAttention({
   }
 
   return (
-    <section className="panel overview-decision-panel">
-      <p className="eyebrow">SETUP ATTENTION</p>
+    <section className="panel overview-decision-panel overview-setup-panel">
+      <p className="panel-title">SETUP ATTENTION</p>
       <table className="dense-matrix overview-decision-matrix">
         <thead>
           <tr>
@@ -27,13 +28,15 @@ export function OverviewSetupAttention({
           {rows.map((row) => (
             <tr key={row.characterId}>
               <td className="overview-col-character">
-                <Link
-                  className="matrix-character-link"
-                  style={{ color: getClassColor(row.className) }}
-                  to={`/characters/${row.characterId}`}
-                >
-                  {row.characterName}
-                </Link>
+                <CharacterNameWithIcon wowClassName={row.className}>
+                  <Link
+                    className="matrix-character-link"
+                    style={{ color: getClassColor(row.className) }}
+                    to={`/characters/${row.characterId}`}
+                  >
+                    {row.characterName}
+                  </Link>
+                </CharacterNameWithIcon>
               </td>
               <td className="overview-col-next">
                 <Link className="overview-next-action" to={row.next.path}>

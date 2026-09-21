@@ -105,41 +105,21 @@ describe("aggregateCharacterWeeklyStates - gear", () => {
 });
 
 describe("aggregateCharacterWeeklyStates - vault", () => {
-  it("zero unlocked vault slots does NOT become Vault Complete - it is UNKNOWN, never READY", () => {
+  /*
+   * G1: the old data-driven "MANUAL_LOG" vault fallback
+   * (resolveVaultOverviewState/OverviewVaultCharacterInput/
+   * vaultByCharacterId) was removed as dead code - OverviewService always
+   * fed it an empty map, so it could only ever resolve to this exact
+   * UNKNOWN/0-slot shape. Vault has no addon-independent fallback at all
+   * (see mythic-plus-vault-firewall.test.ts); the real, live vault state
+   * comes exclusively from weeklyGameplayByCharacterId (addon-sourced).
+   * Real 1/4/8 threshold-progress coverage for that live path already
+   * exists at its own layer (weekly-gameplay.authority.test.ts).
+   */
+  it("no weeklyGameplay data for a character does NOT become Vault Complete - it is UNKNOWN, never READY", () => {
     const { characters } =
       aggregateCharacterWeeklyStates(
-        baseInput({
-          vaultByCharacterId:
-            new Map([
-              [
-                "char-1",
-                {
-                  id: "char-1",
-                  name: "Synblast",
-                  runs: [],
-                  vaultSlots: [
-                    {
-                      threshold: 1,
-                      unlocked: false,
-                      keyLevel: null
-                    },
-                    {
-                      threshold: 4,
-                      unlocked: false,
-                      keyLevel: null
-                    },
-                    {
-                      threshold: 8,
-                      unlocked: false,
-                      keyLevel: null
-                    }
-                  ],
-                  highestKeyLevel:
-                    null
-                }
-              ]
-            ])
-        })
+        baseInput()
       );
 
     expect(
@@ -149,58 +129,13 @@ describe("aggregateCharacterWeeklyStates - vault", () => {
     expect(
       characters[0]!.vault.state
     ).not.toBe("READY");
-  });
-
-  it("real run data produces the correct existing 1/4/8 slot progress", () => {
-    const { characters } =
-      aggregateCharacterWeeklyStates(
-        baseInput({
-          vaultByCharacterId:
-            new Map([
-              [
-                "char-1",
-                {
-                  id: "char-1",
-                  name: "Synblast",
-                  runs: [
-                    { keyLevel: 10 },
-                    { keyLevel: 9 }
-                  ],
-                  vaultSlots: [
-                    {
-                      threshold: 1,
-                      unlocked: true,
-                      keyLevel: 10
-                    },
-                    {
-                      threshold: 4,
-                      unlocked: false,
-                      keyLevel: null
-                    },
-                    {
-                      threshold: 8,
-                      unlocked: false,
-                      keyLevel: null
-                    }
-                  ],
-                  highestKeyLevel: 10
-                }
-              ]
-            ])
-        })
-      );
 
     expect(
       characters[0]!.vault
-        .unlockedSlots
-    ).toBe(1);
-
-    expect(
-      characters[0]!.vault.slotsTotal
-    ).toBe(3);
-
-    expect(
-      characters[0]!.vault.state
-    ).toBe("IN_PROGRESS");
+    ).toMatchObject({
+      unlockedSlots: 0,
+      slotsTotal: 0,
+      highestKeyLevel: null
+    });
   });
 });

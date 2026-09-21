@@ -66,6 +66,7 @@ describe("ProfessionOverviewWork knowledge semantics", () => {
         realm: "Antonidas",
         region: "EU",
         className: "Mage",
+        level: 90,
         professionId: "prof-alchemy",
         professionKey: "alchemy",
         professionName: "Alchemy",

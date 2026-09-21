@@ -48,4 +48,13 @@ describe("getRaiderLoginUrl", () => {
       })
     ).not.toContain("evil.example.com");
   });
+
+  it("accepts a relative API base by resolving against the page origin", () => {
+    expect(() =>
+      getRaiderLoginUrl()
+    ).not.toThrow();
+    expect(getRaiderLoginUrl()).toMatch(
+      /^https?:\/\//
+    );
+  });
 });

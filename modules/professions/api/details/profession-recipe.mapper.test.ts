@@ -188,4 +188,153 @@ describe("mapProfessionRecipeCatalog", () => {
       })
     );
   });
+
+  describe("effective public skill (Phase F1 corrective review, Section 4)", () => {
+    function createCrafterRelation(overrides: {
+      characterId: string;
+      skill: number;
+      skillModifier?: number;
+      knowledgePoints?: number;
+    }) {
+      return {
+        source: "ADDON",
+        lastSyncedAt: null,
+        baseSkill: null,
+        bonusSkill: null,
+        effectiveSkill: null,
+        craftingQuality: null,
+        craftingQualityId: null,
+        guaranteedCraftingQualityId: null,
+        lowerSkillThreshold: null,
+        upperSkillThreshold: null,
+        concentrationCost: null,
+        concentrationCurrencyId: null,
+        ingenuityRefund: null,
+        quality: null,
+        operationMetricsJson: null,
+        reagentSimulationJson: null,
+        operationCapturedAt: null,
+        operationCaptureVersion: null,
+        operationScopeVersion: null,
+        characterProfession: {
+          skill: overrides.skill,
+          skillModifier: overrides.skillModifier ?? 0,
+          knowledgePoints: overrides.knowledgePoints ?? 66,
+          character: {
+            id: overrides.characterId,
+            name: "Synblast",
+            realm: "Antonidas",
+            className: "Shaman",
+            level: 90
+          }
+        }
+      };
+    }
+
+    function createEligibilityCatalog(
+      baseDifficulty: number | null,
+      characters: ReturnType<typeof createCrafterRelation>[]
+    ): CatalogRecord {
+      return {
+        id: "profession-1",
+        key: "leatherworking",
+        name: "Leatherworking",
+        recipes: [
+          {
+            id: "recipe-1",
+            gameRecipeId: 1,
+            name: "Item",
+            expansion: "MIDNIGHT",
+            categoryId: null,
+            craftedItemId: 1,
+            iconUrl: null,
+            itemQuality: null,
+            itemLevel: null,
+            baseDifficulty,
+            capabilities: [],
+            characters
+          }
+        ]
+      } as unknown as CatalogRecord;
+    }
+
+    it("changes recipe eligibility (baselineStatus) when the Blizzard-authoritative public skill differs from the addon's raw skill", () => {
+      const catalog = createEligibilityCatalog(100, [
+        createCrafterRelation({ characterId: "char-1", skill: 90 })
+      ]);
+
+      // Addon-only: skill 90 < baseDifficulty 100 -> RECIPE_BONUS_REQUIRED.
+      const withoutEffectiveSkill = mapProfessionRecipeCatalog(catalog);
+      expect(withoutEffectiveSkill.items[0]!.crafters[0]!.baselineStatus).toBe(
+        "RECIPE_BONUS_REQUIRED"
+      );
+
+      // Blizzard-authoritative public skill (105) makes the recipe eligible.
+      const withEffectiveSkill = mapProfessionRecipeCatalog(
+        catalog,
+        new Map([["char-1", 105]])
+      );
+      const crafter = withEffectiveSkill.items[0]!.crafters[0]!;
+      expect(crafter.baselineStatus).toBe("BASE_SKILL_SUFFICIENT");
+      expect(crafter.skill).toBe(105);
+      expect(crafter.effectiveSkill).toBe(105);
+    });
+
+    it("still adds the addon-private skillModifier on top of the effective public skill", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90, skillModifier: 10 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(catalog, new Map([["char-1", 105]]));
+      const crafter = result.items[0]!.crafters[0]!;
+
+      expect(crafter.skill).toBe(105); // public skill only
+      expect(crafter.skillModifier).toBe(10); // addon-private, unaffected
+      expect(crafter.effectiveSkill).toBe(115); // 105 + 10
+    });
+
+    it("leaves knowledgePoints addon-owned even when the public skill is overridden", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90, knowledgePoints: 66 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(catalog, new Map([["char-1", 105]]));
+
+      expect(result.items[0]!.crafters[0]!.knowledgePoints).toBe(66);
+    });
+
+    it("falls back to the addon's raw skill when no effective-skill entry exists for a character", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(catalog, new Map());
+
+      expect(result.items[0]!.crafters[0]!.skill).toBe(90);
+    });
+
+    it("Phase F3 follow-up: renders the fresh Blizzard className instead of the raw addon-captured Character row (ProfessionRecipeCard / ProfessionRecipeDetailPanel / Find Craft)", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(
+        catalog,
+        new Map(),
+        new Map([["char-1", "Enhancement Shaman"]])
+      );
+
+      expect(result.items[0]!.crafters[0]!.className).toBe("Enhancement Shaman");
+    });
+
+    it("falls back to the persisted className when no usable Blizzard profile exists", () => {
+      const catalog = createEligibilityCatalog(null, [
+        createCrafterRelation({ characterId: "char-1", skill: 90 })
+      ]);
+
+      const result = mapProfessionRecipeCatalog(catalog, new Map(), new Map());
+
+      expect(result.items[0]!.crafters[0]!.className).toBe("Shaman");
+    });
+  });
 });

@@ -5,7 +5,6 @@ import {
   resolveProfessionKnowledgeTreasureInput,
   resolveProfessionWeeklyInput,
   resolveResourceInput,
-  resolveVaultInput,
   resolveWeeklyInput
 } from "./overview.aggregator.inputs.js";
 import { resolveGearOverviewState } from "./overview-gear-state.mapper.js";
@@ -14,7 +13,6 @@ import { resolveProfessionKnowledgeTreasureOverviewState } from "./overview-prof
 import { resolveProfessionSetupOverviewState } from "./overview-profession-setup-state.mapper.js";
 import { resolveProfessionWeeklyOverviewState } from "./overview-profession-weekly-state.mapper.js";
 import { resolveResourceOverviewState } from "./overview-resource-state.mapper.js";
-import { resolveVaultOverviewState } from "./overview-vault-state.mapper.js";
 import { resolveWeeklyOverviewState } from "./overview-weekly-state.mapper.js";
 import { resolveWeeklySummaryOverviewState } from "./overview-weekly-summary.mapper.js";
 import {
@@ -25,8 +23,26 @@ import { pickNextAction } from "./overview.sorting.js";
 import type { OverviewAggregationInput } from "./overview.aggregator.js";
 import type {
   AttentionItem,
-  CharacterWeeklyState
+  CharacterWeeklyState,
+  VaultOverviewState
 } from "./overview.types.js";
+
+/*
+ * G1: Vault has no addon-independent fallback path - it is permanently
+ * addon-only (see mythic-plus-vault-firewall.test.ts). Before G1 there
+ * was a second "MANUAL_LOG"-sourced fallback (resolveVaultOverviewState/
+ * OverviewVaultCharacterInput/vaultByCharacterId) that was always fed an
+ * empty map by OverviewService, so it could only ever resolve to this
+ * exact UNKNOWN/0-slot shape - a dead runtime path, not a real fallback.
+ * Removed; this constant reproduces its one possible output exactly.
+ */
+const UNKNOWN_VAULT_STATE: VaultOverviewState = {
+  state: "UNKNOWN",
+  unlockedSlots: 0,
+  slotsTotal: 0,
+  highestKeyLevel: null,
+  source: "MANUAL_LOG"
+};
 
 export function resolveCharacterState(
   character: OverviewAggregationInput["characters"][number],
@@ -35,10 +51,6 @@ export function resolveCharacterState(
   const weeklyResult = resolveWeeklyOverviewState(
     resolveWeeklyInput(character, input),
     input.weeklyTaskCount
-  );
-
-  const vaultResult = resolveVaultOverviewState(
-    resolveVaultInput(character, input)
   );
 
   const gearInput = resolveGearInput(character, input);
@@ -109,7 +121,7 @@ export function resolveCharacterState(
           highestKeyLevel: weeklyGameplay.highestKeyLevel,
           source: "ADDON" as const
         }
-      : vaultResult.vault;
+      : UNKNOWN_VAULT_STATE;
 
   const weeklySummaryResult = resolveWeeklySummaryOverviewState({
     characterId: character.id,

@@ -6,8 +6,38 @@ import {
 } from "../api/seasonGoalPreferenceApi.js";
 import type {
   ManageGoalsView,
-  SeasonGoalPreferenceInput
+  SeasonGoalPreferenceInput,
+  SeasonGoalPreferenceValue
 } from "../types/seasonGoalPreference.types.js";
+
+function applyPreference(
+  view: ManageGoalsView,
+  goalKey: string,
+  characterId: string | null,
+  value: SeasonGoalPreferenceValue
+): ManageGoalsView {
+  if (!characterId) {
+    return {
+      ...view,
+      warband: { ...view.warband, [goalKey]: value }
+    };
+  }
+
+  return {
+    ...view,
+    characters: view.characters.map((character) =>
+      character.id === characterId
+        ? {
+            ...character,
+            preferences: {
+              ...character.preferences,
+              [goalKey]: value
+            }
+          }
+        : character
+    )
+  };
+}
 
 export function useManageGoals(active: boolean) {
   const [view, setView] = useState<ManageGoalsView | null>(null);
@@ -38,30 +68,57 @@ export function useManageGoals(active: boolean) {
     }
   }, [active, reload]);
 
-  const save = useCallback(
-    async (input: SeasonGoalPreferenceInput) => {
-      try {
-        await saveSeasonGoalPreference(input);
-        await reload();
-      } catch (saveError) {
-        // Never leave a checked-but-unsaved control — view stays at its
-        // last successful fetch, so the control re-renders back to the
-        // real persisted state, with the error surfaced instead of silent.
-        setError(
-          saveError instanceof Error
-            ? saveError.message
-            : "Season goal preference could not be saved."
-        );
-      }
-    },
-    [reload]
-  );
+  const save = useCallback(async (input: SeasonGoalPreferenceInput) => {
+    setView((current) =>
+      current
+        ? applyPreference(current, input.goalKey, input.characterId, {
+            enabled: input.enabled,
+            numericTarget: input.numericTarget,
+            enumTarget: input.enumTarget
+          })
+        : current
+    );
+    setError(null);
+
+    try {
+      const saved = await saveSeasonGoalPreference(input);
+      setView((current) =>
+        current
+          ? applyPreference(
+              current,
+              input.goalKey,
+              input.characterId,
+              saved
+            )
+          : current
+      );
+    } catch (saveError) {
+      // Roll back the optimistic patch so a failed POST never leaves a
+      // checked-but-unsaved control. Full reload (not a local undo) so
+      // we also pick up any concurrent edits.
+      await reload();
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Season goal preference could not be saved."
+      );
+    }
+  }, [reload]);
 
   const reset = useCallback(
     async (goalKey: string, characterId: string | null) => {
+      setError(null);
+
       try {
-        await resetSeasonGoalPreference(goalKey, characterId);
-        await reload();
+        const restored = await resetSeasonGoalPreference(
+          goalKey,
+          characterId
+        );
+        setView((current) =>
+          current
+            ? applyPreference(current, goalKey, characterId, restored)
+            : current
+        );
       } catch (resetError) {
         setError(
           resetError instanceof Error
@@ -70,7 +127,7 @@ export function useManageGoals(active: boolean) {
         );
       }
     },
-    [reload]
+    []
   );
 
   return { view, isLoading, error, save, reset };

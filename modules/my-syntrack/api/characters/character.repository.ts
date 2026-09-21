@@ -75,7 +75,7 @@ export class CharacterRepository {
     });
   }
 
-  create(input: CharacterInput) {
+  create(input: CharacterInput, raiderAccountId?: string) {
     return prisma.character.create({
       data: {
         name: input.name,
@@ -83,6 +83,9 @@ export class CharacterRepository {
         region: input.region,
         className: input.className,
         level: input.level,
+        ...(raiderAccountId
+          ? { raiderAccountId }
+          : {}),
         professions: {
           create: input.professionIds.map(
             (professionId) => ({

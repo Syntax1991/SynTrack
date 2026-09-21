@@ -25,7 +25,39 @@ export class GearReadinessRepository {
         region: true,
         className: true,
         level: true,
-        gearSlots: true,
+        /*
+         * G3A corrective follow-up: explicit field select (was `true`,
+         * which selects every CharacterGearSlot scalar column) so that
+         * `uniqueCategoryCount` - proven to have zero downstream
+         * consumer - is never read from the database at all, not just
+         * unused after the fact. Every other column the effective-gear
+         * composition layer (gear-readiness.effective.ts) actually
+         * reads is listed explicitly here.
+         */
+        gearSlots: {
+          select: {
+            id: true,
+            slotKey: true,
+            itemId: true,
+            itemName: true,
+            itemLevel: true,
+            enchantStatus: true,
+            enchantName: true,
+            socketCount: true,
+            gemCount: true,
+            notes: true,
+            source: true,
+            lastSyncedAt: true,
+            updatedAt: true,
+            setId: true,
+            expansionId: true,
+            setEvidenceResolved: true,
+            setBonusResolved: true,
+            setBonusSpellIds: true,
+            uniqueCategoryId: true,
+            uniquenessResolved: true
+          }
+        },
         gearBagSetPieces: true
       },
       orderBy: [

@@ -32,9 +32,6 @@ import "./styles/vault-mythic-plus-runs.css";
 import "./styles/raid-tasks.css";
 import "./styles/raid-tasks-board.css";
 import "./styles/raid-tasks-responsive.css";
-import "./styles/gear-readiness.css";
-import "./styles/gear-readiness-slots.css";
-import "./styles/gear-readiness-responsive.css";
 import "./styles/guild.css";
 import "./styles/guild-roster-summary.css";
 import "./styles/guild-workspace.css";
@@ -58,6 +55,8 @@ import "./styles/profession-recipe-readiness.css";
 import "./styles/specializations.css";
 import "./styles/forms.css";
 import "./styles/tables.css";
+import "./styles/landing.css";
+import "./styles/legal.css";
 
 const rootElement =
   document.getElementById("root");

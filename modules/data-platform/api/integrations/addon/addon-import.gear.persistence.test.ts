@@ -153,7 +153,10 @@ describe("AddonCharacterPersistence gear snapshot semantics", () => {
     expect(row.setBonusResolved).toBe(true);
     expect(row.setBonusSpellIds).toBe(JSON.stringify([111, 222]));
     expect(row.uniqueCategoryId).toBe(42);
-    expect(row.uniqueCategoryCount).toBe(2);
+    // G3A: uniqueCategoryCount is no longer persisted (G2 proved zero
+    // downstream consumer) - uniqueCategoryId/uniquenessResolved, the
+    // fields embellishment detection actually uses, are unaffected.
+    expect(row.uniqueCategoryCount).toBeNull();
     expect(row.uniquenessResolved).toBe(true);
   });
 });

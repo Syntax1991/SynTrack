@@ -45,11 +45,18 @@ type RecipeRecord =
   RecipeCatalogRecord["recipes"][number];
 
 export function mapProfessionRecipeCatalog(
-  record: RecipeCatalogRecord
+  record: RecipeCatalogRecord,
+  effectiveSkillByCharacterId: Map<string, number> = new Map(),
+  effectiveClassNameByCharacterId: Map<string, string> = new Map()
 ): ProfessionRecipeCatalog {
   const items =
     record.recipes.map(
-      mapRecipe
+      (recipe) =>
+        mapRecipe(
+          recipe,
+          effectiveSkillByCharacterId,
+          effectiveClassNameByCharacterId
+        )
     );
 
   return {
@@ -67,7 +74,9 @@ export function mapProfessionRecipeCatalog(
 }
 
 function mapRecipe(
-  recipe: RecipeRecord
+  recipe: RecipeRecord,
+  effectiveSkillByCharacterId: Map<string, number>,
+  effectiveClassNameByCharacterId: Map<string, string>
 ): ProfessionRecipeCatalogItem {
   const capabilities =
     recipe.capabilities
@@ -84,7 +93,9 @@ function mapRecipe(
         (relation) =>
           mapCrafter(
             recipe.baseDifficulty,
-            relation
+            relation,
+            effectiveSkillByCharacterId,
+            effectiveClassNameByCharacterId
           )
       )
       .sort(
@@ -154,13 +165,28 @@ function mapCapability(
 function mapCrafter(
   baseDifficulty: number | null,
   relation:
-    RecipeRecord["characters"][number]
+    RecipeRecord["characters"][number],
+  effectiveSkillByCharacterId: Map<string, number>,
+  effectiveClassNameByCharacterId: Map<string, string>
 ): ProfessionRecipeCrafter {
   const assignment =
     relation.characterProfession;
 
+  /*
+   * PUBLIC skill (Phase F1 corrective review, Section 4): the same
+   * Blizzard-primary/addon-fallback value Overview already shows, not a
+   * second competing raw-addon truth - falls back to the addon's own
+   * skill when no authoritative entry was resolved for this character.
+   * skillModifier stays addon-private and is still added on top exactly
+   * as before.
+   */
+  const publicSkill =
+    effectiveSkillByCharacterId.get(
+      assignment.character.id
+    ) ?? assignment.skill;
+
   const effectiveSkill =
-    assignment.skill +
+    publicSkill +
     assignment.skillModifier;
 
   const readiness =
@@ -204,12 +230,17 @@ function mapCrafter(
       assignment.character.name,
     realm:
       assignment.character.realm,
+    // Public identity (Phase F3 follow-up): BLIZZARD-primary/ADDON-
+    // fallback, resolved by the caller via CharacterProfileAuthorityService.
+    // `level` is not currently rendered by any consumer of this crafter
+    // type, so it stays read straight from the Character row.
     className:
+      effectiveClassNameByCharacterId.get(assignment.character.id) ??
       assignment.character.className,
     level:
       assignment.character.level,
     skill:
-      assignment.skill,
+      publicSkill,
     skillModifier:
       assignment.skillModifier,
     effectiveSkill,

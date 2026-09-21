@@ -168,10 +168,8 @@ export function RaidTasksPage() {
           </div>
 
           <p className="raid-task-ownership-note">
-            Personal reminders live in My
-            SynTrack. Guild raid plans and
-            assignments will remain owned by
-            the Raid module.
+            Personal reminders live here in My
+            SynTrack, per character.
           </p>
         </>
       )}

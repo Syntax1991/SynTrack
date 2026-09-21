@@ -14,7 +14,9 @@ type ResolvedTracker = {
 
 /** Raw recorded rating — the actual score always stays visible, never
  * collapsed to a generic "✓ 2K"-style placeholder. */
-function ratingValue(resolved: ResolvedTracker | null): number | null {
+export function seasonMythicPlusRating(
+  resolved: ResolvedTracker | null
+): number | null {
   const value = resolved?.state?.value;
 
   if (
@@ -52,12 +54,11 @@ function formatCompactTarget(target: number): string {
  *   1847 → 2.5K   (target 2500)
  *   ?
  */
-export function deriveSeasonMythicPlusGoal(
-  resolved: ResolvedTracker | null,
+export function deriveSeasonMythicPlusGoalFromScore(
+  score: number | null,
   milestone = DEFAULT_MILESTONE
 ): SeasonGoalSignal {
   const title = `Current-season Mythic+ rating / ${formatCompactTarget(milestone)} milestone`;
-  const score = ratingValue(resolved);
 
   if (score === null) {
     return {
@@ -91,6 +92,16 @@ export function deriveSeasonMythicPlusGoal(
     detail: title,
     actionLabel: `Reach ${milestoneLabel} Mythic+ rating`
   };
+}
+
+export function deriveSeasonMythicPlusGoal(
+  resolved: ResolvedTracker | null,
+  milestone = DEFAULT_MILESTONE
+): SeasonGoalSignal {
+  return deriveSeasonMythicPlusGoalFromScore(
+    seasonMythicPlusRating(resolved),
+    milestone
+  );
 }
 
 /** Overrides any goal signal to NOT_APPLICABLE ("—") when the user has

@@ -16,7 +16,11 @@ export class ProfessionOverviewWorkRepository {
               name: true,
               realm: true,
               region: true,
-              className: true
+              className: true,
+              // Not exposed on the response row - only needed as the
+              // fallback-candidate input to the effective-identity lookup
+              // (see resolveEffectiveCharacterIdentities).
+              level: true
             }
           },
           profession: {
@@ -53,6 +57,7 @@ export class ProfessionOverviewWorkRepository {
       realm: row.character.realm,
       region: row.character.region,
       className: row.character.className,
+      level: row.character.level,
       professionId: row.profession.id,
       professionKey: row.profession.key,
       professionName: row.profession.name,

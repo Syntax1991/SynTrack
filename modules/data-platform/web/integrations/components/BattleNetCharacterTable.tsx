@@ -1,4 +1,5 @@
 import type { BattleNetCharacterPreview } from "../types/battlenet.types";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 
 type BattleNetCharacterTableProps = {
   characters:
@@ -69,21 +70,19 @@ export function BattleNetCharacterTable({
 
                   <td>
                     <div className="character-identity">
-                      <div className="character-avatar">
-                        {character.name
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </div>
+                      <CharacterNameWithIcon
+                        wowClassName={character.className}
+                      >
+                        <div>
+                          <strong>
+                            {character.name}
+                          </strong>
 
-                      <div>
-                        <strong>
-                          {character.name}
-                        </strong>
-
-                        <span>
-                          {character.realm}
-                        </span>
-                      </div>
+                          <span>
+                            {character.realm}
+                          </span>
+                        </div>
+                      </CharacterNameWithIcon>
                     </div>
                   </td>
 

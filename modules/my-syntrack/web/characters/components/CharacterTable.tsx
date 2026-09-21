@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { IndeterminateCheckbox } from "../../../../../apps/web/src/shared/components/IndeterminateCheckbox";
+import { CharacterNameWithIcon } from "../../../../../apps/web/src/shared/components/CharacterNameWithIcon";
 import { StatusToken } from "../../../../../apps/web/src/shared/components/StatusToken";
 import { getClassColor } from "../../../../../apps/web/src/shared/utils/classColors";
 import type { TagView } from "../../tags/types/tag.types";
@@ -136,19 +137,23 @@ export function CharacterTable({
 
                 <td>
                   <div className="matrix-identity">
-                    <Link
-                      style={{
-                        color:
-                          getClassColor(
-                            character.className
-                          )
-                      }}
-                      to={`/characters/${character.id}`}
+                    <CharacterNameWithIcon
+                      wowClassName={character.className}
                     >
-                      <strong>
-                        {character.name}
-                      </strong>
-                    </Link>
+                      <Link
+                        style={{
+                          color:
+                            getClassColor(
+                              character.className
+                            )
+                        }}
+                        to={`/characters/${character.id}`}
+                      >
+                        <strong>
+                          {character.name}
+                        </strong>
+                      </Link>
+                    </CharacterNameWithIcon>
 
                     <span>
                       {character.className}

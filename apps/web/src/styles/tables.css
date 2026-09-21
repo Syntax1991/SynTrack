@@ -53,12 +53,18 @@ tbody tr:last-child td {
   gap: 11px;
 }
 
-.character-identity strong,
-.character-identity span {
+.character-identity .character-name-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.character-identity .character-name-with-icon > div strong,
+.character-identity .character-name-with-icon > div span {
   display: block;
 }
 
-.character-identity span {
+.character-identity .character-name-with-icon > div span {
   margin-top: 3px;
   color: var(--text-muted);
   font-size: 0.72rem;
@@ -112,9 +118,11 @@ tbody tr:last-child td {
 .text-button {
   padding: 4px;
   border: 0;
-  color: #c9b9ef;
+  color: var(--primary-hover);
   background: transparent;
-  font-size: 0.73rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: normal;
 }
 
 .text-button:hover {

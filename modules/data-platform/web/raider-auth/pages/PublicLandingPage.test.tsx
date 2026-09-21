@@ -14,6 +14,11 @@ vi.mock("../api/raiderAuthApi", () => ({
   getRaiderSessionStatus: vi.fn()
 }));
 
+vi.mock("../../client-download/api/clientDownloadApi", () => ({
+  getClientDownloadInfo: vi.fn().mockResolvedValue({ available: false }),
+  getClientDownloadFileUrl: () => "http://localhost:4000/api/client-download/file"
+}));
+
 import { getRaiderSessionStatus } from "../api/raiderAuthApi";
 
 beforeEach(() => {
@@ -62,6 +67,28 @@ describe("PublicLandingPage — signed out", () => {
         name: "Log in"
       })
     ).toHaveAttribute("href", "/login");
+  });
+
+  it("explains the product and links to the legal pages, with the Blizzard disclaimer", async () => {
+    renderLanding();
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "What SynTrack does"
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/not affiliated with, endorsed, sponsored/)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("link", { name: "Impressum" })
+    ).toHaveAttribute("href", "/impressum");
+
+    expect(
+      screen.getByRole("link", { name: "Datenschutz" })
+    ).toHaveAttribute("href", "/datenschutz");
   });
 });
 

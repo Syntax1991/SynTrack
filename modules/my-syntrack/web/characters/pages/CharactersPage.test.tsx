@@ -155,6 +155,46 @@ describe("CharactersPage", () => {
     });
   });
 
+  it("keeps the remove dialog open when backend returns 404", async () => {
+    deleteCharacter.mockRejectedValueOnce(
+      new Error("Charakter nicht gefunden.")
+    );
+
+    renderPage();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "More actions for Synblast"
+      })
+    );
+    fireEvent.click(
+      screen.getByRole("menuitem", {
+        name: "Remove from SynTrack"
+      })
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Remove character"
+      })
+    );
+
+    await vi.waitFor(() => {
+      expect(deleteCharacter).toHaveBeenCalledWith("char-1");
+    });
+
+    await vi.waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Remove character" })
+      ).toBeEnabled();
+    });
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Remove Synblast - Antonidas from SynTrack?"
+      })
+    ).toBeInTheDocument();
+  });
+
   it("shows each character's tags and filters the roster by tag", () => {
     renderPage();
 

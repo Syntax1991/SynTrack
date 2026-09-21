@@ -115,7 +115,7 @@ describe("AppNavigation - flat product-domain sidebar", () => {
   });
 
   it("does not highlight Weeklies or Professions when viewing an unrelated domain", () => {
-    renderNavigation("/gear-readiness");
+    renderNavigation("/some-unrelated-page");
 
     const weekliesLink =
       sidebar().getByRole("link", {

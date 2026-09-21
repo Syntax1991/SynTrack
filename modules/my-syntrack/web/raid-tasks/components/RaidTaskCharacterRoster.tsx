@@ -1,4 +1,5 @@
 import type { RaidTaskCharacter } from "../types/raidTask.types";
+import { WowClassIcon } from "../../../../../apps/web/src/shared/components/WowClassIcon";
 
 type RaidTaskCharacterRosterProps = {
   characters: RaidTaskCharacter[];
@@ -60,9 +61,10 @@ export function RaidTaskCharacterRoster({
               type="button"
             >
               <span className="raid-task-character-avatar">
-                {character.name
-                  .slice(0, 2)
-                  .toUpperCase()}
+                <WowClassIcon
+                  size="lg"
+                  wowClassName={character.className}
+                />
               </span>
 
               <span className="raid-task-character-copy">

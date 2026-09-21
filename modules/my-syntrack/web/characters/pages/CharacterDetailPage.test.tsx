@@ -127,17 +127,6 @@ describe("CharacterDetailPage", () => {
       "href",
       "/professions/specializations?profession=profession-alchemy&character=char-2"
     );
-
-    expect(
-      screen.getAllByRole("link")
-        .some(
-          (link) =>
-            link.getAttribute(
-              "href"
-            ) ===
-            "/gear-readiness"
-        )
-    ).toBe(true);
   });
 
   it("shows the empty state when no profession weekly sources are tracked yet", () => {

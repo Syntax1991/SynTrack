@@ -2,6 +2,7 @@ import { AppError } from "../../../../../apps/api/src/shared/errors/AppError.js"
 import { normalizeAddonSnapshot } from "./addon-import.normalizer.js";
 import { AddonImportPersistence } from "./addon-import.persistence.js";
 import { createAddonImportPreview } from "./addon-import.preview.js";
+import { captureRawAddonGearObservations } from "./addon-import.raw-observation.js";
 import type {
   AddonSnapshot
 } from "./addon-import.types.js";
@@ -75,7 +76,8 @@ export class AddonImportService {
   ) {
     const snapshot =
       this.readSnapshot(
-        source
+        source,
+        { captureRawObservation: true }
       );
 
     return this.persistence.persist(
@@ -85,13 +87,28 @@ export class AddonImportService {
   }
 
   private readSnapshot(
-    source: string
+    source: string,
+    options: {
+      captureRawObservation?: boolean;
+    } = {}
   ): AddonSnapshot {
     try {
       const root =
         new LuaSavedVariablesParser(
           source
         ).parse();
+
+      /*
+       * G3B: RAW OBSERVATION DB. Deliberately BEFORE
+       * normalizeAddonSnapshot() below transforms `root`'s shape - see
+       * addon-import.raw-observation.ts. Only on the real import path,
+       * never on preview() (a dry run that persists nothing). This can
+       * never throw or alter `root` - see recordIngestObservation's own
+       * failure-isolation guarantee.
+       */
+      if (options.captureRawObservation) {
+        captureRawAddonGearObservations(root);
+      }
 
       const isCoreSnapshot =
         root.format ===
