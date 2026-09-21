@@ -18,6 +18,7 @@ import { trackerScopeProfileRouter } from "../../../../modules/my-syntrack/api/t
 import { addonImportRouter } from "../../../../modules/data-platform/api/integrations/addon/addon-import.routes.js";
 import { battleNetIntegrationRouter } from "../../../../modules/data-platform/api/integrations/battlenet/battlenet.routes.js";
 import { raiderAuthRouter } from "../../../../modules/data-platform/api/raider-auth/raider-auth.routes.js";
+import { adminUsersRouter } from "../../../../modules/data-platform/api/admin-users/admin-users.routes.js";
 import { deviceLinkRouter } from "../../../../modules/data-platform/api/device-auth/device-link.routes.js";
 import { clientImportRouter } from "../../../../modules/data-platform/api/client-import/client-import.routes.js";
 import { clientProfileRouter } from "../../../../modules/data-platform/api/client-profile/client-profile.routes.js";
@@ -25,6 +26,10 @@ import { clientCharactersRouter } from "../../../../modules/data-platform/api/cl
 import { clientDownloadRouter } from "../../../../modules/data-platform/api/client-download/client-download.routes.js";
 import { settingsTrustRouter } from "../../../../modules/data-platform/api/settings-trust/settings-trust.routes.js";
 import { wowMediaRouter } from "../../../../modules/data-platform/api/wow-media/wow-media.routes.js";
+import {
+  crafterShareRouter,
+  publicCrafterShareRouter
+} from "../../../../modules/professions/api/crafter-share/crafter-share.routes.js";
 import { professionDetailRouter } from "../../../../modules/professions/api/details/profession-detail.routes.js";
 import { professionRouter } from "../../../../modules/professions/api/profession.routes.js";
 import { specializationRouter } from "../../../../modules/professions/api/specializations/specialization.routes.js";
@@ -145,6 +150,16 @@ apiRouter.use(
 );
 
 apiRouter.use(
+  "/crafter-share",
+  crafterShareRouter
+);
+
+apiRouter.use(
+  "/c",
+  publicCrafterShareRouter
+);
+
+apiRouter.use(
   "/integrations/addon",
   addonImportRouter
 );
@@ -157,6 +172,11 @@ apiRouter.use(
 apiRouter.use(
   "/auth/raider",
   raiderAuthRouter
+);
+
+apiRouter.use(
+  "/admin/users",
+  adminUsersRouter
 );
 
 apiRouter.use(

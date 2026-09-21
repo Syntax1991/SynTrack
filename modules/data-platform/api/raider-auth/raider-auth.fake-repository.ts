@@ -9,6 +9,7 @@ export type FakeAccount = {
   tokenType: string | null;
   scope: string | null;
   tokenExpiresAt: Date | null;
+  status: string;
 };
 
 type FakePending = {
@@ -92,6 +93,7 @@ export function createFakeRepository() {
       async (input: {
         battleNetAccountId: string;
         battleTag: string | null;
+        status?: string;
       }) => {
         const account: FakeAccount = {
           id: `account-${nextAccountId++}`,
@@ -101,7 +103,8 @@ export function createFakeRepository() {
           accessToken: null,
           tokenType: null,
           scope: null,
-          tokenExpiresAt: null
+          tokenExpiresAt: null,
+          status: input.status ?? "ACTIVE"
         };
 
         accounts.set(

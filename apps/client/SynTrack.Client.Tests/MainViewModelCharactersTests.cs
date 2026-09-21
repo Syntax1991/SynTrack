@@ -200,6 +200,51 @@ public class MainViewModelCharactersTests
         Assert.Null(viewModel.CharactersError);
         Assert.True(viewModel.AccountHealth == AccountHealth.FullyConnected);
         Assert.False(viewModel.ShowEmptyRosterMessage);
+        Assert.NotNull(viewModel.LastSyncAt);
+        Assert.DoesNotContain("Never", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("PM", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("AM", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void RosterLastSyncedAtFillsSidebarWhenSettingsHaveNoLastSync()
+    {
+        var capturedAt = new DateTimeOffset(2026, 9, 7, 13, 20, 0, TimeSpan.Zero);
+        var (viewModel, _) = Build(
+            existingCredential: "dvc_existing",
+            configureApi: fake =>
+            {
+                fake.NextCharacters = new ClientCharactersFetchResult
+                {
+                    Status = ClientCharactersFetchStatus.Ok,
+                    Items = new[]
+                    {
+                        new ClientCharacterSummary
+                        {
+                            Id = "char-1",
+                            Name = "Synblast",
+                            Realm = "Antonidas",
+                            ClassName = "Mage",
+                            Level = 80,
+                            LastSyncedAt = capturedAt.AddDays(-3)
+                        },
+                        new ClientCharacterSummary
+                        {
+                            Id = "char-2",
+                            Name = "Synbeam",
+                            Realm = "Antonidas",
+                            ClassName = "Priest",
+                            Level = 80,
+                            LastSyncedAt = capturedAt
+                        }
+                    }
+                };
+            });
+
+        PumpDispatcher(TimeSpan.FromSeconds(2));
+
+        Assert.Equal(capturedAt, viewModel.LastSyncAt);
+        Assert.DoesNotContain("Never", viewModel.LastSyncLabel, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

@@ -43,7 +43,7 @@ vi.mock(
  * faked, exactly like raider-auth.service.login.test.ts /
  * raider-auth.service.register.test.ts already do. Covers:
  *  - an existing account binds the pending connection immediately
- *  - a brand-new account only binds after the explicit confirm step
+ *  - a brand-new non-admin account stays pending and does not bind
  *  - the bind is exactly-once/idempotent under a duplicate confirm
  *  - a different account can never steal an already-bound request
  */
@@ -71,7 +71,8 @@ describe("raider-auth device-connect continuation", () => {
       accessToken: null,
       tokenType: null,
       scope: null,
-      tokenExpiresAt: null
+      tokenExpiresAt: null,
+      status: "ACTIVE"
     });
 
     const bound = vi.fn(
@@ -95,7 +96,7 @@ describe("raider-auth device-connect continuation", () => {
     );
   });
 
-  it("a brand-new account does NOT bind at OAuth callback time - only after the explicit confirm", async () => {
+  it("a brand-new non-admin account does not bind while waiting for approval", async () => {
     const { service } = createService();
 
     const bound = vi.fn(
@@ -134,17 +135,10 @@ describe("raider-auth device-connect continuation", () => {
         outcome.pendingToken
       );
 
-    expect(bound).toHaveBeenCalledWith(
-      "link-99",
-      confirmed.raiderAccountId
+    expect(confirmed.outcome).toBe(
+      "awaiting-approval"
     );
-
-    // returnTo survived the full OAuth -> explicit confirm round trip.
-    expect(
-      confirmed.returnTo
-    ).toBe(
-      "/client/connect?token=abc"
-    );
+    expect(bound).not.toHaveBeenCalled();
   });
 
   it("registration-continuation is single-use: a replayed confirm cannot bind (or create) a second time", async () => {
@@ -185,9 +179,7 @@ describe("raider-auth device-connect continuation", () => {
       )
     ).rejects.toThrow();
 
-    expect(bound).toHaveBeenCalledTimes(
-      1
-    );
+    expect(bound).not.toHaveBeenCalled();
   });
 
   it("the real bindDeviceConnection bridge call never throws even when the binder rejects a cross-account attempt - a hijacked/reused token must not break an unrelated login", async () => {
@@ -201,7 +193,8 @@ describe("raider-auth device-connect continuation", () => {
       accessToken: null,
       tokenType: null,
       scope: null,
-      tokenExpiresAt: null
+      tokenExpiresAt: null,
+      status: "ACTIVE"
     });
 
     // Simulates the real DeviceConnectionService's contract: it never
@@ -235,7 +228,8 @@ describe("raider-auth device-connect continuation", () => {
       accessToken: null,
       tokenType: null,
       scope: null,
-      tokenExpiresAt: null
+      tokenExpiresAt: null,
+      status: "ACTIVE"
     });
 
     const bound = vi.fn(

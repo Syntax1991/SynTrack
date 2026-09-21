@@ -96,10 +96,18 @@ export class RaiderAuthRepository {
   async createAccount(input: {
     battleNetAccountId: string;
     battleTag: string | null;
+    status?: string;
   }) {
     try {
       return await this.db.raiderAccount.create({
-        data: input
+        data: {
+          battleNetAccountId:
+            input.battleNetAccountId,
+          battleTag: input.battleTag,
+          ...(input.status
+            ? { status: input.status }
+            : {})
+        }
       });
     }
     catch (error) {

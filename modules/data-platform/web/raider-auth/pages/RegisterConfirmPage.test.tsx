@@ -96,6 +96,7 @@ describe("RegisterConfirmPage — new identity (pendingToken)", () => {
     vi.mocked(
       confirmRegistration
     ).mockResolvedValue({
+      outcome: "registered",
       token: "session-token",
       raiderAccountId: "account-1",
       characters: [],
@@ -111,9 +112,30 @@ describe("RegisterConfirmPage — new identity (pendingToken)", () => {
 
     fireEvent.click(createButton);
 
+    expect(confirmRegistration).toHaveBeenCalledWith(
+      "abc123"
+    );
+  });
+
+  it("shows a waiting-for-approval message instead of creating a session", async () => {
+    vi.mocked(getPendingRegistration).mockResolvedValue({
+      battleTag: "Syntax#21715"
+    });
+    vi.mocked(confirmRegistration).mockResolvedValue({
+      outcome: "awaiting-approval",
+      battleTag: "Syntax#21715"
+    });
+
+    renderConfirm("#pendingToken=abc123");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Create account" })
+    );
+
     expect(
-      confirmRegistration
-    ).toHaveBeenCalledWith("abc123");
+      await screen.findByRole("heading", {
+        name: "Waiting for approval"
+      })
+    ).toBeInTheDocument();
   });
 });
 

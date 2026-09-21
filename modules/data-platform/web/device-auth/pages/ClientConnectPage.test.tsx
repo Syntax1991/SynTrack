@@ -143,7 +143,8 @@ describe("ClientConnectPage — signed in", () => {
       battleTag: "Syntax#21715",
       expiresAt: new Date(
         Date.now() + 100000
-      ).toISOString()
+      ).toISOString(),
+      isAdmin: false
     });
 
     vi.mocked(

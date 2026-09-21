@@ -1,0 +1,235 @@
+.crafter-share-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-elevated);
+}
+
+.crafter-share-controls h2 {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+}
+
+.crafter-share-controls p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.crafter-share-controls-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crafter-share-controls-actions button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--primary-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.crafter-share-controls-actions button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.crafter-share-controls-actions code {
+  max-width: 320px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crafter-share-public {
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: 32px 16px 48px;
+  background: var(--background);
+}
+
+.crafter-share-public-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(720px, 100%);
+  padding: 32px 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-large);
+  background: rgb(18 21 29 / 92%);
+  box-shadow: var(--shadow);
+}
+
+.crafter-share-public-card .brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-medium);
+  color: var(--text);
+  background: var(--primary-soft);
+  font-weight: 800;
+}
+
+.crafter-share-eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.crafter-share-public-card h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.crafter-share-public-card > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.crafter-share-character {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.crafter-share-character h2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.crafter-share-character h2 span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.crafter-share-character h3 {
+  margin: 0 0 6px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.crafter-share-character ul {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.crafter-share-character li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 0.8rem;
+}
+
+.crafter-share-slot,
+.crafter-share-empty {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.crafter-share-status {
+  margin-left: auto;
+  font-size: 0.68rem;
+}
+
+.crafter-share-status.is-safe {
+  color: #7dcea0;
+}
+
+.crafter-share-status.is-concentration {
+  color: #f0c674;
+}
+
+.crafter-share-status.is-not_safe {
+  color: #e0b08a;
+}
+
+.crafter-share-status.is-unknown {
+  color: var(--text-muted);
+}
+
+.crafter-share-home {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.crafter-share-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+  padding-top: 4px;
+}
+
+.crafter-share-filters > p {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.crafter-share-search,
+.crafter-share-ilvl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crafter-share-search span,
+.crafter-share-ilvl span {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.crafter-share-search input,
+.crafter-share-ilvl input {
+  width: 180px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.74rem;
+}
+
+.crafter-share-ilvl input {
+  width: 88px;
+}
+
+.crafter-share-recipe-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  cursor: help;
+}

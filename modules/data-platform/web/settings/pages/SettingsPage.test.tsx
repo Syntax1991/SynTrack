@@ -80,6 +80,11 @@ vi.mock(
   })
 );
 
+vi.mock("../../raider-auth/api/raiderAuthApi", () => ({
+  getRaiderLoginUrl: () => "/auth/raider/connect",
+  raiderLogout: vi.fn()
+}));
+
 function renderSettingsPage() {
   return render(
     <MemoryRouter>
@@ -194,6 +199,14 @@ describe("SettingsPage", () => {
 
     expect(
       screen.queryByText(/Connected/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not host user management; that lives in the Manage sidebar", () => {
+    renderSettingsPage();
+
+    expect(
+      screen.queryByRole("tab", { name: "Users" })
     ).not.toBeInTheDocument();
   });
 });

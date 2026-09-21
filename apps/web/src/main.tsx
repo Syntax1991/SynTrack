@@ -46,6 +46,7 @@ import "./styles/profession-detail-tabs.css";
 import "./styles/profession-crafter-workspace.css";
 import "./styles/profession-crafter-recipes.css";
 import "./styles/profession-find-craft.css";
+import "./styles/crafter-share.css";
 import "./styles/profession-find-craft-browse.css";
 import "./styles/profession-icons-tooltip.css";
 import "./styles/profession-recipe-finder.css";

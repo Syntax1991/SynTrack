@@ -1,7 +1,18 @@
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppNavigation } from "./AppNavigation";
+
+const getRaiderSessionStatus = vi.fn();
+
+vi.mock(
+  "../../../../../modules/data-platform/web/raider-auth/api/raiderAuthApi",
+  () => ({
+    getRaiderSessionStatus: () => getRaiderSessionStatus(),
+    getRaiderLoginUrl: () => "/auth/raider/connect",
+    raiderLogout: vi.fn()
+  })
+);
 
 /*
  * Navigation-architecture verification. The real app gates AppNavigation
@@ -37,6 +48,15 @@ function sidebar() {
 }
 
 describe("AppNavigation - flat product-domain sidebar", () => {
+  beforeEach(() => {
+    getRaiderSessionStatus.mockReset();
+    getRaiderSessionStatus.mockResolvedValue({
+      battleTag: "Syntax#21715",
+      expiresAt: "2026-12-31T00:00:00.000Z",
+      isAdmin: false
+    });
+  });
+
   it("renders exactly the six domains: Overview, Season, Characters, Weeklies, Professions and Settings", () => {
     renderNavigation();
 
@@ -56,6 +76,7 @@ describe("AppNavigation - flat product-domain sidebar", () => {
     }
 
     expect(sidebar().queryByText("Gear")).toBeNull();
+    expect(sidebar().queryByText("Manage")).toBeNull();
   });
 
   it("never renders My Characters, Weekly Checklist, Vault / M+, profession child links, a My SynTrack wrapper, Roadmap, Automation, Guild, Loot, Recruitment or Raid Tasks", () => {
@@ -160,5 +181,21 @@ describe("AppNavigation - flat product-domain sidebar", () => {
       ])
     );
     expect(labels).not.toContain("Gear");
+  });
+
+  it("shows Manage in the sidebar only for an operator session", async () => {
+    getRaiderSessionStatus.mockResolvedValue({
+      battleTag: "Syntax#21715",
+      expiresAt: "2026-12-31T00:00:00.000Z",
+      isAdmin: true
+    });
+
+    renderNavigation();
+
+    const manage = await sidebar().findByRole("link", {
+      name: /Manage/i
+    });
+
+    expect(manage).toHaveAttribute("href", "/manage");
   });
 });

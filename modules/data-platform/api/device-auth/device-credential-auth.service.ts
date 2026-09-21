@@ -1,19 +1,25 @@
 import { AppError } from "../../../../apps/api/src/shared/errors/AppError.js";
+import { assertActiveRaiderAccount } from "../raider-auth/raider-auth.account-access.js";
 import { hashSecret } from "./device-auth.crypto.js";
 import type {
   DeviceCredentialRepositoryContract,
   DeviceCredentialRow
 } from "./device-link-repository.types.js";
 
+export type DeviceOwnerStatusLookup = (
+  raiderAccountId: string
+) => Promise<string | null>;
+
 /*
  * Proves "this is an authorized SynTrack client" - not per-user data
- * isolation (SynTrack's personal data remains single-tenant; see the
- * pre-client foundation audit). A valid, non-revoked device credential
- * is the only thing this asserts.
+ * isolation. A valid, non-revoked credential is required. If it is bound
+ * to a RaiderAccount, that account must be ACTIVE.
  */
 export class DeviceCredentialAuthService {
   constructor(
-    private readonly repository: DeviceCredentialRepositoryContract
+    private readonly repository: DeviceCredentialRepositoryContract,
+    private readonly getOwnerStatus: DeviceOwnerStatusLookup = async () =>
+      "ACTIVE"
   ) {}
 
   async requireValidCredential(
@@ -35,6 +41,14 @@ export class DeviceCredentialAuthService {
       throw new AppError(
         401,
         "This device has been disconnected."
+      );
+    }
+
+    if (credential.raiderAccountId) {
+      assertActiveRaiderAccount(
+        await this.getOwnerStatus(
+          credential.raiderAccountId
+        )
       );
     }
 

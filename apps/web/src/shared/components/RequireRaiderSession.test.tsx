@@ -94,7 +94,8 @@ describe("RequireRaiderSession — signed in", () => {
       battleTag: "Demo#1234",
       expiresAt: new Date(
         Date.now() + 60_000
-      ).toISOString()
+      ).toISOString(),
+      isAdmin: false
     });
 
     renderGate("/characters");
