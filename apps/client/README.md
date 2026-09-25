@@ -151,11 +151,22 @@ Add-AppxPackage -Path apps/client/msix/Output/SynTrack-0.1.0.msix
 ```
 
 The default pack talks to `https://syntrack.io/api` and
-`https://syntrack.io`. For a local API instead:
+`https://syntrack.io`, and every pack reads the endpoints back out of
+the built MSIX (`scripts/release/verify-client-endpoints.ps1`). A
+Release build or pack against localhost / plain HTTP is refused. For
+an intentional local sideload test against a dev API only:
 
 ```powershell
-powershell -File apps/client/pack.ps1 -ApiBaseUrl http://localhost:4000/api -WebBaseUrl http://localhost:5173
+powershell -File apps/client/pack.ps1 -ApiBaseUrl http://localhost:4000/api -WebBaseUrl http://localhost:5173 -AllowInsecureEndpoints
 ```
+
+That package is stamped `SynTrackAllowInsecureEndpoints=true` and must
+never be submitted. Microsoft Store builds, WACK and resubmission:
+see [STORE_CERTIFICATION.md](STORE_CERTIFICATION.md).
+
+Debug builds (`npm run client:build`, `dotnet run`) are unrestricted;
+point one at the local API with
+`-p:SynTrackApiBaseUrl=http://localhost:4000/api -p:SynTrackWebBaseUrl=http://localhost:5173`.
 
 Pass `-SkipInno` to build only the MSIX.
 
