@@ -127,10 +127,21 @@ dotnet publish $clientProject `
     -p:DebugType=None `
     -p:DebugSymbols=false `
     -p:SynTrackApiBaseUrl=$ApiBaseUrl `
-    -p:SynTrackWebBaseUrl=$WebBaseUrl
+    -p:SynTrackWebBaseUrl=$WebBaseUrl `
+    -p:SynTrackAllowInsecureEndpoints=$(if ($AllowInsecureEndpoints) { "true" } else { "false" })
 
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish failed (exit $LASTEXITCODE)."
+}
+
+# Read the endpoints back out of the binary that will actually ship.
+$verifyArgs = @("-NoProfile", "-File", (Join-Path $repoRoot "scripts/release/verify-client-endpoints.ps1"), "-Path", (Join-Path $publishDir "SynTrack.Client.dll"))
+if ($AllowInsecureEndpoints) {
+    $verifyArgs += "-AllowInsecure"
+}
+& powershell.exe @verifyArgs
+if ($LASTEXITCODE -ne 0) {
+    throw "Published client does not embed the production endpoints."
 }
 
 $clientExe = Join-Path $publishDir "SynTrack.Client.exe"

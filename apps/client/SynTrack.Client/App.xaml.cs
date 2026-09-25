@@ -11,6 +11,13 @@ using SynTrack.Client.Views;
 
 public partial class App : Application
 {
+    /// <summary>
+    /// Shared per-request ceiling. The default 100 s left a START against
+    /// an unreachable host spinning far longer than any user (or Store
+    /// tester) waits; polling retries timeouts until the link expires.
+    /// </summary>
+    internal static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(20);
+
     private HttpClient? _httpClient;
     private TrayService? _trayService;
     private MainWindow? _mainWindow;
@@ -37,7 +44,12 @@ public partial class App : Application
         var clientVersion = GetType().Assembly.GetName().Version?.ToString() ?? "0.1.0";
 
         logger.Info(
-            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType} version={clientVersion} packaged={PackagedApp.IsRunningAsPackaged} api={ClientEndpoints.ApiBaseUrl} web={ClientEndpoints.WebBaseUrl} assemblyDir={AppContext.BaseDirectory}");
+            $"SynTrack Client starting. pid={Environment.ProcessId} host={hostType} version={clientVersion} packaged={PackagedApp.IsRunningAsPackaged} api={ClientEndpoints.SanitizeForLog(ClientEndpoints.ApiBaseUrl)} web={ClientEndpoints.SanitizeForLog(ClientEndpoints.WebBaseUrl)} assemblyDir={AppContext.BaseDirectory}");
+
+        if (ClientEndpoints.FellBackToProduction)
+        {
+            logger.Warn("Packaged build was stamped with non-production endpoints; using the production SynTrack service instead.");
+        }
 
         // A raw SynTrack.Client.exe double-click landing as a second,
         // uncoordinated process while a dotnet.exe-hosted instance was
@@ -60,7 +72,7 @@ public partial class App : Application
         var accountDiscovery = new WowAccountDiscoveryService();
         var autoStartService = new AutoStartService();
 
-        _httpClient = new HttpClient();
+        _httpClient = new HttpClient { Timeout = HttpTimeout };
         var apiClient = new SynTrackApiClient(_httpClient, ClientEndpoints.ApiBaseUrl);
         var deviceLinkService = new DeviceLinkService(apiClient, credentialService, ClientEndpoints.WebBaseUrl);
         var deviceConnectionService = new DeviceConnectionService(

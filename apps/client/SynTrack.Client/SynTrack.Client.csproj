@@ -9,7 +9,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\syntrack.ico</ApplicationIcon>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <AssemblyTitle>SynTrack</AssemblyTitle>
     <Product>SynTrack</Product>
     <Company>SynTrack</Company>
@@ -17,6 +17,10 @@
     <Copyright>Copyright © SynTrack</Copyright>
     <SynTrackApiBaseUrl Condition="'$(SynTrackApiBaseUrl)' == ''">https://syntrack.io/api</SynTrackApiBaseUrl>
     <SynTrackWebBaseUrl Condition="'$(SynTrackWebBaseUrl)' == ''">https://syntrack.io</SynTrackWebBaseUrl>
+    <!-- Only for an intentional local sideload/test build against a dev API. -->
+    <SynTrackAllowInsecureEndpoints Condition="'$(SynTrackAllowInsecureEndpoints)' != 'true'">false</SynTrackAllowInsecureEndpoints>
+    <!-- Absolute https URL whose host is not localhost / loopback / 0.0.0.0. -->
+    <_SynTrackTrustedUrlPattern>(?i)^https://(?!(localhost|[^/:]*\.localhost|127\.[0-9.]+|0\.0\.0\.0|\[[0:]*1?\])([:/]|$))[^/:\s\[\]]+(:[0-9]+)?(/\S*)?$</_SynTrackTrustedUrlPattern>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +32,24 @@
       <_Parameter1>SynTrackWebBaseUrl</_Parameter1>
       <_Parameter2>$(SynTrackWebBaseUrl)</_Parameter2>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>SynTrackAllowInsecureEndpoints</_Parameter1>
+      <_Parameter2>$(SynTrackAllowInsecureEndpoints)</_Parameter2>
+    </AssemblyAttribute>
   </ItemGroup>
+
+  <!--
+    A Release (Store / MSIX / installer) build must never embed a dev
+    endpoint: the first Store submission shipped http://localhost:4000/api
+    and failed certification. Debug builds may point anywhere.
+  -->
+  <Target Name="SynTrackValidateReleaseEndpoints" BeforeTargets="CoreCompile"
+          Condition="'$(Configuration)' == 'Release' and '$(SynTrackAllowInsecureEndpoints)' != 'true'">
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(SynTrackApiBaseUrl)', '$(_SynTrackTrustedUrlPattern)'))"
+           Text="SynTrackApiBaseUrl '$(SynTrackApiBaseUrl)' is not a trusted production endpoint (absolute https, non-localhost). Pass -p:SynTrackAllowInsecureEndpoints=true only for an intentional local test build." />
+    <Error Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(SynTrackWebBaseUrl)', '$(_SynTrackTrustedUrlPattern)'))"
+           Text="SynTrackWebBaseUrl '$(SynTrackWebBaseUrl)' is not a trusted production endpoint (absolute https, non-localhost). Pass -p:SynTrackAllowInsecureEndpoints=true only for an intentional local test build." />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
