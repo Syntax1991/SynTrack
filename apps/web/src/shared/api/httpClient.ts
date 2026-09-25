@@ -1,13 +1,15 @@
+import {
+  productionApiBaseUrl,
+  resolveApiBaseUrl
+} from "./apiBaseUrl";
 import { getRaiderSessionToken } from "./raiderSession";
 
-const configuredApiBaseUrl =
-  import.meta.env.VITE_API_URL ??
-  "http://localhost:4000/api";
-
 const apiBaseUrl =
-  configuredApiBaseUrl.replace(
-    /\/+$/u,
-    ""
+  resolveApiBaseUrl(
+    import.meta.env.VITE_API_URL,
+    import.meta.env.DEV
+      ? "http://localhost:4000/api"
+      : productionApiBaseUrl
   );
 
 type ApiErrorResponse = {
