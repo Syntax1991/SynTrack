@@ -37,7 +37,7 @@ export const deviceConnectionStartSchema =
         .trim()
         .min(1)
         .max(80)
-        .optional()
+        .nullish()
     })
     .strict();
 

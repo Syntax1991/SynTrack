@@ -107,15 +107,100 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         string? deviceName,
         CancellationToken cancellationToken)
     {
-        var response = await _http.PostAsJsonAsync(
-            $"{_apiBaseUrl}/client/connect",
-            new { deviceName },
-            JsonOptions,
-            cancellationToken);
+        HttpResponseMessage response;
 
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            response = await _http.PostAsJsonAsync(
+                $"{_apiBaseUrl}/client/connect",
+                new { deviceName },
+                JsonOptions,
+                cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            throw new DeviceConnectStartException(DeviceConnectStartFailure.Unreachable);
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // HttpClient.Timeout, not a caller cancellation.
+            throw new DeviceConnectStartException(DeviceConnectStartFailure.Unreachable);
+        }
 
-        return (await response.Content.ReadFromJsonAsync<DeviceConnectStartResponse>(JsonOptions, cancellationToken))!;
+        using (response)
+        {
+            var status = (int)response.StatusCode;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new DeviceConnectStartException(
+                    status >= 500 || response.StatusCode == HttpStatusCode.TooManyRequests
+                        ? DeviceConnectStartFailure.ServerError
+                        : DeviceConnectStartFailure.Rejected,
+                    status);
+            }
+
+            DeviceConnectStartResponse? body;
+
+            try
+            {
+                body = await response.Content.ReadFromJsonAsync<DeviceConnectStartResponse>(JsonOptions, cancellationToken);
+            }
+            catch (Exception ex) when (ex is JsonException or NotSupportedException or InvalidOperationException)
+            {
+                // HTML error page, wrong content type, or missing required fields.
+                throw new DeviceConnectStartException(DeviceConnectStartFailure.InvalidResponse, status);
+            }
+            catch (HttpRequestException)
+            {
+                throw new DeviceConnectStartException(DeviceConnectStartFailure.Unreachable, status);
+            }
+            catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new DeviceConnectStartException(DeviceConnectStartFailure.Unreachable, status);
+            }
+
+            if (!IsValidStartResponse(body, _apiBaseUrl))
+            {
+                throw new DeviceConnectStartException(DeviceConnectStartFailure.InvalidResponse, status);
+            }
+
+            return new DeviceConnectStartResponse
+            {
+                BrowserUrl = body!.BrowserUrl,
+                PollToken = body.PollToken,
+                ExpiresAt = body.ExpiresAt,
+                ServerDate = response.Headers.Date
+            };
+        }
+    }
+
+    /// <summary>
+    /// START contract: absolute browserUrl (https whenever the API itself
+    /// is https), non-empty pollToken, parseable expiresAt.
+    /// </summary>
+    internal static bool IsValidStartResponse(DeviceConnectStartResponse? body, string apiBaseUrl)
+    {
+        if (body is null
+            || string.IsNullOrWhiteSpace(body.PollToken)
+            || string.IsNullOrWhiteSpace(body.BrowserUrl)
+            || !Uri.TryCreate(body.BrowserUrl, UriKind.Absolute, out var browserUri)
+            || !DateTimeOffset.TryParse(
+                body.ExpiresAt,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.RoundtripKind,
+                out _))
+        {
+            return false;
+        }
+
+        if (browserUri.Scheme == Uri.UriSchemeHttps)
+        {
+            return true;
+        }
+
+        return browserUri.Scheme == Uri.UriSchemeHttp
+            && apiBaseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<DeviceConnectPollResult> PollConnectStatusAsync(

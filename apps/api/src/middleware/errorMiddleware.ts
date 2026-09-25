@@ -32,6 +32,20 @@ export const errorMiddleware:
       return;
     }
 
+    /*
+     * express.json() rejects a malformed body with a client error
+     * (body-parser sets expose + a 4xx status). Answer with a controlled
+     * 4xx instead of the generic 500, without echoing the parser detail.
+     */
+    if (isExposedClientError(error)) {
+      response.status(error.status).json({
+        error:
+          "Die übermittelten Daten sind ungültig."
+      });
+
+      return;
+    }
+
     console.error(error);
 
     response.status(500).json({
@@ -39,3 +53,21 @@ export const errorMiddleware:
         "Ein interner Serverfehler ist aufgetreten."
     });
   };
+
+function isExposedClientError(
+  error: unknown
+): error is { status: number } {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const candidate =
+    error as { status?: unknown; expose?: unknown };
+
+  return (
+    candidate.expose === true &&
+    typeof candidate.status === "number" &&
+    candidate.status >= 400 &&
+    candidate.status < 500
+  );
+}

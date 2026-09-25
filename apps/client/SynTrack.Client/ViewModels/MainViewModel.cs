@@ -423,17 +423,27 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (!outcome.BrowserOpened)
             {
-                ConnectError = "Could not open your browser.";
+                ConnectError = ConnectMessages.BrowserFailed;
+                _logger.Warn("Codeless connect started but the default browser could not be opened.");
             }
 
-            _logger.Info("Codeless Battle.net connect started.");
+            _logger.Info(
+                $"Codeless Battle.net connect started. browser={ClientEndpoints.SanitizeForLog(outcome.BrowserUrl)}");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.Warn($"Codeless connect failed to start: {ex.Message}");
+            var failure = ex is DeviceConnectStartException start
+                ? start.Failure
+                : DeviceConnectStartFailure.InvalidResponse;
+            var status = (ex as DeviceConnectStartException)?.StatusCode;
+
+            // Category + status + token-free endpoint only - never ex.Message
+            // (could carry a response body) or anything token-bearing.
+            _logger.Warn(
+                $"Codeless connect failed to start. operation=connect-start endpoint={ClientEndpoints.SanitizeForLog(ClientEndpoints.ApiBaseUrl + "/client/connect")} category={failure} status={status?.ToString() ?? "none"} error={ex.GetType().Name}");
             _deviceConnectionService.Cancel();
             SignInBrowserUrl = null;
-            ConnectError = "Could not connect this client.";
+            ConnectError = ConnectMessages.ForStartFailure(failure);
             AccountHealth = _credentialService.Load() is null
                 ? AccountHealth.SignedOut
                 : AccountHealth.ConnectionIssue;
@@ -462,9 +472,13 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenBrowserAgain()
     {
-        if (!_deviceConnectionService.TryOpenBrowserAgain())
+        if (_deviceConnectionService.TryOpenBrowserAgain())
         {
-            ConnectError = "Could not open your browser.";
+            ConnectError = null;
+        }
+        else
+        {
+            ConnectError = ConnectMessages.BrowserFailed;
         }
     }
 
@@ -482,7 +496,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            _logger.Warn($"Could not copy sign-in link: {ex.Message}");
+            _logger.Warn($"Could not copy sign-in link: {ex.GetType().Name}");
         }
     }
 
@@ -576,7 +590,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.Warn($"Profile fetch failed: {ex.Message}");
+            _logger.Warn($"Profile fetch failed: {ex.GetType().Name}");
             result = new ClientProfileFetchResult { Health = AccountHealth.ConnectionIssue };
         }
 
@@ -656,7 +670,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.Warn($"Character roster fetch failed: {ex.Message}");
+            _logger.Warn($"Character roster fetch failed: {ex.GetType().Name}");
             fetch = new ClientCharactersFetchResult { Status = ClientCharactersFetchStatus.TemporaryFailure };
         }
 
@@ -736,7 +750,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnCodelessExpired() => _dispatcher.Invoke(() =>
     {
         IsLinking = false;
-        ConnectError = "Connection expired.";
+        ConnectError = ConnectMessages.Expired;
         AccountHealth = AccountHealth.SignedOut;
         _logger.Warn("Codeless connect expired.");
     });
@@ -744,7 +758,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnCodelessConsumedWithoutCredential() => _dispatcher.Invoke(() =>
     {
         IsLinking = false;
-        ConnectError = "Could not connect this client.";
+        ConnectError = ConnectMessages.NoLongerValid;
         if (_credentialService.Load() is null)
         {
             AccountHealth = AccountHealth.SignedOut;
@@ -756,7 +770,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnCodelessInvalid() => _dispatcher.Invoke(() =>
     {
         IsLinking = false;
-        ConnectError = "Could not connect this client.";
+        ConnectError = ConnectMessages.NoLongerValid;
         AccountHealth = AccountHealth.SignedOut;
         _logger.Warn("Codeless connect poll token was invalid.");
     });
@@ -764,7 +778,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void OnCodelessStorageFailed() => _dispatcher.Invoke(() =>
     {
         IsLinking = false;
-        ConnectError = "Could not connect this client.";
+        ConnectError = ConnectMessages.StorageFailed;
         AccountHealth = AccountHealth.SignedOut;
         _logger.Warn("Codeless connect credential could not be stored; polling stopped.");
     });

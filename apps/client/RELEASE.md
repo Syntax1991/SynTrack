@@ -3,6 +3,16 @@
 How to build a distributable `SynTrackClientSetup-<version>.exe` and publish
 it to the self-hosted download at `/api/client-download`.
 
+For the Microsoft Store MSIX (`apps/client/pack.ps1`), endpoint
+verification, WACK, the clean-machine smoke test and the Partner Center
+resubmission checklist, see [STORE_CERTIFICATION.md](STORE_CERTIFICATION.md).
+
+The desktop connect flow also depends on the deployed web app: always
+build it for deployment with `npm run build:web:production` (pins the
+same-origin `/api` and fails on a loopback API in the bundle), never a
+plain `npm run build` from a checkout whose `apps/web/.env` points at
+the local API.
+
 ## Prerequisites
 
 - .NET 8 SDK (`dotnet --version`)
@@ -65,7 +75,12 @@ powershell -File scripts/release-client.ps1 -Version 0.2.0
    build output, never committed (`.gitignore`'d).
 3. Validates the configured API/web endpoints aren't `localhost` (unless
    `-AllowInsecureEndpoints` is passed for an intentional local test build).
-4. `dotnet publish` - Release, `win-x64`, self-contained.
+4. `dotnet publish` - Release, `win-x64`, self-contained. The Release
+   build itself fails on a non-https / loopback endpoint unless
+   `SynTrackAllowInsecureEndpoints=true` is passed (which
+   `-AllowInsecureEndpoints` does), and the published
+   `SynTrack.Client.dll` is then checked with
+   `scripts/release/verify-client-endpoints.ps1`.
 5. Optionally signs `SynTrack.Client.exe`.
 6. Builds the installer with the existing Inno Setup script at
    `apps/client/installer/syntrack-client.iss` (per-user install under

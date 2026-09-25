@@ -9,17 +9,28 @@
 #               for the Inno EXE; MSIX sideload trusts CurrentUser\TrustedPeople)
 #   Skip:       -SkipSign
 #
-# Defaults to https://syntrack.io. For a local API:
-#   powershell -File apps/client/pack.ps1 -ApiBaseUrl http://localhost:4000/api -WebBaseUrl http://localhost:5173
+# Defaults to https://syntrack.io. A localhost / plain-http endpoint is
+# refused unless -AllowInsecureEndpoints is passed (local sideload only -
+# never submit such a package; the first Store submission failed
+# certification exactly this way). For a local API:
+#   powershell -File apps/client/pack.ps1 -ApiBaseUrl http://localhost:4000/api -WebBaseUrl http://localhost:5173 -AllowInsecureEndpoints
+#
+# Version defaults to SynTrack.Client.csproj <Version> (the one release
+# version source, same as scripts/release-client.ps1).
+#
+# After packing, the endpoints are read back out of the built MSIX by
+# scripts/release/verify-client-endpoints.ps1 and the pack fails unless
+# they are the https production endpoints.
 #
 # Usage:
 #   powershell -File apps/client/pack.ps1
 
 [CmdletBinding()]
 param(
-    [string] $Version = "0.1.0",
+    [string] $Version = "",
     [string] $ApiBaseUrl = "",
     [string] $WebBaseUrl = "",
+    [switch] $AllowInsecureEndpoints,
     [switch] $SkipSign,
     [switch] $SkipInno
 )
@@ -48,6 +59,27 @@ if ([string]::IsNullOrWhiteSpace($ApiBaseUrl)) {
 }
 if ([string]::IsNullOrWhiteSpace($WebBaseUrl)) {
     $WebBaseUrl = "https://syntrack.io"
+}
+
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $Version = ([xml](Get-Content -Raw -Path $clientProject)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($Version)) {
+        throw "Could not read <Version> from $clientProject"
+    }
+}
+
+$verifyEndpoints = Join-Path $repoRoot "scripts\release\verify-client-endpoints.ps1"
+
+function Test-TrustedEndpoint {
+    param([string] $Url)
+
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($Url, [System.UriKind]::Absolute, [ref] $uri)) {
+        return $false
+    }
+
+    $hostName = $uri.Host.Trim('[', ']')
+    return $uri.Scheme -eq "https" -and -not $uri.IsLoopback -and $hostName -ne "localhost" -and -not $hostName.EndsWith(".localhost") -and $hostName -ne "0.0.0.0"
 }
 
 function Find-SdkTool {
@@ -289,9 +321,16 @@ if (-not (Test-Path $manifestTemplate)) {
 Write-Host "Publishing SynTrack.Client $Version (win-x64 self-contained)"
 Write-Host "API: $ApiBaseUrl"
 Write-Host "Web: $WebBaseUrl"
-if ($ApiBaseUrl -like "http://localhost*" -or $WebBaseUrl -like "http://localhost*") {
-    Write-Host "WARNING: localhost URLs are for local sideload only. Store submission needs https production -ApiBaseUrl / -WebBaseUrl."
+foreach ($url in @($ApiBaseUrl, $WebBaseUrl)) {
+    if (-not (Test-TrustedEndpoint -Url $url)) {
+        if (-not $AllowInsecureEndpoints) {
+            throw "Refusing to pack against a non-production endpoint ($url). Store / release packages need https production endpoints. Pass -AllowInsecureEndpoints only for an intentional local sideload build."
+        }
+
+        Write-Host "WARNING: non-production endpoint $url - local sideload only. NEVER submit this package to the Microsoft Store."
+    }
 }
+$allowInsecureProperty = if ($AllowInsecureEndpoints) { "true" } else { "false" }
 
 if (Test-Path $publishDir) {
     Remove-Item -Recurse -Force $publishDir
@@ -306,7 +345,8 @@ dotnet publish $clientProject `
     -p:DebugType=None `
     -p:DebugSymbols=false `
     -p:SynTrackApiBaseUrl=$ApiBaseUrl `
-    -p:SynTrackWebBaseUrl=$WebBaseUrl
+    -p:SynTrackWebBaseUrl=$WebBaseUrl `
+    -p:SynTrackAllowInsecureEndpoints=$allowInsecureProperty
 
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet publish failed (exit $LASTEXITCODE)"
@@ -366,6 +406,16 @@ if ($LASTEXITCODE -ne 0) {
     throw "makeappx failed (exit $LASTEXITCODE)"
 }
 
+$verifyArgs = @("-NoProfile", "-File", $verifyEndpoints, "-Path", $msixPath)
+if ($AllowInsecureEndpoints) {
+    $verifyArgs += "-AllowInsecure"
+}
+& powershell.exe @verifyArgs
+if ($LASTEXITCODE -ne 0) {
+    Remove-Item -Force $msixPath
+    throw "Built MSIX does not embed the production endpoints; removed $msixPath."
+}
+
 if (-not $SkipSign -and $null -ne $signTool) {
     Sign-File -Path $msixPath -SignTool $signTool
     if ([string]::IsNullOrWhiteSpace($env:SYNTRACK_CODE_SIGN_PFX)) {
@@ -412,6 +462,6 @@ Write-Host "MSIX: $msixPath"
 Write-Host "Client: $clientExe"
 Write-Host "Sideload: Add-AppxPackage -Path `"$msixPath`""
 Write-Host "Self-signed sideload: admin-import the CN=SynTrack cert into LocalMachine\\TrustedPeople, or upload the MSIX to Partner Center (Microsoft re-signs)."
-if ($ApiBaseUrl -like "http://localhost*") {
+if ($AllowInsecureEndpoints -and $ApiBaseUrl -like "http://localhost*") {
     Write-Host "Localhost API loopback (after install): CheckNetIsolation.exe LoopbackExempt -a -n=(Get-AppxPackage SynTrack.Client).PackageFamilyName"
 }

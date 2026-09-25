@@ -1,6 +1,8 @@
 namespace SynTrack.Client.Services;
 
+using System.Globalization;
 using System.Net.Http;
+using System.Text.Json;
 using SynTrack.Client.Models;
 
 /// <summary>
@@ -15,6 +17,7 @@ public sealed class DeviceConnectionService
     private readonly ICredentialService _credentialService;
     private readonly IBrowserLauncher _browserLauncher;
     private readonly TimeSpan _pollInterval;
+    private readonly Func<DateTimeOffset> _utcNow;
 
     private string? _pollToken;
     private string? _browserUrl;
@@ -31,13 +34,21 @@ public sealed class DeviceConnectionService
         ISynTrackApiClient apiClient,
         ICredentialService credentialService,
         IBrowserLauncher browserLauncher,
-        TimeSpan? pollInterval = null)
+        TimeSpan? pollInterval = null,
+        Func<DateTimeOffset>? utcNow = null)
     {
         _apiClient = apiClient;
         _credentialService = credentialService;
         _browserLauncher = browserLauncher;
         _pollInterval = pollInterval ?? TimeSpan.FromSeconds(2);
+        _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
     }
+
+    /// <summary>
+    /// Longest local polling window accepted from a server response, so a
+    /// bogus expiresAt can never turn into (near-)infinite polling.
+    /// </summary>
+    internal static readonly TimeSpan MaxPollWindow = TimeSpan.FromMinutes(30);
 
     public string? BrowserUrl => _browserUrl;
 
@@ -48,12 +59,15 @@ public sealed class DeviceConnectionService
         Cancel();
 
         var created = await _apiClient.StartConnectAsync(deviceName, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(created.PollToken) || string.IsNullOrWhiteSpace(created.BrowserUrl)
+            || !DateTimeOffset.TryParse(created.ExpiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out _))
+        {
+            throw new DeviceConnectStartException(DeviceConnectStartFailure.InvalidResponse);
+        }
         _pollToken = created.PollToken;
         _browserUrl = created.BrowserUrl;
-        _expiresAt = DateTimeOffset.Parse(
-            created.ExpiresAt,
-            null,
-            System.Globalization.DateTimeStyles.RoundtripKind);
+        _expiresAt = ComputeLocalDeadline(created, _utcNow());
 
         var opened = _browserLauncher.TryOpen(created.BrowserUrl);
 
@@ -92,7 +106,7 @@ public sealed class DeviceConnectionService
                 return;
             }
 
-            if (DateTimeOffset.UtcNow >= _expiresAt)
+            if (_utcNow() >= _expiresAt)
             {
                 _pollToken = null;
                 Expired?.Invoke();
@@ -105,12 +119,17 @@ public sealed class DeviceConnectionService
             {
                 result = await _apiClient.PollConnectStatusAsync(token, cancellationToken);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 return;
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException
+                or OperationCanceledException // HttpClient.Timeout
+                or JsonException              // HTML / garbled body from a proxy
+                or NotSupportedException)     // wrong content type
             {
+                // Transient: keep polling until the server resolves the
+                // request or the local deadline passes.
                 await DelayOrReturn(cancellationToken);
                 continue;
             }
@@ -170,6 +189,31 @@ public sealed class DeviceConnectionService
 
         _pollToken = null;
         Completed?.Invoke();
+    }
+
+    /// <summary>
+    /// expiresAt is server time. When the response carried a Date header
+    /// the deadline is "now + (expiresAt - serverDate)", so a skewed local
+    /// clock neither expires the connection instantly nor polls forever.
+    /// </summary>
+    internal static DateTimeOffset ComputeLocalDeadline(DeviceConnectStartResponse created, DateTimeOffset localNow)
+    {
+        var expiresAt = DateTimeOffset.Parse(created.ExpiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+
+        var window = created.ServerDate is { } serverDate
+            ? expiresAt - serverDate
+            : expiresAt - localNow;
+
+        if (window < TimeSpan.Zero)
+        {
+            window = TimeSpan.Zero;
+        }
+        else if (window > MaxPollWindow)
+        {
+            window = MaxPollWindow;
+        }
+
+        return localNow + window;
     }
 
     private async Task DelayOrReturn(CancellationToken cancellationToken)
