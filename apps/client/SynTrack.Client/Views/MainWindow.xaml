@@ -109,8 +109,9 @@
                          Fill="{Binding ConnectionStatusTone, Converter={StaticResource ToneToBrush}}" />
                 <TextBlock Text="Waiting for Battle.net..." Style="{StaticResource BodyText}" FontWeight="SemiBold" />
             </StackPanel>
-            <TextBlock Text="Complete sign-in in your browser." Style="{StaticResource MutedText}"
-                       Margin="0,6,0,16" HorizontalAlignment="Center" />
+            <TextBlock Text="Finish signing in in your browser. This screen updates automatically — or Cancel to stop waiting."
+                       Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"
+                       MaxWidth="380" Margin="0,6,0,16" HorizontalAlignment="Center" />
 
             <TextBlock Style="{StaticResource MutedText}" TextWrapping="Wrap" TextAlignment="Center"
                        MaxWidth="360" Text="{Binding ConnectError}"

@@ -22,8 +22,14 @@ type Resolver = (
   browserToken: string
 ) => Promise<{ id: string } | null>;
 
+type AwaitingApprovalMarker = (
+  deviceLinkRequestId: string
+) => Promise<void>;
+
 let binder: Binder | null = null;
 let resolver: Resolver | null = null;
+let awaitingApprovalMarker: AwaitingApprovalMarker | null =
+  null;
 
 export function registerDeviceConnectionBinder(
   fn: Binder
@@ -35,6 +41,12 @@ export function registerDeviceConnectionResolver(
   fn: Resolver
 ): void {
   resolver = fn;
+}
+
+export function registerDeviceConnectionAwaitingApprovalMarker(
+  fn: AwaitingApprovalMarker
+): void {
+  awaitingApprovalMarker = fn;
 }
 
 /*
@@ -73,4 +85,20 @@ export async function resolvePendingDeviceConnection(
   }
 
   return resolver(browserToken);
+}
+
+export async function markDeviceConnectionAwaitingApproval(
+  deviceLinkRequestId: string
+): Promise<void> {
+  if (!awaitingApprovalMarker) {
+    console.warn(
+      "[device-connection-bridge] markDeviceConnectionAwaitingApproval called before a marker was registered - skipping."
+    );
+
+    return;
+  }
+
+  await awaitingApprovalMarker(
+    deviceLinkRequestId
+  );
 }

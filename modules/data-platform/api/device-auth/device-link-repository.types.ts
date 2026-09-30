@@ -75,6 +75,10 @@ export interface DeviceLinkRepositoryContract {
     id: string
   ): Promise<DeviceLinkRequestRow>;
 
+  markAwaitingApproval(
+    id: string
+  ): Promise<DeviceLinkRequestRow>;
+
   /*
    * The one transactional step that both consumes the link request and
    * creates the credential - the two must never happen independently,

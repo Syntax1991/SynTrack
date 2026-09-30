@@ -2,7 +2,8 @@ export type DeviceLinkStatus =
   | "PENDING"
   | "APPROVED"
   | "CONSUMED"
-  | "EXPIRED";
+  | "EXPIRED"
+  | "AWAITING_APPROVAL";
 
 export type DeviceLinkCreateResult = {
   userCode: string;
@@ -11,7 +12,7 @@ export type DeviceLinkCreateResult = {
 };
 
 export type DeviceLinkStatusResult =
-  | { status: "PENDING" | "EXPIRED" }
+  | { status: "PENDING" | "EXPIRED" | "AWAITING_APPROVAL" }
   | { status: "APPROVED" }
   | {
       status: "CONSUMED";
@@ -60,4 +61,5 @@ export type DeviceConnectionPreview =
       connectedBattleTag: string | null;
     }
   | { status: "EXPIRED" }
+  | { status: "AWAITING_APPROVAL" }
   | { status: "INVALID" };

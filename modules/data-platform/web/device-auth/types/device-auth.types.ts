@@ -17,4 +17,5 @@ export type DeviceConnectionPreview =
       connectedBattleTag: string | null;
     }
   | { status: "EXPIRED" }
+  | { status: "AWAITING_APPROVAL" }
   | { status: "INVALID" };

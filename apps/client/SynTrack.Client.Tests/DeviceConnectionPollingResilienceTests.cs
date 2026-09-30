@@ -129,7 +129,9 @@ public class DeviceConnectionPollingResilienceTests
         await WaitFor(() => expired > 0);
 
         Assert.Equal(1, expired);
-        Assert.InRange(api.PollCount, 9, 11);
+        // Server TTL is 10 minutes, but MaxPollWindow clamps the local
+        // deadline to 3 minutes (one minute of clock advance per poll).
+        Assert.InRange(api.PollCount, 2, 4);
     }
 
     [Fact]
@@ -147,7 +149,8 @@ public class DeviceConnectionPollingResilienceTests
 
         var deadline = DeviceConnectionService.ComputeLocalDeadline(created, skewedLocalNow);
 
-        Assert.Equal(skewedLocalNow.AddMinutes(10), deadline);
+        // 10-minute server window is clamped to MaxPollWindow (3 minutes).
+        Assert.Equal(skewedLocalNow + DeviceConnectionService.MaxPollWindow, deadline);
     }
 
     [Fact]

@@ -109,6 +109,17 @@ export class DeviceLinkRepository
     );
   }
 
+  markAwaitingApproval(
+    id: string
+  ): Promise<DeviceLinkRequestRow> {
+    return prisma.deviceLinkRequest.update(
+      {
+        where: { id },
+        data: { status: "AWAITING_APPROVAL" }
+      }
+    );
+  }
+
   async consumeAndIssueCredential(
     linkRequestId: string,
     credential: {

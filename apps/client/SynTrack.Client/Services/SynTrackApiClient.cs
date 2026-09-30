@@ -231,6 +231,7 @@ public sealed class SynTrackApiClient : ISynTrackApiClient
         {
             "PENDING" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Pending },
             "EXPIRED" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.Expired },
+            "AWAITING_APPROVAL" => new DeviceConnectPollResult { Kind = DeviceConnectPollKind.AwaitingApproval },
             "CONSUMED" when body.Credential is not null =>
                 new DeviceConnectPollResult
                 {

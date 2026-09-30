@@ -7,7 +7,7 @@ import {
   RAIDER_ACCOUNT_PENDING,
   isActiveRaiderAccountStatus
 } from "../admin-users/admin-account-status.js";
-import { bindDeviceConnection } from "../device-auth/device-connection-bridge.js";
+import { bindDeviceConnection, markDeviceConnectionAwaitingApproval } from "../device-auth/device-connection-bridge.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import type { BattleNetRepository } from "../integrations/battlenet/battlenet.repository.js";
 import { isSafeInternalPath } from "./internal-path.js";
@@ -234,6 +234,12 @@ export class RaiderAuthCallbackService {
         account.status
       )
     ) {
+      if (pending.deviceLinkRequestId) {
+        await markDeviceConnectionAwaitingApproval(
+          pending.deviceLinkRequestId
+        );
+      }
+
       return {
         outcome: "awaiting-approval",
         battleTag: pending.battleTag

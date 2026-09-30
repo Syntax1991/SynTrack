@@ -20,6 +20,7 @@ export type ClientConnectViewState =
       connectedBattleTag: string | null;
     }
   | { kind: "expired" }
+  | { kind: "awaiting-approval" }
   | { kind: "invalid" };
 
 function toView(
@@ -38,6 +39,10 @@ function toView(
 
   if (preview.status === "EXPIRED") {
     return { kind: "expired" };
+  }
+
+  if (preview.status === "AWAITING_APPROVAL") {
+    return { kind: "awaiting-approval" };
   }
 
   if (preview.status === "INVALID") {

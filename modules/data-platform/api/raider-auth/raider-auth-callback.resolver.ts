@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { env } from "../../../../apps/api/src/config/env.js";
-import { bindDeviceConnection } from "../device-auth/device-connection-bridge.js";
+import { bindDeviceConnection, markDeviceConnectionAwaitingApproval } from "../device-auth/device-connection-bridge.js";
 import { normalizeBattleNetCharacters } from "../integrations/battlenet/battlenet-import.mapper.js";
 import type { BattleNetClient } from "../integrations/battlenet/battlenet.client.js";
 import { resolveCanonicalBattleNetAccountId } from "./raider-auth.identity.js";
@@ -143,6 +143,12 @@ export async function resolveRaiderAuthCallback(
       account.status
     )
   ) {
+    if (deviceLinkRequestId) {
+      await markDeviceConnectionAwaitingApproval(
+        deviceLinkRequestId
+      );
+    }
+
     return {
       outcome:
         account.status ===

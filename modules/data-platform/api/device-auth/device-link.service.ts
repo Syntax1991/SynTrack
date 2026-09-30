@@ -177,6 +177,10 @@ export class DeviceLinkService {
       return { status: "PENDING" };
     }
 
+    if (link.status === "AWAITING_APPROVAL") {
+      return { status: "AWAITING_APPROVAL" };
+    }
+
     if (link.status === "CONSUMED") {
       return { status: "CONSUMED" };
     }

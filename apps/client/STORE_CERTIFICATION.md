@@ -28,6 +28,30 @@ https://syntrack.io/api/client/connect` returns 200 with `browserUrl`,
 `pollToken`, `expiresAt`; the Battle.net redirect URI is
 `https://syntrack.io/api/auth/raider/callback`).
 
+## Why the 0.1.1 submission failed (same policy)
+
+The package reached production SynTrack (START succeeded). The tester
+then saw **"Waiting for Battle.net..."** indefinitely after selecting
+sign-in. Causes that keep the desktop on that spinner:
+
+1. **New / unapproved SynTrack accounts never bind the device
+   connection.** Registration returns `awaiting-approval` without
+   consuming the pending link, so the desktop kept polling `PENDING`
+   for the full server TTL (~10 minutes). From 0.1.2 the API marks the
+   link `AWAITING_APPROVAL` and the desktop exits the spinner with a
+   clear message.
+2. **Browser-open failure still left the Waiting spinner up.** Copy-
+   link recovery stayed on `SigningIn`. From 0.1.2 a failed browser
+   launch returns to signed-out with Copy link while polling continues.
+3. **Local poll window was up to 30 minutes.** From 0.1.2 it is capped
+   at 3 minutes so a reviewer who never finishes browser sign-in gets a
+   timeout instead of an apparent hang.
+
+**Required for every resubmit:** an already-approved Battle.net test
+account in Partner Center notes (see "Reviewer account" below). An
+unapproved tester account will still fail productively (clear message)
+but cannot complete the connected-state smoke path.
+
 ## Guards now in place
 
 | Layer | Guard |
@@ -134,10 +158,11 @@ or Battle.net OAuth tokens.
 
 The production SynTrack service must be reachable during certification.
 
-Note on the previous submission: the earlier package was built against
-development endpoints, which caused "Could not connect this client."
-This version is built and verified against the production SynTrack
-service (https://syntrack.io).
+Note on previous submissions: 0.1.0 was built against development
+endpoints; 0.1.1 could reach production but left the desktop waiting when
+the Battle.net account was not an approved SynTrack account (or browser
+sign-in was not completed). This version exits that waiting state with a
+clear message, and is built against https://syntrack.io.
 ```
 
 ### Reviewer account (required - account approval)

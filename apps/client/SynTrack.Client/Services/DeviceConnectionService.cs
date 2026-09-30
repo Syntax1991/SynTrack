@@ -24,11 +24,12 @@ public sealed class DeviceConnectionService
     private DateTimeOffset _expiresAt;
     private CancellationTokenSource? _pollCts;
 
-    public event Action? Completed;
+        public event Action? Completed;
     public event Action? Expired;
     public event Action? ConsumedWithoutCredential;
     public event Action? Invalid;
     public event Action? StorageFailed;
+    public event Action? AwaitingApproval;
 
     public DeviceConnectionService(
         ISynTrackApiClient apiClient,
@@ -46,9 +47,11 @@ public sealed class DeviceConnectionService
 
     /// <summary>
     /// Longest local polling window accepted from a server response, so a
-    /// bogus expiresAt can never turn into (near-)infinite polling.
+    /// bogus expiresAt can never turn into (near-)infinite polling. Capped
+    /// below the server TTL so Store reviewers never sit on
+    /// "Waiting for Battle.net..." for the full ten minutes.
     /// </summary>
-    internal static readonly TimeSpan MaxPollWindow = TimeSpan.FromMinutes(30);
+    internal static readonly TimeSpan MaxPollWindow = TimeSpan.FromMinutes(3);
 
     public string? BrowserUrl => _browserUrl;
 
@@ -143,6 +146,11 @@ public sealed class DeviceConnectionService
                 case DeviceConnectPollKind.Expired:
                     _pollToken = null;
                     Expired?.Invoke();
+                    return;
+
+                case DeviceConnectPollKind.AwaitingApproval:
+                    _pollToken = null;
+                    AwaitingApproval?.Invoke();
                     return;
 
                 case DeviceConnectPollKind.NotFound:

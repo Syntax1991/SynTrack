@@ -195,6 +195,31 @@ export class DeviceConnectionService {
     return { id: link.id };
   }
 
+  /*
+   * Stops desktop polling when Battle.net signed in to a SynTrack
+   * account that still needs admin approval - otherwise the WPF client
+   * stays on "Waiting for Battle.net..." until the 10-minute TTL.
+   */
+  async markAwaitingApprovalInternal(
+    deviceLinkRequestId: string
+  ): Promise<void> {
+    const link =
+      await this.linkRepository.findById(
+        deviceLinkRequestId
+      );
+
+    if (
+      !link ||
+      link.status !== "PENDING"
+    ) {
+      return;
+    }
+
+    await this.linkRepository.markAwaitingApproval(
+      link.id
+    );
+  }
+
   private isExpiredRow(
     link: DeviceLinkRequestRow
   ): boolean {
@@ -269,6 +294,10 @@ export class DeviceConnectionService {
         status: "PENDING",
         deviceName: link.clientName
       };
+    }
+
+    if (link.status === "AWAITING_APPROVAL") {
+      return { status: "AWAITING_APPROVAL" };
     }
 
     if (

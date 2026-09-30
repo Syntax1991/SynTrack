@@ -219,7 +219,7 @@ public class MainViewModelConnectTests
     }
 
     [Fact]
-    public void ABrowserFailureStaysRecoverableWithOpenAgainAndCopyLink()
+    public void ABrowserFailureLeavesTheWaitingSpinnerAndKeepsCopyLink()
     {
         var harness = Build();
         harness.Browser.OpenResult = false;
@@ -227,14 +227,31 @@ public class MainViewModelConnectTests
         harness.ViewModel.ConnectCommand.Execute(null);
 
         Assert.Equal(ConnectMessages.BrowserFailed, harness.ViewModel.ConnectError);
-        Assert.Equal(AccountHealth.SigningIn, harness.ViewModel.AccountHealth);
+        Assert.Equal(AccountHealth.SignedOut, harness.ViewModel.AccountHealth);
+        Assert.False(harness.ViewModel.ShowConnectingShell);
         Assert.NotNull(harness.ViewModel.SignInBrowserUrl);
 
         harness.Browser.OpenResult = true;
         harness.ViewModel.OpenBrowserAgainCommand.Execute(null);
 
         Assert.Null(harness.ViewModel.ConnectError);
+        Assert.Equal(AccountHealth.SigningIn, harness.ViewModel.AccountHealth);
         Assert.Equal(2, harness.Browser.OpenCount);
+        AssertNoSecrets(harness);
+    }
+
+    [Fact]
+    public void AnAwaitingApprovalPollStopsWaitingWithAClearMessage()
+    {
+        var harness = Build();
+        harness.Api.Polls.Enqueue(new DeviceConnectPollResult { Kind = DeviceConnectPollKind.AwaitingApproval });
+
+        harness.ViewModel.ConnectCommand.Execute(null);
+        PumpDispatcher(TimeSpan.FromMilliseconds(300));
+
+        Assert.Equal(ConnectMessages.AwaitingApproval, harness.ViewModel.ConnectError);
+        Assert.Equal(AccountHealth.SignedOut, harness.ViewModel.AccountHealth);
+        Assert.False(harness.ViewModel.ShowConnectingShell);
         AssertNoSecrets(harness);
     }
 
