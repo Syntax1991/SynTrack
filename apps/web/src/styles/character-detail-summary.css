@@ -37,7 +37,7 @@
   background:
     var(--primary-soft);
   font-size: 1.35rem;
-  font-weight: 850;
+  font-weight: 650;
 }
 
 .character-detail-stat-grid {
@@ -56,8 +56,8 @@
 
 .character-detail-stat > span {
   color: var(--text-secondary);
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .character-detail-stat strong {
@@ -68,7 +68,7 @@
 .character-detail-stat small {
   margin-top: 4px;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
 }
 
 .character-detail-section {
@@ -91,7 +91,7 @@
 .character-detail-section-heading > p {
   max-width: 520px;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   line-height: 1.55;
   text-align: right;
 }

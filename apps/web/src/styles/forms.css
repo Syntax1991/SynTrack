@@ -14,8 +14,8 @@
   display: block;
   margin-bottom: 7px;
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .character-form input,
@@ -29,7 +29,7 @@
     var(--radius-small);
   outline: none;
   color: var(--text);
-  background: #0f1219;
+  background: var(--surface);
 }
 
 .character-form input:focus,
@@ -37,7 +37,7 @@
   border-color: var(--primary);
   box-shadow:
     0 0 0 3px
-    rgb(128 88 221 / 15%);
+    rgb(124 108 242 / 15%);
 }
 
 .character-form fieldset {
@@ -50,7 +50,7 @@
 .field-hint {
   margin: -2px 0 12px;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .profession-selector {
@@ -90,7 +90,7 @@
 .profession-option > span {
   margin: 0 !important;
   color: var(--text) !important;
-  font-size: 0.75rem !important;
+  font-size: var(--text-sm) !important;
 }
 
 .profession-option:has(

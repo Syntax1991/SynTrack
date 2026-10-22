@@ -6,13 +6,13 @@
   width: 22px;
   height: 22px;
   border-radius: 5px;
-  font-size: 0.58rem;
-  font-weight: 800;
+  font-size: var(--text-2xs);
+  font-weight: 650;
   line-height: 1;
 }
 
 .syntrack-icon-class {
-  color: #12121a;
+  color: var(--surface-sunken);
   background: var(--syntrack-icon-color, #6b6b7a);
 }
 
@@ -56,24 +56,24 @@
 }
 
 .wow-media-icon-class {
-  color: #12121a;
+  color: var(--surface-sunken);
   background: var(--syntrack-icon-color, #6b6b7a);
-  font-size: 0.52rem;
-  font-weight: 800;
+  font-size: var(--text-2xs);
+  font-weight: 650;
 }
 
 .wow-media-icon-profession {
   color: var(--text-secondary);
   background: var(--surface-elevated);
   border: 1px solid var(--border);
-  font-size: 0.52rem;
-  font-weight: 800;
+  font-size: var(--text-2xs);
+  font-weight: 650;
 }
 
 .matrix-identity .wow-media-icon,
 .overview-character-identity .wow-media-icon {
-  color: #12121a;
-  font-size: 0.52rem;
+  color: var(--surface-sunken);
+  font-size: var(--text-2xs);
 }
 
 .gear-character-avatar .wow-media-icon,
@@ -93,7 +93,7 @@
   color: var(--text-muted);
   background: var(--surface-elevated);
   border: 1px dashed var(--border-strong);
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   font-weight: 400;
 }
 
@@ -127,22 +127,22 @@
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 
 .syntrack-icon-craft-status.safe {
-  color: #12121a;
-  background: var(--success-text, #7ee2a8);
+  color: var(--surface-sunken);
+  background: var(--success-text, var(--success));
 }
 
 .syntrack-icon-craft-status.concentration {
-  color: #12121a;
-  background: var(--warning-text, #ffc670);
+  color: var(--surface-sunken);
+  background: var(--warning-text, var(--warning));
 }
 
 .syntrack-icon-craft-status.not_safe {
-  color: #12121a;
-  background: var(--danger-text, #ff9aa4);
+  color: var(--surface-sunken);
+  background: var(--danger-text, var(--danger));
 }
 
 .syntrack-icon-craft-status.unknown {
@@ -188,12 +188,12 @@
 }
 
 .syntrack-tooltip-body strong {
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .syntrack-tooltip-body span {
   color: var(--text-secondary);
-  font-size: 0.66rem;
+  font-size: var(--text-xs);
 }
 
 .syntrack-tooltip-item-header {

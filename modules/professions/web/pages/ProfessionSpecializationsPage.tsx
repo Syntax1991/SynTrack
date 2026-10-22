@@ -58,9 +58,8 @@ export function ProfessionSpecializationsPage() {
 
   return (
     <>
-      <ProfessionsTabNav />
-
       <ProfessionModuleWorkspace
+        navigation={<ProfessionsTabNav />}
         description="Who is responsible for what? Compare exact verified nodes and ranks across every crafter."
         eyebrow="RESPONSIBILITY"
         title="Specializations"

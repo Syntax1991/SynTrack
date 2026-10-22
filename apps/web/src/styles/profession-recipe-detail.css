@@ -25,7 +25,7 @@
   display: block;
   margin-top: 4px;
   color: var(--text-muted);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-detail-statuses {
@@ -45,18 +45,18 @@
   flex: 0 0 auto;
   padding: 5px 7px;
   border-radius: 999px;
-  font-size: 0.58rem;
-  font-weight: 800;
+  font-size: var(--text-2xs);
+  font-weight: 650;
 }
 
 .profession-recipe-available {
-  color: #a9edcd;
+  color: var(--success);
   background:
     var(--success-soft);
 }
 
 .profession-recipe-missing {
-  color: #ffc9cd;
+  color: var(--danger);
   background:
     var(--danger-soft);
 }
@@ -82,13 +82,13 @@
 .profession-recipe-detail-facts span {
   display: block;
   color: var(--text-muted);
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-detail-facts strong {
   display: block;
   margin-top: 3px;
-  font-size: 0.8rem;
+  font-size: var(--text-md);
 }
 
 .profession-recipe-detail-groups {
@@ -103,10 +103,10 @@
 .profession-recipe-detail-groups span {
   padding: 4px 6px;
   border-radius: 999px;
-  color: #cdbcf4;
+  color: var(--primary-text);
   background:
     var(--primary-soft);
-  font-size: 0.56rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-detail-crafters
@@ -121,13 +121,13 @@
 }
 
 .profession-recipe-detail-crafters h4 {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .profession-recipe-detail-crafters
   > header span {
   color: var(--text-muted);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-detail-crafter-list {
@@ -156,7 +156,7 @@
 .profession-recipe-detail-crafter-header
   strong {
   display: block;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
 }
 
 .profession-recipe-detail-crafter-header
@@ -164,7 +164,7 @@
   display: block;
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 0.57rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-detail-crafter-actions {
@@ -181,8 +181,8 @@
 
 .profession-recipe-detail-crafter-header
   a {
-  color: #cdbcf4;
-  font-size: 0.58rem;
+  color: var(--primary-text);
+  font-size: var(--text-2xs);
   text-decoration: none;
 }
 
@@ -200,12 +200,12 @@
   span {
   padding: 4px 6px;
   border-radius: 999px;
-  font-size: 0.56rem;
+  font-size: var(--text-2xs);
   white-space: nowrap;
 }
 
 .profession-recipe-operation-chips span {
-  color: #a9edcd;
+  color: var(--success);
   background:
     var(--success-soft);
 }
@@ -218,14 +218,14 @@
 
 .profession-recipe-operation-meta
   .captured {
-  color: #a9edcd;
+  color: var(--success);
   background:
     var(--success-soft);
 }
 
 .profession-recipe-operation-meta
   .missing {
-  color: #ffd68a;
+  color: var(--warning);
   background:
     rgba(190, 134, 31, 0.18);
 }
@@ -233,7 +233,7 @@
 .profession-recipe-detail-empty {
   padding: 20px 16px;
   color: var(--text-muted);
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   text-align: center;
 }
 

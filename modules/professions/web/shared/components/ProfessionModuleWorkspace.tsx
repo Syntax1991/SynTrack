@@ -24,6 +24,8 @@ type ProfessionModuleWorkspaceProps = {
   eyebrow: string;
   title: string;
   description: string;
+  /* Page-level tabs, rendered directly under the header. */
+  navigation?: ReactNode;
   children: (
     profession: ProfessionOverviewItem
   ) => ReactNode;
@@ -47,6 +49,7 @@ export function ProfessionModuleWorkspace({
   eyebrow,
   title,
   description,
+  navigation,
   children
 }: ProfessionModuleWorkspaceProps) {
   const {
@@ -102,6 +105,8 @@ export function ProfessionModuleWorkspace({
         eyebrow={eyebrow}
         title={title}
       />
+
+      {navigation}
 
       {error && (
         <StatusMessage type="error">

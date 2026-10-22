@@ -53,13 +53,13 @@ export function ProfessionsPage() {
 
   return (
     <>
-      <ProfessionsTabNav />
-
       <PageHeader
         description="Scan open profession work across your roster, then drill into craft coverage and responsibility."
         eyebrow="PROFESSION CONTROL CENTER"
         title="Professions"
       />
+
+      <ProfessionsTabNav />
 
       {error && (
         <StatusMessage type="error">

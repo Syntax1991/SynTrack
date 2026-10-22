@@ -1,11 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SynTrack">
-  <rect width="64" height="64" rx="14" fill="#03060F"/>
-  <path
-    fill="none"
-    stroke="#F4F6FB"
-    stroke-width="8"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    d="M46 14H22a8 8 0 0 0 0 18h20a8 8 0 0 1 0 18H18"/>
-  <path fill="#8058DD" d="M18 29h28v7H37v16h-8V36H18l-6-3.5L18 29z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="SynTrack">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#8f81f5"/>
+      <stop offset="1" stop-color="#5f4fe0"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8.5" fill="url(#g)"/>
+  <path fill="none" stroke="#fff" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"
+    d="M19.75 9.5H13a3.25 3.25 0 0 0 0 6.5h6a3.25 3.25 0 0 1 0 6.5H9.25"/>
+  <circle cx="23.6" cy="9.5" r="1.9" fill="#fff"/>
 </svg>

@@ -11,8 +11,6 @@ export function WeeklyChecklistPage() {
 
   return (
     <>
-      <WeekliesTabNav />
-
       <PageHeader
         actions={
           <Link className="button button-secondary" to="/characters">
@@ -23,6 +21,8 @@ export function WeeklyChecklistPage() {
         eyebrow="WEEKLY RESET"
         title="Weeklies"
       />
+
+      <WeekliesTabNav />
 
       {error && <StatusMessage type="error">{error}</StatusMessage>}
 

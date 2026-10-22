@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./app/App";
+import "@fontsource-variable/inter";
 import "./styles/tokens.css";
 import "./styles/base.css";
 import "./styles/layout.css";
@@ -28,6 +29,7 @@ import "./styles/character-tags.css";
 import "./styles/weekly-checklist.css";
 import "./styles/season-checklist.css";
 import "./styles/bonus-rolls.css";
+import "./styles/bonus-rolls-board.css";
 import "./styles/season-goal-preference.css";
 import "./styles/vault-mythic-plus-runs.css";
 import "./styles/raid-tasks.css";

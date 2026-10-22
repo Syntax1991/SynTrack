@@ -30,8 +30,8 @@
   gap: 8px;
   margin: 0;
   color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 750;
+  font-size: var(--text-sm);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -47,13 +47,13 @@
   gap: 8px;
   margin: 0 0 4px 10px;
   color: var(--text);
-  font-size: 0.8rem;
+  font-size: var(--text-md);
   font-weight: 650;
   text-decoration: none;
 }
 
 .profession-responsibility-character-heading:hover {
-  color: #cdbcf4;
+  color: var(--primary-text);
   text-decoration: underline;
 }
 
@@ -73,7 +73,7 @@
   padding: 6px 4px 6px 10px;
   border-top: 1px solid var(--border);
   color: var(--text);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .profession-responsibility-slot-row:first-child {
@@ -83,7 +83,7 @@
 .profession-responsibility-table-footnote {
   margin: 4px 4px 0;
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .profession-responsibility-table-linkish {
@@ -96,7 +96,7 @@
   color: var(--text-secondary);
   background: none;
   font: inherit;
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
   text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -104,7 +104,7 @@
 }
 
 .profession-responsibility-table-linkish:not(:disabled):hover {
-  color: #cdbcf4;
+  color: var(--primary-text);
   text-decoration: underline;
 }
 
@@ -116,7 +116,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--text-secondary);
-  font-size: 0.74rem;
+  font-size: var(--text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

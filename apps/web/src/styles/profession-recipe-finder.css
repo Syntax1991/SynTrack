@@ -30,13 +30,13 @@
 .profession-recipe-summary span {
   display: block;
   color: var(--text-muted);
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-summary strong {
   display: block;
   margin-top: 3px;
-  font-size: 0.86rem;
+  font-size: var(--text-md);
 }
 
 .profession-recipe-filters {
@@ -55,7 +55,7 @@
   display: block;
   margin-bottom: 5px;
   color: var(--text-muted);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-filters
@@ -90,7 +90,7 @@
   gap: 5px;
   margin: 12px 2px 9px;
   color: var(--text-secondary);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .profession-recipe-browser {
@@ -126,8 +126,8 @@
   border-bottom:
     1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.58rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -147,7 +147,7 @@
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 0.67rem;
+  font-size: var(--text-xs);
   text-align: left;
 }
 
@@ -164,7 +164,7 @@
   background:
     var(--primary-soft);
   box-shadow:
-    inset 3px 0 0 #9d78e8;
+    inset 3px 0 0 var(--primary-text);
 }
 
 .profession-recipe-list-name {
@@ -174,7 +174,7 @@
 .profession-recipe-list-name strong {
   display: block;
   overflow: hidden;
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -183,12 +183,12 @@
   display: block;
   margin-top: 3px;
   color: var(--text-muted);
-  font-size: 0.56rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-list-group {
   overflow: hidden;
-  color: #cdbcf4;
+  color: var(--primary-text);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -197,18 +197,18 @@
   display: inline-flex;
   padding: 4px 6px;
   border-radius: 999px;
-  font-size: 0.56rem;
-  font-weight: 800;
+  font-size: var(--text-2xs);
+  font-weight: 650;
 }
 
 .profession-recipe-coverage.complete {
-  color: #a9edcd;
+  color: var(--success);
   background:
     var(--success-soft);
 }
 
 .profession-recipe-coverage.incomplete {
-  color: #ffd68a;
+  color: var(--warning);
   background:
     rgba(190, 134, 31, 0.18);
 }

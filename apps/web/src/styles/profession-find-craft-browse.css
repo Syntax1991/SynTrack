@@ -3,8 +3,8 @@
 .profession-find-craft-browse-step-label {
   margin: 18px 0 8px;
   color: var(--text-muted);
-  font-size: 0.62rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -31,7 +31,7 @@
   background: var(--surface-elevated);
   cursor: pointer;
   font: inherit;
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .profession-find-craft-picker-grid.slot button {
@@ -44,13 +44,13 @@
 }
 
 .profession-find-craft-picker-grid button.active {
-  border-color: #9d78e8;
+  border-color: var(--primary-text);
   background: var(--primary-soft);
 }
 
 .profession-find-craft-picker-grid button small {
   color: var(--text-muted);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-find-craft-browse-candidates {
@@ -75,8 +75,8 @@
   padding: 7px 4px;
   border-bottom: 1px solid var(--border-strong);
   color: var(--text-muted);
-  font-size: 0.6rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -84,7 +84,7 @@
 .profession-find-craft-browse-candidate-row {
   padding: 9px 4px;
   border-bottom: 1px solid var(--border);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .profession-find-craft-browse-candidate-nodes {

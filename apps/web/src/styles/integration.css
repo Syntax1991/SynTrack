@@ -16,8 +16,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 750;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .integration-badge {
@@ -27,14 +27,14 @@
 .integration-badge.configured,
 .coverage-badge.covered,
 .level-badge.ready {
-  color: #a9edcd;
+  color: var(--success);
   background: var(--success-soft);
 }
 
 .integration-badge.pending,
 .coverage-badge.missing,
 .level-badge.pending {
-  color: #ffd28a;
+  color: var(--warning);
   background: var(--warning-soft);
 }
 
@@ -114,7 +114,7 @@
 
 .import-result-grid span {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .import-result-grid strong {
@@ -146,8 +146,8 @@
 }
 
 .failed-imports li span {
-  color: #ffc9cd;
-  font-size: 0.78rem;
+  color: var(--danger);
+  font-size: var(--text-sm);
 }
 
 @media (max-width: 620px) {

@@ -39,7 +39,7 @@
   max-width: 500px;
   margin-top: 4px;
   color: #737e90;
-  font-size: 0.67rem;
+  font-size: var(--text-xs);
   line-height: 1.45;
 }
 
@@ -78,7 +78,7 @@
 .guild-editor-modal-body
   .character-form legend {
   margin-bottom: 4px;
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .guild-editor-modal-body
@@ -100,7 +100,7 @@
   min-height: 32px;
   padding: 6px 10px;
   border-radius: 4px;
-  font-size: 0.69rem;
+  font-size: var(--text-xs);
 }
 
 @media (max-width: 620px) {

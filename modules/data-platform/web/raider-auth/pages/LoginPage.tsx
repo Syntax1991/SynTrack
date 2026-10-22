@@ -4,6 +4,7 @@ import { useRaiderSessionStatus } from "../hooks/useRaiderSessionStatus";
 import { getAuthErrorCopy } from "../utils/authErrorCopy";
 import { isSafeInternalPath } from "../utils/internalPath";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
+import { SynTrackMark } from "../../../../../apps/web/src/shared/components/SynTrackLogo";
 
 export function LoginPage() {
   const status = useRaiderSessionStatus();
@@ -51,7 +52,7 @@ export function LoginPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">ST</span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
           <h1>Waiting for approval</h1>
           <p>
             This SynTrack account is registered and waiting for an
@@ -66,7 +67,7 @@ export function LoginPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">ST</span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
           <h1>Account disabled</h1>
           <p>
             This SynTrack account has been disabled.
@@ -80,9 +81,7 @@ export function LoginPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
 
           <h1>No account found</h1>
 
@@ -112,9 +111,7 @@ export function LoginPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
 
           <h1>{errorCopy.title}</h1>
 
@@ -136,9 +133,7 @@ export function LoginPage() {
   return (
     <div className="raider-session-gate">
       <div className="raider-session-gate-card">
-        <span className="brand-mark">
-          ST
-        </span>
+        <SynTrackMark className="brand-mark" decorative size={44} />
 
         <h1>Welcome back</h1>
 

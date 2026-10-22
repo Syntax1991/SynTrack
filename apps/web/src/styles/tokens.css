@@ -1,32 +1,61 @@
+/*
+ * SynTrack design tokens - "clean & calm" dark theme.
+ *
+ * Neutral graphite instead of blue-black, surfaces separated by small
+ * lightness steps and hairlines (no drop shadows), one violet accent
+ * used sparingly, Inter (self-hosted, see main.tsx) on a fixed type
+ * scale. Every stylesheet consumes these variables - change the look
+ * here, not per page.
+ */
 :root {
-  --background: #0a0c11;
-  --surface: #12151d;
-  --surface-elevated: #171b25;
-  /* A step lighter than --surface-elevated - for table headers and other
-     "control" chrome that needs to read as distinct from the panel body
-     it sits on, without introducing a new hue. */
-  --surface-control: #1c212d;
-  --surface-hover: #1d2230;
-  /* Matches the SynTrack logo asset's native background exactly, so the
-     sidebar surface and the logo image blend with no visible seam. */
-  --sidebar-background: #03060f;
-  --border: #292e3a;
-  --border-strong: #393f4f;
-  --text: #f4f6fb;
-  --text-secondary: #9da5b7;
-  --text-muted: #737c91;
-  --primary: #8058dd;
-  --primary-hover: #916deb;
-  --primary-soft: #251d39;
-  --success: #47d597;
-  --success-soft: #163329;
-  --warning: #f6b94a;
-  --warning-soft: #382b16;
-  --danger: #ff6f78;
-  --danger-soft: #3c1d22;
-  --radius-small: 8px;
-  --radius-medium: 12px;
-  --radius-large: 18px;
-  /* Flat design: a hairline separation, not a soft drop shadow. */
-  --shadow: 0 1px 2px rgb(0 0 0 / 35%);
+  color-scheme: dark;
+
+  /* Surfaces, darkest -> lightest. */
+  --background: #0d0e11;
+  --surface-sunken: #0a0b0d;
+  --surface: #121317;
+  --surface-elevated: #16171b;
+  --surface-control: #1c1d22;
+  --surface-hover: #202127;
+  /* Opaque row hover - sticky table cells cannot use alpha. */
+  --row-hover: #1a1b20;
+  --sidebar-background: #0b0c0f;
+
+  /* Hairlines - white at low alpha reads evenly on every surface. */
+  --border: rgb(255 255 255 / 7%);
+  --border-strong: rgb(255 255 255 / 12%);
+
+  /* Text. */
+  --text: #ececf0;
+  --text-secondary: #a3a5ae;
+  --text-muted: #6f727c;
+
+  /* Accent (brand violet), used sparingly. */
+  --primary: #7c6cf2;
+  --primary-hover: #8f81f5;
+  --primary-soft: rgb(124 108 242 / 13%);
+  --primary-text: #b9b0fa;
+
+  /* Status. */
+  --success: #3ecf8e;
+  --success-soft: rgb(62 207 142 / 12%);
+  --warning: #f2b14b;
+  --warning-soft: rgb(242 177 75 / 12%);
+  --danger: #f2727a;
+  --danger-soft: rgb(242 114 122 / 12%);
+
+  /* Shape. */
+  --radius-small: 6px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --shadow: none;
+  --focus-ring: 0 0 0 3px rgb(124 108 242 / 28%);
+
+  /* Type scale (Inter). */
+  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-2xs: 0.6875rem; /* 11px - table headers, chips */
+  --text-xs: 0.75rem; /* 12px - meta, sublines */
+  --text-sm: 0.8125rem; /* 13px - table cells, controls */
+  --text-md: 0.875rem; /* 14px - body */
+  --text-lg: 1rem; /* 16px - panel titles */
 }
