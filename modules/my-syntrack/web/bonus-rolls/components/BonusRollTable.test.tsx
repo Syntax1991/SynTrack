@@ -12,9 +12,9 @@ import { BonusRollTable } from "./BonusRollTable";
 const base: BonusRoll = {
   id: "roll-1",
   character: { id: "char-1", name: "Syntax", realm: "Blackrock", className: "Mage" },
-  instance: { id: 1320, name: "Der Giftige Abgrund" },
+  instance: { id: 1320, name: "The Venomous Abyss" },
   encounter: { id: 2895, name: "Ula'tek" },
-  targetItem: { id: 900002, name: "Giftschuppenhelm" },
+  targetItem: { id: 900002, name: "Venomscale Helm" },
   status: "PLANNED",
   outcome: null,
   receivedItem: null,
@@ -45,8 +45,8 @@ describe("BonusRollTable", () => {
 
     const row = screen.getByRole("row", { name: /Syntax/ });
     expect(within(row).getByText("Ula'tek")).toBeInTheDocument();
-    expect(within(row).getByText("Der Giftige Abgrund")).toBeInTheDocument();
-    expect(within(row).getByText("Giftschuppenhelm")).toBeInTheDocument();
+    expect(within(row).getByText("The Venomous Abyss")).toBeInTheDocument();
+    expect(within(row).getByText("Venomscale Helm")).toBeInTheDocument();
     expect(within(row).getByText("BiS")).toBeInTheDocument();
     expect(within(row).getByText("Planned")).toBeInTheDocument();
   });
@@ -54,27 +54,27 @@ describe("BonusRollTable", () => {
   it("distinguishes target received, another item, and gold only", () => {
     renderTable([
       { ...base, id: "a", status: "ROLLED", outcome: "ITEM", receivedItem: base.targetItem, gotTarget: true, rolledAt: "2026-10-21T19:00:00.000Z" },
-      { ...base, id: "b", status: "ROLLED", outcome: "ITEM", receivedItem: { id: 900001, name: "Fangzahn des Abgrunds" } },
+      { ...base, id: "b", status: "ROLLED", outcome: "ITEM", receivedItem: { id: 900001, name: "Fang of the Abyss" } },
       { ...base, id: "c", status: "ROLLED", outcome: "NO_ITEM" }
     ]);
 
-    expect(screen.getByText("Target received: Giftschuppenhelm")).toBeInTheDocument();
-    expect(screen.getByText("Received: Fangzahn des Abgrunds")).toBeInTheDocument();
+    expect(screen.getByText("Target received: Venomscale Helm")).toBeInTheDocument();
+    expect(screen.getByText("Received: Fang of the Abyss")).toBeInTheDocument();
     expect(screen.getByText("No item (gold)")).toBeInTheDocument();
   });
 
   it("enters what the character received, pre-selecting the target from the boss loot", async () => {
     api.listJournalLoot.mockResolvedValue({
       items: [
-        { id: 900001, name: "Fangzahn des Abgrunds", slot: "Einhändig", quality: "EPIC" },
-        { id: 900002, name: "Giftschuppenhelm", slot: "Kopf", quality: "EPIC" }
+        { id: 900001, name: "Fang of the Abyss", slot: "One-Hand", quality: "EPIC" },
+        { id: 900002, name: "Venomscale Helm", slot: "Head", quality: "EPIC" }
       ]
     });
     const onRecordResult = vi.fn().mockResolvedValue(undefined);
     renderTable([base], { onRecordResult });
 
     fireEvent.click(screen.getByRole("button", { name: "Enter result" }));
-    await screen.findByRole("option", { name: "Fangzahn des Abgrunds · Einhändig" });
+    await screen.findByRole("option", { name: "Fang of the Abyss · One-Hand" });
     expect(api.listJournalLoot).toHaveBeenCalledWith(1320, 2895);
     expect(screen.getByLabelText("Received item")).toHaveValue("900002");
 

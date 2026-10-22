@@ -97,22 +97,22 @@ export class FakeJournalClient implements JournalClient {
 export function sampleJournal() {
   return new FakeJournalClient(
     [
-      { id: 1320, name: "Der Giftige Abgrund", kind: "RAID" },
-      { id: 1322, name: "Altar der Fänge", kind: "DUNGEON" }
+      { id: 1320, name: "The Venomous Abyss", kind: "RAID" },
+      { id: 1322, name: "Altar of Fangs", kind: "DUNGEON" }
     ],
     {
       1320: [
-        { id: 2888, name: "Nek'zali die Seelenwinderin" },
+        { id: 2888, name: "Nek'zali the Soulwinder" },
         { id: 2895, name: "Ula'tek" }
       ],
-      1322: [{ id: 3001, name: "Erster Boss" }]
+      1322: [{ id: 3001, name: "First Boss" }]
     },
     {
       2895: [
-        { id: 900001, name: "Fangzahn des Abgrunds", slot: "Einhändig", quality: "EPIC" },
-        { id: 900002, name: "Giftschuppenhelm", slot: "Kopf", quality: "EPIC" }
+        { id: 900001, name: "Fang of the Abyss", slot: "One-Hand", quality: "EPIC" },
+        { id: 900002, name: "Venomscale Helm", slot: "Head", quality: "EPIC" }
       ],
-      2888: [{ id: 900010, name: "Seelenwinder-Ring", slot: "Finger", quality: "EPIC" }]
+      2888: [{ id: 900010, name: "Soulwinder Ring", slot: "Finger", quality: "EPIC" }]
     }
   );
 }

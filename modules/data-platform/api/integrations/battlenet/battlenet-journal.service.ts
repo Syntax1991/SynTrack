@@ -6,9 +6,16 @@ import type { BattleNetAppTokenService } from "./battlenet-app-token.service.js"
  * tier 505 is Blizzard's own "Current Season" tier: the dungeons and
  * raids of the running season, so callers never hardcode a season's
  * instance list. Verified live 2026-10-22 (Midnight Season 2: tier 505
- * lists the M+ pool and "Der Giftige Abgrund" ending in Ula'tek).
+ * lists the M+ pool and "The Venomous Abyss" ending in Ula'tek).
  */
 export const CURRENT_SEASON_JOURNAL_TIER_ID = 505;
+
+/*
+ * Journal names (instances, bosses, items, slots) are always English,
+ * independent of BATTLENET_LOCALE: players look loot up by its English
+ * name. en_US is served by every region, EU included.
+ */
+export const JOURNAL_LOCALE = "en_US";
 
 export type JournalInstanceKind = "DUNGEON" | "RAID";
 
@@ -114,7 +121,7 @@ export class BattleNetJournalService implements JournalClient {
       const url = new URL(path, `https://${env.BATTLENET_REGION}.api.blizzard.com`);
 
       url.searchParams.set("namespace", `static-${env.BATTLENET_REGION}`);
-      url.searchParams.set("locale", env.BATTLENET_LOCALE);
+      url.searchParams.set("locale", JOURNAL_LOCALE);
 
       const response = await fetch(url, {
         headers: {
