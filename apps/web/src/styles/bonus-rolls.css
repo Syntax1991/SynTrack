@@ -1,0 +1,177 @@
+/* Season -> Bonus Rolls planner */
+
+.bonus-roll-plan-form,
+.bonus-roll-list-panel {
+  padding: 18px 20px;
+}
+
+.bonus-roll-plan-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 12px 14px;
+  align-items: end;
+  margin-top: 12px;
+}
+
+.bonus-roll-note-field {
+  grid-column: span 3;
+}
+
+.bonus-roll-field > span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.bonus-roll-field select,
+.bonus-roll-field input {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border:
+    1px solid var(--border-strong);
+  border-radius:
+    var(--radius-small);
+  outline: none;
+  color: var(--text);
+  background: var(--surface-control);
+}
+
+.bonus-roll-field select:focus,
+.bonus-roll-field input:focus {
+  border-color: var(--primary);
+}
+
+.bonus-roll-field select:disabled {
+  opacity: 0.55;
+}
+
+.bonus-roll-submit {
+  min-height: 38px;
+}
+
+.bonus-roll-quality-epic {
+  color: #b88cff;
+}
+
+.bonus-roll-quality-rare {
+  color: #4fa3ff;
+}
+
+.bonus-roll-quality-legendary {
+  color: #ff9a3c;
+}
+
+.bonus-roll-catalog-error {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 0.78rem;
+}
+
+.bonus-roll-table th,
+.bonus-roll-table td {
+  padding: 12px 14px;
+}
+
+.bonus-roll-table td {
+  vertical-align: top;
+}
+
+/* Actions shrink to their content; target/result get the width. */
+.bonus-roll-table th:last-child,
+.bonus-roll-table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.bonus-roll-table td:nth-child(3) {
+  min-width: 180px;
+}
+
+.bonus-roll-table .text-button {
+  white-space: nowrap;
+}
+
+.bonus-roll-subline {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.bonus-roll-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.bonus-roll-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.bonus-roll-badge-planned {
+  color: var(--text-secondary);
+  background: var(--surface-control);
+}
+
+.bonus-roll-badge-target {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.bonus-roll-badge-item {
+  color: #c9b6ff;
+  background: var(--primary-soft);
+}
+
+.bonus-roll-badge-gold {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.bonus-roll-result-editor {
+  display: grid;
+  gap: 8px;
+  min-width: 240px;
+}
+
+.bonus-roll-editor-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.bonus-roll-empty {
+  margin: 14px 0 4px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 900px) {
+  .bonus-roll-plan-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .bonus-roll-note-field {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 560px) {
+  .bonus-roll-plan-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bonus-roll-note-field {
+    grid-column: auto;
+  }
+}

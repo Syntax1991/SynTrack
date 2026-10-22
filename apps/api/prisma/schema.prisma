@@ -43,6 +43,7 @@ model Character {
   professionWeeklySnapshots CharacterProfessionWeeklySnapshot[]
   professionKnowledgeTreasureSnapshots CharacterProfessionKnowledgeTreasureSnapshot[]
   weeklyGameplaySnapshots CharacterWeeklyGameplaySnapshot[]
+  bonusRolls        BonusRoll[]
 
   @@unique([name, realm, region])
   @@index([battleNetId, region])
@@ -1179,4 +1180,36 @@ model SeasonGoalPreference {
 
   @@unique([goalKey, characterId])
   @@index([characterId])
+}
+
+/*
+ * Bonus Roll planner (Season -> Bonus Rolls). One row per planned or
+ * used bonus roll of a character on one Encounter Journal boss.
+ * Instance / encounter / item names are snapshots taken from the
+ * Blizzard Journal when the row was written (server-validated against
+ * the boss loot table), so the planner renders without API calls.
+ * status: PLANNED | ROLLED. outcome (ROLLED only): ITEM | NO_ITEM.
+ */
+model BonusRoll {
+  id               String    @id @default(cuid())
+  characterId      String
+  instanceId       Int
+  instanceName     String
+  encounterId      Int
+  encounterName    String
+  targetItemId     Int?
+  targetItemName   String?
+  status           String    @default("PLANNED")
+  outcome          String?
+  receivedItemId   Int?
+  receivedItemName String?
+  note             String?
+  rolledAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@index([characterId])
+  @@index([status])
 }
