@@ -23,14 +23,14 @@
 
 .profession-recipe-simulation-header
   strong {
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-simulation-header
   > span {
   color:
     var(--text-muted);
-  font-size: 0.54rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-recommendation {
@@ -54,7 +54,7 @@
   small {
   color:
     var(--text-muted);
-  font-size: 0.52rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-recommendation
@@ -62,7 +62,7 @@
   min-width: 0;
   color:
     #d9ccf7;
-  font-size: 0.57rem;
+  font-size: var(--text-2xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -97,7 +97,7 @@
 .profession-recipe-simulation-card-header
   strong {
   overflow: hidden;
-  font-size: 0.56rem;
+  font-size: var(--text-2xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -106,7 +106,7 @@
   .profession-craft-status {
   min-width: 0;
   padding: 3px 5px;
-  font-size: 0.48rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-simulation-card dl {
@@ -127,18 +127,18 @@
 .profession-recipe-simulation-card dt {
   color:
     var(--text-muted);
-  font-size: 0.51rem;
+  font-size: var(--text-2xs);
 }
 
 .profession-recipe-simulation-card dd {
   margin: 0;
-  font-size: 0.54rem;
-  font-weight: 700;
+  font-size: var(--text-2xs);
+  font-weight: 600;
 }
 
 .profession-recipe-simulation-meta {
   margin-top: 5px;
-  font-size: 0.54rem;
+  font-size: var(--text-2xs);
 }
 
 @media (max-width: 650px) {

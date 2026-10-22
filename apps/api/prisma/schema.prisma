@@ -1199,10 +1199,12 @@ model BonusRoll {
   encounterName    String
   targetItemId     Int?
   targetItemName   String?
+  targetItemIcon   String?
   status           String    @default("PLANNED")
   outcome          String?
   receivedItemId   Int?
   receivedItemName String?
+  receivedItemIcon String?
   note             String?
   rolledAt         DateTime?
   createdAt        DateTime  @default(now())

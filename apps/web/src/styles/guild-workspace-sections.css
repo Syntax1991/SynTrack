@@ -28,7 +28,7 @@
 .guild-roster-workspace .roster-summary-section {
   margin-top: 0;
   padding: 10px 12px;
-  border-bottom: 1px solid #272d37;
+  border-bottom: 1px solid var(--surface-control);
 }
 
 .guild-roster-workspace

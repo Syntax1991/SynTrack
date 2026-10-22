@@ -4,6 +4,7 @@ import { LoadingPanel } from "../../../../../apps/web/src/shared/components/Load
 import { getPublicCrafterShareCard } from "../api/crafterShareApi";
 import type { PublicCrafterShareCard } from "../types/crafterShare.types";
 import { PublicCrafterShareBody } from "../components/PublicCrafterShareBody";
+import { SynTrackMark } from "../../../../../apps/web/src/shared/components/SynTrackLogo";
 
 export function PublicCrafterSharePage() {
   const { token } = useParams();
@@ -57,7 +58,7 @@ export function PublicCrafterSharePage() {
   return (
     <div className="crafter-share-public">
       <div className="crafter-share-public-card">
-        <span className="brand-mark">ST</span>
+        <SynTrackMark className="brand-mark" decorative size={44} />
         <p className="crafter-share-eyebrow">CRAFTER CARD</p>
 
         {isLoading ? <LoadingPanel label="Loading crafts…" /> : null}

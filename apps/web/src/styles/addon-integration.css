@@ -45,7 +45,7 @@
 .addon-preview-meta,
 .addon-result-meta {
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: var(--text-md);
 }
 
 .addon-summary-grid {
@@ -71,7 +71,7 @@
 
 .addon-summary-grid span {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .addon-summary-grid strong {
@@ -126,7 +126,7 @@
 .addon-character-heading span,
 .addon-character-empty {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .addon-profession-list {
@@ -152,7 +152,7 @@
 
 .addon-profession-row span {
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .addon-character-empty {

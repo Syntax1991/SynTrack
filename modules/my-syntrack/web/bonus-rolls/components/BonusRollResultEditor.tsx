@@ -13,12 +13,17 @@ type BonusRollResultEditorProps = {
   onCancel: () => void;
 };
 
+const outcomes: { value: BonusRollOutcome; label: string }[] = [
+  { value: "ITEM", label: "Item received" },
+  { value: "NO_ITEM", label: "Gold only" }
+];
+
 /*
  * "What did the character get?" - an item from this boss's loot table
  * (pre-selected with the planned target) or gold only.
  */
 export function BonusRollResultEditor({ roll, onSave, onCancel }: BonusRollResultEditorProps) {
-  const [outcome, setOutcome] = useState<BonusRollOutcome>("ITEM");
+  const [outcome, setOutcome] = useState<BonusRollOutcome>(roll.outcome ?? "ITEM");
   const [itemId, setItemId] = useState<number | null>(roll.receivedItem?.id ?? roll.targetItem?.id ?? null);
   const [isSaving, setIsSaving] = useState(false);
   const loot = useJournalLoot(roll.instance.id, roll.encounter.id);
@@ -40,17 +45,20 @@ export function BonusRollResultEditor({ roll, onSave, onCancel }: BonusRollResul
 
   return (
     <div className="bonus-roll-result-editor">
-      <label className="bonus-roll-field">
-        <span>Result</span>
-        <select
-          aria-label="Result"
-          onChange={(event) => setOutcome(event.target.value as BonusRollOutcome)}
-          value={outcome}
-        >
-          <option value="ITEM">Item received</option>
-          <option value="NO_ITEM">No item (gold)</option>
-        </select>
-      </label>
+      <div aria-label="Result" className="bonus-roll-segmented" role="radiogroup">
+        {outcomes.map((entry) => (
+          <button
+            aria-checked={outcome === entry.value}
+            className={outcome === entry.value ? "active" : undefined}
+            key={entry.value}
+            onClick={() => setOutcome(entry.value)}
+            role="radio"
+            type="button"
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
 
       {outcome === "ITEM" && (
         <LootItemSelect
@@ -68,7 +76,7 @@ export function BonusRollResultEditor({ roll, onSave, onCancel }: BonusRollResul
         <button className="button button-primary" disabled={!canSave} onClick={() => void save()} type="button">
           {isSaving ? "Saving…" : "Save result"}
         </button>
-        <button className="text-button" onClick={onCancel} type="button">Cancel</button>
+        <button className="button button-ghost" onClick={onCancel} type="button">Cancel</button>
       </div>
     </div>
   );

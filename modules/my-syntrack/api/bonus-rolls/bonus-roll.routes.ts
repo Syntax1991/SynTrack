@@ -3,13 +3,15 @@ import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.
 import { raiderAuthService } from "../../../data-platform/api/raider-auth/raider-auth.routes.js";
 import { BattleNetAppTokenService } from "../../../data-platform/api/integrations/battlenet/battlenet-app-token.service.js";
 import { BattleNetJournalService } from "../../../data-platform/api/integrations/battlenet/battlenet-journal.service.js";
+import { BattleNetMediaService } from "../../../data-platform/api/integrations/battlenet/battlenet-media.service.js";
 import { BonusRollCatalogService } from "./bonus-roll-catalog.service.js";
 import { BonusRollController } from "./bonus-roll.controller.js";
 import { BonusRollRepository } from "./bonus-roll.repository.js";
 import { BonusRollService } from "./bonus-roll.service.js";
 
+const appToken = new BattleNetAppTokenService();
 const catalog = new BonusRollCatalogService(
-  new BattleNetJournalService(new BattleNetAppTokenService())
+  new BattleNetJournalService(appToken, new BattleNetMediaService(appToken))
 );
 const service = new BonusRollService(new BonusRollRepository(), catalog);
 const controller = new BonusRollController(service, catalog, raiderAuthService);

@@ -60,7 +60,7 @@ export function WeeklyChecklistMatrix({
   const columns = weekliesColumns();
   const summaryText = `${characters.length} gameplay character${
     characters.length === 1 ? "" : "s"
-  } · Vault / M+ / Raid / Delves from this-week capture · MAP / META from weekly trackers · 2K lives on /season · Prof. links to /professions`;
+  }`;
 
   if (characters.length === 0) {
     return (

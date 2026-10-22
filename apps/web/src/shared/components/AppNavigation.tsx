@@ -18,6 +18,7 @@ import { RaiderAuthTopAction } from "../../../../../modules/data-platform/web/ra
 import { SidebarAccountPanel } from "../../../../../modules/data-platform/web/raider-auth/components/SidebarAccountPanel";
 import { useIsOperator } from "../../../../../modules/data-platform/web/admin-users/hooks/useIsOperator";
 import { NavIcon } from "./NavIcon";
+import { SynTrackLogo, SynTrackMark } from "./SynTrackLogo";
 
 export function AppNavigation() {
   const { pathname } =
@@ -115,9 +116,7 @@ export function AppNavigation() {
           className="mobile-brand"
           to="/"
         >
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={28} />
 
           <strong>SynTrack</strong>
         </Link>
@@ -156,11 +155,7 @@ export function AppNavigation() {
             }
             to="/"
           >
-            <img
-              alt="SynTrack — Track Together. Progress Everywhere."
-              className="sidebar-logo"
-              src="/branding/syntrack-logo.png"
-            />
+            <SynTrackLogo className="sidebar-logo" />
           </Link>
 
           <button

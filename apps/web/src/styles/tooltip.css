@@ -18,7 +18,7 @@
   background: var(--surface-elevated);
   box-shadow: 0 4px 14px rgb(0 0 0 / 0.35);
   color: var(--text);
-  font-size: 0.67rem;
+  font-size: var(--text-xs);
   line-height: 1.35;
   pointer-events: none;
   white-space: normal;
@@ -34,14 +34,14 @@
  */
 .tooltip-timestamp {
   font-size: 0.92rem;
-  font-weight: 800;
+  font-weight: 650;
   color: var(--text);
   line-height: 1.1;
 }
 
 .tooltip-phase-elapsed {
   color: var(--text-muted);
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
 }
 
 .tooltip-ability-row {
@@ -49,8 +49,8 @@
   align-items: center;
   gap: 5px;
   margin-top: 4px;
-  font-weight: 700;
-  font-size: 0.68rem;
+  font-weight: 600;
+  font-size: var(--text-xs);
 }
 
 .tooltip-ability-row img {
@@ -65,7 +65,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .tooltip-title img {
@@ -78,7 +78,7 @@
 
 .tooltip-time {
   color: var(--primary, #a389f0);
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .tooltip-meta {
@@ -88,8 +88,8 @@
 .tooltip-warning {
   margin-top: 2px;
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.04em;
 }

@@ -4,6 +4,7 @@ import { useRaiderSessionStatus } from "../hooks/useRaiderSessionStatus";
 import { getAuthErrorCopy } from "../utils/authErrorCopy";
 import { isSafeInternalPath } from "../utils/internalPath";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
+import { SynTrackMark } from "../../../../../apps/web/src/shared/components/SynTrackLogo";
 
 export function RegisterPage() {
   const status = useRaiderSessionStatus();
@@ -48,9 +49,7 @@ export function RegisterPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
 
           <h1>{errorCopy.title}</h1>
 
@@ -72,9 +71,7 @@ export function RegisterPage() {
   return (
     <div className="raider-session-gate">
       <div className="raider-session-gate-card">
-        <span className="brand-mark">
-          ST
-        </span>
+        <SynTrackMark className="brand-mark" decorative size={44} />
 
         <h1>
           Create your SynTrack account

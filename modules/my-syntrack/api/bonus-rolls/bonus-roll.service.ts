@@ -47,6 +47,7 @@ export class BonusRollService {
       encounterName: encounter.name,
       targetItemId: target?.id ?? null,
       targetItemName: target?.name ?? null,
+      targetItemIcon: target?.iconUrl ?? null,
       note: input.note ?? null
     });
 
@@ -64,6 +65,7 @@ export class BonusRollService {
 
       data.targetItemId = target?.id ?? null;
       data.targetItemName = target?.name ?? null;
+      data.targetItemIcon = target?.iconUrl ?? null;
     }
 
     if (input.note !== undefined) {
@@ -86,6 +88,7 @@ export class BonusRollService {
         outcome: input.outcome,
         receivedItemId: received?.id ?? null,
         receivedItemName: received?.name ?? null,
+        receivedItemIcon: received?.iconUrl ?? null,
         rolledAt: input.rolledAt ?? this.now()
       })
     );
@@ -100,6 +103,7 @@ export class BonusRollService {
         outcome: null,
         receivedItemId: null,
         receivedItemName: null,
+        receivedItemIcon: null,
         rolledAt: null
       })
     );
@@ -127,7 +131,7 @@ export function toView(row: BonusRollRowWithCharacter): BonusRollView {
     status === "ROLLED" && (row.outcome === "ITEM" || row.outcome === "NO_ITEM") ? row.outcome : null;
 
   const receivedItem = outcome === "ITEM" && row.receivedItemId !== null && row.receivedItemName
-    ? { id: row.receivedItemId, name: row.receivedItemName }
+    ? { id: row.receivedItemId, name: row.receivedItemName, iconUrl: row.receivedItemIcon }
     : null;
 
   return {
@@ -136,7 +140,7 @@ export function toView(row: BonusRollRowWithCharacter): BonusRollView {
     instance: { id: row.instanceId, name: row.instanceName },
     encounter: { id: row.encounterId, name: row.encounterName },
     targetItem: row.targetItemId !== null && row.targetItemName
-      ? { id: row.targetItemId, name: row.targetItemName }
+      ? { id: row.targetItemId, name: row.targetItemName, iconUrl: row.targetItemIcon }
       : null,
     status,
     outcome,

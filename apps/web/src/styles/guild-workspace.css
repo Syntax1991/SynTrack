@@ -22,18 +22,18 @@
   max-width: 680px;
   margin-top: 5px;
   color: #8994a5;
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
 .guild-page .eyebrow {
-  font-size: 0.55rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.14em;
 }
 
 .guild-page .panel {
   margin-top: 12px;
-  border-color: #272d37;
+  border-color: var(--surface-control);
   border-radius: 5px;
   background: #11151c;
   box-shadow: none;
@@ -42,7 +42,7 @@
 .guild-page .panel-header {
   min-height: 0;
   padding: 11px 13px;
-  border-bottom-color: #272d37;
+  border-bottom-color: var(--surface-control);
 }
 
 .guild-page .panel-header h2 {
@@ -52,14 +52,14 @@
 
 .guild-page .panel > .muted-text {
   padding: 12px 13px;
-  font-size: 0.73rem;
+  font-size: var(--text-sm);
 }
 
 .guild-page .button {
   min-height: 31px;
   padding: 5px 10px;
   border-radius: 4px;
-  font-size: 0.69rem;
+  font-size: var(--text-xs);
 }
 
 .guild-page .button:hover {
@@ -72,11 +72,11 @@
 }
 
 .guild-page table th {
-  font-size: 0.58rem;
+  font-size: var(--text-2xs);
 }
 
 .guild-page table td {
-  font-size: 0.73rem;
+  font-size: var(--text-sm);
 }
 
 .guild-page .empty-state {
@@ -85,7 +85,7 @@
   place-items: center;
   padding: 22px;
   color: #697487;
-  font-size: 0.73rem;
+  font-size: var(--text-sm);
 }
 
 .guild-context-bar {
@@ -96,8 +96,8 @@
   gap: 18px;
   margin-bottom: 13px;
   padding: 9px 11px;
-  border-top: 1px solid #272d37;
-  border-bottom: 1px solid #272d37;
+  border-top: 1px solid var(--surface-control);
+  border-bottom: 1px solid var(--surface-control);
 }
 
 .guild-context-identity {
@@ -117,8 +117,8 @@
   border-radius: 50%;
   color: #d9c9ff;
   background: linear-gradient(145deg, #3a245f, #191523);
-  font-size: 0.8rem;
-  font-weight: 850;
+  font-size: var(--text-md);
+  font-weight: 650;
 }
 
 .guild-context-copy {
@@ -130,7 +130,7 @@
 .guild-context-realm,
 .guild-context-meta {
   color: #697486;
-  font-size: 0.61rem;
+  font-size: var(--text-2xs);
 }
 
 .guild-context-title {
@@ -154,19 +154,19 @@
 
 .guild-context-verified {
   padding: 2px 6px;
-  color: #8ce2b8;
+  color: var(--success);
   background: rgb(44 160 103 / 12%);
-  font-size: 0.53rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
 }
 
 .guild-context-rank {
   padding: 4px 8px;
-  color: #8ce2b8;
+  color: var(--success);
   border: 1px solid rgb(49 157 107 / 25%);
   background: rgb(49 157 107 / 10%);
-  font-size: 0.6rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
 }
 
 .guild-section-toolbar {
@@ -208,7 +208,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 11px 12px;
-  border: 1px solid #272d37;
+  border: 1px solid var(--surface-control);
   border-radius: 5px;
   background: #11151c;
   transition:
@@ -223,8 +223,8 @@
 
 .guild-dashboard-card-label {
   color: #9ba5b5;
-  font-size: 0.63rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
 }
 
 .guild-dashboard-card-value {
@@ -241,7 +241,7 @@
 .guild-dashboard-card-value span,
 .guild-dashboard-card-action {
   color: #697487;
-  font-size: 0.62rem;
+  font-size: var(--text-2xs);
 }
 
 .guild-dashboard-card-action {
@@ -267,18 +267,18 @@
 }
 
 .guild-access-card strong {
-  font-size: 0.82rem;
+  font-size: var(--text-md);
 }
 
 .guild-access-card p {
   color: #7f8999;
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
 }
 
 .guild-page-footnote {
   margin-top: 8px;
   color: #626d80;
-  font-size: 0.63rem;
+  font-size: var(--text-2xs);
 }
 
 .guild-page .status-message,

@@ -2,6 +2,7 @@ import { useSearchParams } from "react-router-dom";
 import { getRaiderLoginUrl } from "../../raider-auth/api/raiderAuthApi";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { useClientConnect } from "../hooks/useClientConnect";
+import { SynTrackMark } from "../../../../../apps/web/src/shared/components/SynTrackLogo";
 
 /*
  * The whole codeless desktop-connection journey lands here: the desktop
@@ -27,9 +28,7 @@ export function ClientConnectPage() {
   return (
     <div className="raider-session-gate">
       <div className="raider-session-gate-card">
-        <span className="brand-mark">
-          ST
-        </span>
+        <SynTrackMark className="brand-mark" decorative size={44} />
 
         {view.kind === "loading" && (
           <LoadingPanel label="Checking this connection request…" />

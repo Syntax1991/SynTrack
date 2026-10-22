@@ -98,13 +98,13 @@
 
 .warband-goal-title {
   color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: var(--text-md);
+  font-weight: 600;
 }
 
 .warband-goal-detail {
   margin-top: 6px;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }

@@ -2,6 +2,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useRaiderSessionStatus } from "../hooks/useRaiderSessionStatus";
 import { LoadingPanel } from "../../../../../apps/web/src/shared/components/LoadingPanel";
 import { ClientDownloadCard } from "../../client-download/components/ClientDownloadCard";
+import { SynTrackMark } from "../../../../../apps/web/src/shared/components/SynTrackLogo";
 
 const features: Array<{
   title: string;
@@ -52,9 +53,7 @@ export function PublicLandingPage() {
     <div className="landing-page">
       <section className="landing-hero">
         <div className="raider-session-gate-card raider-landing-card">
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
 
           <h1>SynTrack</h1>
 

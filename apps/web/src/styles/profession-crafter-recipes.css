@@ -27,8 +27,8 @@
   border-bottom:
     1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.6rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -64,7 +64,7 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  font-size: 0.74rem;
+  font-size: var(--text-sm);
 }
 
 .profession-crafter-recipe-name > span {
@@ -75,15 +75,15 @@
 
 .profession-crafter-product-type {
   color: var(--text-secondary);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .profession-crafter-specialization {
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .profession-crafter-specialization.specialized {
-  color: var(--success-text, #7ee2a8);
+  color: var(--success-text, var(--success));
 }
 
 .profession-crafter-specialization.not-specialized {
@@ -100,20 +100,20 @@
 }
 
 .profession-crafter-craft-cell {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   font-weight: 650;
 }
 
 .profession-crafter-craft-cell.safe {
-  color: var(--success-text, #7ee2a8);
+  color: var(--success-text, var(--success));
 }
 
 .profession-crafter-craft-cell.concentration {
-  color: var(--warning-text, #ffc670);
+  color: var(--warning-text, var(--warning));
 }
 
 .profession-crafter-craft-cell.not_safe {
-  color: var(--danger-text, #ff9aa4);
+  color: var(--danger-text, var(--danger));
 }
 
 .profession-crafter-craft-cell.unknown {
@@ -136,13 +136,13 @@
 
 .profession-crafter-recipe-detail span {
   color: var(--text-muted);
-  font-size: 0.6rem;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .profession-crafter-recipe-detail strong {
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   color: var(--text-secondary);
 }
 

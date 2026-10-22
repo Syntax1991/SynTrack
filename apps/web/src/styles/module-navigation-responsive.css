@@ -20,14 +20,12 @@
   }
 
   .mobile-brand .brand-mark {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-    font-size: 0.66rem;
+    width: 28px;
+    height: 28px;
   }
 
   .mobile-brand strong {
-    font-size: 0.82rem;
+    font-size: var(--text-md);
   }
 
   .mobile-menu-button,

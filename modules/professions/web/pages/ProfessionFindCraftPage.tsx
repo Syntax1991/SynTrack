@@ -56,11 +56,10 @@ function FindCraftContent({
 export function ProfessionFindCraftPage() {
   return (
     <>
-      <ProfessionsTabNav />
-
       <CrafterShareControls />
 
       <ProfessionModuleWorkspace
+        navigation={<ProfessionsTabNav />}
         description="I want to craft X - who should do it? Search a recipe and compare crafters. Share a public card so guildmates can see what you can make."
         eyebrow="FIND CRAFT"
         title="Find Craft"

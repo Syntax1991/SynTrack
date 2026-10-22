@@ -6,6 +6,7 @@ export type BonusRollOutcome = "ITEM" | "NO_ITEM";
 export type BonusRollItemRef = {
   id: number;
   name: string;
+  iconUrl: string | null;
 };
 
 export type BonusRoll = {
@@ -44,6 +45,7 @@ export type JournalLootItem = {
   name: string;
   slot: string | null;
   quality: string | null;
+  iconUrl: string | null;
 };
 
 export type BonusRollCreateInput = {

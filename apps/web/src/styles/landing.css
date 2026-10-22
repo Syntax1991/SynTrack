@@ -52,7 +52,7 @@
 .landing-feature-card p {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   line-height: 1.55;
 }
 
@@ -84,18 +84,18 @@
 .landing-download-card p {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   line-height: 1.55;
 }
 
 .landing-download-status {
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: var(--text-md);
 }
 
 .landing-download-meta {
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .landing-footer {
@@ -109,7 +109,7 @@
 .landing-disclaimer {
   margin: 0 0 14px;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   line-height: 1.55;
 }
 
@@ -121,7 +121,7 @@
 
 .landing-footer-links a {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 

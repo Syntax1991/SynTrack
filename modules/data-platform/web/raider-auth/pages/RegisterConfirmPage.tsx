@@ -11,6 +11,7 @@ import {
   getPendingRegistration
 } from "../api/raiderAuthApi";
 import { isSafeInternalPath } from "../utils/internalPath";
+import { SynTrackMark } from "../../../../../apps/web/src/shared/components/SynTrackLogo";
 
 function extractHashValue(
   hash: string,
@@ -221,9 +222,7 @@ export function RegisterConfirmPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
 
           <h1>Sign-in failed</h1>
 
@@ -246,7 +245,7 @@ export function RegisterConfirmPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">ST</span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
           <h1>Waiting for approval</h1>
           <p>
             {view.battleTag ?? "This Battle.net account"} was registered.
@@ -261,9 +260,7 @@ export function RegisterConfirmPage() {
     return (
       <div className="raider-session-gate">
         <div className="raider-session-gate-card">
-          <span className="brand-mark">
-            ST
-          </span>
+          <SynTrackMark className="brand-mark" decorative size={44} />
 
           <h1>
             You already have a SynTrack account
@@ -291,9 +288,7 @@ export function RegisterConfirmPage() {
   return (
     <div className="raider-session-gate">
       <div className="raider-session-gate-card">
-        <span className="brand-mark">
-          ST
-        </span>
+        <SynTrackMark className="brand-mark" decorative size={44} />
 
         <h1>
           Create SynTrack account

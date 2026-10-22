@@ -46,7 +46,7 @@
   border-radius: var(--radius-small);
   color: var(--text);
   background: var(--surface);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .tracker-manager-add-form button {
@@ -55,19 +55,19 @@
   border-radius: var(--radius-small);
   color: var(--text);
   background: var(--primary);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .tracker-manager-error {
   color: var(--danger);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .tracker-manager-empty {
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .tracker-manager-list {
@@ -110,12 +110,12 @@
 }
 
 .tracker-manager-row-name strong {
-  font-size: 0.82rem;
+  font-size: var(--text-md);
 }
 
 .tracker-manager-row-name small {
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
 }
 
 .tracker-manager-row-toggle {
@@ -123,6 +123,6 @@
   align-items: center;
   gap: 4px;
   color: var(--text-muted);
-  font-size: 0.68rem;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }

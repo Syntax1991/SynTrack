@@ -14,7 +14,7 @@
 .profession-detail-section-heading > p {
   max-width: 480px;
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
   text-align: right;
 }
@@ -22,7 +22,7 @@
 .profession-detail-metrics-line {
   margin: 2px 0 18px;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: var(--text-md);
 }
 
 .profession-detail-metrics-line strong {
@@ -53,7 +53,7 @@
   background: none;
   cursor: pointer;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
 }
 
 .profession-specialization-picker button:hover {
@@ -61,8 +61,8 @@
 }
 
 .profession-specialization-picker button.active {
-  border-color: #9d78e8;
-  color: #e5dafb;
+  border-color: var(--primary-text);
+  color: var(--primary-text);
   background: var(--primary-soft);
 }
 
@@ -83,7 +83,7 @@
 
 .profession-specialization-character-link {
   color: var(--text);
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -95,12 +95,12 @@
   > header
   span {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
 }
 
 .profession-specialization-character-empty {
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: var(--text-sm);
 }
 
 .profession-specialization-section {
@@ -110,8 +110,8 @@
 .profession-specialization-section-label {
   margin: 0 0 8px;
   color: var(--text-muted);
-  font-size: 0.62rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -131,7 +131,7 @@
   align-items: center;
   padding: 6px 0;
   border-top: 1px solid var(--border);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .profession-specialization-general-row
@@ -148,8 +148,8 @@
 .profession-specialization-family-name {
   margin: 0 0 6px;
   color: var(--text);
-  font-size: 0.7rem;
-  font-weight: 750;
+  font-size: var(--text-xs);
+  font-weight: 600;
 }
 
 .profession-specialization-claim-list {
@@ -171,8 +171,8 @@
 .profession-specialization-claim-header {
   padding-bottom: 5px;
   color: var(--text-muted);
-  font-size: 0.6rem;
-  font-weight: 750;
+  font-size: var(--text-2xs);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -181,7 +181,7 @@
   padding: 7px 0;
   border-top:
     1px solid var(--border);
-  font-size: 0.76rem;
+  font-size: var(--text-sm);
 }
 
 .profession-specialization-claim.uninvested {

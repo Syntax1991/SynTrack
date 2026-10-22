@@ -14,10 +14,12 @@ export type BonusRollRow = {
   encounterName: string;
   targetItemId: number | null;
   targetItemName: string | null;
+  targetItemIcon: string | null;
   status: string;
   outcome: string | null;
   receivedItemId: number | null;
   receivedItemName: string | null;
+  receivedItemIcon: string | null;
   note: string | null;
   rolledAt: Date | null;
   createdAt: Date;
@@ -43,17 +45,20 @@ export type BonusRollCreateData = {
   encounterName: string;
   targetItemId: number | null;
   targetItemName: string | null;
+  targetItemIcon: string | null;
   note: string | null;
 };
 
 export type BonusRollUpdateData = Partial<{
   targetItemId: number | null;
   targetItemName: string | null;
+  targetItemIcon: string | null;
   note: string | null;
   status: BonusRollStatus;
   outcome: BonusRollOutcome | null;
   receivedItemId: number | null;
   receivedItemName: string | null;
+  receivedItemIcon: string | null;
   rolledAt: Date | null;
 }>;
 
@@ -73,6 +78,7 @@ export interface BonusRollRepositoryContract {
 export type BonusRollItemRef = {
   id: number;
   name: string;
+  iconUrl: string | null;
 };
 
 export type BonusRollView = {

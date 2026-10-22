@@ -40,13 +40,13 @@ export function VaultMythicPlusPage() {
 
   return (
     <>
-      <WeekliesTabNav />
-
       <PageHeader
         description="Automatic Great Vault and Mythic+ progress from your synced WoW data."
         eyebrow="WEEKLY GAMEPLAY DETAIL"
         title="Vault / Mythic+"
       />
+
+      <WeekliesTabNav />
 
       {error ? <StatusMessage type="error">{error}</StatusMessage> : null}
 

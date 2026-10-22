@@ -22,8 +22,8 @@
 
 .overview-decision-metric-label {
   color: var(--text-muted);
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: var(--text-xs);
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -31,13 +31,13 @@
 .overview-decision-metric strong {
   color: var(--text);
   font-size: 0.98rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
 }
 
 .overview-decision-unresolved {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 550;
 }
 
@@ -58,7 +58,7 @@
 
 .overview-setup-panel > .panel-title {
   margin-bottom: 8px;
-  font-size: 0.85rem;
+  font-size: var(--text-md);
 }
 
 .overview-decision-section-head {
@@ -75,7 +75,7 @@
 
 .overview-decision-section-link {
   color: var(--text-secondary);
-  font-size: 0.74rem;
+  font-size: var(--text-sm);
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
@@ -97,7 +97,7 @@
 .overview-decision-matrix-compact td {
   padding-top: 7px;
   padding-bottom: 7px;
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
 }
 
 .overview-col-character {
@@ -124,12 +124,12 @@
 }
 
 .overview-decision-unknown {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .overview-decision-more {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: var(--text-sm);
   font-weight: 650;
   text-decoration: none;
   white-space: nowrap;
