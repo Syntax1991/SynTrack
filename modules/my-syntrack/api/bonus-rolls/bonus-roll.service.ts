@@ -27,7 +27,7 @@ export class BonusRollService {
 
   async create(input: BonusRollCreateInput): Promise<BonusRollView> {
     if (!(await this.repository.findCharacterExists(input.characterId))) {
-      throw new AppError(404, "Charakter nicht gefunden.");
+      throw new AppError(404, "Character not found.");
     }
 
     const { instance, encounter } = await this.catalog.requireEncounter(
@@ -114,7 +114,7 @@ export class BonusRollService {
     const row = await this.repository.findById(id);
 
     if (!row) {
-      throw new AppError(404, "Bonus Roll nicht gefunden.");
+      throw new AppError(404, "Bonus roll not found.");
     }
 
     return row;

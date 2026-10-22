@@ -6,9 +6,9 @@ describe("BonusRollCatalogService", () => {
   it("serves instances, bosses and loot from the Journal", async () => {
     const catalog = new BonusRollCatalogService(sampleJournal());
 
-    expect((await catalog.listInstances()).map((entry) => entry.name)).toEqual(["Der Giftige Abgrund", "Altar der Fänge"]);
+    expect((await catalog.listInstances()).map((entry) => entry.name)).toEqual(["The Venomous Abyss", "Altar of Fangs"]);
     expect((await catalog.listEncounters(1320)).map((entry) => entry.name)).toContain("Ula'tek");
-    expect((await catalog.listLoot(1320, 2895)).map((entry) => entry.slot)).toEqual(["Einhändig", "Kopf"]);
+    expect((await catalog.listLoot(1320, 2895)).map((entry) => entry.slot)).toEqual(["One-Hand", "Head"]);
   });
 
   it("caches successful lookups until the TTL expires", async () => {

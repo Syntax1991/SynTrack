@@ -35,7 +35,7 @@ export const bonusRollResultSchema = z
   .strict()
   .refine(
     (input) => input.outcome !== "ITEM" || typeof input.receivedItemId === "number",
-    { message: "Bei einem Item-Ergebnis muss das erhaltene Item gewählt werden.", path: ["receivedItemId"] }
+    { message: "Choose the received item for an item result.", path: ["receivedItemId"] }
   );
 
 export type BonusRollCreateInput = z.infer<typeof bonusRollCreateSchema>;

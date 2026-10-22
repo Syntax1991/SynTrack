@@ -36,7 +36,7 @@ export class BonusRollCatalogService {
     );
 
     if (!instances) {
-      throw new AppError(502, "Die Instanzen der aktuellen Season konnten nicht von Blizzard geladen werden.");
+      throw new AppError(502, "The current season instances could not be loaded from Blizzard.");
     }
 
     return instances;
@@ -50,7 +50,7 @@ export class BonusRollCatalogService {
     );
 
     if (!encounters) {
-      throw new AppError(502, "Die Bosse dieser Instanz konnten nicht von Blizzard geladen werden.");
+      throw new AppError(502, "The bosses of this instance could not be loaded from Blizzard.");
     }
 
     return encounters;
@@ -64,7 +64,7 @@ export class BonusRollCatalogService {
     );
 
     if (!loot) {
-      throw new AppError(502, "Die Beute dieses Bosses konnte nicht von Blizzard geladen werden.");
+      throw new AppError(502, "The loot of this boss could not be loaded from Blizzard.");
     }
 
     return loot;
@@ -74,7 +74,7 @@ export class BonusRollCatalogService {
     const instance = (await this.listInstances()).find((entry) => entry.id === instanceId);
 
     if (!instance) {
-      throw new AppError(400, "Diese Instanz gehört nicht zur aktuellen Season.");
+      throw new AppError(400, "This instance is not part of the current season.");
     }
 
     return instance;
@@ -88,7 +88,7 @@ export class BonusRollCatalogService {
     const encounter = (await this.listEncounters(instanceId)).find((entry) => entry.id === encounterId);
 
     if (!encounter) {
-      throw new AppError(400, "Dieser Boss gehört nicht zur gewählten Instanz.");
+      throw new AppError(400, "This boss is not part of the selected instance.");
     }
 
     return { instance, encounter };
@@ -102,7 +102,7 @@ export class BonusRollCatalogService {
     const item = (await this.listLoot(instanceId, encounterId)).find((entry) => entry.id === itemId);
 
     if (!item) {
-      throw new AppError(400, "Dieses Item droppt nicht bei diesem Boss.");
+      throw new AppError(400, "This item does not drop from this boss.");
     }
 
     return item;

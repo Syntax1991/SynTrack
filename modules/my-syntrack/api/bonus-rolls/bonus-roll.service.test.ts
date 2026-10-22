@@ -27,19 +27,19 @@ describe("BonusRollService", () => {
       instanceId: 1320,
       encounterId: 2895,
       targetItemId: 900002,
-      note: "für BiS-Helm"
+      note: "for BiS helm"
     });
 
     expect(view).toMatchObject({
       character,
-      instance: { id: 1320, name: "Der Giftige Abgrund" },
+      instance: { id: 1320, name: "The Venomous Abyss" },
       encounter: { id: 2895, name: "Ula'tek" },
-      targetItem: { id: 900002, name: "Giftschuppenhelm" },
+      targetItem: { id: 900002, name: "Venomscale Helm" },
       status: "PLANNED",
       outcome: null,
       receivedItem: null,
       gotTarget: false,
-      note: "für BiS-Helm",
+      note: "for BiS helm",
       rolledAt: null
     });
   });
@@ -74,14 +74,14 @@ describe("BonusRollService", () => {
     expect(hit).toMatchObject({
       status: "ROLLED",
       outcome: "ITEM",
-      receivedItem: { id: 900002, name: "Giftschuppenhelm" },
+      receivedItem: { id: 900002, name: "Venomscale Helm" },
       gotTarget: true,
       rolledAt: "2026-10-22T20:00:00.000Z"
     });
 
     const other = await service.recordResult(planned.id, { outcome: "ITEM", receivedItemId: 900001 });
     expect(other.gotTarget).toBe(false);
-    expect(other.receivedItem?.name).toBe("Fangzahn des Abgrunds");
+    expect(other.receivedItem?.name).toBe("Fang of the Abyss");
   });
 
   it("records a gold-only roll without an item and can reset it to planned", async () => {
@@ -113,7 +113,7 @@ describe("BonusRollService", () => {
     const planned = await service.create({ characterId: "char-1", instanceId: 1320, encounterId: 2895, targetItemId: 900001 });
 
     const updated = await service.update(planned.id, { targetItemId: 900002, note: null });
-    expect(updated.targetItem?.name).toBe("Giftschuppenhelm");
+    expect(updated.targetItem?.name).toBe("Venomscale Helm");
     expect(updated.note).toBeNull();
 
     expect((await service.update(planned.id, { targetItemId: null })).targetItem).toBeNull();
