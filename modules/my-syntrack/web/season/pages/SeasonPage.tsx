@@ -4,6 +4,7 @@ import { PageHeader } from "../../../../../apps/web/src/shared/components/PageHe
 import { StatusMessage } from "../../../../../apps/web/src/shared/components/StatusMessage";
 import { ManageGoalsModal } from "../../../web/season-goal-preference/components/ManageGoalsModal.js";
 import { SeasonChecklistMatrix } from "../components/SeasonChecklistMatrix";
+import { SeasonTabNav } from "../components/SeasonTabNav";
 import { SeasonWarbandGoalsPanel } from "../components/SeasonWarbandGoalsPanel";
 import { useSeasonChecklist } from "../hooks/useSeasonChecklist";
 
@@ -56,6 +57,8 @@ export function SeasonPage() {
         }
         title="Season"
       />
+
+      <SeasonTabNav />
 
       {isManagingGoals && (
         <ManageGoalsModal

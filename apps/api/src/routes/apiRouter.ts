@@ -2,6 +2,7 @@ import { Router } from "express";
 import { characterRouter } from "../../../../modules/my-syntrack/api/characters/character.routes.js";
 import { overviewRouter } from "../../../../modules/my-syntrack/api/overview/overview.routes.js";
 import { tagRouter } from "../../../../modules/my-syntrack/api/tags/tag.routes.js";
+import { bonusRollRouter } from "../../../../modules/my-syntrack/api/bonus-rolls/bonus-roll.routes.js";
 import { characterEquipmentRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-equipment-refresh.routes.js";
 import { characterProfileRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-profile-refresh.routes.js";
 import { characterProfessionsRefreshRouter } from "../../../../modules/my-syntrack/api/character-external-sync/character-professions-refresh.routes.js";
@@ -137,6 +138,11 @@ apiRouter.use(
 apiRouter.use(
   "/tags",
   tagRouter
+);
+
+apiRouter.use(
+  "/bonus-rolls",
+  bonusRollRouter
 );
 
 apiRouter.use(
