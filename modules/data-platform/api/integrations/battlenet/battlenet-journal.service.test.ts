@@ -53,7 +53,7 @@ describe("BattleNetJournalService", () => {
     expect(requested[0]?.searchParams.get("namespace")).toBe("static-eu");
   });
 
-  it("returns boss loot with English slot names and keeps items whose details fail", async () => {
+  it("returns boss loot with English slot names and icons, and keeps items whose details fail", async () => {
     const requested = stubFetch({
       "/data/wow/journal-encounter/2895": {
         items: [
@@ -67,11 +67,15 @@ describe("BattleNetJournalService", () => {
       }
     });
 
-    const loot = await new BattleNetJournalService(appToken).listEncounterLoot(2895);
+    const icons = {
+      resolveItemIconUrl: vi.fn(async (itemId: number) => (itemId === 270175 ? "https://render.example/heart.jpg" : null))
+    };
+
+    const loot = await new BattleNetJournalService(appToken, icons).listEncounterLoot(2895);
 
     expect(loot).toEqual([
-      { id: 270175, name: "Voracious Heart of Ula'tek", slot: "Trinket", quality: "EPIC" },
-      { id: 999999, name: "Unlookupable Item", slot: null, quality: null }
+      { id: 270175, name: "Voracious Heart of Ula'tek", slot: "Trinket", quality: "EPIC", iconUrl: "https://render.example/heart.jpg" },
+      { id: 999999, name: "Unlookupable Item", slot: null, quality: null, iconUrl: null }
     ]);
     expect(requested.every((url) => url.searchParams.get("locale") === "en_US")).toBe(true);
   });

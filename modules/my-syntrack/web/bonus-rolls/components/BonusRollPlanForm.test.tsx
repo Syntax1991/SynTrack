@@ -37,7 +37,7 @@ describe("BonusRollPlanForm", () => {
     });
     api.listJournalEncounters.mockResolvedValue({ items: [{ id: 2895, name: "Ula'tek" }] });
     api.listJournalLoot.mockResolvedValue({
-      items: [{ id: 900002, name: "Venomscale Helm", slot: "Head", quality: "EPIC" }]
+      items: [{ id: 900002, name: "Venomscale Helm", slot: "Head", quality: "EPIC", iconUrl: null }]
     });
   });
 

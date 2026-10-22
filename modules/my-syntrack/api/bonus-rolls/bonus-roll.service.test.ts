@@ -34,7 +34,7 @@ describe("BonusRollService", () => {
       character,
       instance: { id: 1320, name: "The Venomous Abyss" },
       encounter: { id: 2895, name: "Ula'tek" },
-      targetItem: { id: 900002, name: "Venomscale Helm" },
+      targetItem: { id: 900002, name: "Venomscale Helm", iconUrl: "https://render.example/helm.jpg" },
       status: "PLANNED",
       outcome: null,
       receivedItem: null,
@@ -74,7 +74,7 @@ describe("BonusRollService", () => {
     expect(hit).toMatchObject({
       status: "ROLLED",
       outcome: "ITEM",
-      receivedItem: { id: 900002, name: "Venomscale Helm" },
+      receivedItem: { id: 900002, name: "Venomscale Helm", iconUrl: "https://render.example/helm.jpg" },
       gotTarget: true,
       rolledAt: "2026-10-22T20:00:00.000Z"
     });

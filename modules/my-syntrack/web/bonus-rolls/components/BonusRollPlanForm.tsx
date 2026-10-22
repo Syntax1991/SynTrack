@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import type { Character } from "../../characters/types/character.types";
 import {
   useJournalEncounters,
@@ -6,6 +6,7 @@ import {
   useJournalLoot
 } from "../hooks/useJournalCatalog";
 import type { BonusRollCreateInput } from "../types/bonusRoll.types";
+import { ItemIcon } from "./ItemIcon";
 import { LootItemSelect } from "./LootItemSelect";
 
 type BonusRollPlanFormProps = {
@@ -14,6 +15,15 @@ type BonusRollPlanFormProps = {
 };
 
 const kindLabel = { RAID: "Raids", DUNGEON: "Dungeons" } as const;
+
+function Step({ number, children }: { number: number; children: ReactNode }) {
+  return (
+    <div className="bonus-roll-step">
+      <span aria-hidden="true" className="bonus-roll-step-number">{number}</span>
+      <div className="bonus-roll-step-body">{children}</div>
+    </div>
+  );
+}
 
 /*
  * Character -> current-season instance -> boss -> optional target item.
@@ -32,6 +42,7 @@ export function BonusRollPlanForm({ characters, onSubmit }: BonusRollPlanFormPro
   const encounters = useJournalEncounters(instanceId);
   const loot = useJournalLoot(instanceId, encounterId);
 
+  const target = loot.items.find((item) => item.id === targetItemId) ?? null;
   const catalogError = instances.error ?? encounters.error ?? loot.error;
   const canSubmit = characterId !== "" && instanceId !== null && encounterId !== null && !isSubmitting;
 
@@ -53,9 +64,10 @@ export function BonusRollPlanForm({ characters, onSubmit }: BonusRollPlanFormPro
 
   return (
     <form className="panel bonus-roll-plan-form" onSubmit={submit}>
-      <p className="panel-title">PLAN A BONUS ROLL</p>
+      <h2 className="bonus-roll-composer-title">Plan a roll</h2>
+      <p className="bonus-roll-composer-hint">Pick who rolls, on which boss, and the item they want.</p>
 
-      <div className="bonus-roll-plan-grid">
+      <Step number={1}>
         <label className="bonus-roll-field">
           <span>Character</span>
           <select aria-label="Character" onChange={(event) => setCharacterId(event.target.value)} value={characterId}>
@@ -67,7 +79,9 @@ export function BonusRollPlanForm({ characters, onSubmit }: BonusRollPlanFormPro
             ))}
           </select>
         </label>
+      </Step>
 
+      <Step number={2}>
         <label className="bonus-roll-field">
           <span>Instance</span>
           <select
@@ -108,10 +122,12 @@ export function BonusRollPlanForm({ characters, onSubmit }: BonusRollPlanFormPro
             ))}
           </select>
         </label>
+      </Step>
 
+      <Step number={3}>
         <LootItemSelect
           disabled={encounterId === null}
-          emptyLabel="No specific target"
+          emptyLabel="Any item from this boss"
           isLoading={loot.isLoading}
           items={loot.items}
           label="Target item"
@@ -119,23 +135,35 @@ export function BonusRollPlanForm({ characters, onSubmit }: BonusRollPlanFormPro
           value={targetItemId}
         />
 
-        <label className="bonus-roll-field bonus-roll-note-field">
+        {target && (
+          <div className="bonus-roll-target-preview">
+            <ItemIcon iconUrl={target.iconUrl} quality={target.quality} size="lg" />
+            <div>
+              <strong className={target.quality ? `bonus-roll-quality-${target.quality.toLowerCase()}` : undefined}>
+                {target.name}
+              </strong>
+              {target.slot && <span>{target.slot}</span>}
+            </div>
+          </div>
+        )}
+
+        <label className="bonus-roll-field">
           <span>Note</span>
           <input
             aria-label="Note"
             maxLength={200}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="optional, e.g. BiS trinket"
+            placeholder="Optional, e.g. BiS trinket"
             value={note}
           />
         </label>
-
-        <button className="button button-primary bonus-roll-submit" disabled={!canSubmit} type="submit">
-          {isSubmitting ? "Adding…" : "Add roll"}
-        </button>
-      </div>
+      </Step>
 
       {catalogError && <p className="bonus-roll-catalog-error">{catalogError}</p>}
+
+      <button className="button button-primary bonus-roll-submit" disabled={!canSubmit} type="submit">
+        {isSubmitting ? "Adding…" : "Add roll"}
+      </button>
     </form>
   );
 }

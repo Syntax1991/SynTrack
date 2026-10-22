@@ -35,7 +35,12 @@ export type JournalLootItem = {
   name: string;
   slot: string | null;
   quality: string | null;
+  iconUrl: string | null;
 };
+
+export interface ItemIconResolver {
+  resolveItemIconUrl(itemId: number): Promise<string | null>;
+}
 
 export interface JournalClient {
   listCurrentSeasonInstances(): Promise<JournalInstanceSummary[]>;
@@ -47,7 +52,8 @@ type NamedRef = { id?: number; name?: string };
 
 export class BattleNetJournalService implements JournalClient {
   constructor(
-    private readonly appTokenService: BattleNetAppTokenService
+    private readonly appTokenService: BattleNetAppTokenService,
+    private readonly icons: ItemIconResolver | null = null
   ) {}
 
   async listCurrentSeasonInstances(): Promise<JournalInstanceSummary[]> {
@@ -96,20 +102,24 @@ export class BattleNetJournalService implements JournalClient {
         : []
     );
 
-    // Slot / quality are display-only; an item lookup failure keeps the
+    // Slot / quality / icon are display-only; a lookup failure keeps the
     // item selectable with null details instead of dropping it.
     return Promise.all(
       refs.map(async (ref) => {
-        const item = await this.get<{
-          inventory_type?: { name?: string };
-          quality?: { type?: string };
-        }>(`/data/wow/item/${ref.id}`);
+        const [item, iconUrl] = await Promise.all([
+          this.get<{
+            inventory_type?: { name?: string };
+            quality?: { type?: string };
+          }>(`/data/wow/item/${ref.id}`),
+          this.icons ? this.icons.resolveItemIconUrl(ref.id).catch(() => null) : Promise.resolve(null)
+        ]);
 
         return {
           id: ref.id,
           name: ref.name,
           slot: item?.inventory_type?.name ?? null,
-          quality: item?.quality?.type ?? null
+          quality: item?.quality?.type ?? null,
+          iconUrl
         };
       })
     );

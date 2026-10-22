@@ -36,6 +36,7 @@ export class FakeBonusRollRepository implements BonusRollRepositoryContract {
       outcome: null,
       receivedItemId: null,
       receivedItemName: null,
+      receivedItemIcon: null,
       rolledAt: null,
       createdAt: now,
       updatedAt: now,
@@ -109,10 +110,10 @@ export function sampleJournal() {
     },
     {
       2895: [
-        { id: 900001, name: "Fang of the Abyss", slot: "One-Hand", quality: "EPIC" },
-        { id: 900002, name: "Venomscale Helm", slot: "Head", quality: "EPIC" }
+        { id: 900001, name: "Fang of the Abyss", slot: "One-Hand", quality: "EPIC", iconUrl: "https://render.example/fang.jpg" },
+        { id: 900002, name: "Venomscale Helm", slot: "Head", quality: "EPIC", iconUrl: "https://render.example/helm.jpg" }
       ],
-      2888: [{ id: 900010, name: "Soulwinder Ring", slot: "Finger", quality: "EPIC" }]
+      2888: [{ id: 900010, name: "Soulwinder Ring", slot: "Finger", quality: "EPIC", iconUrl: null }]
     }
   );
 }
