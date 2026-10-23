@@ -6,6 +6,7 @@ import {
   vi
 } from "vitest";
 import {
+  registerDeviceConnectionAwaitingApprovalMarker,
   registerDeviceConnectionBinder,
   registerDeviceConnectionResolver
 } from "../device-auth/device-connection-bridge.js";
@@ -56,6 +57,10 @@ describe("raider-auth device-connect continuation", () => {
     registerDeviceConnectionResolver(
       async () => null
     );
+
+    registerDeviceConnectionAwaitingApprovalMarker(
+      async () => {}
+    );
   });
 
   it("an existing account binds a pending device connection immediately on login", async () => {
@@ -102,9 +107,15 @@ describe("raider-auth device-connect continuation", () => {
     const bound = vi.fn(
       async () => {}
     );
+    const awaiting = vi.fn(
+      async () => {}
+    );
 
     registerDeviceConnectionBinder(
       bound
+    );
+    registerDeviceConnectionAwaitingApprovalMarker(
+      awaiting
     );
 
     const outcome =
@@ -139,6 +150,9 @@ describe("raider-auth device-connect continuation", () => {
       "awaiting-approval"
     );
     expect(bound).not.toHaveBeenCalled();
+    expect(awaiting).toHaveBeenCalledWith(
+      "link-99"
+    );
   });
 
   it("registration-continuation is single-use: a replayed confirm cannot bind (or create) a second time", async () => {

@@ -115,6 +115,26 @@ export function ClientConnectPage() {
           </>
         )}
 
+        {view.kind ===
+          "awaiting-approval" && (
+          <>
+            <h1>
+              Account awaiting
+              approval
+            </h1>
+
+            <p>
+              Your SynTrack account
+              still needs admin
+              approval before this
+              desktop client can
+              connect. Return to the
+              app after it is
+              activated.
+            </p>
+          </>
+        )}
+
         {view.kind === "invalid" && (
           <>
             <h1>

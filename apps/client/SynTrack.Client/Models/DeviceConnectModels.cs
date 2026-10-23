@@ -24,7 +24,8 @@ public enum DeviceConnectPollKind
     Expired,
     Consumed,
     ConsumedWithoutCredential,
-    NotFound
+    NotFound,
+    AwaitingApproval
 }
 
 /// <summary>

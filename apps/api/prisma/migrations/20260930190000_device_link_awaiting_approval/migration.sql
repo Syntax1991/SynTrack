@@ -1,0 +1,2 @@
+-- DeviceLinkRequest.status is TEXT on SQLite; Prisma enum values are
+-- application-level. No table rewrite needed to accept AWAITING_APPROVAL.

@@ -207,6 +207,7 @@ public sealed partial class MainViewModel : ObservableObject
         _deviceLinkService.LinkExpired += OnLinkExpired;
         _deviceConnectionService.Completed += OnCodelessCompleted;
         _deviceConnectionService.Expired += OnCodelessExpired;
+        _deviceConnectionService.AwaitingApproval += OnCodelessAwaitingApproval;
         _deviceConnectionService.ConsumedWithoutCredential += OnCodelessConsumedWithoutCredential;
         _deviceConnectionService.Invalid += OnCodelessInvalid;
         _deviceConnectionService.StorageFailed += OnCodelessStorageFailed;
@@ -423,6 +424,10 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (!outcome.BrowserOpened)
             {
+                // Leave the poll running (Copy link / Open again can still
+                // finish the flow) but exit the Waiting spinner so Store
+                // reviewers never see an indefinite "Waiting for Battle.net...".
+                AccountHealth = AccountHealth.SignedOut;
                 ConnectError = ConnectMessages.BrowserFailed;
                 _logger.Warn("Codeless connect started but the default browser could not be opened.");
             }
@@ -475,6 +480,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (_deviceConnectionService.TryOpenBrowserAgain())
         {
             ConnectError = null;
+            AccountHealth = AccountHealth.SigningIn;
         }
         else
         {
@@ -753,6 +759,15 @@ public sealed partial class MainViewModel : ObservableObject
         ConnectError = ConnectMessages.Expired;
         AccountHealth = AccountHealth.SignedOut;
         _logger.Warn("Codeless connect expired.");
+    });
+
+    private void OnCodelessAwaitingApproval() => _dispatcher.Invoke(() =>
+    {
+        IsLinking = false;
+        SignInBrowserUrl = null;
+        ConnectError = ConnectMessages.AwaitingApproval;
+        AccountHealth = AccountHealth.SignedOut;
+        _logger.Warn("Codeless connect blocked: SynTrack account awaiting approval.");
     });
 
     private void OnCodelessConsumedWithoutCredential() => _dispatcher.Invoke(() =>

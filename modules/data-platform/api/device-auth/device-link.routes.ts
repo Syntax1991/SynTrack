@@ -3,6 +3,7 @@ import { asyncHandler } from "../../../../apps/api/src/shared/http/asyncHandler.
 import { raiderAuthService } from "../raider-auth/raider-auth.routes.js";
 import { RaiderAuthRepository } from "../raider-auth/raider-auth.repository.js";
 import {
+  registerDeviceConnectionAwaitingApprovalMarker,
   registerDeviceConnectionBinder,
   registerDeviceConnectionResolver
 } from "./device-connection-bridge.js";
@@ -64,6 +65,13 @@ registerDeviceConnectionResolver(
   (browserToken) =>
     deviceConnectionService.resolvePendingByBrowserToken(
       browserToken
+    )
+);
+
+registerDeviceConnectionAwaitingApprovalMarker(
+  (deviceLinkRequestId) =>
+    deviceConnectionService.markAwaitingApprovalInternal(
+      deviceLinkRequestId
     )
 );
 

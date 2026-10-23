@@ -1102,6 +1102,9 @@ enum DeviceLinkStatus {
   APPROVED
   CONSUMED
   EXPIRED
+  // Desktop poll exits Waiting-for-Battle.net instead of hanging when
+  // the linked SynTrack account still needs admin approval.
+  AWAITING_APPROVAL
 }
 
 // userCode/deviceCodeHash back the legacy human-typed manual-code flow

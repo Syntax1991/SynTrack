@@ -165,6 +165,27 @@ export class FakeDeviceLinkRepository
     return updated;
   }
 
+  async markAwaitingApproval(id: string) {
+    const existing =
+      this.links.get(id);
+
+    if (!existing) {
+      throw new Error(
+        "link not found"
+      );
+    }
+
+    const updated: DeviceLinkRequestRow =
+      {
+        ...existing,
+        status: "AWAITING_APPROVAL"
+      };
+
+    this.links.set(id, updated);
+
+    return updated;
+  }
+
   async consumeAndIssueCredential(
     linkRequestId: string,
     credential: {

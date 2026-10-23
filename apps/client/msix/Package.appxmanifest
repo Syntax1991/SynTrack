@@ -35,6 +35,7 @@
   </Dependencies>
 
   <Capabilities>
+    <Capability Name="internetClient" />
     <!-- Classic Win32 WPF: required so the app can watch the WoW install folder. -->
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>

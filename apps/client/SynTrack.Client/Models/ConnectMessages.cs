@@ -14,13 +14,16 @@ public static class ConnectMessages
         "SynTrack could not start the connection. Please try again in a moment.";
 
     public const string Expired =
-        "Connection expired. Start a new connection.";
+        "Sign-in timed out. Complete Battle.net in your browser, or try again.";
+
+    public const string AwaitingApproval =
+        "This SynTrack account is awaiting approval. Try again after an admin activates it.";
 
     public const string NoLongerValid =
         "This connection is no longer valid. Start a new connection.";
 
     public const string BrowserFailed =
-        "Could not open your browser.";
+        "Could not open your browser. Copy the sign-in link below, open it manually, then return here.";
 
     public const string StorageFailed =
         "SynTrack could not save the connection on this PC. Please try again.";
